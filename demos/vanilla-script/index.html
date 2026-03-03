@@ -98,6 +98,20 @@
           },
         });
 
+        // Wire QNA → Chat bridge.
+        // initOverlayWidgets() does this automatically, but per-widget IIFE
+        // bundles require manual wiring after all widgets are initialised.
+        window.addEventListener('gengage:qna:action', function(e) {
+          if (window.gengage && window.gengage.chat) {
+            window.gengage.chat.openWithAction(e.detail);
+          }
+        });
+        window.addEventListener('gengage:qna:open-chat', function() {
+          if (window.gengage && window.gengage.chat) {
+            window.gengage.chat.open();
+          }
+        });
+
         console.log('[vanilla-script] All widgets ready. Session:', SESSION_ID);
       } catch (err) {
         console.error('[vanilla-script] Widget init failed:', err);

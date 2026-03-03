@@ -166,7 +166,25 @@
           simrelRef.current = simrel;
         }
 
+        // Wire QNA → Chat bridge.
+        // initOverlayWidgets() does this automatically, but per-widget IIFE
+        // bundles require manual wiring after all widgets are initialised.
+        function onQnaAction(e) {
+          if (window.gengage && window.gengage.chat) {
+            window.gengage.chat.openWithAction(e.detail);
+          }
+        }
+        function onQnaOpenChat() {
+          if (window.gengage && window.gengage.chat) {
+            window.gengage.chat.open();
+          }
+        }
+        window.addEventListener('gengage:qna:action', onQnaAction);
+        window.addEventListener('gengage:qna:open-chat', onQnaOpenChat);
+
         return function () {
+          window.removeEventListener('gengage:qna:action', onQnaAction);
+          window.removeEventListener('gengage:qna:open-chat', onQnaOpenChat);
           chatRef.current && chatRef.current.destroy();
           qnaRef.current && qnaRef.current.destroy();
           simrelRef.current && simrelRef.current.destroy();
