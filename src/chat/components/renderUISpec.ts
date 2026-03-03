@@ -141,6 +141,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
   if (!product) return card;
 
+  // Store SKU as data attribute for comparison mode DOM refresh
+  const productSku = product['sku'] as string | undefined;
+  if (productSku) card.dataset['sku'] = productSku;
+
   // Make card clickable to show detail in panel
   if (ctx.onProductSelect) {
     card.style.cursor = 'pointer';

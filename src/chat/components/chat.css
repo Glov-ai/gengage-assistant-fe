@@ -252,11 +252,25 @@
   max-height: -webkit-fill-available;
   max-height: 100dvh;
   border-radius: 16px 16px 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 -4px 16px rgba(0, 0, 0, 0.10),
+    0 12px 40px rgba(15, 23, 42, 0.18);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   clip-path: inset(0);
   transition:
     clip-path 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     opacity 0.32s ease;
+}
+
+/* Subtle backdrop behind mobile half-sheet to separate from PDP */
+.gengage-chat-root--mobile.gengage-chat-root--open::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .gengage-chat-root--mobile.gengage-chat-root--mobile-half .gengage-chat-drawer {
@@ -270,10 +284,12 @@
   height: 100dvh;
   max-height: 100dvh;
   border-radius: 0;
+  border-top: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-input-area {
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--_gengage-border-color, #e5e7eb);
   transform: translateY(calc(-1 * var(--gengage-keyboard-offset, 0px)));
 }
 

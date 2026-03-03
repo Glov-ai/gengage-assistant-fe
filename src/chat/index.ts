@@ -1297,6 +1297,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               onCtaClick: () => {
                 this._comparisonSelectMode = true;
                 this._choicePrompterEl = null;
+                this._refreshComparisonUI();
               },
               onDismiss: () => {
                 this._choicePrompterEl = null;
@@ -1891,6 +1892,113 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   /**
+   * Toggle comparison mode or individual SKU selection, then refresh the DOM.
+   * Extracted so both the render-context callback and DOM-created checkboxes
+   * share the same state-mutation + refresh path.
+   */
+  private _toggleComparisonSku(sku: string): void {
+    if (sku === '') {
+      this._comparisonSelectMode = !this._comparisonSelectMode;
+      if (!this._comparisonSelectMode) {
+        this._comparisonSelectedSkus = [];
+        ga.trackCompareClear();
+      }
+    } else {
+      const idx = this._comparisonSelectedSkus.indexOf(sku);
+      if (idx >= 0) {
+        this._comparisonSelectedSkus = this._comparisonSelectedSkus.filter((s) => s !== sku);
+      } else {
+        this._comparisonSelectedSkus = [...this._comparisonSelectedSkus, sku];
+        ga.trackComparePreselection(sku);
+      }
+    }
+    this._refreshComparisonUI();
+  }
+
+  /**
+   * Refresh the panel DOM to reflect the current comparison state without
+   * full re-render. Updates: toggle button active class, checkbox overlays
+   * on product cards, and the floating comparison button.
+   */
+  private _refreshComparisonUI(): void {
+    const panelEl = this._shadow?.querySelector('.gengage-chat-panel');
+    if (!panelEl) return;
+
+    const gridWrapper = panelEl.querySelector('.gengage-chat-product-grid-wrapper');
+    if (!gridWrapper) return;
+    const grid = gridWrapper.querySelector('.gengage-chat-product-grid');
+    if (!grid) return;
+
+    // 1. Toggle comparison button active state
+    const toggleBtn = gridWrapper.querySelector('.gengage-chat-comparison-toggle-btn');
+    if (toggleBtn) {
+      toggleBtn.classList.toggle('gengage-chat-comparison-toggle-btn--active', this._comparisonSelectMode);
+    }
+
+    // 2. Add or remove checkbox overlays on product cards
+    if (this._comparisonSelectMode) {
+      const cards = grid.querySelectorAll<HTMLElement>('.gengage-chat-product-card[data-sku]');
+      for (const card of cards) {
+        if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
+          // Already wrapped — sync checked state
+          const cb = card.parentElement.querySelector<HTMLInputElement>('.gengage-chat-comparison-checkbox');
+          if (cb) cb.checked = this._comparisonSelectedSkus.includes(card.dataset['sku']!);
+          continue;
+        }
+        const sku = card.dataset['sku']!;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gengage-chat-comparison-select-wrapper';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'gengage-chat-comparison-checkbox';
+        checkbox.checked = this._comparisonSelectedSkus.includes(sku);
+        checkbox.addEventListener('change', () => {
+          this._toggleComparisonSku(sku);
+        });
+        card.parentNode!.insertBefore(wrapper, card);
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(card);
+      }
+    } else {
+      // Remove all checkbox wrappers
+      const wrappers = grid.querySelectorAll('.gengage-chat-comparison-select-wrapper');
+      for (const wrapper of wrappers) {
+        const card = wrapper.querySelector('.gengage-chat-product-card');
+        if (card && wrapper.parentNode) {
+          wrapper.parentNode.insertBefore(card, wrapper);
+          wrapper.remove();
+        }
+      }
+    }
+
+    // 3. Update floating comparison button
+    const existingFloating = gridWrapper.querySelector('.gengage-chat-comparison-floating-btn');
+    if (this._comparisonSelectMode && this._comparisonSelectedSkus.length >= 2) {
+      const label = this._i18n.compareSelected ?? 'Karşılaştır';
+      const text = `${label} (${this._comparisonSelectedSkus.length})`;
+      if (existingFloating) {
+        existingFloating.textContent = text;
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'gengage-chat-comparison-floating-btn';
+        btn.type = 'button';
+        btn.textContent = text;
+        btn.addEventListener('click', () => {
+          ga.trackCompareSelected(this._comparisonSelectedSkus);
+          this._sendAction({
+            title: label,
+            type: 'getComparisonTable',
+            payload: { sku_list: [...this._comparisonSelectedSkus] },
+          });
+        });
+        gridWrapper.appendChild(btn);
+      }
+    } else {
+      existingFloating?.remove();
+    }
+  }
+
+  /**
    * Build a ChatUISpecRenderContext with all callbacks wired up.
    * Used both during streaming and during session restore.
    */
@@ -1973,21 +2081,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       comparisonSelectMode: this._comparisonSelectMode,
       comparisonSelectedSkus: this._comparisonSelectedSkus,
       onToggleComparisonSku: (sku) => {
-        if (sku === '') {
-          this._comparisonSelectMode = !this._comparisonSelectMode;
-          if (!this._comparisonSelectMode) {
-            this._comparisonSelectedSkus = [];
-            ga.trackCompareClear();
-          }
-        } else {
-          const idx = this._comparisonSelectedSkus.indexOf(sku);
-          if (idx >= 0) {
-            this._comparisonSelectedSkus = this._comparisonSelectedSkus.filter((s) => s !== sku);
-          } else {
-            this._comparisonSelectedSkus = [...this._comparisonSelectedSkus, sku];
-            ga.trackComparePreselection(sku);
-          }
-        }
+        this._toggleComparisonSku(sku);
       },
       favoritedSkus: this._session?.favoritedSkus ?? new Set(),
       onFavoriteToggle: (sku, product) => {

@@ -83,9 +83,9 @@
 
   <div id="root"></div>
 
-  <!-- React 19 from CDN -->
-  <script crossorigin src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
+  <!-- React 18 from CDN (pinned — React 19 UMD is not reliably served from unpkg) -->
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 
   <!-- Gengage IIFE bundles from npm via CDN -->
   <script src="https://unpkg.com/@gengage/assistant-fe/dist/chat.iife.js"></script>
@@ -94,16 +94,16 @@
 
   <script>
     // ---- CONFIGURE THESE VALUES ----
-    var ACCOUNT_ID = 'your-account-id';
-    var MIDDLEWARE_URL = 'https://YOUR-BACKEND.gengage.ai';
-    var LOCALE = 'en';
+    var ACCOUNT_ID = 'koctascomtr';
+    var MIDDLEWARE_URL = 'https://chatbe-dev.gengage.ai';
+    var LOCALE = 'tr';
 
     var h = React.createElement;
     var useState = React.useState;
     var useEffect = React.useEffect;
     var useRef = React.useRef;
 
-    var SKU = new URLSearchParams(location.search).get('sku') || 'DEMO-001';
+    var SKU = new URLSearchParams(location.search).get('sku') || '1000465056';
 
     // ---------------------------------------------------------------
     // useGengageWidgets — custom hook that initialises all 3 widgets
@@ -198,9 +198,9 @@
         ),
         h('main', { className: 'container' },
           h('section', { className: 'product-card' },
-            h('h1', null, 'Demo Product', h('span', { className: 'badge' }, 'React')),
+            h('h1', null, 'Lorem Ipsum Demo', h('span', { className: 'badge' }, 'React')),
             h('p', { className: 'sku' }, 'SKU: ' + SKU),
-            h('p', { className: 'price' }, '$99.99')
+            h('p', { className: 'price' }, 'XXX TL')
           ),
           h('section', { className: 'widget-section' },
             h('h2', { className: 'section-title' }, 'Questions & Answers'),

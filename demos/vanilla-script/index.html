@@ -17,9 +17,9 @@
   <p>This demo uses IIFE bundles via <code>&lt;script&gt;</code> tags — no bundler required.</p>
 
   <div class="product">
-    <h2>Demo Product</h2>
-    <p>SKU: <code id="demo-sku">DEMO-001</code></p>
-    <p>This is a placeholder product page. The Gengage widgets will initialize below.</p>
+    <h2>Lorem Ipsum Demo</h2>
+    <p>SKU: <code id="demo-sku">—</code></p>
+    <p>Bu alan yer tutucu PDP kabuğudur. Widget verileri backend tarafından sağlanır.</p>
   </div>
 
   <div id="gengage-qna"></div>
@@ -38,10 +38,10 @@
 
   <script>
     // ---- CONFIGURE THESE VALUES ----
-    var ACCOUNT_ID = 'your-account-id';
-    var MIDDLEWARE_URL = 'https://YOUR-BACKEND.gengage.ai';
-    var SKU = new URLSearchParams(location.search).get('sku') || 'DEMO-001';
-    var LOCALE = 'en';
+    var ACCOUNT_ID = 'koctascomtr';
+    var MIDDLEWARE_URL = 'https://chatbe-dev.gengage.ai';
+    var SKU = new URLSearchParams(location.search).get('sku') || '1000465056';
+    var LOCALE = 'tr';
 
     document.getElementById('demo-sku').textContent = SKU;
 

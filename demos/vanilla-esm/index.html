@@ -96,9 +96,9 @@
 
   <main class="container">
     <section class="product-card">
-      <h1>Demo Product</h1>
+      <h1>Lorem Ipsum Demo</h1>
       <p class="sku">SKU: <span id="demo-sku">—</span></p>
-      <p class="price">$99.99</p>
+      <p class="price">XXX TL</p>
     </section>
 
     <section class="widget-section">
@@ -116,15 +116,15 @@
     import { initOverlayWidgets } from '@gengage/assistant-fe';
 
     const params = new URLSearchParams(location.search);
-    const sku = params.get('sku') ?? 'DEMO-001';
+    const sku = params.get('sku') ?? '1000465056';
 
     document.getElementById('demo-sku').textContent = sku;
 
     // ---- CONFIGURE THESE VALUES ----
     const controller = await initOverlayWidgets({
-      accountId: 'your-account-id',
-      middlewareUrl: 'https://YOUR-BACKEND.gengage.ai',
-      locale: 'en',
+      accountId: 'koctascomtr',
+      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      locale: 'tr',
       sku,
       pageContext: { pageType: 'pdp', sku },
       qna: { mountTarget: '#gengage-qna' },
