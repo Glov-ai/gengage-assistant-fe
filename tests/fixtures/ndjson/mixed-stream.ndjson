@@ -1,0 +1,6 @@
+{"type":"metadata","sessionId":"mixed-session","model":"gpt-4o"}
+{"type":"loading","payload":{"text":"Araştırıyorum..."}}
+{"type":"text_chunk","content":"İşte sonuçlar:","final":true}
+{"type":"productList","payload":{"product_list":[{"sku":"MIX001","name":"Karma Ürün","brand":"MixBrand","images":["https://img.test.com/mix1.jpg"],"price":100,"url":"https://test.com/mix001","rating":4.0,"review_count":50,"cart_code":"CC-MIX","in_stock":true}]}}
+{"type":"suggestedActions","payload":{"actions":[{"title":"Detaylı incele","icon":"info","requestDetails":{"type":"launchSingleProduct","payload":{"sku":"MIX001"}}}]}}
+{"type":"done"}

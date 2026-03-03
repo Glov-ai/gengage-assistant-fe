@@ -1,0 +1,571 @@
+/* Catalog chrome styles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.catalog-shell {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.catalog-sidebar {
+  width: 240px;
+  background: #1d1d1f;
+  color: #f5f5f7;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-logo {
+  padding: 20px 16px;
+  font-size: 16px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+.catalog-logo strong {
+  color: #6366f1;
+}
+
+.catalog-nav {
+  list-style: none;
+  padding: 8px 0;
+  flex: 1;
+}
+
+.catalog-nav > li > a,
+.catalog-nav-group-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  color: #aaa;
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.catalog-nav > li > a:hover,
+.catalog-nav-group-header:hover {
+  background: #2a2a2e;
+  color: #fff;
+}
+
+.catalog-nav a.active {
+  background: #6366f1;
+  color: #fff;
+  border-radius: 4px;
+  margin: 0 8px;
+  padding: 6px 8px;
+}
+
+.catalog-nav-group-header {
+  justify-content: space-between;
+  user-select: none;
+}
+
+.catalog-nav-group-header a {
+  color: inherit;
+  text-decoration: none;
+  flex: 1;
+}
+
+.catalog-nav-toggle {
+  font-size: 10px;
+  margin-left: 8px;
+  opacity: 0.5;
+}
+
+.catalog-nav-children {
+  list-style: none;
+  padding-left: 12px;
+}
+
+.catalog-nav-children li a {
+  display: block;
+  padding: 4px 16px;
+  color: #888;
+  text-decoration: none;
+  font-size: 12px;
+  transition: color 0.15s;
+}
+
+.catalog-nav-children li a:hover {
+  color: #ddd;
+}
+
+/* Main area */
+.catalog-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.catalog-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+
+.catalog-breadcrumb {
+  font-size: 14px;
+  color: #666;
+}
+
+.catalog-theme-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.catalog-theme-select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.catalog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Component card wrapper */
+.catalog-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.catalog-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.catalog-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.catalog-card-header p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.catalog-card-preview {
+  padding: 20px;
+  min-height: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Chat drawer frame ── */
+.catalog-chat-frame {
+  width: 420px;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  background: var(--gengage-background-color, #fff);
+}
+
+.catalog-chat-frame-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  min-height: 56px;
+  background: var(--gengage-chat-header-bg, #1d2939);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.catalog-chat-frame-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.catalog-chat-frame-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.catalog-chat-frame-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.catalog-chat-frame-subtitle {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.catalog-chat-frame-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.catalog-chat-frame-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: default;
+  display: grid;
+  place-items: center;
+}
+
+.catalog-chat-frame-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--gengage-background-color, #fff);
+  min-height: 120px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* ── Panel frame (for ProductDetailsPanel) ── */
+.catalog-panel-frame {
+  width: 860px;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  background: var(--gengage-background-color, #fff);
+}
+
+.catalog-panel-frame-sidebar {
+  width: 440px;
+  background: #f8fafc;
+  border-right: 1px solid var(--gengage-border-color, #e5e7eb);
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.catalog-panel-frame-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-panel-frame-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  min-height: 56px;
+  background: var(--gengage-chat-header-bg, #1d2939);
+  color: #fff;
+}
+
+.catalog-panel-frame-messages {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--gengage-background-color, #fff);
+  min-height: 200px;
+}
+
+.catalog-panel-frame-msg-placeholder {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ── QNA frame (below a mock PDP header) ── */
+.catalog-qna-frame {
+  width: 520px;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  background: var(--gengage-background-color, #fff);
+}
+
+.catalog-qna-frame-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+  background: #fafbfc;
+}
+
+.catalog-qna-frame-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gengage-foreground-color, #1d1d1f);
+  margin-bottom: 4px;
+}
+
+.catalog-qna-frame-header .price {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gengage-primary-color, #3b82f6);
+}
+
+.catalog-qna-frame-body {
+  padding: 14px 18px;
+}
+
+/* ── SimRel frame (PDP section) ── */
+.catalog-simrel-frame {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  background: var(--gengage-background-color, #fff);
+}
+
+.catalog-simrel-frame-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.catalog-simrel-frame-header h4 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gengage-foreground-color, #1d1d1f);
+}
+
+.catalog-simrel-frame-body {
+  padding: 8px 14px 16px;
+}
+
+.catalog-card-source {
+  border-top: 1px solid #eee;
+}
+
+.catalog-card-source summary {
+  padding: 8px 20px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  user-select: none;
+}
+
+.catalog-card-source pre {
+  padding: 12px 20px;
+  background: #f8f8f8;
+  font-size: 12px;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.catalog-card-console {
+  border-top: 1px solid #eee;
+  padding: 8px 20px;
+  background: #1e1e1e;
+  color: #4ec9b0;
+  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-size: 11px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.catalog-card-console .log-entry {
+  padding: 2px 0;
+  border-bottom: 1px solid #333;
+}
+
+/* Overview */
+.catalog-overview h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.catalog-overview .version-badge {
+  display: inline-block;
+  background: #6366f1;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin-bottom: 24px;
+}
+
+.catalog-overview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.catalog-overview th {
+  text-align: left;
+  padding: 8px 12px;
+  background: #f5f5f7;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+}
+
+.catalog-overview td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.catalog-overview td a {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.catalog-overview td a:hover {
+  text-decoration: underline;
+}
+
+/* Theme comparison grid */
+.catalog-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.catalog-theme-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.catalog-theme-card-header {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.catalog-theme-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.catalog-theme-card-body {
+  padding: 16px;
+}
+
+/* Responsive preview */
+.catalog-responsive-frames {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.catalog-responsive-frame {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.catalog-responsive-frame-header {
+  padding: 6px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.catalog-responsive-frame-body {
+  overflow: hidden;
+}
+
+/* Full widgets section */
+.catalog-full-widgets {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+  min-height: 500px;
+}
+
+.catalog-full-widget-col {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.catalog-full-widget-col h4 {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.catalog-full-widget-body {
+  padding: 16px;
+  position: relative;
+  min-height: 400px;
+}
+
+/* Component type selector */
+.catalog-component-select {
+  margin-bottom: 20px;
+}
+
+.catalog-component-select label {
+  font-size: 13px;
+  color: #666;
+  margin-right: 8px;
+}
+
+.catalog-component-select select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}

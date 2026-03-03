@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Gengage Native Overlay</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      height: 100%;
+      /* iOS safe area support */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    /* Hidden by default — widgets manage their own visibility */
+    #gengage-qna, #gengage-simrel { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Mount targets for PDP widgets (shown only when context is PDP) -->
+  <div id="gengage-qna"></div>
+  <div id="gengage-simrel"></div>
+
+  <!-- Step 1: Load native bridge synchronously (before widgets) -->
+  <script src="native-bridge.js"></script>
+
+  <!-- Step 2: Initialize widgets -->
+  <script type="module">
+    import { initOverlayWidgets } from '@gengage/assistant-fe';
+
+    // Config source priority:
+    // 1. window.gengageNativeConfig (injected by native app via WKUserScript / evaluateJavascript)
+    // 2. URL query params (?accountId=...&sku=...&middlewareUrl=...)
+    // 3. Defaults
+
+    var nativeConfig = window.gengageNativeConfig || {};
+    var params = new URLSearchParams(window.location.search);
+
+    var accountId = nativeConfig.accountId || params.get('accountId') || 'demo';
+    var middlewareUrl = nativeConfig.middlewareUrl || params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+    var sku = nativeConfig.sku || params.get('sku') || undefined;
+    var locale = nativeConfig.locale || params.get('locale') || 'tr';
+    var pageType = nativeConfig.pageType || params.get('pageType') || (sku ? 'pdp' : 'other');
+
+    // Apply native-injected session before widget init
+    if (nativeConfig.sessionId) {
+      window.gengageNative.receive({ type: 'setSession', payload: { sessionId: nativeConfig.sessionId } });
+    }
+    if (nativeConfig.userId) {
+      window.gengageNative.receive({ type: 'setSession', payload: { userId: nativeConfig.userId } });
+    }
+
+    try {
+      var controller = await initOverlayWidgets({
+        accountId: accountId,
+        middlewareUrl: middlewareUrl,
+        locale: locale,
+        sku: sku,
+        pageContext: { pageType: pageType, sku: sku },
+        chat: {
+          variant: 'floating',
+          mobileInitialState: nativeConfig.mobileInitialState || 'full',
+        },
+        onAddToCart: function (params) {
+          window.gengageNative.sendToNative('addToCart', {
+            sku: params.sku,
+            quantity: params.quantity,
+            cartCode: params.cartCode,
+          });
+        },
+        onProductNavigate: function (url, prodSku, sessionId) {
+          window.gengageNative.sendToNative('productNavigate', {
+            url: url,
+            sku: prodSku,
+            sessionId: sessionId,
+          });
+        },
+      });
+
+      // Signal readiness to native app
+      window.gengageNative.sendToNative('ready', {
+        sessionId: controller.session.sessionId,
+        widgets: {
+          chat: controller.chat !== null,
+          qna: controller.qna !== null,
+          simrel: controller.simrel !== null,
+        },
+      });
+    } catch (err) {
+      window.gengageNative.sendToNative('error', {
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  </script>
+
+</body>
+</html>

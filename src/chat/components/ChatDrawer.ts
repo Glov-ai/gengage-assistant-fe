@@ -1,0 +1,1162 @@
+import type { ChatI18n, ChatMessage } from '../types.js';
+import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
+import { CHAT_I18N_TR } from '../locales/index.js';
+import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
+import { createKvkkBanner } from './KvkkBanner.js';
+import { PanelTopBar } from './PanelTopBar.js';
+import { ThumbnailsColumn } from './ThumbnailsColumn.js';
+import type { ThumbnailEntry } from './ThumbnailsColumn.js';
+
+/** SVG icon map for suggested action chips/pills. Keys match backend icon names. */
+const SUGGESTED_ACTION_ICONS: Record<string, string> = {
+  search:
+    '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="10" y1="10" x2="15" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>',
+  review:
+    '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><polygon points="8,1 10,6 15,6 11,9 12.5,14 8,11 3.5,14 5,9 1,6 6,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  info: '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="7" x2="8" y2="12" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="4.5" r="0.8" fill="currentColor"/></svg>',
+  similar:
+    '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><rect x="1" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+};
+
+export { SUGGESTED_ACTION_ICONS };
+
+export interface ChatDrawerOptions {
+  i18n: ChatI18n;
+  onSend: (text: string, attachment?: File) => void;
+  onClose: () => void;
+  onAttachment?: (file: File) => void;
+  onPanelToggle?: () => void;
+  onRollback?: (messageId: string) => void;
+  headerTitle?: string | undefined;
+  headerAvatarUrl?: string | undefined;
+  headerBadge?: string | undefined;
+  /** URL for the cart icon link in the header (e.g. "/sepetim"). */
+  headerCartUrl?: string | undefined;
+  /** Show a favorites (heart) toggle button in the header. */
+  headerFavoritesToggle?: boolean | undefined;
+  onFavoritesClick?: (() => void) | undefined;
+  /** Callback fired when the panel back button is clicked. */
+  onPanelBack?: (() => void) | undefined;
+  /** Callback fired when the panel forward button is clicked. */
+  onPanelForward?: (() => void) | undefined;
+  /** Callback fired when a product thumbnail is clicked (for thread rollback). */
+  onThumbnailClick?: ((threadId: string) => void) | undefined;
+  /** Callback fired when a link in bot HTML is clicked. */
+  onLinkClick?: ((url: string) => void) | undefined;
+  /** Enable voice input (Web Speech API STT). Default: false. */
+  voiceEnabled?: boolean | undefined;
+  /** BCP 47 language for speech recognition. Default: 'tr-TR'. */
+  voiceLang?: string | undefined;
+}
+
+const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
+
+export class ChatDrawer {
+  private root: HTMLElement;
+  private messagesEl: HTMLElement;
+  private inputEl: HTMLTextAreaElement;
+  private sendBtn: HTMLButtonElement;
+  private i18n: ChatI18n;
+  private onSend: (text: string, attachment?: File) => void;
+  private _panelEl: HTMLElement;
+  private _panelVisible = false;
+  private _panelCollapsed = false;
+  private _panelForceExpanded = false;
+  private _dividerEl: HTMLElement;
+  private _onPanelToggle: (() => void) | undefined = undefined;
+  private _pendingAttachment: File | null = null;
+  private _fileInput: HTMLInputElement;
+  private _previewStrip: HTMLElement;
+  private _previewName: HTMLElement;
+  private _onAttachment: ((file: File) => void) | undefined = undefined;
+  private _onRollback: ((messageId: string) => void) | undefined = undefined;
+  private _onLinkClick: ((url: string) => void) | undefined = undefined;
+  private _pillsEl: HTMLElement;
+  private _kvkkSlot: HTMLElement;
+  private _panelTopBar: PanelTopBar;
+  private _userScrolledUp = false;
+  private _scrollLockedUntil = 0;
+  private _inputChipsEl: HTMLElement;
+  private _thumbnailsColumn: ThumbnailsColumn;
+  private _thinkingSteps: string[] = [];
+  private _firstBotMessageIds: Set<string> = new Set();
+  private _voiceInput: VoiceInput | null = null;
+  private _micBtn: HTMLButtonElement | null = null;
+  private _voiceEnabled = false;
+  private _voiceLang = 'tr-TR';
+
+  constructor(container: HTMLElement, options: ChatDrawerOptions) {
+    this.i18n = { ...DEFAULT_I18N, ...options.i18n };
+    this.onSend = options.onSend;
+    if (options.onPanelToggle !== undefined) {
+      this._onPanelToggle = options.onPanelToggle;
+    }
+    if (options.onAttachment !== undefined) {
+      this._onAttachment = options.onAttachment;
+    }
+    if (options.onRollback !== undefined) {
+      this._onRollback = options.onRollback;
+    }
+    if (options.onLinkClick !== undefined) {
+      this._onLinkClick = options.onLinkClick;
+    }
+    if (options.voiceEnabled) {
+      this._voiceEnabled = true;
+    }
+    if (options.voiceLang !== undefined) {
+      this._voiceLang = options.voiceLang;
+    }
+
+    this.root = document.createElement('div');
+    this.root.className = 'gengage-chat-drawer';
+    this.root.setAttribute('role', 'dialog');
+    this.root.setAttribute('aria-label', this.i18n.headerTitle ?? 'Chat');
+    this.root.setAttribute('aria-modal', 'true');
+
+    // Header — branded dark bar
+    const header = document.createElement('div');
+    header.className = 'gengage-chat-header';
+
+    const headerLeft = document.createElement('div');
+    headerLeft.className = 'gengage-chat-header-left';
+
+    if (options.headerAvatarUrl) {
+      const avatar = document.createElement('img');
+      avatar.className = 'gengage-chat-header-avatar';
+      avatar.src = options.headerAvatarUrl;
+      avatar.alt = options.headerTitle ?? 'Assistant';
+      headerLeft.appendChild(avatar);
+    }
+
+    const headerInfo = document.createElement('div');
+    headerInfo.className = 'gengage-chat-header-info';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'gengage-chat-header-title-row';
+    const title = document.createElement('span');
+    title.className = 'gengage-chat-header-title';
+    title.textContent = options.headerTitle ?? this.i18n.headerTitle ?? 'Gengage Asistan\u0131';
+    titleRow.appendChild(title);
+
+    if (options.headerBadge) {
+      const badge = document.createElement('span');
+      badge.className = 'gengage-chat-header-badge';
+      badge.textContent = options.headerBadge;
+      titleRow.appendChild(badge);
+    }
+    headerInfo.appendChild(titleRow);
+
+    const powered = document.createElement('a');
+    powered.className = 'gengage-chat-header-powered';
+    powered.href = 'https://gengage.ai/';
+    powered.target = '_blank';
+    powered.rel = 'noopener noreferrer';
+    powered.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM7 4.5h2v4H7v-4zm0 5h2v2H7v-2z"/></svg>Powered by Gengage`;
+    headerInfo.appendChild(powered);
+
+    headerLeft.appendChild(headerInfo);
+    header.appendChild(headerLeft);
+
+    const headerRight = document.createElement('div');
+    headerRight.className = 'gengage-chat-header-right';
+
+    // Cart link (optional — production shows cart icon → /sepetim)
+    if (options.headerCartUrl) {
+      const cartLink = document.createElement('a');
+      cartLink.className = 'gengage-chat-header-btn';
+      cartLink.href = options.headerCartUrl;
+      cartLink.target = '_blank';
+      cartLink.rel = 'noopener noreferrer';
+      cartLink.setAttribute('aria-label', 'Sepetim');
+      cartLink.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+      headerRight.appendChild(cartLink);
+    }
+
+    // Favorites heart toggle (optional)
+    if (options.headerFavoritesToggle) {
+      const favBtn = document.createElement('button');
+      favBtn.className = 'gengage-chat-header-btn';
+      favBtn.type = 'button';
+      favBtn.setAttribute('aria-label', 'Favorilerim');
+      favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
+      headerRight.appendChild(favBtn);
+    }
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'gengage-chat-close';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', this.i18n.closeButton);
+    closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    closeBtn.addEventListener('click', options.onClose);
+    headerRight.appendChild(closeBtn);
+    header.appendChild(headerRight);
+
+    // Body: flex container for panel + conversation
+    const body = document.createElement('div');
+    body.className = 'gengage-chat-body';
+
+    // Panel (hidden by default)
+    this._panelEl = document.createElement('div');
+    this._panelEl.className = 'gengage-chat-panel';
+
+    // Panel top bar (navigation)
+    this._panelTopBar = new PanelTopBar({
+      onBack: () => options.onPanelBack?.(),
+      onForward: () => options.onPanelForward?.(),
+    });
+    this._panelEl.appendChild(this._panelTopBar.getElement());
+
+    body.appendChild(this._panelEl);
+
+    // Divider between panel and conversation
+    this._dividerEl = document.createElement('div');
+    this._dividerEl.className = 'gengage-chat-panel-divider gengage-chat-panel-divider--hidden';
+    this._dividerEl.setAttribute('role', 'separator');
+    this._dividerEl.setAttribute('aria-label', 'Toggle panel');
+    const chevron = document.createElement('button');
+    chevron.className = 'gengage-chat-panel-divider-toggle';
+    chevron.type = 'button';
+    chevron.setAttribute('aria-label', 'Toggle panel');
+    chevron.textContent = '\u00BB'; // » (collapse right)
+    chevron.addEventListener('click', () => {
+      this.togglePanel();
+      this._onPanelToggle?.();
+    });
+    this._dividerEl.appendChild(chevron);
+    body.appendChild(this._dividerEl);
+
+    // Conversation wrapper — header lives inside so it only spans chat width
+    const conversation = document.createElement('div');
+    conversation.className = 'gengage-chat-conversation';
+    conversation.appendChild(header);
+
+    // KVKK banner slot (inserted above messages)
+    this._kvkkSlot = document.createElement('div');
+    this._kvkkSlot.className = 'gengage-chat-kvkk-slot';
+    conversation.appendChild(this._kvkkSlot);
+
+    // Messages area
+    this.messagesEl = document.createElement('div');
+    this.messagesEl.className = 'gengage-chat-messages';
+    this.messagesEl.setAttribute('role', 'log');
+    this.messagesEl.setAttribute('aria-live', 'polite');
+    this.messagesEl.setAttribute('aria-label', 'Chat messages');
+
+    // Track user scroll position to avoid auto-scrolling when reading history
+    let scrollRafPending = false;
+    this.messagesEl.addEventListener(
+      'scroll',
+      () => {
+        if (scrollRafPending) return;
+        scrollRafPending = true;
+        requestAnimationFrame(() => {
+          scrollRafPending = false;
+          const { scrollTop, scrollHeight, clientHeight } = this.messagesEl;
+          this._userScrolledUp = scrollHeight - scrollTop - clientHeight > 10;
+        });
+      },
+      { passive: true },
+    );
+
+    conversation.appendChild(this.messagesEl);
+
+    // Thumbnails column (right edge of panel — quick-scroll shortcuts for search results)
+    this._thumbnailsColumn = new ThumbnailsColumn({
+      onThumbnailClick: (threadId) => options.onThumbnailClick?.(threadId),
+    });
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
+
+    // Suggestion pills row (between messages and input)
+    this._pillsEl = document.createElement('div');
+    this._pillsEl.className = 'gengage-chat-pills';
+    this._pillsEl.setAttribute('role', 'toolbar');
+    this._pillsEl.setAttribute('aria-label', 'Suggestions');
+    this._pillsEl.style.display = 'none';
+
+    const pillsScroll = document.createElement('div');
+    pillsScroll.className = 'gengage-chat-pills-scroll';
+    this._pillsEl.appendChild(pillsScroll);
+
+    const pillsArrow = document.createElement('button');
+    pillsArrow.className = 'gengage-chat-pills-arrow';
+    pillsArrow.type = 'button';
+    pillsArrow.setAttribute('aria-label', 'More suggestions');
+    pillsArrow.textContent = '\u203A'; // › single right-pointing angle
+    pillsArrow.addEventListener('click', () => {
+      pillsScroll.scrollBy({ left: 150, behavior: 'smooth' });
+    });
+    this._pillsEl.appendChild(pillsArrow);
+
+    // Hide arrow when fully scrolled
+    let pillsRafPending = false;
+    pillsScroll.addEventListener(
+      'scroll',
+      () => {
+        if (pillsRafPending) return;
+        pillsRafPending = true;
+        requestAnimationFrame(() => {
+          pillsRafPending = false;
+          const atEnd = pillsScroll.scrollLeft + pillsScroll.clientWidth >= pillsScroll.scrollWidth - 4;
+          pillsArrow.style.display = atEnd ? 'none' : '';
+        });
+      },
+      { passive: true },
+    );
+
+    conversation.appendChild(this._pillsEl);
+
+    // Input-area chips (compact chips above input for search/info/review/similar)
+    this._inputChipsEl = document.createElement('div');
+    this._inputChipsEl.className = 'gengage-chat-input-chips';
+    this._inputChipsEl.style.display = 'none';
+    conversation.appendChild(this._inputChipsEl);
+
+    // Input area
+    const inputArea = document.createElement('div');
+    inputArea.className = 'gengage-chat-input-area';
+
+    this.inputEl = document.createElement('textarea');
+    this.inputEl.className = 'gengage-chat-input';
+    this.inputEl.rows = 1;
+    this.inputEl.placeholder = this.i18n.inputPlaceholder;
+
+    // Auto-expand on desktop as user types (capped at 120px)
+    this.inputEl.addEventListener('input', () => {
+      requestAnimationFrame(() => {
+        this.inputEl.style.height = 'auto';
+        this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
+      });
+    });
+
+    // Enter submits; Shift+Enter inserts newline on desktop only
+    this.inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const isMobile = window.innerWidth < 768;
+        if (isMobile || !e.shiftKey) {
+          e.preventDefault();
+          this._submit();
+        }
+        // else: Shift+Enter on desktop → natural newline (no preventDefault)
+      }
+    });
+
+    this.inputEl.addEventListener('paste', (e) => {
+      const file = e.clipboardData?.files[0];
+      if (file && file.type.startsWith('image/')) {
+        e.preventDefault();
+        if (this._onAttachment) {
+          this._onAttachment(file);
+        } else {
+          this.stageAttachment(file);
+        }
+      }
+    });
+
+    // Hidden file input
+    this._fileInput = document.createElement('input');
+    this._fileInput.type = 'file';
+    this._fileInput.accept = 'image/jpeg,image/png,image/webp';
+    this._fileInput.style.display = 'none';
+    this._fileInput.addEventListener('change', () => {
+      const file = this._fileInput.files?.[0];
+      if (file) {
+        if (this._onAttachment) {
+          this._onAttachment(file);
+        } else {
+          this.stageAttachment(file);
+        }
+      }
+      this._fileInput.value = '';
+    });
+
+    // Attach button with camera SVG
+    const attachBtn = document.createElement('button');
+    attachBtn.className = 'gengage-chat-attach-btn';
+    attachBtn.type = 'button';
+    attachBtn.setAttribute('aria-label', this.i18n.attachImageButton);
+    attachBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+    attachBtn.addEventListener('click', () => this._fileInput.click());
+
+    // Attachment preview strip (hidden by default)
+    this._previewStrip = document.createElement('div');
+    this._previewStrip.className = 'gengage-chat-attachment-preview gengage-chat-attachment-preview--hidden';
+    const previewThumb = document.createElement('img');
+    previewThumb.className = 'gengage-chat-attachment-preview-thumb';
+    previewThumb.alt = '';
+    this._previewName = document.createElement('span');
+    this._previewName.className = 'gengage-chat-attachment-name';
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'gengage-chat-attachment-remove';
+    removeBtn.type = 'button';
+    removeBtn.setAttribute('aria-label', this.i18n.removeAttachmentButton);
+    removeBtn.textContent = '\u00D7'; // multiplication sign (x)
+    removeBtn.addEventListener('click', () => this.clearAttachment());
+    this._previewStrip.appendChild(previewThumb);
+    this._previewStrip.appendChild(this._previewName);
+    this._previewStrip.appendChild(removeBtn);
+
+    this.sendBtn = document.createElement('button');
+    this.sendBtn.className = 'gengage-chat-send';
+    this.sendBtn.type = 'button';
+    this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
+    this.sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
+    this.sendBtn.addEventListener('click', () => this._submit());
+
+    // Drag-and-drop on input area
+    inputArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      inputArea.classList.add('gengage-chat-input-area--dragover');
+    });
+    inputArea.addEventListener('dragleave', () => {
+      inputArea.classList.remove('gengage-chat-input-area--dragover');
+    });
+    inputArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      inputArea.classList.remove('gengage-chat-input-area--dragover');
+      const file = e.dataTransfer?.files[0];
+      if (file) {
+        if (this._onAttachment) {
+          this._onAttachment(file);
+        } else {
+          this.stageAttachment(file);
+        }
+      }
+    });
+
+    // Build pill container: [camera] [input] [mic?] [send]
+    const pill = document.createElement('div');
+    pill.className = 'gengage-chat-input-pill';
+    pill.appendChild(attachBtn);
+    pill.appendChild(this.inputEl);
+
+    // Voice input mic button (Web Speech API STT)
+    if (this._voiceEnabled && isVoiceInputSupported()) {
+      this._micBtn = document.createElement('button');
+      this._micBtn.className = 'gengage-chat-mic-btn';
+      this._micBtn.type = 'button';
+      this._micBtn.setAttribute('aria-label', this.i18n.voiceButton);
+      this._micBtn.innerHTML =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>' +
+        '<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>' +
+        '<line x1="12" y1="19" x2="12" y2="23"/>' +
+        '<line x1="8" y1="23" x2="16" y2="23"/>' +
+        '</svg>';
+      this._micBtn.addEventListener('click', () => this._toggleVoice());
+      pill.appendChild(this._micBtn);
+
+      this._voiceInput = new VoiceInput(
+        {
+          onInterim: (text) => {
+            this.inputEl.value = text;
+            this.inputEl.style.height = 'auto';
+            this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
+          },
+          onFinal: (text) => {
+            this.inputEl.value = text;
+          },
+          onAutoSubmit: (text) => {
+            this.inputEl.value = text;
+            this._micBtn?.classList.remove('gengage-chat-mic-btn--active');
+            this._submit();
+          },
+          onStateChange: (state) => {
+            if (state === 'listening') {
+              this._micBtn?.classList.add('gengage-chat-mic-btn--active');
+            } else {
+              this._micBtn?.classList.remove('gengage-chat-mic-btn--active');
+            }
+          },
+          onError: (_code, _message) => {
+            this._micBtn?.classList.remove('gengage-chat-mic-btn--active');
+          },
+        },
+        { lang: this._voiceLang },
+      );
+    }
+
+    pill.appendChild(this.sendBtn);
+
+    inputArea.appendChild(this._previewStrip);
+    inputArea.appendChild(this._fileInput);
+    inputArea.appendChild(pill);
+    conversation.appendChild(inputArea);
+
+    body.appendChild(conversation);
+    this.root.appendChild(body);
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'gengage-chat-footer';
+    footer.textContent = this.i18n.poweredBy;
+    this.root.appendChild(footer);
+
+    // Escape key to close drawer
+    this.root.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        options.onClose();
+      }
+    });
+
+    this._trapFocus();
+
+    container.appendChild(this.root);
+  }
+
+  addMessage(message: ChatMessage): void {
+    const bubble = document.createElement('div');
+    bubble.className = `gengage-chat-bubble gengage-chat-bubble--${message.role}`;
+    bubble.dataset['messageId'] = message.id;
+    if (message.threadId) {
+      bubble.dataset['threadId'] = message.threadId;
+    }
+
+    if (this._firstBotMessageIds.has(message.id)) {
+      bubble.classList.add('gengage-chat-bubble--first');
+    }
+
+    if (message.attachment) {
+      const thumbEl = document.createElement('img');
+      thumbEl.className = 'gengage-chat-attachment-thumb';
+      const blobUrl = URL.createObjectURL(message.attachment);
+      thumbEl.src = blobUrl;
+      thumbEl.alt = message.attachment.name;
+      // Revoke blob URL once image loads (or errors) to free memory
+      thumbEl.addEventListener('load', () => URL.revokeObjectURL(blobUrl), { once: true });
+      thumbEl.addEventListener('error', () => URL.revokeObjectURL(blobUrl), { once: true });
+      bubble.insertBefore(thumbEl, bubble.firstChild);
+    }
+
+    if (message.content) {
+      const text = document.createElement('div');
+      text.className = 'gengage-chat-bubble-text';
+      if (message.role === 'assistant') {
+        text.innerHTML = sanitizeHtml(message.content);
+        // Intercept all links in bot HTML
+        if (this._onLinkClick) {
+          const links = text.querySelectorAll('a[href]');
+          for (const link of links) {
+            link.addEventListener('click', (e) => {
+              e.preventDefault();
+              const href = link.getAttribute('href');
+              if (href) {
+                this._onLinkClick?.(href);
+              }
+            });
+          }
+        }
+      } else {
+        text.textContent = message.content; // User messages: always safe textContent
+      }
+      bubble.appendChild(text);
+    }
+
+    // Add rollback button to user message bubbles
+    if (message.role === 'user' && this._onRollback) {
+      const rollbackBtn = document.createElement('button');
+      rollbackBtn.className = 'gengage-chat-rollback-btn';
+      rollbackBtn.type = 'button';
+      rollbackBtn.setAttribute('aria-label', 'Rollback to this message');
+      rollbackBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+      rollbackBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._onRollback?.(message.id);
+      });
+      bubble.appendChild(rollbackBtn);
+    }
+
+    this.messagesEl.appendChild(bubble);
+    this._scrollToBottom(message.role === 'user');
+  }
+
+  showTypingIndicator(searchText?: string): void {
+    this.removeTypingIndicator();
+    const container = document.createElement('div');
+    container.className = 'gengage-chat-typing';
+    container.dataset['typing'] = 'true';
+
+    if (this._thinkingSteps.length > 0) {
+      // Render accumulated thinking steps
+      this._renderThinkingStepsInto(container);
+    } else {
+      // Default 3-dot animation
+      const indicator = document.createElement('div');
+      indicator.className = 'gengage-chat-typing-dots';
+      for (let i = 0; i < 3; i++) indicator.appendChild(document.createElement('span'));
+      container.appendChild(indicator);
+      if (searchText) {
+        const sparkle = document.createElement('span');
+        sparkle.className = 'gengage-chat-typing-sparkle';
+        sparkle.textContent = '\u2728'; // sparkle
+        container.appendChild(sparkle);
+
+        const text = document.createElement('span');
+        text.className = 'gengage-chat-typing-text';
+        text.textContent = searchText;
+        container.appendChild(text);
+      }
+    }
+
+    this.messagesEl.appendChild(container);
+    this._scrollToBottom(true);
+  }
+
+  /** Accumulate a new thinking step (shown as a checklist in the typing indicator). */
+  addThinkingStep(text: string): void {
+    this._thinkingSteps.push(text);
+    this._renderThinkingSteps();
+  }
+
+  removeTypingIndicator(): void {
+    const existing = this.messagesEl.querySelector('.gengage-chat-typing');
+    existing?.remove();
+    this._thinkingSteps = [];
+  }
+
+  showError(message?: string, onRetry?: () => void): void {
+    const errEl = document.createElement('div');
+    errEl.className = 'gengage-chat-error';
+    const textEl = document.createElement('span');
+    textEl.textContent = message ?? this.i18n.errorMessage;
+    errEl.appendChild(textEl);
+
+    if (onRetry) {
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'gengage-chat-error-retry';
+      retryBtn.textContent = this.i18n.retryButton ?? 'Retry';
+      retryBtn.addEventListener('click', () => {
+        errEl.remove();
+        onRetry();
+      });
+      errEl.appendChild(retryBtn);
+    }
+
+    this.messagesEl.appendChild(errEl);
+    this._scrollToBottom(true);
+  }
+
+  clearMessages(): void {
+    this.messagesEl.innerHTML = '';
+  }
+
+  /** Replace suggestion pills. Pass empty array to hide. */
+  setPills(
+    pills: Array<{ label: string; onAction: () => void; icon?: string; image?: string; description?: string }>,
+  ): void {
+    const scroll = this._pillsEl.querySelector('.gengage-chat-pills-scroll');
+    if (!scroll) return;
+    while (scroll.firstChild) scroll.removeChild(scroll.firstChild);
+
+    if (pills.length === 0) {
+      this._pillsEl.style.display = 'none';
+      return;
+    }
+
+    this._pillsEl.style.display = '';
+    for (const pill of pills) {
+      const btn = document.createElement('button');
+      btn.className = pill.image ? 'gengage-chat-pill gengage-chat-pill--rich' : 'gengage-chat-pill';
+      btn.type = 'button';
+
+      if (pill.icon) {
+        const svgHtml = SUGGESTED_ACTION_ICONS[pill.icon];
+        if (svgHtml) {
+          const iconSpan = document.createElement('span');
+          iconSpan.className = 'gengage-chat-pill-icon';
+          iconSpan.innerHTML = svgHtml;
+          btn.appendChild(iconSpan);
+        }
+      }
+
+      if (pill.image && isSafeImageUrl(pill.image)) {
+        const img = document.createElement('img');
+        img.className = 'gengage-chat-pill-img';
+        img.src = pill.image;
+        img.alt = '';
+        btn.appendChild(img);
+      }
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'gengage-chat-pill-text';
+      textWrap.textContent = pill.label;
+      btn.appendChild(textWrap);
+
+      if (pill.description) {
+        const desc = document.createElement('span');
+        desc.className = 'gengage-chat-pill-desc';
+        desc.textContent = pill.description;
+        btn.appendChild(desc);
+      }
+
+      btn.addEventListener('click', () => pill.onAction());
+      scroll.appendChild(btn);
+    }
+
+    // Show/hide arrow based on overflow
+    const arrow = this._pillsEl.querySelector('.gengage-chat-pills-arrow') as HTMLElement | null;
+    if (arrow) {
+      requestAnimationFrame(() => {
+        arrow.style.display = scroll.scrollWidth > scroll.clientWidth ? '' : 'none';
+      });
+    }
+  }
+
+  focusInput(): void {
+    this.inputEl.focus();
+  }
+
+  showKvkkBanner(html: string, onDismiss: () => void): void {
+    this._kvkkSlot.innerHTML = '';
+    const banner = createKvkkBanner({ htmlContent: html, onDismiss });
+    this._kvkkSlot.appendChild(banner);
+  }
+
+  hideKvkkBanner(): void {
+    this._kvkkSlot.innerHTML = '';
+  }
+
+  getElement(): HTMLElement {
+    return this.root;
+  }
+
+  /** Stage a file attachment for sending. Shows preview. */
+  stageAttachment(file: File): void {
+    this._pendingAttachment = file;
+    this._previewName.textContent = file.name;
+    const thumb = this._previewStrip.querySelector('.gengage-chat-attachment-preview-thumb') as HTMLImageElement;
+    if (thumb) {
+      // Revoke previous blob URL to prevent memory leak
+      if (thumb.src && thumb.src.startsWith('blob:')) {
+        URL.revokeObjectURL(thumb.src);
+      }
+      thumb.src = URL.createObjectURL(file);
+    }
+    this._previewStrip.classList.remove('gengage-chat-attachment-preview--hidden');
+  }
+
+  /** Remove the staged attachment and hide preview. */
+  clearAttachment(): void {
+    const thumb = this._previewStrip.querySelector('.gengage-chat-attachment-preview-thumb') as HTMLImageElement;
+    if (thumb?.src) {
+      URL.revokeObjectURL(thumb.src);
+      thumb.src = '';
+    }
+    this._pendingAttachment = null;
+    this._previewStrip.classList.add('gengage-chat-attachment-preview--hidden');
+  }
+
+  /** Get the currently staged attachment file, or null. */
+  getPendingAttachment(): File | null {
+    return this._pendingAttachment;
+  }
+
+  /** Replace panel content and show the panel. */
+  setPanelContent(el: HTMLElement): void {
+    this._panelEl.innerHTML = '';
+    this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(el);
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    if (!this._panelVisible) {
+      this._panelVisible = true;
+      this._panelEl.classList.add('gengage-chat-panel--visible');
+      this.root.classList.add('gengage-chat-drawer--with-panel');
+    }
+    if (this._panelCollapsed) {
+      this._panelEl.classList.add('gengage-chat-panel--collapsed');
+    }
+  }
+
+  /** Append content to the panel without replacing existing content. */
+  appendPanelContent(el: HTMLElement): void {
+    this._panelEl.appendChild(el);
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    if (!this._panelVisible) {
+      this._panelVisible = true;
+      this._panelEl.classList.add('gengage-chat-panel--visible');
+      this.root.classList.add('gengage-chat-drawer--with-panel');
+    }
+  }
+
+  /** Return the panel element's content child (after topbar), or null. */
+  getPanelContentElement(): HTMLElement | null {
+    const children = this._panelEl.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      if (
+        child.classList.contains('gengage-chat-panel-topbar') ||
+        child.classList.contains('gengage-chat-thumbnails-column')
+      ) {
+        continue;
+      }
+      return child;
+    }
+    return null;
+  }
+
+  /** Whether the panel is currently visible and has rendered content (beyond topbar + thumbnails column). */
+  hasPanelContent(): boolean {
+    // The topbar and thumbnails column are always present; actual content starts at childElementCount > 2
+    return this._panelVisible && this._panelEl.childElementCount > 2;
+  }
+
+  /** Whether panel currently shows loading skeleton blocks. */
+  isPanelLoading(): boolean {
+    return this._panelEl.querySelector('.gengage-chat-panel-skeleton') !== null;
+  }
+
+  /** Show loading skeleton in the panel. Variant depends on contentType hint. */
+  showPanelLoading(contentType?: string): void {
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    this._panelEl.innerHTML = '';
+    this._panelEl.appendChild(this._panelTopBar.getElement());
+    const skeleton = document.createElement('div');
+    skeleton.className = 'gengage-chat-panel-skeleton';
+
+    switch (contentType) {
+      case 'productDetails': {
+        // Tall image placeholder + text lines
+        const imgBlock = document.createElement('div');
+        imgBlock.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--image';
+        skeleton.appendChild(imgBlock);
+        for (let i = 0; i < 3; i++) {
+          const line = document.createElement('div');
+          line.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--text';
+          skeleton.appendChild(line);
+        }
+        break;
+      }
+      case 'productList':
+      case 'groupList': {
+        // 2x3 grid of small card placeholders
+        const grid = document.createElement('div');
+        grid.className = 'gengage-chat-panel-skeleton-grid';
+        for (let i = 0; i < 6; i++) {
+          const card = document.createElement('div');
+          card.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--card';
+          grid.appendChild(card);
+        }
+        skeleton.appendChild(grid);
+        break;
+      }
+      case 'comparisonTable': {
+        // Table-like rows
+        for (let i = 0; i < 4; i++) {
+          const row = document.createElement('div');
+          row.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--row';
+          skeleton.appendChild(row);
+        }
+        break;
+      }
+      default: {
+        // Generic: 3 blocks (existing behavior)
+        for (let i = 0; i < 3; i++) {
+          const block = document.createElement('div');
+          block.className = 'gengage-chat-panel-skeleton-block';
+          skeleton.appendChild(block);
+        }
+        break;
+      }
+    }
+
+    this._panelEl.appendChild(skeleton);
+    if (!this._panelVisible) {
+      this._panelVisible = true;
+      this._panelEl.classList.add('gengage-chat-panel--visible');
+      this.root.classList.add('gengage-chat-drawer--with-panel');
+    }
+  }
+
+  /** Update the panel top bar navigation state. */
+  updatePanelTopBar(canBack: boolean, canForward: boolean, title: string): void {
+    this._panelTopBar.update(canBack, canForward, title);
+  }
+
+  /**
+   * Hide the panel and clear its content. Always hides — even in force-expanded mode.
+   * Callers: _hideDrawer (stale panel cleanup), stream onDone (loading skeleton cleanup),
+   * thread navigation (no snapshot to restore). All require full hide.
+   */
+  clearPanel(): void {
+    this._panelEl.innerHTML = '';
+    this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelVisible = false;
+    this._panelCollapsed = false;
+    this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
+    this.root.classList.remove('gengage-chat-drawer--with-panel');
+    this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+  }
+
+  /** Force the panel to stay expanded (panelMode: 'expanded'). Hides the divider toggle. */
+  setForceExpanded(): void {
+    this._panelForceExpanded = true;
+    this._panelCollapsed = false;
+    this._panelEl.classList.remove('gengage-chat-panel--collapsed');
+    // Show panel immediately even if empty
+    if (!this._panelVisible) {
+      this._panelVisible = true;
+      this._panelEl.classList.add('gengage-chat-panel--visible');
+      this.root.classList.add('gengage-chat-drawer--with-panel');
+    }
+    // Hide divider toggle — user cannot collapse
+    this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+  }
+
+  /** Toggle panel between collapsed and expanded. */
+  togglePanel(): void {
+    if (this._panelForceExpanded) return;
+    this.setPanelCollapsed(!this._panelCollapsed);
+  }
+
+  /** Whether the panel is currently collapsed by the user. */
+  isPanelCollapsed(): boolean {
+    return this._panelCollapsed;
+  }
+
+  /** Programmatically set panel collapsed state. */
+  setPanelCollapsed(collapsed: boolean): void {
+    if (this._panelForceExpanded) return;
+    this._panelCollapsed = collapsed;
+    if (collapsed) {
+      this._panelEl.classList.add('gengage-chat-panel--collapsed');
+    } else {
+      this._panelEl.classList.remove('gengage-chat-panel--collapsed');
+    }
+    const chevronBtn = this._dividerEl.querySelector('.gengage-chat-panel-divider-toggle');
+    if (chevronBtn) {
+      chevronBtn.textContent = collapsed ? '\u00AB' : '\u00BB'; // « (expand left) or » (collapse right)
+    }
+  }
+
+  /** Save panel collapsed state to sessionStorage. */
+  persistPanelState(accountId: string): void {
+    try {
+      const key = `gengage:panel:${accountId}`;
+      if (this._panelCollapsed) {
+        sessionStorage.setItem(key, 'collapsed');
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch {
+      // sessionStorage may be unavailable in restricted environments
+    }
+  }
+
+  /** Restore panel collapsed state from sessionStorage. */
+  restorePanelState(accountId: string): void {
+    try {
+      const key = `gengage:panel:${accountId}`;
+      if (sessionStorage.getItem(key) === 'collapsed') {
+        this._panelCollapsed = true;
+      }
+    } catch {
+      // sessionStorage may be unavailable in restricted environments
+    }
+  }
+
+  /** Re-render thinking steps inside the existing typing indicator container. */
+  private _renderThinkingSteps(): void {
+    const existing = this.messagesEl.querySelector('[data-typing="true"]') as HTMLElement | null;
+    if (!existing) {
+      // No typing indicator yet — create one with the steps
+      this.showTypingIndicator();
+      return;
+    }
+    // Clear and re-render
+    existing.innerHTML = '';
+    this._renderThinkingStepsInto(existing);
+    this._scrollToBottom(false);
+  }
+
+  /** Render the accumulated thinking-step checklist into a container element. */
+  private _renderThinkingStepsInto(container: HTMLElement): void {
+    const list = document.createElement('div');
+    list.className = 'gengage-chat-thinking-steps';
+
+    for (let i = 0; i < this._thinkingSteps.length; i++) {
+      const step = document.createElement('div');
+      step.className = 'gengage-chat-thinking-step';
+
+      const marker = document.createElement('span');
+      marker.className = 'gengage-chat-thinking-step-marker';
+
+      if (i < this._thinkingSteps.length - 1) {
+        // Completed step
+        marker.textContent = '\u2713'; // ✓
+        marker.classList.add('gengage-chat-thinking-step-marker--done');
+      } else {
+        // Current step (last one — still in progress)
+        marker.textContent = '\u25CF'; // ●
+        marker.classList.add('gengage-chat-thinking-step-marker--active');
+      }
+
+      step.appendChild(marker);
+
+      const text = document.createElement('span');
+      text.className = 'gengage-chat-thinking-step-text';
+      text.textContent = this._thinkingSteps[i]!;
+      step.appendChild(text);
+
+      list.appendChild(step);
+    }
+
+    container.appendChild(list);
+  }
+
+  private _trapFocus(): void {
+    this.root.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const focusable = this.root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+
+      // Use getRootNode() to resolve activeElement inside Shadow DOM
+      const rootNode = this.root.getRootNode();
+      const active = (rootNode as ShadowRoot).activeElement ?? document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+  }
+
+  private _submit(): void {
+    const text = this.inputEl.value.trim();
+    const attachment = this._pendingAttachment;
+    if (!text && !attachment) return;
+    this.onSend(text, attachment ?? undefined);
+    this.inputEl.value = '';
+    this.inputEl.style.height = 'auto'; // Reset textarea height after submit
+    this.clearAttachment();
+  }
+
+  private _toggleVoice(): void {
+    if (!this._voiceInput) return;
+    if (this._voiceInput.state === 'listening') {
+      const text = this._voiceInput.stop();
+      if (text.trim()) {
+        this.inputEl.value = text;
+        this._submit();
+      }
+    } else {
+      this.inputEl.value = '';
+      this._voiceInput.start();
+    }
+  }
+
+  /** Lock auto-scroll for 500ms after session history restore to prevent visual jump. */
+  lockScrollForRestore(): void {
+    this._scrollLockedUntil = Date.now() + 500;
+  }
+
+  /** Scroll to bottom only if user hasn't scrolled up. Force=true always scrolls. */
+  private _scrollToBottom(force = false): void {
+    if (!force && this._userScrolledUp) return;
+    if (!force && Date.now() < this._scrollLockedUntil) return;
+    requestAnimationFrame(() => {
+      this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+      this._userScrolledUp = false;
+    });
+  }
+
+  /** Public method for typewriter ticks — scrolls only if user is near bottom. */
+  scrollToBottomIfNeeded(): void {
+    this._scrollToBottom(false);
+  }
+
+  /** Mark a message as the first bot message in its thread (for special styling). */
+  markFirstBotMessage(messageId: string): void {
+    this._firstBotMessageIds.add(messageId);
+    const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    if (bubble) {
+      bubble.classList.add('gengage-chat-bubble--first');
+    }
+  }
+
+  /** Scroll to the first message of the last thread (for restore targeting). */
+  scrollToLastThread(): void {
+    const allBubbles = this.messagesEl.querySelectorAll('[data-thread-id]');
+    if (allBubbles.length === 0) {
+      this._scrollToBottom(true);
+      return;
+    }
+    const lastThreadId = allBubbles[allBubbles.length - 1]!.getAttribute('data-thread-id');
+    if (!lastThreadId) {
+      this._scrollToBottom(true);
+      return;
+    }
+    const target = this.messagesEl.querySelector(`[data-thread-id="${CSS.escape(lastThreadId)}"]`);
+    if (target) {
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        this._userScrolledUp = false;
+      });
+    } else {
+      this._scrollToBottom(true);
+    }
+  }
+
+  /** Set compact input-area chips (search/info/review shortcuts above input). */
+  setInputAreaChips(chips: Array<{ label: string; onAction: () => void; icon?: string }>): void {
+    this._inputChipsEl.innerHTML = '';
+    if (chips.length === 0) {
+      this._inputChipsEl.style.display = 'none';
+      return;
+    }
+    this._inputChipsEl.style.display = '';
+    for (const chip of chips) {
+      const btn = document.createElement('button');
+      btn.className = 'gengage-chat-input-chip';
+      btn.type = 'button';
+
+      // Icon (SVG from icon map)
+      if (chip.icon) {
+        const svgHtml = SUGGESTED_ACTION_ICONS[chip.icon];
+        if (svgHtml) {
+          const iconSpan = document.createElement('span');
+          iconSpan.className = 'gengage-chat-input-chip-icon';
+          iconSpan.innerHTML = svgHtml;
+          btn.appendChild(iconSpan);
+        }
+      }
+
+      const label = document.createElement('span');
+      label.textContent = chip.label;
+      btn.appendChild(label);
+
+      btn.addEventListener('click', () => chip.onAction());
+      this._inputChipsEl.appendChild(btn);
+    }
+  }
+
+  /** Clear input-area chips. */
+  clearInputAreaChips(): void {
+    this._inputChipsEl.innerHTML = '';
+    this._inputChipsEl.style.display = 'none';
+  }
+
+  setThumbnails(entries: ThumbnailEntry[]): void {
+    this._thumbnailsColumn.setEntries(entries);
+    if (entries.length > 0) {
+      this._thumbnailsColumn.show();
+    } else {
+      this._thumbnailsColumn.hide();
+    }
+  }
+
+  hideThumbnails(): void {
+    this._thumbnailsColumn.hide();
+  }
+}

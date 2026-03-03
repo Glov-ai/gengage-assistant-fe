@@ -1,0 +1,5 @@
+{"type":"metadata","sessionId":"test-session-123","model":"gpt-4o","meta":{}}
+{"type":"text_chunk","content":"Merhaba! "}
+{"type":"text_chunk","content":"Size nasıl yardımcı olabilirim?","final":true}
+{"type":"ui_spec","widget":"chat","spec":{"root":"btn-group-1","elements":{"btn-group-1":{"type":"ActionButtons","props":{},"children":["btn-1","btn-2"]},"btn-1":{"type":"ActionButton","props":{"label":"Kargo süresi","action":{"title":"Kargo süresi","type":"user_message","payload":"Kargo süresi ne kadar?"}}},"btn-2":{"type":"ActionButton","props":{"label":"İade koşulları","action":{"title":"İade koşulları","type":"user_message","payload":"İade koşulları nelerdir?"}}}}}}
+{"type":"done"}

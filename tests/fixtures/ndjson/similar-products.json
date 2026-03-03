@@ -1,0 +1,36 @@
+{
+  "results": [
+    {
+      "sku": "SIM001",
+      "name": "Benzer Ürün 1",
+      "brand": "BrandA",
+      "images": ["https://img.test.com/sim1.jpg", "https://img.test.com/sim1b.jpg"],
+      "price": 299.99,
+      "price_discounted": 249.99,
+      "price_currency": "TRY",
+      "url": "https://test.com/sim001",
+      "rating": 4.2,
+      "review_count": 85,
+      "cart_code": "CC-SIM001",
+      "in_stock": true,
+      "category_names": ["Elektronik", "TV"],
+      "discount_reason": "Kampanya"
+    },
+    {
+      "sku": "SIM002",
+      "name": "Benzer Ürün 2",
+      "brand": "BrandB",
+      "images": ["https://img.test.com/sim2.jpg"],
+      "price": 199.99,
+      "price_discounted": 0,
+      "price_currency": "TRY",
+      "url": "https://test.com/sim002",
+      "rating": 3.8,
+      "review_count": 42,
+      "cart_code": "CC-SIM002",
+      "in_stock": true
+    }
+  ],
+  "count": 2,
+  "source_sku": "PARENT-SKU"
+}

@@ -1,0 +1,443 @@
+import { GengageChat } from '../chat/index.js';
+import type { ChatI18n, ChatWidgetConfig } from '../chat/types.js';
+import { GengageQNA } from '../qna/index.js';
+import type { QNAWidgetConfig } from '../qna/types.js';
+import { GengageSimRel } from '../simrel/index.js';
+import type { SimRelWidgetConfig } from '../simrel/types.js';
+import { DEFAULT_IDEMPOTENCY_KEY } from './config-schema.js';
+import { resolveSession } from './context.js';
+import { wireQNAToChat } from './events.js';
+import type { PageContext, SessionContext, WidgetTheme } from './types.js';
+
+const DEFAULT_OVERLAY_KEY_PREFIX = `${DEFAULT_IDEMPOTENCY_KEY}_overlay_`;
+const DEFAULT_QNA_MOUNT = '#gengage-qna';
+const DEFAULT_SIMREL_MOUNT = '#gengage-simrel';
+
+interface OverlayRegistryState {
+  instances: Record<string, OverlayWidgetsRuntime>;
+  pending: Record<string, Promise<OverlayWidgetsRuntime>>;
+}
+
+interface WindowWithOverlayRegistry extends Window {
+  __gengageOverlayRegistry?: OverlayRegistryState;
+}
+
+function getOverlayRegistry(): OverlayRegistryState {
+  const win = window as WindowWithOverlayRegistry;
+  if (!win.__gengageOverlayRegistry) {
+    win.__gengageOverlayRegistry = {
+      instances: {},
+      pending: {},
+    };
+  }
+  return win.__gengageOverlayRegistry;
+}
+
+function buildInitialPageContext(options: OverlayWidgetsOptions): PageContext {
+  const base: PageContext = {
+    pageType: options.pageContext?.pageType ?? (options.sku !== undefined ? 'pdp' : 'other'),
+  };
+
+  const incoming = options.pageContext;
+  if (incoming?.sku !== undefined) base.sku = incoming.sku;
+  if (incoming?.price !== undefined) base.price = incoming.price;
+  if (incoming?.categoryTree !== undefined) base.categoryTree = incoming.categoryTree;
+  if (incoming?.url !== undefined) base.url = incoming.url;
+  if (incoming?.extra !== undefined) base.extra = incoming.extra;
+
+  if (options.sku !== undefined) {
+    base.sku = options.sku;
+  }
+
+  return base;
+}
+
+function mergePageContext(current: PageContext, patch: Partial<PageContext>): PageContext {
+  const next: PageContext = {
+    ...current,
+    ...patch,
+    pageType: patch.pageType ?? current.pageType,
+  };
+  if (patch.sku === undefined && current.sku !== undefined) {
+    next.sku = current.sku;
+  }
+  return next;
+}
+
+function resolveMountTarget(target: HTMLElement | string): HTMLElement | string | null {
+  if (target instanceof HTMLElement) return target;
+  if (document.querySelector(target)) return target;
+  return null;
+}
+
+function buildOverlayKey(options: OverlayWidgetsOptions): string {
+  return options.idempotencyKey ?? `${DEFAULT_OVERLAY_KEY_PREFIX}${options.accountId}`;
+}
+
+export interface OverlayChatOptions {
+  enabled?: boolean;
+  variant?: ChatWidgetConfig['variant'];
+  mountTarget?: HTMLElement | string;
+  launcherSvg?: string;
+  hideMobileLauncher?: boolean;
+  mobileBreakpoint?: number;
+  mobileInitialState?: 'half' | 'full';
+  i18n?: Partial<ChatI18n>;
+  actionHandling?: ChatWidgetConfig['actionHandling'];
+}
+
+export interface OverlayQNAOptions {
+  enabled?: boolean;
+  mountTarget?: HTMLElement | string;
+  ctaText?: string;
+  inputPlaceholder?: QNAWidgetConfig['inputPlaceholder'];
+}
+
+export interface OverlaySimRelOptions {
+  enabled?: boolean;
+  mountTarget?: HTMLElement | string;
+  discountType?: SimRelWidgetConfig['discountType'];
+}
+
+export interface OverlayWidgetsOptions {
+  accountId: string;
+  middlewareUrl: string;
+  locale?: string;
+  session?: Partial<SessionContext>;
+  pageContext?: Partial<PageContext>;
+  sku?: string;
+  theme?: WidgetTheme;
+  /** Price formatting options. Defaults to Turkish locale. */
+  pricing?: import('./price-formatter.js').PriceFormatConfig;
+  idempotencyKey?: string;
+  wireQnaToChat?: boolean;
+  chat?: OverlayChatOptions;
+  qna?: OverlayQNAOptions;
+  simrel?: OverlaySimRelOptions;
+  onAddToCart?: SimRelWidgetConfig['onAddToCart'];
+  onProductNavigate?: SimRelWidgetConfig['onProductNavigate'];
+  onScriptCall?: ChatWidgetConfig['onScriptCall'];
+}
+
+export interface OverlayWidgetsController {
+  readonly idempotencyKey: string;
+  readonly session: SessionContext;
+  readonly chat: GengageChat | null;
+  readonly qna: GengageQNA | null;
+  readonly simrel: GengageSimRel | null;
+  /** Shared analytics client for custom event tracking (null if not configured). */
+  readonly analyticsClient: import('./analytics.js').AnalyticsClient | null;
+  openChat(options?: { state?: 'half' | 'full' }): void;
+  closeChat(): void;
+  updateContext(patch: Partial<PageContext>): Promise<void>;
+  updateSku(sku: string, pageType?: PageContext['pageType']): Promise<void>;
+  destroy(): void;
+}
+
+class OverlayWidgetsRuntime implements OverlayWidgetsController {
+  private _chat: GengageChat | null = null;
+  private _qna: GengageQNA | null = null;
+  private _simrel: GengageSimRel | null = null;
+  private _analyticsClient: import('./analytics.js').AnalyticsClient | null = null;
+  private _pageContext: PageContext;
+  private _destroyed = false;
+  private _queue: Promise<void> = Promise.resolve();
+  private _warnedQnaMountMissing = false;
+  private _warnedSimRelMountMissing = false;
+
+  readonly idempotencyKey: string;
+  readonly session: SessionContext;
+
+  constructor(
+    private readonly options: OverlayWidgetsOptions,
+    private readonly onDestroy: () => void,
+  ) {
+    this.idempotencyKey = buildOverlayKey(options);
+    this.session = resolveSession(options.session);
+    this._pageContext = buildInitialPageContext(options);
+  }
+
+  get chat(): GengageChat | null {
+    return this._chat;
+  }
+
+  get qna(): GengageQNA | null {
+    return this._qna;
+  }
+
+  get simrel(): GengageSimRel | null {
+    return this._simrel;
+  }
+
+  get analyticsClient(): import('./analytics.js').AnalyticsClient | null {
+    return this._analyticsClient;
+  }
+
+  async init(): Promise<void> {
+    if (!window.gengage) window.gengage = {};
+    window.gengage.sessionId = this.session.sessionId;
+    window.gengage.pageContext = this._pageContext;
+
+    await this._initChat();
+    await this._syncPdpWidgets();
+
+    if (this.options.wireQnaToChat !== false) {
+      wireQNAToChat();
+    }
+
+    window.gengage.overlay = this;
+  }
+
+  openChat(options?: { state?: 'half' | 'full' }): void {
+    this._chat?.open(options);
+  }
+
+  closeChat(): void {
+    this._chat?.close();
+  }
+
+  async updateContext(patch: Partial<PageContext>): Promise<void> {
+    if (this._destroyed) return;
+    await this._enqueue(async () => {
+      this._pageContext = mergePageContext(this._pageContext, patch);
+
+      if (!window.gengage) window.gengage = {};
+      window.gengage.pageContext = this._pageContext;
+
+      this._chat?.update(patch);
+      this._qna?.update(patch);
+      this._simrel?.update(patch);
+      await this._syncPdpWidgets();
+    });
+  }
+
+  async updateSku(sku: string, pageType: PageContext['pageType'] = 'pdp'): Promise<void> {
+    await this.updateContext({ sku, pageType });
+  }
+
+  destroy(): void {
+    if (this._destroyed) return;
+    this._destroyed = true;
+
+    this._chat?.destroy();
+    this._qna?.destroy();
+    this._simrel?.destroy();
+
+    this._chat = null;
+    this._qna = null;
+    this._simrel = null;
+
+    if (window.gengage?.overlay === this) {
+      delete window.gengage.overlay;
+    }
+
+    this.onDestroy();
+  }
+
+  private async _initChat(): Promise<void> {
+    if (this.options.chat?.enabled === false) return;
+
+    const middlewareUrl = this.options.middlewareUrl;
+
+    const config: ChatWidgetConfig = {
+      accountId: this.options.accountId,
+      middlewareUrl,
+      session: this.session,
+      pageContext: this._pageContext,
+      variant: this.options.chat?.variant ?? 'floating',
+    };
+
+    if (this.options.theme !== undefined) config.theme = this.options.theme;
+    if (this.options.locale !== undefined) config.locale = this.options.locale;
+    if (this.options.pricing !== undefined) config.pricing = this.options.pricing;
+    if (this.options.chat?.mountTarget !== undefined) config.mountTarget = this.options.chat.mountTarget;
+    if (this.options.chat?.launcherSvg !== undefined) config.launcherSvg = this.options.chat.launcherSvg;
+    if (this.options.chat?.hideMobileLauncher !== undefined) {
+      config.hideMobileLauncher = this.options.chat.hideMobileLauncher;
+    }
+    if (this.options.chat?.mobileBreakpoint !== undefined) {
+      config.mobileBreakpoint = this.options.chat.mobileBreakpoint;
+    }
+    if (this.options.chat?.mobileInitialState !== undefined) {
+      config.mobileInitialState = this.options.chat.mobileInitialState;
+    }
+    if (this.options.chat?.i18n !== undefined) config.i18n = this.options.chat.i18n;
+    if (this.options.chat?.actionHandling !== undefined) {
+      config.actionHandling = this.options.chat.actionHandling;
+    }
+    if (this.options.onScriptCall !== undefined) {
+      config.onScriptCall = this.options.onScriptCall;
+    }
+
+    this._chat = new GengageChat();
+    await this._chat.init(config);
+  }
+
+  private async _syncPdpWidgets(): Promise<void> {
+    if (this._destroyed) return;
+    const sku = this._pageContext.sku;
+    const isPdp = this._pageContext.pageType === 'pdp' && sku !== undefined && sku.length > 0;
+
+    if (!isPdp) {
+      this._destroyPdpWidgets();
+      return;
+    }
+
+    const middlewareUrl = this.options.middlewareUrl;
+
+    if (this.options.qna?.enabled !== false) {
+      const qnaTarget = this.options.qna?.mountTarget ?? DEFAULT_QNA_MOUNT;
+      const mountTarget = resolveMountTarget(qnaTarget);
+
+      if (mountTarget) {
+        this._warnedQnaMountMissing = false;
+        if (!this._qna) {
+          const qna = new GengageQNA();
+          const qnaConfig: QNAWidgetConfig = {
+            accountId: this.options.accountId,
+            middlewareUrl,
+            session: this.session,
+            pageContext: {
+              pageType: 'pdp',
+              sku,
+            },
+            mountTarget,
+          };
+          if (this.options.theme !== undefined) qnaConfig.theme = this.options.theme;
+          if (this.options.qna?.ctaText !== undefined) qnaConfig.ctaText = this.options.qna.ctaText;
+          if (this.options.qna?.inputPlaceholder !== undefined) {
+            qnaConfig.inputPlaceholder = this.options.qna.inputPlaceholder;
+          }
+          await qna.init(qnaConfig);
+          this._qna = qna;
+        } else {
+          this._qna.show();
+          this._qna.update({ pageType: 'pdp', sku });
+        }
+      } else {
+        this._qna?.destroy();
+        this._qna = null;
+        if (!this._warnedQnaMountMissing) {
+          console.warn(`[gengage] QNA mount target not found: ${qnaTarget}`);
+          this._warnedQnaMountMissing = true;
+        }
+      }
+    } else {
+      this._qna?.destroy();
+      this._qna = null;
+    }
+
+    if (this.options.simrel?.enabled !== false) {
+      const simRelTarget = this.options.simrel?.mountTarget ?? DEFAULT_SIMREL_MOUNT;
+      const mountTarget = resolveMountTarget(simRelTarget);
+
+      if (mountTarget) {
+        this._warnedSimRelMountMissing = false;
+        if (!this._simrel) {
+          const simrel = new GengageSimRel();
+          const simRelConfig: SimRelWidgetConfig = {
+            accountId: this.options.accountId,
+            middlewareUrl,
+            session: this.session,
+            sku,
+            mountTarget,
+          };
+          if (this.options.theme !== undefined) simRelConfig.theme = this.options.theme;
+          if (this.options.pricing !== undefined) simRelConfig.pricing = this.options.pricing;
+          if (this.options.simrel?.discountType !== undefined) {
+            simRelConfig.discountType = this.options.simrel.discountType;
+          }
+          if (this.options.onAddToCart !== undefined) {
+            simRelConfig.onAddToCart = this.options.onAddToCart;
+          }
+          if (this.options.onProductNavigate !== undefined) {
+            simRelConfig.onProductNavigate = this.options.onProductNavigate;
+          } else {
+            simRelConfig.onProductNavigate = (url, productSku, sessionId) => {
+              this._chat?.saveSession(sessionId ?? this.session.sessionId, productSku);
+              window.location.href = url;
+            };
+          }
+          await simrel.init(simRelConfig);
+          this._simrel = simrel;
+        } else {
+          this._simrel.show();
+          this._simrel.update({ pageType: 'pdp', sku });
+        }
+      } else {
+        this._simrel?.destroy();
+        this._simrel = null;
+        if (!this._warnedSimRelMountMissing) {
+          console.warn(`[gengage] SimRel mount target not found: ${simRelTarget}`);
+          this._warnedSimRelMountMissing = true;
+        }
+      }
+    } else {
+      this._simrel?.destroy();
+      this._simrel = null;
+    }
+  }
+
+  private _destroyPdpWidgets(): void {
+    this._qna?.destroy();
+    this._simrel?.destroy();
+    this._qna = null;
+    this._simrel = null;
+  }
+
+  private _enqueue(fn: () => Promise<void>): Promise<void> {
+    const next = this._queue.then(fn);
+    this._queue = next.catch((err) => {
+      if (import.meta.env?.DEV) {
+        console.error('[gengage:overlay] Queued operation failed:', err);
+      }
+    });
+    return next;
+  }
+}
+
+export async function initOverlayWidgets(options: OverlayWidgetsOptions): Promise<OverlayWidgetsController> {
+  const key = buildOverlayKey(options);
+  const registry = getOverlayRegistry();
+
+  const existing = registry.instances[key];
+  if (existing) return existing;
+
+  const pending = registry.pending[key];
+  if (pending) return pending;
+
+  const runtime = new OverlayWidgetsRuntime(options, () => {
+    const liveRegistry = getOverlayRegistry();
+    delete liveRegistry.instances[key];
+    delete liveRegistry.pending[key];
+  });
+
+  const runtimeInit = runtime
+    .init()
+    .then(() => {
+      registry.instances[key] = runtime;
+      delete registry.pending[key];
+      return runtime;
+    })
+    .catch((err) => {
+      delete registry.pending[key];
+      throw err;
+    });
+
+  registry.pending[key] = runtimeInit;
+  return runtimeInit;
+}
+
+export function getOverlayWidgets(idempotencyKey: string): OverlayWidgetsController | null {
+  const registry = getOverlayRegistry();
+  return registry.instances[idempotencyKey] ?? null;
+}
+
+export function destroyOverlayWidgets(idempotencyKey: string): void {
+  const controller = getOverlayWidgets(idempotencyKey);
+  controller?.destroy();
+}
+
+export function buildOverlayIdempotencyKey(accountId: string): string {
+  return `${DEFAULT_OVERLAY_KEY_PREFIX}${accountId}`;
+}

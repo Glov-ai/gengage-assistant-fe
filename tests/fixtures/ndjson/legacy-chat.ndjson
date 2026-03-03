@@ -1,0 +1,6 @@
+{"type":"loading","payload":{"text":"Düşünüyorum...","is_dynamic":true}}
+{"type":"outputText","messageId":"abc123","from":"bot","payload":{"text":"<p>Bu ürün hakkında bilgi vereyim.</p>","plain_text":"Bu ürün hakkında bilgi vereyim."},"threadId":"thread-1","version":"v2"}
+{"type":"suggestedActions","payload":{"actions":[{"title":"Kargo bilgisi","icon":"info","requestDetails":{"type":"launcherQuestionClick","payload":{"text":"Kargo bilgisi"}}},{"title":"Benzer ürünler","icon":"similar","requestDetails":{"type":"findSimilar","payload":{"sku":"12345"}}}]}}
+{"type":"productList","payload":{"product_list":[{"sku":"P001","name":"Test Ürün","brand":"TestBrand","images":["https://img.test.com/p1.jpg"],"price":149.99,"price_discounted":129.99,"price_currency":"TRY","url":"https://test.com/p001","rating":4.5,"review_count":120,"cart_code":"CC001","in_stock":true}],"source":"similar","title":"Benzer Ürünler"}}
+{"type":"context","payload":{"panel":{"screen_type":"product_list","screen_sku_list":["P001"]},"messages":[{"role":"model","content":"Bu ürün hakkında bilgi vereyim."}],"message_id":"msg-1"}}
+{"type":"chatStreamEnd","payload":{}}

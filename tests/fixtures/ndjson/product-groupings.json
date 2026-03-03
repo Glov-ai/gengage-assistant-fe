@@ -1,0 +1,42 @@
+{
+  "intro_message": "Bu ürünle ilgili alternatifleri grupladık:",
+  "product_groupings": [
+    {
+      "name": "Aynı Marka",
+      "description": "Aynı markanın benzer ürünleri",
+      "highlight": "Marka güvencesi",
+      "repr_sku": "GRP001",
+      "repr_image": "https://img.test.com/grp1.jpg",
+      "group_skus": ["GRP001", "GRP002"],
+      "group_products": [
+        {
+          "sku": "GRP001",
+          "name": "Grup Ürün 1",
+          "brand": "BrandA",
+          "images": ["https://img.test.com/grp1.jpg"],
+          "price": 399.99,
+          "price_discounted": 349.99,
+          "url": "https://test.com/grp001",
+          "rating": 4.6,
+          "review_count": 200,
+          "cart_code": "CC-GRP001",
+          "in_stock": true
+        },
+        {
+          "sku": "GRP002",
+          "name": "Grup Ürün 2",
+          "brand": "BrandA",
+          "images": ["https://img.test.com/grp2.jpg"],
+          "price": 349.99,
+          "price_discounted": 0,
+          "url": "https://test.com/grp002",
+          "rating": 4.1,
+          "review_count": 95,
+          "cart_code": "CC-GRP002",
+          "in_stock": true
+        }
+      ]
+    }
+  ],
+  "count": 1
+}

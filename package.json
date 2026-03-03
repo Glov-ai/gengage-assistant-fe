@@ -1,0 +1,126 @@
+{
+  "name": "@gengage/assistant-fe",
+  "version": "0.1.4",
+  "description": "Source-available frontend widgets for Gengage AI Assistant — chat, Q&A, and similar-products. Backend is SaaS (gengage.ai).",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "unpkg": "./dist/chat.iife.js",
+  "jsdelivr": "./dist/chat.iife.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Glov-ai/gengage-assistant-fe"
+  },
+  "homepage": "https://github.com/Glov-ai/gengage-assistant-fe#readme",
+  "bugs": {
+    "url": "https://github.com/Glov-ai/gengage-assistant-fe/issues"
+  },
+  "keywords": [
+    "gengage",
+    "ai",
+    "chatbot",
+    "widget",
+    "e-commerce",
+    "assistant"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./chat": {
+      "types": "./dist/chat/index.d.ts",
+      "import": "./dist/chat.js",
+      "require": "./dist/chat.cjs"
+    },
+    "./qna": {
+      "types": "./dist/qna/index.d.ts",
+      "import": "./dist/qna.js",
+      "require": "./dist/qna.cjs"
+    },
+    "./simrel": {
+      "types": "./dist/simrel/index.d.ts",
+      "import": "./dist/simrel.js",
+      "require": "./dist/simrel.cjs"
+    },
+    "./common": {
+      "types": "./dist/common/index.d.ts",
+      "import": "./dist/common.js",
+      "require": "./dist/common.cjs"
+    },
+    "./chat.iife": "./dist/chat.iife.js",
+    "./qna.iife": "./dist/qna.iife.js",
+    "./simrel.iife": "./dist/simrel.iife.js",
+    "./qna/style.css": "./dist/qna.css",
+    "./simrel/style.css": "./dist/simrel.css"
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && vite build && tsx scripts/build-iife.ts",
+    "build:lib": "tsc && vite build",
+    "build:iife": "tsx scripts/build-iife.ts",
+    "dev": "tsx scripts/dev.ts",
+    "kill": "tsx scripts/kill.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\" && eslint src --fix",
+    "test": "vitest run",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:fullstack": "playwright test --project=full-stack",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "catalog": "npm run build && vite --config catalog/vite.config.ts",
+    "catalog:dev": "npm run build && vite --config catalog/vite.config.ts",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.0",
+    "@types/node": "^25.3.1",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^7.3.1",
+    "vite-plugin-dts": "^4.5.4",
+    "vitepress": "^1.0.0",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@json-render/core": "^0.11.0",
+    "zod": "^4.3.6"
+  },
+  "gengage": {
+    "apiVersion": "1",
+    "backendNote": "UI and client-side logic only. Backend services are proprietary and require a gengage.ai subscription."
+  }
+}

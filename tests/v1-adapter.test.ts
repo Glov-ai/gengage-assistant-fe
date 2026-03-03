@@ -1,0 +1,930 @@
+import { describe, it, expect } from 'vitest';
+import {
+  adaptV1Event,
+  productToNormalized,
+  normalizeSimilarProductsResponse,
+  normalizeProductGroupingsResponse,
+} from '../src/common/v1-protocol-adapter.js';
+import similarFixture from './fixtures/ndjson/similar-products.json';
+import groupingsFixture from './fixtures/ndjson/product-groupings.json';
+
+describe('adaptV1Event', () => {
+  it('passes through normalized events unchanged', () => {
+    const event = { type: 'text_chunk', content: 'hello', final: true };
+    const result = adaptV1Event(event);
+    expect(result).toEqual(event);
+  });
+
+  it('passes through normalized metadata events', () => {
+    const event = { type: 'metadata', sessionId: 's1', model: 'gpt-4o' };
+    const result = adaptV1Event(event);
+    expect(result).toEqual(event);
+  });
+
+  it('passes through normalized done events', () => {
+    const event = { type: 'done' };
+    const result = adaptV1Event(event);
+    expect(result).toEqual(event);
+  });
+
+  it('adapts outputText to text_chunk', () => {
+    const v1 = {
+      type: 'outputText',
+      payload: { text: '<p>Hello</p>', plain_text: 'Hello' },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('text_chunk');
+    expect((result as { content: string }).content).toBe('<p>Hello</p>');
+    expect((result as { final?: boolean }).final).toBe(true);
+  });
+
+  it('adapts outputText with is_error to normalized error', () => {
+    const v1 = {
+      type: 'outputText',
+      payload: { text: 'Something went wrong', plain_text: 'Something went wrong', is_error: true },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('error');
+    expect((result as { code: string }).code).toBe('BACKEND_ERROR');
+    expect((result as { message: string }).message).toBe('Something went wrong');
+  });
+
+  it('adapts v1 error payload shape to normalized error', () => {
+    const v1 = {
+      type: 'error',
+      payload: { text: 'Backend failed' },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result).toEqual({
+      type: 'error',
+      code: 'BACKEND_ERROR',
+      message: 'Backend failed',
+    });
+  });
+
+  it('adapts suggestedActions to chat ui_spec', () => {
+    const v1 = {
+      type: 'suggestedActions',
+      payload: {
+        actions: [
+          {
+            title: 'Kargo bilgisi',
+            icon: 'info',
+            requestDetails: { type: 'launcherQuestionClick', payload: { text: 'Kargo' } },
+          },
+          {
+            title: 'Benzer urunler',
+            icon: 'similar',
+            requestDetails: { type: 'findSimilar', payload: { sku: '123' } },
+          },
+        ],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      widget: string;
+      spec: { root: string; elements: Record<string, unknown> };
+    };
+    expect(uiSpec.widget).toBe('chat');
+    expect(uiSpec.spec.root).toBe('root');
+    expect(Object.keys(uiSpec.spec.elements)).toContain('action-0');
+    expect(Object.keys(uiSpec.spec.elements)).toContain('action-1');
+  });
+
+  it('adapts productList to panel ui_spec with ProductGrid', () => {
+    const v1 = {
+      type: 'productList',
+      payload: {
+        product_list: [
+          { sku: 'P1', name: 'Product 1', brand: 'B1', images: ['img.jpg'], price: 100, url: 'https://example.com' },
+        ],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    expect((result as { panelHint?: string }).panelHint).toBe('panel');
+    const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
+    expect(uiSpec.spec.elements['root']!.type).toBe('ProductGrid');
+  });
+
+  it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
+    const v1 = {
+      type: 'productDetails',
+      payload: {
+        productDetails: { sku: 'P1', name: 'Detail Product', price: 200, url: 'https://example.com' },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    expect((result as { panelHint?: string }).panelHint).toBe('panel');
+    const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
+    expect(uiSpec.spec.elements['root']!.type).toBe('ProductDetailsPanel');
+  });
+
+  it('adapts productDetailsSimilars to chat panel ui_spec', () => {
+    const v1 = {
+      type: 'productDetailsSimilars',
+      payload: {
+        similarProducts: [{ sku: 'S1', name: 'Similar 1', price: 50, url: 'https://example.com/s1' }],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    expect((result as { widget: string }).widget).toBe('chat');
+    expect((result as { panelHint?: string }).panelHint).toBe('panel');
+  });
+
+  it('adapts comparisonTable to panel ComparisonTable ui_spec', () => {
+    const v1 = {
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'C1', name: 'Compare 1', price: 100, url: 'https://example.com/c1' },
+          { sku: 'C2', name: 'Compare 2', price: 200, url: 'https://example.com/c2' },
+        ],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    expect((result as { panelHint?: string }).panelHint).toBe('panel');
+    const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(uiSpec.spec.elements['root']!.type).toBe('ComparisonTable');
+    const props = uiSpec.spec.elements['root']!.props!;
+    expect(props['products']).toHaveLength(2);
+    expect(props['recommended']).toBeDefined();
+  });
+
+  it('adapts comparisonTable with rich framework data', () => {
+    const v1 = {
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'C1', name: 'Compare 1', price: 100, url: 'https://example.com/c1' },
+          { sku: 'C2', name: 'Compare 2', price: 200, url: 'https://example.com/c2' },
+        ],
+        table: {
+          brand: ['BrandA', 'BrandB'],
+          weight: ['1kg', '2kg'],
+        },
+        product_comparison_framework: {
+          key_differences: ['Price difference is significant', 'BrandA is lighter'],
+          recommended_choice: 'BrandA offers better value for money',
+          recommended_choice_sku: 'C1',
+          special_considerations: ['If you need heavier items, choose C2'],
+          criteria_view: { brand: 'Marka', weight: 'Ağırlık' },
+          compared_field_names: ['brand', 'weight'],
+          winner_hits: {
+            C1: { positive: ['Lighter', 'Cheaper'] },
+            C2: { positive: ['Heavier'], negative: ['More expensive'] },
+          },
+        },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    const props = uiSpec.spec.elements['root']!.props!;
+    expect(props['attributes']).toEqual([
+      { label: 'Marka', values: ['BrandA', 'BrandB'] },
+      { label: 'Ağırlık', values: ['1kg', '2kg'] },
+    ]);
+    expect(props['highlights']).toEqual(['Price difference is significant', 'BrandA is lighter']);
+    expect(props['specialCases']).toEqual(['If you need heavier items, choose C2']);
+    expect(props['recommendedText']).toBe('BrandA offers better value for money');
+    expect(props['winnerHits']).toBeDefined();
+    const recommended = props['recommended'] as Record<string, unknown>;
+    expect(recommended['sku']).toBe('C1');
+  });
+
+  it('adapts context to metadata', () => {
+    const v1 = {
+      type: 'context',
+      payload: {
+        panel: { screen_type: 'product_list' },
+        messages: [{ role: 'model', content: 'hi' }],
+        message_id: 'msg-1',
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('metadata');
+    const meta = result as { meta?: { panel: unknown } };
+    expect(meta.meta?.panel).toEqual({ screen_type: 'product_list' });
+  });
+
+  it('adapts loading to metadata with loading flag', () => {
+    const v1 = {
+      type: 'loading',
+      payload: { text: 'Dusunuyorum...', is_dynamic: true },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('metadata');
+    const meta = result as { meta?: Record<string, unknown> };
+    expect(meta.meta?.['loading']).toBe(true);
+    expect(meta.meta?.['dynamicLoading']).toBe(true);
+    expect(meta.meta?.['loadingText']).toBe('Dusunuyorum...');
+  });
+
+  it('adapts panelLoading and similarLoading metadata flags', () => {
+    const panelLoading = adaptV1Event({
+      type: 'panelLoading',
+      payload: { pending_type: 'productDetails' },
+    }) as { type: string; meta?: Record<string, unknown> };
+    expect(panelLoading.type).toBe('metadata');
+    expect(panelLoading.meta?.['panelLoading']).toBe(true);
+
+    const similarLoading = adaptV1Event({
+      type: 'similarLoading',
+      payload: { pending_type: 'productDetailsSimilars' },
+    }) as { type: string; meta?: Record<string, unknown> };
+    expect(similarLoading.type).toBe('metadata');
+    expect(similarLoading.meta?.['panelLoading']).toBeUndefined();
+    expect(similarLoading.meta?.['similarPanelLoading']).toBe(true);
+  });
+
+  it('adapts redirect with url to action(navigate)', () => {
+    const v1 = {
+      type: 'redirect',
+      payload: { url: 'https://example.com/page', new_tab: true },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('action');
+    const action = result as { action: { kind: string; url: string; newTab: boolean } };
+    expect(action.action.kind).toBe('navigate');
+    expect(action.action.url).toBe('https://example.com/page');
+    expect(action.action.newTab).toBe(true);
+  });
+
+  it('adapts redirect without url to metadata payload', () => {
+    const result = adaptV1Event({
+      type: 'redirect',
+      payload: { to: 'voiceLead' },
+    }) as { type: string; meta?: Record<string, unknown> };
+    expect(result.type).toBe('metadata');
+    expect(result.meta?.['redirectTarget']).toBe('voiceLead');
+  });
+
+  it('adapts launcher text and widgets to qna ui_spec', () => {
+    const heading = adaptV1Event({
+      type: 'text',
+      payload: { text: 'Birlikte inceleyelim' },
+    }) as { type: string; widget?: string; spec?: { elements: Record<string, { type: string }> } };
+    expect(heading.type).toBe('ui_spec');
+    expect(heading.widget).toBe('qna');
+    expect(heading.spec?.elements['root']?.type).toBe('QuestionHeading');
+
+    const quickQna = adaptV1Event({
+      type: 'quick_qna',
+      payload: {
+        action_list: [
+          {
+            title: 'Kargo',
+            requestDetails: { type: 'launcherQuestionClick', payload: { text: 'Kargo' } },
+          },
+        ],
+      },
+    }) as { type: string; widget?: string; spec?: { elements: Record<string, { type: string }> } };
+    expect(quickQna.type).toBe('ui_spec');
+    expect(quickQna.widget).toBe('qna');
+    expect(quickQna.spec?.elements['root']?.type).toBe('ActionButtons');
+  });
+
+  it('adapts reviewHighlights to ui_spec', () => {
+    const result = adaptV1Event({
+      type: 'reviewHighlights',
+      payload: {
+        sku: 'SKU1',
+        reviews: [{ review_class: 'positive', review_text: 'Harika urun', review_rating: '5/5', review_tag: 'Kalite' }],
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string }> } };
+    expect(result.type).toBe('ui_spec');
+    expect(result.spec?.elements['root']?.type).toBe('ReviewHighlights');
+  });
+
+  it('adapts aiProductSuggestions to AITopPicks ui_spec', () => {
+    const result = adaptV1Event({
+      type: 'aiProductSuggestions',
+      payload: {
+        product_suggestions: [
+          {
+            sku: 'SKU1',
+            short_name: 'Model 1',
+            role: 'winner',
+            reason: 'Best overall',
+            labels: [{ label: 'Durable', sentiment: 'positive' }],
+            expert_quality_score: 9,
+            review_highlight: 'Great product',
+            product_item: {
+              sku: 'SKU1',
+              name: 'Model 1',
+              url: 'https://example.com/1',
+              price: 1000,
+            },
+            requestDetails: { type: 'launchSingleProduct', payload: { sku: 'SKU1' } },
+          },
+        ],
+      },
+    }) as {
+      type: string;
+      spec?: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(result.type).toBe('ui_spec');
+    expect(result.spec?.elements['root']?.type).toBe('AITopPicks');
+
+    // Verify rich data is preserved in suggestions
+    const suggestions = result.spec?.elements['root']?.props?.['suggestions'] as
+      | Array<Record<string, unknown>>
+      | undefined;
+    expect(suggestions).toHaveLength(1);
+    const item = suggestions![0]!;
+    expect(item['role']).toBe('winner');
+    expect(item['reason']).toBe('Best overall');
+    expect(item['labels']).toEqual([{ label: 'Durable', sentiment: 'positive' }]);
+    expect(item['expertQualityScore']).toBe(9);
+    expect(item['reviewHighlight']).toBe('Great product');
+    expect(item['action']).toBeDefined();
+  });
+
+  it('adapts aiProductGroupings to AIGroupingCards ui_spec', () => {
+    const groupings = adaptV1Event({
+      type: 'aiProductGroupings',
+      payload: {
+        product_groupings: [
+          {
+            name: 'Aile boyu',
+            sku: 'SKU1',
+            labels: ['Genis', 'Performans'],
+            requestDetails: { type: 'findSimilar', payload: { sku: 'SKU1' } },
+          },
+        ],
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(groupings.type).toBe('ui_spec');
+    expect(groupings.spec?.elements['root']?.type).toBe('AIGroupingCards');
+
+    // Verify entry data is preserved
+    const entries = groupings.spec?.elements['root']?.props?.['entries'] as Array<Record<string, unknown>> | undefined;
+    expect(entries).toHaveLength(1);
+    expect(entries![0]!['name']).toBe('Aile boyu');
+    expect(entries![0]!['labels']).toEqual(['Genis', 'Performans']);
+    expect(entries![0]!['action']).toBeDefined();
+  });
+
+  it('adapts aiSuggestedSearches to AISuggestedSearchCards ui_spec', () => {
+    const searches = adaptV1Event({
+      type: 'aiSuggestedSearches',
+      payload: {
+        suggested_searches: [
+          {
+            short_name: 'Daha guclu',
+            detailed_user_message: 'Daha guclu modelleri goster',
+            why_different: 'Daha yuksek performans',
+            sku: 'SKU2',
+          },
+        ],
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(searches.type).toBe('ui_spec');
+    expect(searches.spec?.elements['root']?.type).toBe('AISuggestedSearchCards');
+
+    // Verify entry data is preserved
+    const entries = searches.spec?.elements['root']?.props?.['entries'] as Array<Record<string, unknown>> | undefined;
+    expect(entries).toHaveLength(1);
+    expect(entries![0]!['shortName']).toBe('Daha guclu');
+    expect(entries![0]!['detailedMessage']).toBe('Daha guclu modelleri goster');
+    expect(entries![0]!['whyDifferent']).toBe('Daha yuksek performans');
+  });
+
+  it('adapts getGroundingReview to GroundingReviewCard ui_spec', () => {
+    const result = adaptV1Event({
+      type: 'getGroundingReview',
+      payload: {
+        title: 'Yorumlar',
+        text: 'Yorumlari goster',
+        review_count: '42',
+        requestDetails: { type: 'reviewSummary', payload: { sku: 'SKU1' } },
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(result.type).toBe('ui_spec');
+    expect(result.spec?.elements['root']?.type).toBe('GroundingReviewCard');
+
+    // Verify props are preserved
+    const props = result.spec?.elements['root']?.props;
+    expect(props?.['title']).toBe('Yorumlar');
+    expect(props?.['text']).toBe('Yorumlari goster');
+    expect(props?.['reviewCount']).toBe('42');
+    expect(props?.['action']).toBeDefined();
+  });
+
+  it('adapts prosAndCons to ProsAndCons ui_spec', () => {
+    const result = adaptV1Event({
+      type: 'prosAndCons',
+      payload: {
+        pros: ['Dayanıklı malzeme', 'Uygun fiyat'],
+        cons: ['Ağır'],
+        product_name: 'Test Ürün',
+      },
+    }) as {
+      type: string;
+      widget?: string;
+      spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(result.type).toBe('ui_spec');
+    expect(result.widget).toBe('chat');
+    expect(result.spec?.elements['root']?.type).toBe('ProsAndCons');
+
+    const props = result.spec?.elements['root']?.props;
+    expect(props?.['pros']).toEqual(['Dayanıklı malzeme', 'Uygun fiyat']);
+    expect(props?.['cons']).toEqual(['Ağır']);
+    expect(props?.['productName']).toBe('Test Ürün');
+  });
+
+  it('adapts prosAndCons with missing fields', () => {
+    const result = adaptV1Event({
+      type: 'prosAndCons',
+      payload: {},
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(result.type).toBe('ui_spec');
+    const props = result.spec?.elements['root']?.props;
+    expect(props?.['pros']).toBeUndefined();
+    expect(props?.['cons']).toBeUndefined();
+    expect(props?.['productName']).toBeUndefined();
+  });
+
+  it('adapts visitorDataResponse to metadata with visitorDataResponse key', () => {
+    const result = adaptV1Event({
+      type: 'visitorDataResponse',
+      payload: { engagement_type: 'popup', message: 'Welcome!' },
+    }) as { type: string; meta?: Record<string, unknown> };
+    expect(result.type).toBe('metadata');
+    expect(result.meta?.['visitorDataResponse']).toEqual({
+      engagement_type: 'popup',
+      message: 'Welcome!',
+    });
+  });
+
+  it('adapts voice and dummy to metadata', () => {
+    const voice = adaptV1Event({
+      type: 'voice',
+      payload: { text: 'Merhaba', audio_base64: 'abc', content_type: 'audio/mpeg' },
+    }) as { type: string; meta?: Record<string, unknown> };
+    expect(voice.type).toBe('metadata');
+    expect(voice.meta?.['voice']).toEqual({ text: 'Merhaba', audio_base64: 'abc', content_type: 'audio/mpeg' });
+
+    const noop = adaptV1Event({ type: 'dummy', payload: {} }) as { type: string; meta?: Record<string, unknown> };
+    expect(noop.type).toBe('metadata');
+    expect(noop.meta?.['noop']).toBe(true);
+  });
+
+  it('adapts chatStreamEnd to done', () => {
+    const v1 = { type: 'chatStreamEnd', payload: {} };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('done');
+  });
+
+  it('returns null for unknown v1 event types', () => {
+    const result = adaptV1Event({ type: 'unknownType', payload: { foo: 'bar' } });
+    expect(result).toBeNull();
+  });
+
+  it('returns null for events without type field', () => {
+    const result = adaptV1Event({ data: 'no type field' });
+    expect(result).toBeNull();
+  });
+});
+
+describe('productToNormalized', () => {
+  it('normalizes a full v1 product', () => {
+    const v1 = {
+      sku: 'P1',
+      name: 'Test Product',
+      brand: 'TestBrand',
+      images: ['img1.jpg', 'img2.jpg'],
+      price: 200,
+      price_discounted: 150,
+      price_currency: 'TRY',
+      url: 'https://example.com/p1',
+      rating: 4.5,
+      review_count: 100,
+      cart_code: 'CC1',
+      in_stock: true,
+    };
+
+    const result = productToNormalized(v1);
+    expect(result.sku).toBe('P1');
+    expect(result.name).toBe('TestBrand Test Product');
+    expect(result.imageUrl).toBe('img1.jpg');
+    expect(result.price).toBe('150');
+    expect(result.originalPrice).toBe('200');
+    expect(result.discountPercent).toBe(25);
+    expect(result.url).toBe('https://example.com/p1');
+    expect(result.brand).toBe('TestBrand');
+    expect(result.rating).toBe(4.5);
+    expect(result.reviewCount).toBe(100);
+    expect(result.cartCode).toBe('CC1');
+    expect(result.inStock).toBe(true);
+  });
+
+  it('does not duplicate brand in name if already present', () => {
+    const v1 = {
+      sku: 'P2',
+      name: 'BrandX Special Item',
+      brand: 'BrandX',
+      price: 100,
+      url: 'https://example.com',
+    };
+    const result = productToNormalized(v1);
+    expect(result.name).toBe('BrandX Special Item');
+  });
+
+  it('handles products without discount', () => {
+    const v1 = {
+      sku: 'P3',
+      name: 'No Discount',
+      price: 100,
+      price_discounted: 0,
+      url: 'https://example.com',
+    };
+    const result = productToNormalized(v1);
+    expect(result.price).toBe('100');
+    expect(result.originalPrice).toBeUndefined();
+    expect(result.discountPercent).toBeUndefined();
+  });
+});
+
+describe('normalizeSimilarProductsResponse', () => {
+  it('normalizes the JSON fixture', () => {
+    const products = normalizeSimilarProductsResponse(similarFixture);
+    expect(products).toHaveLength(2);
+    expect(products[0]!.sku).toBe('SIM001');
+    expect(products[0]!.price).toBe('249.99');
+    expect(products[0]!.originalPrice).toBe('299.99');
+    expect(products[1]!.sku).toBe('SIM002');
+    expect(products[1]!.price).toBe('199.99');
+    expect(products[1]!.originalPrice).toBeUndefined();
+  });
+});
+
+describe('normalizeProductGroupingsResponse', () => {
+  it('normalizes the JSON fixture', () => {
+    const groups = normalizeProductGroupingsResponse(groupingsFixture);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.name).toBe('Aynı Marka');
+    expect(groups[0]!.highlight).toBe('Marka güvencesi');
+    expect(groups[0]!.products).toHaveLength(2);
+    expect(groups[0]!.products[0]!.sku).toBe('GRP001');
+  });
+});
+
+describe('product mentions in outputText', () => {
+  it('passes through product_mentions from outputText payload', () => {
+    const v1 = {
+      type: 'outputText',
+      payload: {
+        text: '<p>Check the Bosch Drill</p>',
+        product_mentions: [{ sku: 'SKU-1', short_name: 'Bosch Drill' }],
+        sku_to_product_item: { 'SKU-1': { name: 'Bosch Drill 500W' } },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('text_chunk');
+    const textChunk = result as {
+      productMentions?: Array<{ sku: string; short_name: string }>;
+      skuToProductItem?: Record<string, Record<string, unknown>>;
+    };
+    expect(textChunk.productMentions).toEqual([{ sku: 'SKU-1', short_name: 'Bosch Drill' }]);
+    expect(textChunk.skuToProductItem).toEqual({ 'SKU-1': { name: 'Bosch Drill 500W' } });
+  });
+
+  it('omits product mentions when not present in payload', () => {
+    const v1 = {
+      type: 'outputText',
+      payload: { text: '<p>Hello</p>' },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('text_chunk');
+    const textChunk = result as { productMentions?: unknown };
+    expect(textChunk.productMentions).toBeUndefined();
+  });
+});
+
+describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
+  it('passes through sku_to_product_item when present', () => {
+    const event = {
+      type: 'outputText',
+      payload: { text: 'hello', sku_to_product_item: { SKU1: { name: 'Product A' } } },
+    };
+    const result = adaptV1Event(event);
+    expect(result!.type).toBe('text_chunk');
+    if (result!.type === 'text_chunk') {
+      expect(result.skuToProductItem).toEqual({ SKU1: { name: 'Product A' } });
+    }
+  });
+
+  it('passes through conversation_mode when present', () => {
+    const event = {
+      type: 'outputText',
+      payload: { text: 'hello', conversation_mode: 'product_search' },
+    };
+    const result = adaptV1Event(event);
+    expect(result!.type).toBe('text_chunk');
+    if (result!.type === 'text_chunk') {
+      expect(result.conversationMode).toBe('product_search');
+    }
+  });
+
+  it('omits conversation_mode when not present', () => {
+    const event = { type: 'outputText', payload: { text: 'hello' } };
+    const result = adaptV1Event(event);
+    expect(result!.type).toBe('text_chunk');
+    if (result!.type === 'text_chunk') {
+      expect(result.conversationMode).toBeUndefined();
+    }
+  });
+
+  it('omits conversation_mode when empty string', () => {
+    const event = { type: 'outputText', payload: { text: 'hello', conversation_mode: '' } };
+    const result = adaptV1Event(event);
+    expect(result!.type).toBe('text_chunk');
+    if (result!.type === 'text_chunk') {
+      expect(result.conversationMode).toBeUndefined();
+    }
+  });
+
+  it('omits conversation_mode when non-string', () => {
+    const event = { type: 'outputText', payload: { text: 'hello', conversation_mode: 42 } };
+    const result = adaptV1Event(event);
+    expect(result!.type).toBe('text_chunk');
+    if (result!.type === 'text_chunk') {
+      expect(result.conversationMode).toBeUndefined();
+    }
+  });
+});
+
+describe('productListPreview event', () => {
+  it('adapts productListPreview to metadata with analyzeAnimation', () => {
+    const v1 = {
+      type: 'productListPreview',
+      payload: {},
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('metadata');
+    const meta = (result as { meta?: Record<string, unknown> }).meta;
+    expect(meta?.analyzeAnimation).toBe(true);
+  });
+});
+
+describe('groupList event (Item 6)', () => {
+  it('adapts groupList to CategoriesContainer UISpec', () => {
+    const v1 = {
+      type: 'groupList',
+      payload: {
+        group_list: [
+          {
+            group_name: 'Electronics',
+            product_list: [{ sku: 'P1', name: 'Phone', price: 100, url: 'https://example.com/p1' }],
+          },
+          {
+            group_name: 'Clothing',
+            product_list: [],
+          },
+        ],
+        filter_tags: [
+          { title: 'Budget', requestDetails: { type: 'filter', payload: { tag: 'budget' } } },
+          { title: 'Premium' },
+        ],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      widget: string;
+      panelHint?: string;
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(uiSpec.widget).toBe('chat');
+    expect(uiSpec.panelHint).toBe('panel');
+    expect(uiSpec.spec.elements['root']!.type).toBe('CategoriesContainer');
+
+    const props = uiSpec.spec.elements['root']!.props!;
+    const groups = props['groups'] as Array<{ groupName: string; products: unknown[] }>;
+    expect(groups).toHaveLength(2);
+    expect(groups[0]!.groupName).toBe('Electronics');
+    expect(groups[0]!.products).toHaveLength(1);
+    expect(groups[1]!.groupName).toBe('Clothing');
+    expect(groups[1]!.products).toHaveLength(0);
+
+    const filterTags = props['filterTags'] as Array<{ title: string; action?: unknown }>;
+    expect(filterTags).toHaveLength(2);
+    expect(filterTags[0]!.title).toBe('Budget');
+    expect(filterTags[0]!.action).toBeDefined();
+    expect(filterTags[1]!.title).toBe('Premium');
+  });
+
+  it('handles empty groupList', () => {
+    const result = adaptV1Event({
+      type: 'groupList',
+      payload: { group_list: [], filter_tags: [] },
+    })!;
+    const props = (result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } }).spec.elements[
+      'root'
+    ]!.props!;
+    expect(props['groups']).toEqual([]);
+    expect(props['filterTags']).toEqual([]);
+  });
+});
+
+describe('productList pagination (Item 7)', () => {
+  it('passes offset and endOfList props from productList payload', () => {
+    const v1 = {
+      type: 'productList',
+      payload: {
+        product_list: [{ sku: 'P1', name: 'Product', price: 100, url: 'https://example.com' }],
+        offset: 10,
+        end_of_list: true,
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
+    const root = uiSpec.spec.elements[uiSpec.spec.root]!;
+    expect(root.props?.['offset']).toBe(10);
+    expect(root.props?.['endOfList']).toBe(true);
+  });
+
+  it('omits pagination props when not in payload', () => {
+    const v1 = {
+      type: 'productList',
+      payload: {
+        product_list: [{ sku: 'P1', name: 'Product', price: 100, url: 'https://example.com' }],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
+    const root = uiSpec.spec.elements[uiSpec.spec.root]!;
+    expect(root.props?.['offset']).toBeUndefined();
+    expect(root.props?.['endOfList']).toBeUndefined();
+  });
+});
+
+describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
+  it('passes keyDifferencesHtml when key_differences is a string', () => {
+    const v1 = {
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'C1', name: 'A', price: 100, url: 'https://example.com/c1' },
+          { sku: 'C2', name: 'B', price: 200, url: 'https://example.com/c2' },
+        ],
+        product_comparison_framework: {
+          key_differences: 'Price is the main factor\nBrand A is lighter',
+          compared_field_names: [],
+        },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
+    const props = uiSpec.spec.elements['root']!.props!;
+    expect(props['keyDifferencesHtml']).toBe('Price is the main factor\nBrand A is lighter');
+  });
+
+  it('does not add keyDifferencesHtml when key_differences is an array', () => {
+    const v1 = {
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'C1', name: 'A', price: 100, url: 'https://example.com/c1' },
+          { sku: 'C2', name: 'B', price: 200, url: 'https://example.com/c2' },
+        ],
+        product_comparison_framework: {
+          key_differences: ['Difference 1', 'Difference 2'],
+          compared_field_names: [],
+        },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
+    const props = uiSpec.spec.elements['root']!.props!;
+    expect(props['keyDifferencesHtml']).toBeUndefined();
+  });
+
+  it('passes specialConsiderations when present', () => {
+    const v1 = {
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'C1', name: 'A', price: 100, url: 'https://example.com/c1' },
+          { sku: 'C2', name: 'B', price: 200, url: 'https://example.com/c2' },
+        ],
+        product_comparison_framework: {
+          special_considerations: ['Consider X', 'Consider Y'],
+          compared_field_names: [],
+        },
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
+    const props = uiSpec.spec.elements['root']!.props!;
+    expect(props['specialConsiderations']).toEqual(['Consider X', 'Consider Y']);
+  });
+});
+
+describe('productDetailsSimilars similarsAppend (Item 11)', () => {
+  it('adds similarsAppend flag to productDetailsSimilars', () => {
+    const v1 = {
+      type: 'productDetailsSimilars',
+      payload: {
+        similarProducts: [{ sku: 'S1', name: 'Similar 1', price: 50, url: 'https://example.com/s1' }],
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
+    const root = uiSpec.spec.elements[uiSpec.spec.root]!;
+    expect(root.props?.['similarsAppend']).toBe(true);
+  });
+});
+
+describe('form events (Item 14)', () => {
+  it.each(['formGetInfo', 'formTestDrive', 'formServiceRequest', 'launchFormPage'] as const)(
+    'adapts %s to metadata with formType',
+    (eventType) => {
+      const v1 = {
+        type: eventType,
+        payload: { formId: 'test-form', sku: 'SKU1' },
+      };
+      const result = adaptV1Event(v1)!;
+      expect(result.type).toBe('metadata');
+      const meta = (result as { meta?: Record<string, unknown> }).meta!;
+      expect(meta['formType']).toBe(eventType);
+      expect(meta['formPayload']).toEqual({ formId: 'test-form', sku: 'SKU1' });
+    },
+  );
+});
+
+describe('launcherContent event (Item 15)', () => {
+  it('adapts launcherContent to metadata', () => {
+    const v1 = {
+      type: 'launcherContent',
+      payload: { title: 'Welcome', body: 'Hello world' },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('metadata');
+    const meta = (result as { meta?: Record<string, unknown> }).meta!;
+    expect(meta['launcherContent']).toEqual({ title: 'Welcome', body: 'Hello world' });
+  });
+
+  it('handles missing payload gracefully', () => {
+    const v1 = { type: 'launcherContent' };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('metadata');
+    const meta = (result as { meta?: Record<string, unknown> }).meta!;
+    expect(meta['launcherContent']).toEqual({});
+  });
+});
+
+describe('adaptV1Event — handoff', () => {
+  it('adapts handoff to ui_spec with HandoffNotice', () => {
+    const v1 = {
+      type: 'handoff',
+      payload: {
+        summary: 'Customer needs help with a return',
+        products_discussed: ['SKU-1', 'SKU-2'],
+        user_sentiment: 'frustrated',
+      },
+    };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(uiSpec.spec.root).toBe('root');
+    const root = uiSpec.spec.elements['root']!;
+    expect(root.type).toBe('HandoffNotice');
+    expect(root.props?.['summary']).toBe('Customer needs help with a return');
+    expect(root.props?.['products_discussed']).toEqual(['SKU-1', 'SKU-2']);
+    expect(root.props?.['user_sentiment']).toBe('frustrated');
+  });
+
+  it('handles handoff with empty payload', () => {
+    const v1 = { type: 'handoff' };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    const root = uiSpec.spec.elements['root']!;
+    expect(root.type).toBe('HandoffNotice');
+    expect(root.props).toEqual({});
+  });
+
+  it('handles handoff with partial payload', () => {
+    const v1 = { type: 'handoff', payload: { summary: 'Need help' } };
+    const result = adaptV1Event(v1)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    const root = uiSpec.spec.elements['root']!;
+    expect(root.props?.['summary']).toBe('Need help');
+    expect(root.props?.['products_discussed']).toBeUndefined();
+  });
+});

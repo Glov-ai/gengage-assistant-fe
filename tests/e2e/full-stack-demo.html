@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Full-Stack Smoke Test — koctascomtr</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f6f6f6; color: #222; font-family: sans-serif; }
+    .page { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 18px; color: #636363; }
+    .qna-section, .simrel-mount { min-height: 60px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Full-Stack Smoke Test</h1>
+    <p>Backend: <code id="backend-url">—</code></p>
+    <p>SKU: <code id="sku-display">—</code></p>
+
+    <!-- QNA mount -->
+    <div id="koctas-qna-section" class="qna-section"></div>
+
+    <!-- SimRel mount -->
+    <section>
+      <h2>Benzer Ürünler</h2>
+      <div id="koctas-similar-products" class="simrel-mount"></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initOverlayWidgets } from '@gengage/assistant-fe';
+
+    const params = new URLSearchParams(location.search);
+    const backendUrl = params.get('backendUrl') ?? '';
+    const sku = params.get('sku') ?? '1000465056';
+
+    document.getElementById('backend-url').textContent = backendUrl;
+    document.getElementById('sku-display').textContent = sku;
+
+    const controller = await initOverlayWidgets({
+      accountId: 'koctascomtr',
+      middlewareUrl: backendUrl,
+      locale: 'tr',
+      sku,
+      pageContext: { pageType: 'pdp', sku },
+      theme: {
+        primaryColor: '#ec6e00',
+        primaryForeground: '#ffffff',
+        backgroundColor: '#ffffff',
+        foregroundColor: '#222222',
+        borderRadius: '8px',
+        fontFamily: 'sans-serif',
+        fontSize: '14px',
+        zIndex: '1000',
+      },
+      isDemoWebsite: true,
+      chat: {
+        variant: 'floating',
+        mobileBreakpoint: 768,
+        i18n: { inputPlaceholder: 'Ürün ara, soru sor', poweredBy: 'Smoke Test' },
+      },
+      qna: { mountTarget: '#koctas-qna-section' },
+      simrel: { mountTarget: '#koctas-similar-products' },
+      onAddToCart: (p) => console.log('[smoke] add-to-cart', p),
+      onProductNavigate: (url) => console.log('[smoke] navigate', url),
+    });
+
+    // Expose controller for Playwright inspection
+    window.__GENGAGE_CONTROLLER__ = controller;
+  </script>
+</body>
+</html>

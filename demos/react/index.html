@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gengage — React Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f5f6f8;
+      color: #111827;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .page-header {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-header__brand {
+      font-weight: 700;
+      font-size: 18px;
+      color: #7c3aed;
+    }
+
+    .page-header__nav {
+      display: flex;
+      gap: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    .product-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .product-card h1 { margin: 0 0 8px; font-size: 24px; }
+    .product-card .sku { color: #6b7280; font-size: 14px; margin-bottom: 16px; }
+    .product-card .price { font-size: 28px; font-weight: 800; color: #7c3aed; }
+
+    .section-title { margin: 0 0 12px; font-size: 20px; }
+
+    .widget-section {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      min-height: 120px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <!-- React 19 from CDN -->
+  <script crossorigin src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
+
+  <!-- Gengage IIFE bundles from npm via CDN -->
+  <script src="https://unpkg.com/@gengage/assistant-fe/dist/chat.iife.js"></script>
+  <script src="https://unpkg.com/@gengage/assistant-fe/dist/qna.iife.js"></script>
+  <script src="https://unpkg.com/@gengage/assistant-fe/dist/simrel.iife.js"></script>
+
+  <script>
+    // ---- CONFIGURE THESE VALUES ----
+    var ACCOUNT_ID = 'your-account-id';
+    var MIDDLEWARE_URL = 'https://YOUR-BACKEND.gengage.ai';
+    var LOCALE = 'en';
+
+    var h = React.createElement;
+    var useState = React.useState;
+    var useEffect = React.useEffect;
+    var useRef = React.useRef;
+
+    var SKU = new URLSearchParams(location.search).get('sku') || 'DEMO-001';
+
+    // ---------------------------------------------------------------
+    // useGengageWidgets — custom hook that initialises all 3 widgets
+    // ---------------------------------------------------------------
+    function useGengageWidgets(config) {
+      var chatRef = useRef(null);
+      var qnaRef = useRef(null);
+      var simrelRef = useRef(null);
+      var readyRef = useRef(false);
+
+      useEffect(function () {
+        if (readyRef.current) return;
+        readyRef.current = true;
+
+        var sessionId = crypto.randomUUID();
+        var session = { sessionId: sessionId };
+
+        // Chat (floating overlay — no mount target)
+        var chat = new Gengage.GengageChat();
+        chat.init({
+          accountId: config.accountId,
+          middlewareUrl: config.middlewareUrl,
+          session: session,
+          variant: 'floating',
+          locale: config.locale,
+          pageContext: { pageType: 'pdp', sku: config.sku },
+        });
+        chatRef.current = chat;
+
+        // QNA
+        if (config.qnaTarget) {
+          var qna = new Gengage.GengageQNA();
+          qna.init({
+            accountId: config.accountId,
+            middlewareUrl: config.middlewareUrl,
+            session: session,
+            pageContext: { pageType: 'pdp', sku: config.sku },
+            mountTarget: config.qnaTarget,
+            locale: config.locale,
+          });
+          qnaRef.current = qna;
+        }
+
+        // SimRel
+        if (config.simrelTarget) {
+          var simrel = new Gengage.GengageSimRel();
+          simrel.init({
+            accountId: config.accountId,
+            middlewareUrl: config.middlewareUrl,
+            session: session,
+            sku: config.sku,
+            mountTarget: config.simrelTarget,
+            locale: config.locale,
+            onAddToCart: function (p) { console.log('[react-demo] add-to-cart', p); },
+            onProductNavigate: function (url, prodSku, sid) {
+              chatRef.current && chatRef.current.saveSession(sid || sessionId, prodSku);
+              window.location.href = url;
+            },
+          });
+          simrelRef.current = simrel;
+        }
+
+        return function () {
+          chatRef.current && chatRef.current.destroy();
+          qnaRef.current && qnaRef.current.destroy();
+          simrelRef.current && simrelRef.current.destroy();
+        };
+      }, []);
+    }
+
+    // ---------------------------------------------------------------
+    // App component
+    // ---------------------------------------------------------------
+    function App() {
+      useGengageWidgets({
+        accountId: ACCOUNT_ID,
+        middlewareUrl: MIDDLEWARE_URL,
+        locale: LOCALE,
+        sku: SKU,
+        qnaTarget: '#gengage-qna',
+        simrelTarget: '#gengage-simrel',
+      });
+
+      return h('div', null,
+        h('header', { className: 'page-header' },
+          h('div', { className: 'page-header__brand' }, 'Gengage React Demo'),
+          h('nav', { className: 'page-header__nav' },
+            h('span', null, 'Products'),
+            h('span', null, 'Categories'),
+            h('span', null, 'Support')
+          )
+        ),
+        h('main', { className: 'container' },
+          h('section', { className: 'product-card' },
+            h('h1', null, 'Demo Product', h('span', { className: 'badge' }, 'React')),
+            h('p', { className: 'sku' }, 'SKU: ' + SKU),
+            h('p', { className: 'price' }, '$99.99')
+          ),
+          h('section', { className: 'widget-section' },
+            h('h2', { className: 'section-title' }, 'Questions & Answers'),
+            h('div', { id: 'gengage-qna' })
+          ),
+          h('section', { className: 'widget-section' },
+            h('h2', { className: 'section-title' }, 'Similar Products'),
+            h('div', { id: 'gengage-simrel' })
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+  </script>
+</body>
+</html>
