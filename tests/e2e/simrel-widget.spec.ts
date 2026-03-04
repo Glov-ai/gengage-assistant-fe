@@ -7,12 +7,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes, MOCK_SIMILAR_PRODUCTS, MOCK_PRODUCT_GROUPINGS } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes, MOCK_SIMILAR_PRODUCTS, MOCK_PRODUCT_GROUPINGS } from './fixtures.js';
 
 test.describe('SimRel widget', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('SimRel container renders inside mount target', async ({ page }) => {
@@ -210,7 +210,7 @@ test.describe('SimRel widget - flat grid fallback', () => {
       return route.fulfill({ status: 200, body: '' });
     });
 
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     // Should render flat grid with all 4 products (no tabs)
     const cards = page.locator('.gengage-simrel-card');

@@ -114,6 +114,17 @@ export const MOCK_CHAT_PRODUCT_DETAILS_NDJSON = [
 
 export const DEMO_URL = '/demos/koctascomtr/index.html?sku=1000465056';
 
+/**
+ * Navigate to the demo page and wait for JS modules to finish executing.
+ * The Koçtaş demo renders `—` as the SKU placeholder in HTML, then JS
+ * replaces it with the real SKU. Waiting for that swap signals readiness.
+ */
+export async function gotoDemoReady(page: Page, url?: string): Promise<void> {
+  await page.goto(url ?? DEMO_URL);
+  // Wait for JS to populate the SKU (replaces "—" placeholder)
+  await page.locator('#dev-sku').filter({ hasNotText: '—' }).waitFor({ state: 'attached', timeout: 30_000 });
+}
+
 // ---------------------------------------------------------------------------
 // Route setup
 // ---------------------------------------------------------------------------

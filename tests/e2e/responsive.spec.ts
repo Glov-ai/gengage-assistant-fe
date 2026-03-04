@@ -4,13 +4,13 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Responsive — mobile viewport (640px)', () => {
   test('PDP layout becomes single column at 640px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 640, height: 900 });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     const pdpLayout = page.locator('.pdp-layout');
     await expect(pdpLayout).toBeVisible({ timeout: 10000 });
@@ -28,7 +28,7 @@ test.describe('Responsive — mobile viewport (640px)', () => {
   test('host shell has reduced padding at 640px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 640, height: 900 });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     const shell = page.locator('.host-shell');
     await expect(shell).toBeVisible({ timeout: 10000 });
@@ -43,7 +43,7 @@ test.describe('Responsive — mobile viewport (640px)', () => {
   test('SimRel grid reduces columns at 768px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 768, height: 900 });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });
@@ -62,7 +62,7 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
   test('PDP layout has 2 columns at 1280px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     const pdpLayout = page.locator('.pdp-layout');
     await expect(pdpLayout).toBeVisible({ timeout: 10000 });
@@ -79,7 +79,7 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
   test('SimRel grid has multiple columns at 1280px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });

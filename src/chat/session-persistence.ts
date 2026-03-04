@@ -25,6 +25,7 @@ export interface PersistSessionParams {
   panelThreads: string[];
   thumbnailEntries: ThumbnailEntry[];
   lastBackendContext: BackendContext | null;
+  sku?: string | undefined;
 }
 
 export class SessionPersistence {
@@ -82,6 +83,7 @@ export class SessionPersistence {
       panelThreads: params.panelThreads.length > 0 ? params.panelThreads : undefined,
       thumbnailEntries: params.thumbnailEntries.length > 0 ? params.thumbnailEntries : undefined,
       panelSnapshotHtml: Object.keys(panelSnapshotHtml).length > 0 ? panelSnapshotHtml : undefined,
+      sku: params.sku,
     });
 
     // Save latest context snapshot for current thread
@@ -104,13 +106,6 @@ export class SessionPersistence {
           uiSpec: m.uiSpec,
         });
       }
-    }
-
-    // Set sessionStorage flag so restore works on re-open within same page session
-    try {
-      sessionStorage.setItem('gengage_restore_session_id', params.sessionId);
-    } catch {
-      // sessionStorage unavailable — silently ignore
     }
   }
 

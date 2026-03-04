@@ -5,12 +5,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Widget visual styles', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('SimRel cards have border-radius', async ({ page }) => {

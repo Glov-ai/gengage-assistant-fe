@@ -173,6 +173,7 @@ export interface ChatI18n {
   panelTitleSimilarProducts: string;
   panelTitleComparisonResults: string;
   panelTitleCategories: string;
+  panelTitleSearchResults: string;
   inStockLabel: string;
   outOfStockLabel: string;
   findSimilarLabel: string;
@@ -198,6 +199,7 @@ export interface ChatI18n {
   voicePermissionDenied: string;
   voiceError: string;
   handoffHeading: string;
+  productNotFoundMessage: string;
 }
 
 export interface ChatUISpecRenderContext {
@@ -225,6 +227,7 @@ export interface ChatUISpecRenderContext {
     | 'panelTitleSimilarProducts'
     | 'panelTitleComparisonResults'
     | 'panelTitleCategories'
+    | 'panelTitleSearchResults'
     | 'inStockLabel'
     | 'outOfStockLabel'
     | 'findSimilarLabel'

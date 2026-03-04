@@ -32,6 +32,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   panelTitleSimilarProducts: 'Benzer Ürünler',
   panelTitleComparisonResults: 'Karşılaştırma Sonuçları',
   panelTitleCategories: 'Kategoriler',
+  panelTitleSearchResults: 'Arama Sonuçları',
   inStockLabel: 'Stokta',
   outOfStockLabel: 'Tükendi',
   findSimilarLabel: 'Benzerlerini Bul',
@@ -57,4 +58,5 @@ export const CHAT_I18N_TR: ChatI18n = {
   voicePermissionDenied: 'Mikrofon erişimi reddedildi.',
   voiceError: 'Sesli giriş hatası.',
   handoffHeading: 'Destek temsilcisine aktarılıyor',
+  productNotFoundMessage: 'Bu ürün bilgisi şu an kullanılamıyor. Başka bir konuda yardımcı olabilirim.',
 };

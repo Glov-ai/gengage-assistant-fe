@@ -112,6 +112,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Last backend-streamed context object — sent back with every request. */
   private _lastBackendContext: import('../common/types.js').BackendContext | null = null;
   private _productSort: ProductSortState = { type: 'related' };
+  private _lastSku: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
   private _thumbnailEntries: ThumbnailEntry[] = [];
@@ -248,21 +249,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Restore panel state from session
     this._drawer.restorePanelState(config.accountId);
 
-    // Always keep panel expanded — drawer is always full-size and right-anchored
+    // Panel mode: 'collapsed' hides panel, 'expanded' locks it open, 'auto' (default) expands but allows toggle
     const panelMode = config.panelMode ?? 'auto';
     if (panelMode === 'collapsed') {
       this._drawer.setPanelCollapsed(true);
-    } else {
+    } else if (panelMode === 'expanded') {
       this._drawer.setForceExpanded();
+    } else {
+      // 'auto': panel starts expanded but user can toggle via chevron
+      this._drawer.expandPanel();
     }
 
-    // Restore session if available
+    // Restore session if an explicit handoff signal exists (e.g. SimRel product navigation)
     const restoreSessionId = sessionStorage.getItem('gengage_restore_session_id');
     const restoreSku = sessionStorage.getItem('gengage_restore_sku');
-    if (restoreSessionId && restoreSku) {
+    const hasHandoff = !!(restoreSessionId && restoreSku);
+    if (hasHandoff) {
       sessionStorage.removeItem('gengage_restore_session_id');
       sessionStorage.removeItem('gengage_restore_sku');
-      // Session restoration handled -- could auto-open in future
     }
 
     // IndexedDB persistence — best-effort, non-fatal
@@ -270,7 +274,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const idb = new GengageIndexedDB();
       await idb.open();
       this._session = new SessionPersistence(idb);
-      await this._restoreFromIndexedDB();
+      await this._restoreFromIndexedDB(hasHandoff);
     } catch {
       // IndexedDB unavailable — continue without persistence
       this._session = new SessionPersistence(null);
@@ -381,6 +385,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this.addCleanup(() => this._heartbeat?.destroy());
     }
 
+    // Track initial SKU for page-change detection
+    this._lastSku = this.config.pageContext?.sku;
+
     // Mark init complete and drain pending actions queue
     this._initComplete = true;
     for (const pending of this._pendingActions) {
@@ -393,8 +400,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     config.onReady?.();
   }
 
-  protected onUpdate(_context: Partial<PageContext>): void {
-    // Forward context changes to pending messages if needed
+  protected onUpdate(context: Partial<PageContext>): void {
+    if (context.sku !== undefined && context.sku !== this._lastSku) {
+      this._lastSku = context.sku;
+      this._resetForNewPage();
+    }
   }
 
   protected onShow(): void {
@@ -538,6 +548,38 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   // ---------------------------------------------------------------------------
   // Private
   // ---------------------------------------------------------------------------
+
+  /** Reset all chat state when navigating to a different SKU/page. */
+  private _resetForNewPage(): void {
+    // Abort in-flight streams
+    this._abortControllers.forEach((c) => c.abort());
+    this._abortControllers.clear();
+    // Cancel active typewriter/TTS
+    this._activeTypewriter?.cancel();
+    this._activeTypewriter = null;
+    this._activeTtsHandle?.stop();
+    this._activeTtsHandle = null;
+    // Clear messages
+    this._messages.length = 0;
+    this._drawer?.clearMessages();
+    // Clear panel
+    this._drawer?.clearPanel();
+    this._panel!.snapshots.clear();
+    this._panel!.threads = [];
+    // Clear thumbnails
+    this._thumbnailEntries = [];
+    this._drawer?.setThumbnails([]);
+    // Reset comparison state
+    this._comparisonSelectMode = false;
+    this._comparisonSelectedSkus = [];
+    // Reset thread cursors
+    this._currentThreadId = null;
+    this._lastThreadId = null;
+    this._lastBackendContext = null;
+    this._chatCreatedAt = new Date().toISOString();
+    // Allow PDP auto-launch for new SKU
+    this._pdpLaunched = false;
+  }
 
   private _handleBridgeMessage(msg: BridgeMessage): void {
     switch (msg.type) {
@@ -775,8 +817,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._drawerVisible = false;
     // Reset mobile open state so next launcher open defaults to full-screen
     this._openState = 'full';
-    // Clear panel state so stale content doesn't persist across open/close cycles
-    this._drawer?.clearPanel();
+    // Don't clear panel — preserve it so reopening the drawer shows the same
+    // panel state. clearPanel() is reserved for SKU/page resets and stale
+    // loading skeleton cleanup after streams.
     const el = this._drawer?.getElement();
     if (el) {
       el.classList.add('gengage-chat-drawer--hidden');
@@ -893,9 +936,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const threadId = uuidv7();
     this._currentThreadId = threadId;
     this._lastThreadId = threadId;
+    // Track action type for panel title disambiguation (search results vs similar products)
+    if (this._panel) this._panel.lastActionType = action.type;
     // For preservePanel actions (like/addToCart), don't overwrite _activeRequestThreadId
     // to avoid silencing concurrent streams. Instead, track validity locally.
     const isPreservePanel = options?.preservePanel === true;
+    const isPdpAutoLaunch = action.type === 'launchSingleProduct' && options?.silent === true;
     if (!isPreservePanel) {
       this._activeRequestThreadId = threadId;
     }
@@ -931,6 +977,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const botMsg = this._createMessage('assistant', '');
     botMsg.threadId = threadId;
     botMsg.status = 'streaming';
+    if (options?.silent) botMsg.silent = true;
     // Note: silent flag only skips the USER message above — bot response is always rendered
     this._messages.push(botMsg);
 
@@ -1187,6 +1234,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // Append ProductGrid (similar products) below existing panel content
               this._drawer.appendPanelContent(this._renderUISpec(panelSpec, renderContext));
             } else {
+              // Reset comparison state when new panel content replaces the grid
+              this._comparisonSelectMode = false;
+              this._comparisonSelectedSkus = [];
               this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
               this._panel.currentType = componentType;
             }
@@ -1195,9 +1245,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (botMsg.threadId && !this._panel.threads.includes(botMsg.threadId)) {
               this._panel.threads.push(botMsg.threadId);
             }
-            // Use the primary panel type for title (don't let appended grids overwrite it)
+            // Use the primary panel type for title (don't let appended grids overwrite it).
+            // Backend-provided panelTitle (e.g. search results title) takes precedence.
             const titleType = this._panel.currentType ?? componentType;
-            this._panel.updateTopBar(titleType);
+            const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
+            this._panel.updateTopBar(titleType, backendTitle);
             this._panel.updateExtendedMode(componentType);
           }
 
@@ -1522,18 +1574,36 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
+          // Capture panel state before resetting — needed for error gating below
+          const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived && this._drawer?.isPanelLoading()) {
             this._drawer.clearPanel();
           }
           panelLoadingSeen = false;
           panelContentReceived = false;
-          dispatch('gengage:global:error', {
-            source: 'chat',
-            code: 'STREAM_ERROR',
-            message: this._i18n.errorMessage,
-          });
-          this.emit('error', err);
-          this._drawer?.showError(err.message);
+          // Skip error toast when the stream already delivered user-facing content
+          // (bot text, panel content, or silent auto-launch). Showing a generic
+          // error on top of an already-rendered assistant response is confusing.
+          const hasContent =
+            botMsg.silent ||
+            (botMsg.content != null && botMsg.content.length > 0) ||
+            localBotText.length > 0 ||
+            hadPanelContent;
+          if (!hasContent) {
+            if (isPdpAutoLaunch) {
+              // Show soft fallback instead of generic error for auto-launch
+              const fallback = this._i18n.productNotFoundMessage;
+              botMsg.content = fallback;
+              botMsg.status = 'done';
+              this._drawer?.updateBotMessage(botMsg.id, fallback);
+            } else {
+              // Show error inline in the chat — not as a global toast.
+              // The user is in an active conversation; a toast on top of the
+              // chat is confusing and can overlap with prior bot messages.
+              this.emit('error', err);
+              this._drawer?.showError(this._i18n.errorMessage);
+            }
+          }
           // Only overwrite status if message hasn't already completed (isFinal text chunk sets 'done')
           if (botMsg.status === 'streaming') {
             botMsg.status = 'error';
@@ -1561,6 +1631,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
           panelLoadingSeen = false;
           panelContentReceived = false;
+          // Detect failed PDP auto-launch: silent launch action that produced
+          // no visible content (no bot text, no panel). Show a soft fallback
+          // message so the user isn't left with an empty chat.
+          if (isPdpAutoLaunch && !localBotText && !panelContentReceived) {
+            const fallback = this._i18n.productNotFoundMessage;
+            botMsg.content = fallback;
+            this._drawer?.updateBotMessage(botMsg.id, fallback);
+          }
+
           if (botMsg.status === 'streaming') {
             botMsg.status = 'done';
             ga.trackMessageReceived();
@@ -1713,6 +1792,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       panelThreads: this._panel?.threads ?? [],
       thumbnailEntries: this._thumbnailEntries,
       lastBackendContext: this._lastBackendContext,
+      sku: this.config.pageContext?.sku,
     });
   }
 
@@ -1740,7 +1820,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    * Always restores when IDB has session data for the current sessionId.
    * Best-effort — failures are silently ignored.
    */
-  private async _restoreFromIndexedDB(): Promise<void> {
+  private async _restoreFromIndexedDB(shouldRestore: boolean): Promise<void> {
     if (!this._session?.db) return;
     const sessionId = this.config.session?.sessionId;
     if (!sessionId) return;
@@ -1748,11 +1828,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const userId = this.config.session?.userId ?? '';
     const appId = this.config.accountId;
 
-    // Restore favorited SKUs from IDB
+    // Always restore favorites (user preference, not session state)
     await this._session.loadFavorites(userId, appId);
+
+    // Only restore chat state on explicit handoff (e.g. SimRel product navigation)
+    if (!shouldRestore) return;
 
     const session = await this._session.db?.loadSession(userId, appId, sessionId);
     if (!session || session.messages.length === 0) return;
+
+    // Don't restore a session saved for a different SKU
+    const currentSku = this.config.pageContext?.sku;
+    if (currentSku && session.sku && session.sku !== currentSku) return;
 
     // Prevent duplicate auto-launch: session already has messages, so PDP launch already happened
     this._pdpLaunched = true;

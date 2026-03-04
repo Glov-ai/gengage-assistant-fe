@@ -6,12 +6,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Chat widget', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('chat launcher is visible', async ({ page }) => {

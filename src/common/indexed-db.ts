@@ -30,6 +30,8 @@ export interface SessionData {
   thumbnailEntries?: Array<{ sku: string; imageUrl: string; threadId: string }> | undefined;
   /** Serialized panel HTML keyed by bot message ID (for panel snapshot restore). */
   panelSnapshotHtml?: Record<string, string> | undefined;
+  /** SKU active when session was saved — prevents cross-SKU restore. */
+  sku?: string | undefined;
 }
 
 export interface ContextData {

@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('QNA widget — element presence', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('QNA container is inside the correct mount parent', async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('QNA widget — element presence', () => {
 test.describe('QNA widget — button styling', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('QNA button has primary background color (orange)', async ({ page }) => {

@@ -117,8 +117,8 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   info.appendChild(priceContainer);
   card.appendChild(info);
 
-  // Add to cart stepper
-  if (product.cartCode) {
+  // Add to cart stepper (only when in stock)
+  if (product.cartCode && product.inStock !== false) {
     const cartCode = product.cartCode;
     const stepper = createQuantityStepper({
       compact: false,

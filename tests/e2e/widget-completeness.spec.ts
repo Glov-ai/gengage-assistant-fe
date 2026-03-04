@@ -6,7 +6,7 @@
 
 import { test, expect } from '@playwright/test';
 import {
-  DEMO_URL,
+  gotoDemoReady,
   setupMockRoutes,
   MOCK_CHAT_PRODUCT_LIST_NDJSON,
   MOCK_CHAT_PRODUCT_DETAILS_NDJSON,
@@ -19,7 +19,7 @@ import {
 test.describe('Widget completeness — SimRel tab panel visibility', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('only the active tab panel is visible, others are hidden', async ({ page }) => {
@@ -65,7 +65,7 @@ test.describe('Widget completeness — SimRel tab panel visibility', () => {
 test.describe('Widget completeness — product card image sizing', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('product card image container has aspect-ratio 1 (square)', async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe('Widget completeness — product card image sizing', () => {
 test.describe('Widget completeness — quantity stepper bounds', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('stepper starts at 1 and decrease button is disabled', async ({ page }) => {
@@ -155,7 +155,7 @@ test.describe('Widget completeness — product details share button', () => {
   test('product detail panel has a share button', async ({ page }) => {
     // Use mock that sends productDetails NDJSON
     await setupMockRoutes(page, { processActionBody: MOCK_CHAT_PRODUCT_DETAILS_NDJSON });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     // Open the chat drawer
     const launcher = page.locator('.gengage-chat-launcher');
@@ -188,7 +188,7 @@ test.describe('Widget completeness — chat sort toolbar', () => {
   test('chat product list shows sort options', async ({ page }) => {
     // Use mock that sends productList NDJSON
     await setupMockRoutes(page, { processActionBody: MOCK_CHAT_PRODUCT_LIST_NDJSON });
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     // Open the chat drawer
     const launcher = page.locator('.gengage-chat-launcher');

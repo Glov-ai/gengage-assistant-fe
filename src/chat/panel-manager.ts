@@ -35,6 +35,8 @@ export class PanelManager {
   currentType: string | null = null;
   /** Thread IDs that have panel content, in order of creation. */
   threads: string[] = [];
+  /** Action type that triggered the current stream (for panel title disambiguation). */
+  lastActionType: string | null = null;
 
   constructor(private readonly deps: PanelManagerDeps) {}
 
@@ -121,14 +123,17 @@ export class PanelManager {
 
   /**
    * Derive panel title from UISpec root element type using i18n strings.
+   * When the backend provides a `panelTitle` prop, it takes precedence.
    */
-  titleForComponent(componentType: string): string {
+  titleForComponent(componentType: string, backendTitle?: string): string {
+    if (backendTitle) return backendTitle;
     const i18n = this.deps.i18n();
     switch (componentType) {
       case 'ProductDetailsPanel':
         return i18n.panelTitleProductDetails;
       case 'ProductGrid':
-        return i18n.panelTitleSimilarProducts;
+        // User-typed queries produce search results; product actions produce similar products
+        return this.lastActionType === 'user_message' ? i18n.panelTitleSearchResults : i18n.panelTitleSimilarProducts;
       case 'ComparisonTable':
         return i18n.panelTitleComparisonResults;
       case 'AIGroupingCards':
@@ -140,14 +145,15 @@ export class PanelManager {
 
   /**
    * Update the panel top bar navigation state and title.
+   * When the backend provides a `panelTitle`, it takes precedence over i18n defaults.
    */
-  updateTopBar(componentType: string): void {
+  updateTopBar(componentType: string, backendTitle?: string): void {
     const currentThreadId = this.deps.currentThreadId();
     if (!currentThreadId) return;
     const idx = this.threads.indexOf(currentThreadId);
     const canBack = idx > 0;
     const canForward = idx >= 0 && idx < this.threads.length - 1;
-    const title = this.titleForComponent(componentType);
+    const title = this.titleForComponent(componentType, backendTitle);
     this.deps.drawer()?.updatePanelTopBar(canBack, canForward, title);
   }
 
@@ -159,7 +165,8 @@ export class PanelManager {
     const i18n = this.deps.i18n();
     const loadingTitleMap: Record<string, string> = {
       productDetails: i18n.panelTitleProductDetails,
-      productList: i18n.panelTitleSimilarProducts,
+      productList:
+        this.lastActionType === 'user_message' ? i18n.panelTitleSearchResults : i18n.panelTitleSimilarProducts,
       comparisonTable: i18n.panelTitleComparisonResults,
       groupList: i18n.panelTitleCategories,
     };

@@ -59,14 +59,16 @@ describe('global error event dispatch', () => {
     document.body.innerHTML = '';
   });
 
-  it('dispatches gengage:global:error on chat stream failure', async () => {
+  it('shows error inline in chat drawer on stream failure (no global toast)', async () => {
     mockedSendChatMessage.mockImplementation((_request, callbacks) => {
       callbacks.onError(new Error('HTTP 500'));
       return new AbortController();
     });
 
     const collector = collectGlobalErrors();
+    const errors: Error[] = [];
     const chat = new GengageChat();
+    chat.on('error', (err) => errors.push(err as Error));
     await chat.init({
       accountId: 'test-account',
       session: { sessionId: 'test-session' },
@@ -79,12 +81,11 @@ describe('global error event dispatch', () => {
       payload: 'hello',
     });
 
-    expect(collector.events).toHaveLength(1);
-    expect(collector.events[0]).toMatchObject({
-      source: 'chat',
-      code: 'STREAM_ERROR',
-      message: 'Something went wrong. Please try again.',
-    });
+    // Chat stream errors now render inline — no global toast dispatch
+    expect(collector.events).toHaveLength(0);
+    // Widget emits 'error' event for programmatic consumers
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.message).toBe('HTTP 500');
 
     collector.stop();
     chat.destroy();

@@ -126,11 +126,12 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     body.appendChild(renderSentimentChips(item.labels));
   }
 
-  // Expert quality score
+  // Expert quality score — auto-detect scale from value range
   if (typeof item.expertQualityScore === 'number') {
     const score = document.createElement('div');
     score.className = 'gengage-chat-ai-toppick-score';
-    score.textContent = `${item.expertQualityScore}/10`;
+    const maxScale = item.expertQualityScore <= 5 ? 5 : 10;
+    score.textContent = `${item.expertQualityScore}/${maxScale}`;
     body.appendChild(score);
   }
 

@@ -50,8 +50,8 @@ test.describe('Vanilla example — widget initialization', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.goto('/demos/vanilla-script/index.html');
-    // Wait a moment for module scripts to execute
-    await page.waitForTimeout(2000);
+    // Wait for the demo page to render its product section (signals JS executed)
+    await page.locator('.product').waitFor({ state: 'attached', timeout: 15_000 });
 
     // Filter out expected network errors from missing backend
     const unexpectedErrors = errors.filter(
@@ -68,7 +68,8 @@ test.describe('Vanilla example — widget initialization', () => {
     });
 
     await page.goto('/demos/vanilla-script/index.html');
-    await page.waitForTimeout(2000);
+    // Wait for the demo page to render (signals module scripts executed)
+    await page.locator('.product').waitFor({ state: 'attached', timeout: 15_000 });
 
     // The demo script logs with "[vanilla-script]" prefix on success or error
     const hasVanillaLog = logs.some((log) => log.includes('vanilla-script'));
@@ -79,9 +80,8 @@ test.describe('Vanilla example — widget initialization', () => {
 test.describe('Vanilla example — chat widget', () => {
   test('floating chat launcher is injected into the DOM', async ({ page }) => {
     await page.goto('/demos/vanilla-script/index.html');
-    // The chat widget creates a floating launcher element
-    // Wait for module script execution
-    await page.waitForTimeout(2000);
+    // Wait for the demo page to render its product section (signals JS executed)
+    await page.locator('.product').waitFor({ state: 'attached', timeout: 15_000 });
 
     // The launcher is either a shadow DOM host or a direct element
     // Check for any gengage-related element in the body
@@ -99,7 +99,8 @@ test.describe('Vanilla example — chat widget', () => {
 test.describe('Vanilla example — SimRel widget', () => {
   test('SimRel container is created inside mount point', async ({ page }) => {
     await page.goto('/demos/vanilla-script/index.html');
-    await page.waitForTimeout(2000);
+    // Wait for the demo page to render its product section (signals JS executed)
+    await page.locator('.product').waitFor({ state: 'attached', timeout: 15_000 });
 
     // The SimRel widget creates a .gengage-simrel-container div
     const container = page.locator('.gengage-simrel-container');

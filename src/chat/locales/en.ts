@@ -32,6 +32,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   panelTitleSimilarProducts: 'Similar Products',
   panelTitleComparisonResults: 'Comparison Results',
   panelTitleCategories: 'Categories',
+  panelTitleSearchResults: 'Search Results',
   inStockLabel: 'In Stock',
   outOfStockLabel: 'Out of Stock',
   findSimilarLabel: 'Find Similar',
@@ -57,4 +58,5 @@ export const CHAT_I18N_EN: ChatI18n = {
   voicePermissionDenied: 'Microphone access denied.',
   voiceError: 'Voice input error.',
   handoffHeading: 'Transferring to a support agent',
+  productNotFoundMessage: 'Product information is currently unavailable. I can help with something else.',
 };

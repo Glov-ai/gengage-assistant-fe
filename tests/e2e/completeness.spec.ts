@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Completeness — SimRel products', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('all 4 unique products appear across tabs', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('Completeness — SimRel products', () => {
 test.describe('Completeness — QNA actions', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('all 3 action texts match mock data exactly', async ({ page }) => {
@@ -147,7 +147,7 @@ test.describe('Completeness — QNA actions', () => {
 test.describe('Completeness — Chat drawer sections', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await launcher.click();
@@ -170,7 +170,7 @@ test.describe('Completeness — Chat drawer sections', () => {
 test.describe('Completeness — Host page sections', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('all major host page sections are present', async ({ page }) => {

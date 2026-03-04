@@ -756,7 +756,9 @@ export class ChatDrawer {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
-    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    if (!this._panelForceExpanded) {
+      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    }
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -770,7 +772,9 @@ export class ChatDrawer {
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
     this._panelEl.appendChild(el);
-    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    if (!this._panelForceExpanded) {
+      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    }
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -807,7 +811,9 @@ export class ChatDrawer {
 
   /** Show loading skeleton in the panel. Variant depends on contentType hint. */
   showPanelLoading(contentType?: string): void {
-    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    if (!this._panelForceExpanded) {
+      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    }
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     const skeleton = document.createElement('div');
@@ -885,6 +891,17 @@ export class ChatDrawer {
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+  }
+
+  /** Expand panel without locking — user can still toggle via divider. */
+  expandPanel(): void {
+    this._panelCollapsed = false;
+    this._panelEl.classList.remove('gengage-chat-panel--collapsed');
+    if (!this._panelVisible) {
+      this._panelVisible = true;
+      this._panelEl.classList.add('gengage-chat-panel--visible');
+      this.root.classList.add('gengage-chat-drawer--with-panel');
+    }
   }
 
   /** Force the panel to stay expanded (panelMode: 'expanded'). Hides the divider toggle. */
@@ -1073,6 +1090,20 @@ export class ChatDrawer {
 
   /** Public method for typewriter ticks — scrolls only if user is near bottom. */
   scrollToBottomIfNeeded(): void {
+    this._scrollToBottom(false);
+  }
+
+  /** Update a bot message's text content in the DOM (e.g. for fallback messages). */
+  updateBotMessage(messageId: string, html: string): void {
+    const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    if (!bubble) return;
+    let textEl = bubble.querySelector('.gengage-chat-bubble-text');
+    if (!textEl) {
+      textEl = document.createElement('div');
+      textEl.className = 'gengage-chat-bubble-text';
+      bubble.appendChild(textEl);
+    }
+    textEl.innerHTML = sanitizeHtml(html);
     this._scrollToBottom(false);
   }
 

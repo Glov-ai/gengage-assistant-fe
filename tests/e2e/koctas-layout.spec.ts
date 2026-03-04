@@ -6,7 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Koctas demo - host page layout', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,12 +14,12 @@ test.describe('Koctas demo - host page layout', () => {
   });
 
   test('page loads with correct title', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     await expect(page).toHaveTitle(/Gengage Dev.*koctascomtr/i);
   });
 
   test('dev header is visible with account info', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const header = page.locator('.dev-header');
     await expect(header).toBeVisible();
     await expect(header).toContainText('koctascomtr');
@@ -27,7 +27,7 @@ test.describe('Koctas demo - host page layout', () => {
   });
 
   test('topbar renders with brand name', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const topbar = page.locator('.host-topbar');
     await expect(topbar).toBeVisible();
     // Brand name uses Turkish character: Koctas with cedilla
@@ -35,14 +35,14 @@ test.describe('Koctas demo - host page layout', () => {
   });
 
   test('breadcrumb shows SKU', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const breadcrumb = page.locator('.host-breadcrumb');
     await expect(breadcrumb).toBeVisible();
     await expect(breadcrumb).toContainText('1000465056');
   });
 
   test('PDP layout has gallery and summary cards', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const layout = page.locator('.pdp-layout');
     await expect(layout).toBeVisible();
     await expect(page.locator('.gallery-card')).toBeVisible();
@@ -50,13 +50,13 @@ test.describe('Koctas demo - host page layout', () => {
   });
 
   test('widget mount points exist', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     await expect(page.locator('#koctas-qna-section')).toBeAttached();
     await expect(page.locator('#koctas-similar-products')).toBeAttached();
   });
 
   test('page sections appear in expected order', async ({ page }) => {
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     // Verify the vertical order: pdp-layout -> content-card -> qna -> simrel
     const sections = page.locator('.pdp-layout, .content-card, .qna-section, .simrel-card');
     const count = await sections.count();
@@ -76,7 +76,7 @@ test.describe('Koctas demo - host page layout', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
 
     // Wait for all widgets to initialize
     await page.locator('.gengage-simrel-container').waitFor({ state: 'attached', timeout: 10000 });

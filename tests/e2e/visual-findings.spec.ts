@@ -5,12 +5,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Visual findings — component duplication check', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('QNA buttons render ONLY inside #koctas-qna-section', async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe('Visual findings — component duplication check', () => {
 test.describe('Visual findings — chat drawer separation', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await launcher.click();
@@ -70,7 +70,7 @@ test.describe('Visual findings — chat drawer separation', () => {
 test.describe('Visual findings — discount display on SimRel cards', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('products with discount show original price with strike-through', async ({ page }) => {
@@ -115,7 +115,7 @@ test.describe('Visual findings — discount display on SimRel cards', () => {
 test.describe('Visual findings — vertical spacing between QNA and SimRel', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('QNA section and SimRel section are vertically ordered (QNA above SimRel)', async ({ page }) => {
@@ -137,7 +137,7 @@ test.describe('Visual findings — vertical spacing between QNA and SimRel', () 
 test.describe('Visual findings — chip/button theming', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('QNA buttons use the theme primary color (orange)', async ({ page }) => {
@@ -158,7 +158,7 @@ test.describe('Visual findings — chip/button theming', () => {
 test.describe('Visual findings — chat input border styling', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await launcher.click();

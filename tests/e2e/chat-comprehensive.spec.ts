@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Chat widget — launcher positioning & style', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('launcher is in the bottom-right quadrant of the viewport', async ({ page }) => {
@@ -60,7 +60,7 @@ test.describe('Chat widget — launcher positioning & style', () => {
 test.describe('Chat widget — drawer structure', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     // Open the drawer for these tests
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });

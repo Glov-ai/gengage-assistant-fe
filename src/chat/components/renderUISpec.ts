@@ -347,9 +347,9 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     card.appendChild(cta);
   }
 
-  // Add to cart stepper (shown on search result cards when cartCode is available)
+  // Add to cart stepper (shown on search result cards when cartCode is available and in stock)
   const cartCode = product['cartCode'] as string | undefined;
-  if (cartCode && sku) {
+  if (cartCode && sku && inStock !== false) {
     const stepper = createQuantityStepper({
       compact: true,
       label: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
@@ -693,8 +693,8 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     }
   }
 
-  // "Sepete Ekle" stepper — shown when the product has a cartCode
-  if (cartCode && sku) {
+  // "Sepete Ekle" stepper — shown when the product has a cartCode and is in stock
+  if (cartCode && sku && inStock !== false) {
     const stepper = createQuantityStepper({
       compact: false,
       label: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
@@ -1038,6 +1038,7 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
     onProductClick: (sku) => {
       ctx.onProductClick?.({ sku, url: '' });
     },
+    pricing: ctx.pricing,
   };
   if (recommendedText !== undefined) options.recommendedText = recommendedText;
   if (winnerHits !== undefined) options.winnerHits = winnerHits;

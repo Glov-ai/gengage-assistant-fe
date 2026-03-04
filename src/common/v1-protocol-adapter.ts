@@ -568,12 +568,13 @@ function adaptSuggestedActions(event: V1SuggestedActions): StreamEventUISpec {
 function adaptProductList(event: V1ProductList): StreamEventUISpec {
   const spec = buildProductGridUISpec(event.payload.product_list ?? [], 'chat');
   spec.panelHint = 'panel';
-  // Pass pagination fields
+  // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
   if (root) {
     if (typeof event.payload.offset === 'number') root.props = { ...root.props, offset: event.payload.offset };
     if (typeof event.payload.end_of_list === 'boolean')
       root.props = { ...root.props, endOfList: event.payload.end_of_list };
+    if (typeof event.payload.title === 'string') root.props = { ...root.props, panelTitle: event.payload.title };
   }
   return spec;
 }

@@ -7,6 +7,8 @@
  */
 
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
+import { formatPrice } from '../../common/price-formatter.js';
+import type { PriceFormatConfig } from '../../common/price-formatter.js';
 
 /** Fallback display names for common Turkish e-commerce product attributes. */
 const CRITERIA_DISPLAY_NAMES: Record<string, string> = {
@@ -87,6 +89,7 @@ export interface ComparisonTableOptions {
   productActions?: Record<string, { title: string; type: string; payload?: unknown }> | undefined;
   keyDifferencesHtml?: string | undefined;
   i18n?: ComparisonTableI18n | undefined;
+  pricing?: PriceFormatConfig | undefined;
 }
 
 export function renderComparisonTable(options: ComparisonTableOptions): HTMLElement {
@@ -137,7 +140,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     info.appendChild(title);
     const price = document.createElement('div');
     price.className = 'gengage-chat-comparison-recommended-price';
-    price.textContent = recommended.price;
+    price.textContent = formatPrice(recommended.price, options.pricing);
     info.appendChild(price);
     recBody.appendChild(info);
 
@@ -170,7 +173,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     if (options.recommendedText) {
       const recExplanation = document.createElement('div');
       recExplanation.className = 'gengage-chat-comparison-recommended-text';
-      recExplanation.textContent = options.recommendedText;
+      recExplanation.innerHTML = sanitizeHtml(options.recommendedText);
       recCard.appendChild(recExplanation);
     }
 
@@ -242,7 +245,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       th.appendChild(name);
       const prc = document.createElement('div');
       prc.className = 'gengage-chat-comparison-table-price';
-      prc.textContent = product.price;
+      prc.textContent = formatPrice(product.price, options.pricing);
       th.appendChild(prc);
       headerRow.appendChild(th);
     }

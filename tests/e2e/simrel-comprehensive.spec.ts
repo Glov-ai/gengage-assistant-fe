@@ -5,12 +5,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('SimRel widget — card details', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('brand name displays on cards', async ({ page }) => {
@@ -93,7 +93,7 @@ test.describe('SimRel widget — card details', () => {
 test.describe('SimRel widget — stepper interactions', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('stepper increment changes value from 1 to 2', async ({ page }) => {
@@ -133,7 +133,7 @@ test.describe('SimRel widget — stepper interactions', () => {
 test.describe('SimRel widget — tab interactions', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('clicking inactive tab changes active state', async ({ page }) => {
@@ -180,7 +180,7 @@ test.describe('SimRel widget — tab interactions', () => {
 test.describe('SimRel widget — grid layout', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('grid has visible gap between cards (computed gap > 0)', async ({ page }) => {

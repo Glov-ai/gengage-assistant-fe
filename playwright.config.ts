@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -16,6 +17,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       testIgnore: /full-stack-smoke|catalog-visual/,
+      fullyParallel: false,
     },
     {
       name: 'full-stack',
@@ -36,13 +38,13 @@ export default defineConfig({
       command: 'npx vite --port 3001',
       port: 3001,
       reuseExistingServer: !process.env.CI,
-      timeout: 15_000,
+      timeout: 90_000,
     },
     {
       command: 'npx vite --config catalog/vite.config.ts --port 3002',
       port: 3002,
       reuseExistingServer: !process.env.CI,
-      timeout: 15_000,
+      timeout: 90_000,
     },
   ],
 });

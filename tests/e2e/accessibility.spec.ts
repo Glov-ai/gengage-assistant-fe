@@ -4,12 +4,12 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DEMO_URL, setupMockRoutes } from './fixtures.js';
+import { gotoDemoReady, setupMockRoutes } from './fixtures.js';
 
 test.describe('Accessibility — Chat widget', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
     // Open the drawer
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
@@ -61,7 +61,7 @@ test.describe('Accessibility — Chat widget', () => {
 test.describe('Accessibility — QNA widget', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('button container has role="group"', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Accessibility — QNA widget', () => {
 test.describe('Accessibility — SimRel widget', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
-    await page.goto(DEMO_URL);
+    await gotoDemoReady(page);
   });
 
   test('grid has role="list"', async ({ page }) => {
