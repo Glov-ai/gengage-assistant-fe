@@ -46,6 +46,14 @@ describe('ChatDrawer panel collapse/expand', () => {
     expect(divider.classList.contains('gengage-chat-panel-divider--hidden')).toBe(false);
   });
 
+  it('reports panel content when only topbar and main content are present', () => {
+    const content = document.createElement('div');
+    content.textContent = 'Comparison results';
+    drawer.setPanelContent(content);
+
+    expect(drawer.hasPanelContent()).toBe(true);
+  });
+
   it('togglePanel collapses an expanded panel', () => {
     const content = document.createElement('div');
     drawer.setPanelContent(content);

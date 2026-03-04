@@ -173,6 +173,23 @@ describe('comparisonTable: full payload round-trip', () => {
     expect(props['recommendedText']).toBe('Bosch en iyi fiyat/performans oranina sahip');
   });
 
+  it('normalizes string-valued special considerations into a single special case entry', () => {
+    const uiSpec = adaptAndAssertComparisonTable({
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'P1', name: 'A', price: 100, url: 'https://example.com/a' },
+          { sku: 'P2', name: 'B', price: 200, url: 'https://example.com/b' },
+        ],
+        product_comparison_framework: {
+          special_considerations: '<ul><li><b>Not:</b> Kucuk alanlar icin daha uygun.</li></ul>',
+        },
+      },
+    });
+    const props = getComparisonProps(uiSpec);
+    expect(props['specialCases']).toEqual(['<ul><li><b>Not:</b> Kucuk alanlar icin daha uygun.</li></ul>']);
+  });
+
   it('preserves winnerHits per product', () => {
     const uiSpec = adaptAndAssertComparisonTable(fullPayload);
     const props = getComparisonProps(uiSpec);
@@ -259,6 +276,45 @@ describe('comparisonTable: edge cases', () => {
     });
     const props = getComparisonProps(uiSpec);
     expect(props['attributes']).toEqual([]);
+  });
+
+  it('builds attributes from sku-keyed tables that use features_list ordering', () => {
+    const uiSpec = adaptAndAssertComparisonTable({
+      type: 'comparisonTable',
+      payload: {
+        multiple_product_details: [
+          { sku: 'P1', name: 'A', price: 100, url: 'https://example.com/a' },
+          { sku: 'P2', name: 'B', price: 200, url: 'https://example.com/b' },
+        ],
+        table: {
+          P1: {
+            name: 'A',
+            Renk: 'Kirmizi',
+            Renk_short: 'Kirmizi',
+            Agirlik: '1.8 kg',
+            Agirlik_short: '1.8 kg',
+          },
+          P2: {
+            name: 'B',
+            Renk: 'Mavi',
+            Renk_short: 'Mavi',
+            Agirlik: '2.1 kg',
+            Agirlik_short: '2.1 kg',
+          },
+        },
+        features_list: ['Renk', 'Agirlik'],
+        recommended_choice_sku: 'P2',
+        special_considerations: ['<ul><li>Stok durumunu kontrol edin</li></ul>'],
+      },
+    });
+
+    const props = getComparisonProps(uiSpec);
+    expect(props['attributes']).toEqual([
+      { label: 'Renk', values: ['Kirmizi', 'Mavi'] },
+      { label: 'Agirlik', values: ['1.8 kg', '2.1 kg'] },
+    ]);
+    expect((props['recommended'] as Record<string, unknown>)['sku']).toBe('P2');
+    expect(props['specialCases']).toEqual(['<ul><li>Stok durumunu kontrol edin</li></ul>']);
   });
 
   it('handles missing product_comparison_framework', () => {

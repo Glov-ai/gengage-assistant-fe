@@ -82,6 +82,20 @@ describe('linkProductMentions', () => {
     expect(container.querySelectorAll('.gengage-product-mention').length).toBe(0);
   });
 
+  it('does not link partial matches inside larger alphanumeric tokens', () => {
+    const container = document.createElement('div');
+    container.textContent = 'ARCELIK 901 KMP I 9 Kg Kurutma Makinesi';
+
+    linkProductMentions({
+      container,
+      mentions: [{ sku: 'SKU-1', short_name: '01 KMP I 9 Kg Kurutma Makinesi' }],
+      onProductClick: vi.fn(),
+    });
+
+    expect(container.querySelectorAll('.gengage-product-mention').length).toBe(0);
+    expect(container.textContent).toBe('ARCELIK 901 KMP I 9 Kg Kurutma Makinesi');
+  });
+
   it('handles mentions with empty short_name', () => {
     const container = document.createElement('div');
     container.textContent = 'Some text';

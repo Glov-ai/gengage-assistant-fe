@@ -29,6 +29,16 @@ interface AITopPickItem {
   action?: ActionPayload;
 }
 
+function resolveActionSku(item: AITopPickItem): string | null {
+  const productSku = item.product['sku'];
+  if (typeof productSku === 'string' && productSku.length > 0) return productSku;
+  const payload = item.action?.payload;
+  if (payload && typeof payload === 'object' && 'sku' in payload && typeof payload.sku === 'string') {
+    return payload.sku;
+  }
+  return null;
+}
+
 const ROLE_LABELS: Record<string, string> = {
   winner: 'roleWinner',
   best_value: 'roleBestValue',
@@ -166,7 +176,8 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
 
   // CTA button
   if (item.action) {
-    const sku = (product['sku'] as string) ?? null;
+    const sku = resolveActionSku(item);
+    const url = (product['url'] as string) ?? '';
 
     // Spinner overlay (hidden by default)
     const spinner = document.createElement('div');
@@ -179,7 +190,10 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     cta.type = 'button';
     cta.textContent = ctx.i18n?.viewDetails ?? 'View Details';
     cta.addEventListener('click', () => {
-      if (sku) spinner.style.display = '';
+      if (item.action?.type === 'findSimilar' && sku && ctx.onProductClick) {
+        ctx.onProductClick({ sku, url });
+        return;
+      }
       ctx.onAction(item.action!);
     });
     card.appendChild(cta);
@@ -261,7 +275,8 @@ function renderCompactCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
 
   // CTA
   if (item.action) {
-    const sku = (product['sku'] as string) ?? null;
+    const sku = resolveActionSku(item);
+    const url = (product['url'] as string) ?? '';
 
     // Spinner overlay (hidden by default)
     const spinner = document.createElement('div');
@@ -274,7 +289,10 @@ function renderCompactCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     cta.type = 'button';
     cta.textContent = ctx.i18n?.viewDetails ?? 'View Details';
     cta.addEventListener('click', () => {
-      if (sku) spinner.style.display = '';
+      if (item.action?.type === 'findSimilar' && sku && ctx.onProductClick) {
+        ctx.onProductClick({ sku, url });
+        return;
+      }
       ctx.onAction(item.action!);
     });
     card.appendChild(cta);

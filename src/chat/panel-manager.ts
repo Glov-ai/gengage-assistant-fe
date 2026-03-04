@@ -133,7 +133,9 @@ export class PanelManager {
         return i18n.panelTitleProductDetails;
       case 'ProductGrid':
         // User-typed queries produce search results; product actions produce similar products
-        return this.lastActionType === 'user_message' ? i18n.panelTitleSearchResults : i18n.panelTitleSimilarProducts;
+        return isSearchLikeActionType(this.lastActionType)
+          ? i18n.panelTitleSearchResults
+          : i18n.panelTitleSimilarProducts;
       case 'ComparisonTable':
         return i18n.panelTitleComparisonResults;
       case 'AIGroupingCards':
@@ -165,8 +167,9 @@ export class PanelManager {
     const i18n = this.deps.i18n();
     const loadingTitleMap: Record<string, string> = {
       productDetails: i18n.panelTitleProductDetails,
-      productList:
-        this.lastActionType === 'user_message' ? i18n.panelTitleSearchResults : i18n.panelTitleSimilarProducts,
+      productList: isSearchLikeActionType(this.lastActionType)
+        ? i18n.panelTitleSearchResults
+        : i18n.panelTitleSimilarProducts,
       comparisonTable: i18n.panelTitleComparisonResults,
       groupList: i18n.panelTitleCategories,
     };
@@ -246,4 +249,8 @@ export class PanelManager {
     this.currentType = null;
     this.threads = [];
   }
+}
+
+function isSearchLikeActionType(actionType: string | null): boolean {
+  return actionType === 'user_message' || actionType === 'inputText';
 }

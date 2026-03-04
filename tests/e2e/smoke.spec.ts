@@ -20,7 +20,7 @@ test.describe('Vanilla example — page load', () => {
     await page.goto('/demos/vanilla-script/index.html');
     const product = page.locator('.product');
     await expect(product).toBeVisible();
-    await expect(product).toContainText('DEMO-001');
+    await expect(product).toContainText('Lorem Ipsum Demo');
   });
 
   test('QNA mount point exists', async ({ page }) => {
@@ -40,9 +40,11 @@ test.describe('Vanilla example — widget initialization', () => {
   test('page contains expected SKU in the DOM', async ({ page }) => {
     await page.goto('/demos/vanilla-script/index.html');
 
-    // The demo renders the SKU into #demo-sku
+    // The demo renders the PDP SKU into #demo-sku using the query param
+    // or its current default fallback.
     const skuEl = page.locator('#demo-sku');
-    await expect(skuEl).toContainText('DEMO-001');
+    await expect(skuEl).not.toHaveText('—');
+    await expect(skuEl).toContainText('1000465056');
   });
 
   test('no uncaught exceptions on page load', async ({ page }) => {
@@ -61,19 +63,29 @@ test.describe('Vanilla example — widget initialization', () => {
     expect(unexpectedErrors).toHaveLength(0);
   });
 
-  test('ES module script executes (console log appears)', async ({ page }) => {
-    const logs: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'log' || msg.type() === 'error') logs.push(msg.text());
-    });
-
+  test('widget scripts execute and expose widget constructors', async ({ page }) => {
     await page.goto('/demos/vanilla-script/index.html');
     // Wait for the demo page to render (signals module scripts executed)
     await page.locator('.product').waitFor({ state: 'attached', timeout: 15_000 });
+    await expect(page.locator('#demo-sku')).not.toHaveText('—');
 
-    // The demo script logs with "[vanilla-script]" prefix on success or error
-    const hasVanillaLog = logs.some((log) => log.includes('vanilla-script'));
-    expect(hasVanillaLog).toBe(true);
+    const constructorsReady = await page.evaluate(() => {
+      const gengageWindow = window as Window & {
+        Gengage?: {
+          GengageChat?: unknown;
+          GengageQNA?: unknown;
+          GengageSimRel?: unknown;
+        };
+      };
+      return Boolean(
+        gengageWindow.Gengage &&
+        gengageWindow.Gengage.GengageChat &&
+        gengageWindow.Gengage.GengageQNA &&
+        gengageWindow.Gengage.GengageSimRel,
+      );
+    });
+
+    expect(constructorsReady).toBe(true);
   });
 });
 

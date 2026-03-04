@@ -20,6 +20,36 @@ interface GroupingEntry {
   action: ActionPayload;
 }
 
+function normalizeGroupingAction(entry: GroupingEntry): ActionPayload {
+  if (entry.action.type !== 'findSimilar') return entry.action;
+  const payload =
+    entry.action.payload && typeof entry.action.payload === 'object'
+      ? (entry.action.payload as Record<string, unknown>)
+      : null;
+  const text =
+    (typeof payload?.['input'] === 'string' && payload['input'].trim()) ||
+    (typeof payload?.['text'] === 'string' && payload['text'].trim()) ||
+    entry.name.trim();
+  if (!text) return entry.action;
+
+  const normalizedPayload: Record<string, unknown> = {
+    text,
+    is_suggested_text: 1,
+  };
+  if (typeof payload?.['sku'] === 'string' && payload['sku'].trim()) {
+    normalizedPayload['sku'] = payload['sku'];
+  }
+  if (Array.isArray(payload?.['group_skus'])) {
+    const groupSkus = payload['group_skus'].filter((sku): sku is string => typeof sku === 'string' && sku.length > 0);
+    if (groupSkus.length > 0) normalizedPayload['group_skus'] = groupSkus;
+  }
+  return {
+    title: entry.action.title,
+    type: 'inputText',
+    payload: normalizedPayload,
+  };
+}
+
 export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const container = document.createElement('div');
   container.className = 'gengage-chat-grouping-cards';
@@ -31,7 +61,7 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
     const card = document.createElement('div');
     card.className = 'gengage-chat-grouping-card';
     card.style.cursor = 'pointer';
-    card.addEventListener('click', () => ctx.onAction(entry.action));
+    card.addEventListener('click', () => ctx.onAction(normalizeGroupingAction(entry)));
 
     // Image (20x20 on desktop, hidden on mobile via CSS)
     if (entry.image && isSafeImageUrl(entry.image)) {

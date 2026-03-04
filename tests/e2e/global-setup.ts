@@ -5,6 +5,7 @@
  * workers can hit the server before compilation finishes, causing 404s or
  * half-loaded pages. This fetches key pages and entry points so all deps are cached.
  */
+import { chromium } from '@playwright/test';
 import { DEMO_URL } from './fixtures.js';
 
 async function warmServer(baseURL: string, path: string): Promise<void> {
@@ -33,6 +34,26 @@ async function warmModule(baseURL: string, path: string): Promise<void> {
   }
 }
 
+async function warmDemoInBrowser(baseURL: string, path: string): Promise<void> {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  try {
+    await page.goto(`${baseURL}${path}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(
+      () => {
+        const sku = document.getElementById('dev-sku')?.textContent?.trim();
+        return Boolean(sku && sku !== '—');
+      },
+      null,
+      { timeout: 20_000 },
+    );
+  } finally {
+    await page.close();
+    await browser.close();
+  }
+}
+
 export default async function globalSetup(): Promise<void> {
   const baseURL = process.env.BASE_URL ?? 'http://localhost:3001';
 
@@ -52,4 +73,6 @@ export default async function globalSetup(): Promise<void> {
     warmModule(baseURL, '/src/qna/index.ts'),
     warmModule(baseURL, '/src/simrel/index.ts'),
   ]);
+
+  await warmDemoInBrowser(baseURL, DEMO_URL);
 }

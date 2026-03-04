@@ -121,6 +121,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
   private _pdpLaunched = false;
+  private _productContextUnavailableSku: string | null = null;
   private _i18n: ChatI18n = CHAT_I18N_TR;
   private _extendedModeManager: ExtendedModeManager | null = null;
   /** Active typewriter animation handle — cancelled on new action or drawer close. */
@@ -579,6 +580,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._chatCreatedAt = new Date().toISOString();
     // Allow PDP auto-launch for new SKU
     this._pdpLaunched = false;
+    this._productContextUnavailableSku = null;
   }
 
   private _handleBridgeMessage(msg: BridgeMessage): void {
@@ -936,8 +938,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const threadId = uuidv7();
     this._currentThreadId = threadId;
     this._lastThreadId = threadId;
-    // Track action type for panel title disambiguation (search results vs similar products)
-    if (this._panel) this._panel.lastActionType = action.type;
+    // Preserve the active grid intent during product drilldowns. A product click
+    // should not relabel an existing search-result panel as "similar products".
+    if (this._panel && action.type !== 'launchSingleProduct') {
+      this._panel.lastActionType = action.type;
+    }
     // For preservePanel actions (like/addToCart), don't overwrite _activeRequestThreadId
     // to avoid silencing concurrent streams. Instead, track validity locally.
     const isPreservePanel = options?.preservePanel === true;
@@ -955,6 +960,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
       this._drawer?.addMessage(userMsg);
       this._messages.push(userMsg);
+    }
+
+    const shouldShortCircuitUnavailableContext =
+      !options?.silent &&
+      this._hasUnavailableProductContext() &&
+      (action.type === 'user_message' || action.type === 'inputText');
+    if (shouldShortCircuitUnavailableContext) {
+      const fallback = this._i18n.productNotFoundMessage;
+      const botMsg = this._createMessage('assistant', fallback);
+      botMsg.threadId = threadId;
+      botMsg.status = 'done';
+      this._messages.push(botMsg);
+      this._ensureAssistantMessageRendered(botMsg);
+      this._drawer?.updateBotMessage(botMsg.id, fallback);
+      this._bridge?.send('isResponding', false);
+      this.emit('message', botMsg);
+      this._persistToIndexedDB().catch(() => {
+        /* non-fatal */
+      });
+      return;
     }
 
     // Keep panel visible during search — show loading skeleton instead of collapsing.
@@ -1239,6 +1264,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._comparisonSelectedSkus = [];
               this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
               this._panel.currentType = componentType;
+            }
+
+            if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
+              this._clearUnavailableProductContext();
             }
 
             // Track panel thread and update topbar + extended mode
@@ -1590,12 +1619,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             localBotText.length > 0 ||
             hadPanelContent;
           if (!hasContent) {
-            if (isPdpAutoLaunch) {
+            if (isPdpAutoLaunch || this._hasUnavailableProductContext()) {
               // Show soft fallback instead of generic error for auto-launch
               const fallback = this._i18n.productNotFoundMessage;
               botMsg.content = fallback;
               botMsg.status = 'done';
+              this._ensureAssistantMessageRendered(botMsg);
               this._drawer?.updateBotMessage(botMsg.id, fallback);
+              this._markUnavailableProductContext();
             } else {
               // Show error inline in the chat — not as a global toast.
               // The user is in an active conversation; a toast on top of the
@@ -1637,7 +1668,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (isPdpAutoLaunch && !localBotText && !panelContentReceived) {
             const fallback = this._i18n.productNotFoundMessage;
             botMsg.content = fallback;
+            this._ensureAssistantMessageRendered(botMsg);
             this._drawer?.updateBotMessage(botMsg.id, fallback);
+            this._markUnavailableProductContext();
           }
 
           if (botMsg.status === 'streaming') {
@@ -1798,11 +1831,37 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   private _isSameOriginUrl(url: string): boolean {
     try {
+      if (!url.trim()) return false;
       const parsed = new URL(url, window.location.href);
       return parsed.origin === window.location.origin;
     } catch {
       return false;
     }
+  }
+
+  private _markUnavailableProductContext(): void {
+    this._productContextUnavailableSku = this.config.pageContext?.sku ?? null;
+  }
+
+  private _clearUnavailableProductContext(): void {
+    this._productContextUnavailableSku = null;
+  }
+
+  private _hasUnavailableProductContext(): boolean {
+    const currentSku = this.config.pageContext?.sku;
+    return currentSku !== undefined && currentSku.length > 0 && this._productContextUnavailableSku === currentSku;
+  }
+
+  private _ensureAssistantMessageRendered(msg: ChatMessage): void {
+    const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+    if (bubble || !this._drawer) return;
+    if (msg.role === 'assistant' && msg.threadId && !this._threadsWithFirstBot.has(msg.threadId)) {
+      this._threadsWithFirstBot.add(msg.threadId);
+      this._drawer.addMessage(msg);
+      this._drawer.markFirstBotMessage(msg.id);
+      return;
+    }
+    this._drawer.addMessage(msg);
   }
 
   private async _saveSessionAndOpenURL(url: string): Promise<void> {
@@ -2109,22 +2168,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       onProductClick: (params) => {
         ga.trackProductDetail(params.sku);
-        dispatch('gengage:similar:product-click', {
-          sku: params.sku,
-          url: params.url,
-          sessionId: this.config.session?.sessionId ?? null,
-        });
-
         // Demo mode: load product in-chat via launchSingleProduct (no navigation)
         // Production mode: navigate to product page (chat auto-opens on new page)
-        const isDemoOrCrossOrigin = this.config.isDemoWebsite === true || !this._isSameOriginUrl(params.url);
-        if (isDemoOrCrossOrigin) {
+        const shouldNavigate = this.config.isDemoWebsite !== true && this._isSameOriginUrl(params.url);
+        if (!shouldNavigate) {
           this._sendAction({
             title: params.sku,
             type: 'launchSingleProduct',
             payload: { sku: params.sku },
           });
         } else {
+          dispatch('gengage:similar:product-click', {
+            sku: params.sku,
+            url: params.url,
+            sessionId: this.config.session?.sessionId ?? null,
+          });
           this._saveSessionAndOpenURL(params.url);
         }
       },

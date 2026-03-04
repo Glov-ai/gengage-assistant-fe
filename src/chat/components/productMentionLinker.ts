@@ -19,6 +19,10 @@ export interface ProductMentionLinkerOptions {
   onProductClick: (sku: string) => void;
 }
 
+function isWordChar(char: string | undefined): boolean {
+  return char !== undefined && /[\p{L}\p{N}_]/u.test(char);
+}
+
 /**
  * Walk text nodes in `container` and wrap occurrences of each mention's
  * `short_name` with a clickable `<a>` element.
@@ -49,6 +53,13 @@ export function linkProductMentions(options: ProductMentionLinkerOptions): void 
       const text = node.textContent ?? '';
       const idx = text.toLowerCase().indexOf(lowerName);
       if (idx === -1) {
+        node = walker.nextNode();
+        continue;
+      }
+
+      const prevChar = idx > 0 ? text[idx - 1] : undefined;
+      const nextChar = text[idx + mention.short_name.length];
+      if (isWordChar(prevChar) || isWordChar(nextChar)) {
         node = walker.nextNode();
         continue;
       }

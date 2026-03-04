@@ -42,7 +42,42 @@ describe('renderAIGroupingCards', () => {
     };
     const dom = renderAIGroupingCards(el, makeContext({ onAction }));
     (dom.querySelector('.gengage-chat-grouping-card') as HTMLElement).click();
-    expect(onAction).toHaveBeenCalledWith(action);
+    expect(onAction).toHaveBeenCalledWith({
+      title: 'Banyo',
+      type: 'inputText',
+      payload: { text: 'Banyo', sku: '1', is_suggested_text: 1 },
+    });
+  });
+
+  it('preserves grouping search payload when converting findSimilar cards into search actions', () => {
+    const onAction = vi.fn();
+    const el: UIElement = {
+      type: 'AIGroupingCards',
+      props: {
+        entries: [
+          {
+            name: 'Beyaz Renkli Kurutma Makinesi',
+            action: {
+              title: 'Beyaz Renkli Kurutma Makinesi',
+              type: 'findSimilar',
+              payload: { sku: '7188270150', input: 'Beyaz Model', group_skus: ['7188270150', '7184270120'] },
+            },
+          },
+        ],
+      },
+    };
+    const dom = renderAIGroupingCards(el, makeContext({ onAction }));
+    (dom.querySelector('.gengage-chat-grouping-card') as HTMLElement).click();
+    expect(onAction).toHaveBeenCalledWith({
+      title: 'Beyaz Renkli Kurutma Makinesi',
+      type: 'inputText',
+      payload: {
+        text: 'Beyaz Model',
+        sku: '7188270150',
+        group_skus: ['7188270150', '7184270120'],
+        is_suggested_text: 1,
+      },
+    });
   });
 
   it('handles empty entries', () => {

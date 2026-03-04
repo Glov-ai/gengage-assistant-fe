@@ -118,7 +118,7 @@ interface V1ComparisonTable {
   type: 'comparisonTable';
   payload: {
     multiple_product_details?: V1Product[];
-    table?: Record<string, string[]>;
+    table?: Record<string, string[] | Record<string, unknown>>;
     features_list?: string[];
     product_comparison_framework?: {
       key_differences?: string[];
@@ -610,8 +610,21 @@ function adaptProductDetailsSimilars(event: V1ProductDetailsSimilars): StreamEve
 
 function adaptComparisonTable(event: V1ComparisonTable): StreamEventUISpec {
   const products = event.payload.multiple_product_details ?? [];
-  const framework = event.payload.product_comparison_framework;
+  const payloadRecord = event.payload as Record<string, unknown>;
+  const framework = {
+    key_differences: payloadRecord['key_differences'],
+    recommended_choice: payloadRecord['recommended_choice'],
+    recommended_choice_sku: payloadRecord['recommended_choice_sku'],
+    special_considerations: payloadRecord['special_considerations'],
+    criteria_view: payloadRecord['criteria_view'],
+    criteria_view_short: payloadRecord['criteria_view_short'],
+    compared_field_names: payloadRecord['compared_field_names'],
+    winner_product: payloadRecord['winner_product'],
+    winner_hits: payloadRecord['winner_hits'],
+    ...(event.payload.product_comparison_framework ?? {}),
+  } as NonNullable<V1ComparisonTable['payload']['product_comparison_framework']>;
   const table = event.payload.table;
+  const featuresList = event.payload.features_list;
 
   // Normalize products
   const normalizedProducts: Array<Record<string, unknown>> = [];
@@ -620,18 +633,7 @@ function adaptComparisonTable(event: V1ComparisonTable): StreamEventUISpec {
     normalizedProducts.push(norm as unknown as Record<string, unknown>);
   }
 
-  // Build attributes from table + criteria_view
-  const attributes: Array<{ label: string; values: string[] }> = [];
-  if (table) {
-    const displayNames = framework?.criteria_view ?? framework?.criteria_view_short ?? {};
-    const fieldOrder = framework?.compared_field_names ?? Object.keys(table);
-    for (const fieldName of fieldOrder) {
-      const values = table[fieldName];
-      if (!values || !Array.isArray(values)) continue;
-      const label = displayNames[fieldName] ?? fieldName;
-      attributes.push({ label, values: values.map((v) => (typeof v === 'string' ? v : String(v ?? ''))) });
-    }
-  }
+  const attributes = buildComparisonAttributes(table, normalizedProducts, framework, featuresList);
 
   // Find recommended product
   let recommendedSku: string | undefined;
@@ -656,12 +658,7 @@ function adaptComparisonTable(event: V1ComparisonTable): StreamEventUISpec {
   }
 
   // Extract special cases
-  const specialCases: string[] = [];
-  if (framework?.special_considerations) {
-    for (const sc of framework.special_considerations) {
-      if (typeof sc === 'string') specialCases.push(sc);
-    }
-  }
+  const specialCases = normalizeStringList(framework?.special_considerations);
 
   // Build recommended choice explanation
   const recommendedText = framework?.recommended_choice;
@@ -718,6 +715,82 @@ function adaptComparisonTable(event: V1ComparisonTable): StreamEventUISpec {
     },
     panelHint: 'panel',
   };
+}
+
+function buildComparisonAttributes(
+  table: V1ComparisonTable['payload']['table'],
+  products: Array<Record<string, unknown>>,
+  framework: NonNullable<V1ComparisonTable['payload']['product_comparison_framework']>,
+  featuresList?: string[],
+): Array<{ label: string; values: string[] }> {
+  if (!table) return [];
+
+  const entries = Object.entries(table);
+  if (entries.length === 0) return [];
+
+  const firstValue = entries[0]?.[1];
+  if (Array.isArray(firstValue)) {
+    const displayNames = framework.criteria_view ?? framework.criteria_view_short ?? {};
+    const fieldOrder = framework.compared_field_names ?? Object.keys(table);
+    const attributes: Array<{ label: string; values: string[] }> = [];
+    for (const fieldName of fieldOrder) {
+      const values = table[fieldName];
+      if (!values || !Array.isArray(values)) continue;
+      const label = displayNames[fieldName] ?? fieldName;
+      attributes.push({ label, values: values.map((v) => (typeof v === 'string' ? v : String(v ?? ''))) });
+    }
+    return attributes;
+  }
+
+  const rowMap = table as Record<string, Record<string, unknown>>;
+  const orderedSkus = products.map((product) => String(product['sku'] ?? '')).filter((sku) => sku.length > 0);
+  const displayNames = framework.criteria_view ?? framework.criteria_view_short ?? {};
+  const rawFieldOrder =
+    featuresList && featuresList.length > 0
+      ? featuresList
+      : framework.compared_field_names && framework.compared_field_names.length > 0
+        ? framework.compared_field_names
+        : collectComparisonFields(rowMap);
+
+  const fieldOrder = rawFieldOrder.filter(
+    (field) => field !== 'name' && field !== 'name_short' && !field.endsWith('_short'),
+  );
+  const attributes: Array<{ label: string; values: string[] }> = [];
+
+  for (const fieldName of fieldOrder) {
+    const values = orderedSkus.map((sku) => {
+      const row = rowMap[sku];
+      if (!row || typeof row !== 'object') return '';
+      const shortValue = row[`${fieldName}_short`];
+      const longValue = row[fieldName];
+      return stringifyComparisonValue(shortValue ?? longValue);
+    });
+    if (values.every((value) => value.length === 0)) continue;
+    const label = displayNames[fieldName] ?? fieldName;
+    attributes.push({ label, values });
+  }
+
+  return attributes;
+}
+
+function collectComparisonFields(rowMap: Record<string, Record<string, unknown>>): string[] {
+  const fields: string[] = [];
+  const seen = new Set<string>();
+  for (const row of Object.values(rowMap)) {
+    if (!row || typeof row !== 'object') continue;
+    for (const key of Object.keys(row)) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      fields.push(key);
+    }
+  }
+  return fields;
+}
+
+function stringifyComparisonValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
 }
 
 function adaptContext(event: V1Context): StreamEventMetadata {
@@ -1144,13 +1217,24 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
     const fallbackPayload: Record<string, unknown> = {};
     const text = firstNonEmptyString(search.detailed_user_message);
     if (text) fallbackPayload['text'] = text;
-    if (search.group_skus && Array.isArray(search.group_skus)) fallbackPayload['group_skus'] = search.group_skus;
-    const sku = firstNonEmptyString(search.sku, search.representative_product_sku);
+    const requestDetailsRecord = asRecord(search.requestDetails);
+    const requestPayload = asRecord(requestDetailsRecord?.['payload']);
+    const requestGroupSkus = requestPayload?.['group_skus'];
+    if (search.group_skus && Array.isArray(search.group_skus)) {
+      fallbackPayload['group_skus'] = search.group_skus;
+    } else if (Array.isArray(requestGroupSkus)) {
+      fallbackPayload['group_skus'] = requestGroupSkus.filter((sku): sku is string => typeof sku === 'string');
+    }
+    const sku = firstNonEmptyString(search.sku, search.representative_product_sku, requestPayload?.['sku']);
     if (sku) fallbackPayload['sku'] = sku;
     fallbackPayload['is_suggested_text'] = 1;
 
     const fallbackRequest: V1RequestDetails = { type: 'inputText', payload: fallbackPayload };
-    const action = requestDetailsToAction(search.requestDetails ?? fallbackRequest, shortName);
+    const requestedAction = requestDetailsToAction(search.requestDetails, shortName);
+    const action =
+      requestedAction?.type === 'findSimilar' && typeof fallbackPayload['text'] === 'string'
+        ? requestDetailsToAction(fallbackRequest, shortName)
+        : (requestedAction ?? requestDetailsToAction(fallbackRequest, shortName));
     if (!action) continue;
 
     const entry: Record<string, unknown> = { shortName, action };
@@ -1534,6 +1618,18 @@ function firstNonEmptyString(...values: unknown[]): string | undefined {
 function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+}
+
+function normalizeStringList(value: unknown): string[] {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 }
 
 function toNumber(value: unknown): number | undefined {

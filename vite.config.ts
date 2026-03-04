@@ -18,6 +18,15 @@ export default defineConfig({
       '@gengage/simrel': resolve(__dirname, 'src/simrel/index.ts'),
     },
   },
+  server: {
+    warmup: {
+      clientFiles: ['demos/koctascomtr/index.html', 'src/index.ts', 'src/chat/index.ts', 'src/qna/index.ts', 'src/simrel/index.ts'],
+    },
+  },
+  optimizeDeps: {
+    entries: ['demos/**/*.html', 'src/**/*.ts'],
+    include: ['zod'],
+  },
   build: {
     cssCodeSplit: true,
     lib: {

@@ -91,6 +91,30 @@ describe('global error event dispatch', () => {
     chat.destroy();
   });
 
+  it('short-circuits free-text messages when the current PDP context is unavailable', async () => {
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'test-account',
+      session: { sessionId: 'test-session' },
+      pageContext: { pageType: 'pdp', sku: 'BAD-SKU' },
+      locale: 'tr',
+    });
+
+    (chat as any)._pdpLaunched = true;
+    (chat as any)._productContextUnavailableSku = 'BAD-SKU';
+
+    chat.open();
+    chat.sendMessage('bu urun nedir');
+
+    expect(mockedSendChatMessage).not.toHaveBeenCalled();
+
+    const shadow = (chat as any)._shadow as ShadowRoot | null;
+    const log = shadow?.querySelector('.gengage-chat-messages');
+    expect(log?.textContent).toContain('Bu ürün bilgisi şu an kullanılamıyor.');
+
+    chat.destroy();
+  });
+
   it('dispatches gengage:global:error on qna fetch failure', async () => {
     mockedFetchLauncherActions.mockRejectedValue(new Error('launcher failed'));
 

@@ -395,6 +395,30 @@ describe('adaptV1Event', () => {
     expect(entries![0]!['whyDifferent']).toBe('Daha yuksek performans');
   });
 
+  it('normalizes findSimilar suggested-search actions into inputText search actions when detailed text exists', () => {
+    const searches = adaptV1Event({
+      type: 'aiSuggestedSearches',
+      payload: {
+        suggested_searches: [
+          {
+            short_name: 'Beyaz Renkli Kurutma Makinesi',
+            detailed_user_message: 'Beyaz renkli kurutma makinesi oner',
+            requestDetails: {
+              type: 'findSimilar',
+              payload: { sku: '7188270150', input: 'Beyaz Model', group_skus: ['7188270150'] },
+            },
+          },
+        ],
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+
+    const entries = searches.spec?.elements['root']?.props?.['entries'] as Array<Record<string, unknown>> | undefined;
+    const action = entries?.[0]?.['action'] as { type: string; payload?: Record<string, unknown> } | undefined;
+    expect(action?.type).toBe('inputText');
+    expect(action?.payload?.['text']).toBe('Beyaz renkli kurutma makinesi oner');
+    expect(action?.payload?.['group_skus']).toEqual(['7188270150']);
+  });
+
   it('adapts getGroundingReview to GroundingReviewCard ui_spec', () => {
     const result = adaptV1Event({
       type: 'getGroundingReview',

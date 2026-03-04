@@ -800,8 +800,7 @@ export class ChatDrawer {
 
   /** Whether the panel is currently visible and has rendered content (beyond topbar + thumbnails column). */
   hasPanelContent(): boolean {
-    // The topbar and thumbnails column are always present; actual content starts at childElementCount > 2
-    return this._panelVisible && this._panelEl.childElementCount > 2;
+    return this._panelVisible && this.getPanelContentElement() !== null;
   }
 
   /** Whether panel currently shows loading skeleton blocks. */

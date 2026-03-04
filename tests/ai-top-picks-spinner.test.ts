@@ -29,14 +29,14 @@ function makeSuggestion(productOverrides: Record<string, unknown> = {}) {
 }
 
 describe('AITopPicks per-card spinner', () => {
-  it('CTA click shows spinner overlay on winner card', () => {
+  it('CTA click does not force a sticky spinner state on winner card', () => {
     const el = { type: 'AITopPicks', props: { suggestions: [makeSuggestion()] } };
     const result = renderAITopPicks(el as never, makeCtx());
     const cta = result.querySelector('.gengage-chat-ai-toppick-cta') as HTMLButtonElement;
     const spinner = result.querySelector('.gengage-chat-ai-toppick-spinner') as HTMLElement;
     expect(spinner.style.display).toBe('none');
     cta.click();
-    expect(spinner.style.display).toBe('');
+    expect(spinner.style.display).toBe('none');
   });
 
   it('spinner visible when topPicksLoadingSku matches card SKU', () => {

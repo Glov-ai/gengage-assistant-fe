@@ -203,11 +203,11 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     special.appendChild(summary);
     const list = document.createElement('ul');
     for (const sc of specialCases) {
-      const li = document.createElement('li');
-      li.textContent = sc;
-      list.appendChild(li);
+      appendSpecialCaseListItems(list, sc);
     }
-    special.appendChild(list);
+    if (list.childElementCount > 0) {
+      special.appendChild(list);
+    }
     container.appendChild(special);
   }
 
@@ -301,4 +301,33 @@ function formatKeyDifferences(text: string): string {
   const lines = text.split('\n').filter((l) => l.trim());
   if (lines.length <= 1) return text;
   return '<ul>' + lines.map((l) => `<li>${l.trim()}</li>`).join('') + '</ul>';
+}
+
+function appendSpecialCaseListItems(list: HTMLUListElement, raw: string): void {
+  const sanitized = sanitizeHtml(raw);
+  if (!sanitized) return;
+
+  const template = document.createElement('template');
+  template.innerHTML = sanitized;
+  const nestedItems = Array.from(template.content.querySelectorAll('li'));
+  if (nestedItems.length > 0) {
+    for (const nestedItem of nestedItems) {
+      const li = document.createElement('li');
+      li.innerHTML = sanitizeHtml(nestedItem.innerHTML);
+      list.appendChild(li);
+    }
+    return;
+  }
+
+  const li = document.createElement('li');
+  if (looksLikeHtml(raw)) {
+    li.innerHTML = sanitized;
+  } else {
+    li.textContent = raw;
+  }
+  list.appendChild(li);
+}
+
+function looksLikeHtml(text: string): boolean {
+  return /<\/?[a-z][\s\S]*>/i.test(text);
 }

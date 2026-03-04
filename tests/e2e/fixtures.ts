@@ -120,9 +120,27 @@ export const DEMO_URL = '/demos/koctascomtr/index.html?sku=1000465056';
  * replaces it with the real SKU. Waiting for that swap signals readiness.
  */
 export async function gotoDemoReady(page: Page, url?: string): Promise<void> {
-  await page.goto(url ?? DEMO_URL);
-  // Wait for JS to populate the SKU (replaces "—" placeholder)
-  await page.locator('#dev-sku').filter({ hasNotText: '—' }).waitFor({ state: 'attached', timeout: 30_000 });
+  const target = url ?? DEMO_URL;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt === 0) {
+      await page.goto(target, { waitUntil: 'domcontentloaded' });
+    } else {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+    }
+
+    try {
+      await page.locator('#dev-sku').filter({ hasNotText: '—' }).waitFor({ state: 'visible', timeout: 10_000 });
+      await page.locator('#dev-session').filter({ hasNotText: '—' }).waitFor({ state: 'visible', timeout: 10_000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(1_000);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Demo shell never became ready');
 }
 
 // ---------------------------------------------------------------------------

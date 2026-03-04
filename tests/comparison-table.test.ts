@@ -64,6 +64,24 @@ describe('ComparisonTable', () => {
     expect(details?.querySelectorAll('li').length).toBe(2);
   });
 
+  it('renders special cases HTML as list items instead of raw tags', () => {
+    const el = renderComparisonTable({
+      recommended: { sku: 'ABC', name: 'Rec', price: '99 TL' },
+      products: [],
+      attributes: [],
+      highlights: [],
+      specialCases: [
+        '<ul><li><b>Oda Boyutu:</b> Kucuk odalar icin daha uygun.</li><li><b>Kisisel Tercihler:</b> Daha genis yatak tercih edebilirsiniz.</li></ul>',
+      ],
+      onProductClick: () => {},
+    });
+
+    const items = el.querySelectorAll('details li');
+    expect(items.length).toBe(2);
+    expect(el.querySelector('details')?.textContent).not.toContain('<ul>');
+    expect(items[0]?.textContent).toContain('Oda Boyutu:');
+  });
+
   it('renders heading text', () => {
     const el = renderComparisonTable({
       recommended: { sku: 'ABC', name: 'Rec', price: '99 TL' },

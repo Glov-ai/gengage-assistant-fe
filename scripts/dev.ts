@@ -126,8 +126,18 @@ async function main() {
 
   const server = await createServer({
     root: ROOT,
+    cacheDir: resolve(ROOT, 'node_modules/.vite', `demo-${opts.demo}-${opts.port}`),
     server: {
       port: opts.port,
+      warmup: {
+        clientFiles: [
+          `demos/${opts.demo}/index.html`,
+          'src/index.ts',
+          'src/chat/index.ts',
+          'src/qna/index.ts',
+          'src/simrel/index.ts',
+        ],
+      },
       proxy: {
         '/chat': {
           target: opts.backendUrl,
@@ -144,6 +154,10 @@ async function main() {
       alias: {
         '@gengage/assistant-fe': resolve(ROOT, 'src/index.ts'),
       },
+    },
+    optimizeDeps: {
+      entries: ['demos/**/*.html', 'src/**/*.ts'],
+      include: ['zod'],
     },
   });
 

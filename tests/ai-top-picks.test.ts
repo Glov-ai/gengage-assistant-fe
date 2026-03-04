@@ -133,6 +133,26 @@ describe('renderAITopPicks', () => {
     expect(onAction).toHaveBeenCalledWith(action);
   });
 
+  it('CTA uses product drilldown instead of findSimilar when a SKU is present', () => {
+    const onAction = vi.fn();
+    const onProductClick = vi.fn();
+    const action = { title: 'View', type: 'findSimilar', payload: { sku: '1' } };
+    const el = makeElement([
+      {
+        product: { name: 'Product A', url: 'https://example.com/p/1' },
+        role: 'winner',
+        action,
+      },
+    ]);
+    const ctx = makeContext({ onAction, onProductClick });
+    const dom = renderAITopPicks(el, ctx);
+
+    const cta = dom.querySelector('.gengage-chat-ai-toppick-cta') as HTMLElement;
+    cta.click();
+    expect(onProductClick).toHaveBeenCalledWith({ sku: '1', url: 'https://example.com/p/1' });
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
   it('renders expert quality score', () => {
     const el = makeElement([{ product: { sku: '1', name: 'Product A' }, role: 'winner', expertQualityScore: 8.5 }]);
     const ctx = makeContext();
