@@ -49,6 +49,23 @@ describe('ProductCard', () => {
     expect(card.querySelector('img')?.src).toBe('https://cdn.example.com/img.jpg');
   });
 
+  it('applies chat product-card classes for visual parity', () => {
+    const card = renderProductCard({
+      product: makeProduct({ cartCode: 'CART-1' }),
+      index: 0,
+      onClick: vi.fn(),
+      onAddToCart: vi.fn(),
+      i18n: defaultI18n,
+    });
+
+    expect(card.classList.contains('gengage-chat-product-card')).toBe(true);
+    expect(card.querySelector('.gengage-simrel-card-cta')?.classList.contains('gengage-chat-product-card-cta')).toBe(
+      true,
+    );
+    expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-chat-product-card-atc')).toBe(true);
+    expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-qty-stepper--compact')).toBe(true);
+  });
+
   it('dispatches onClick when card is clicked', () => {
     const onClick = vi.fn();
     const card = renderProductCard({

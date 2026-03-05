@@ -155,7 +155,7 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
     if (typeof sku !== 'string' || typeof cartCode !== 'string') return null;
 
     const button = document.createElement('button');
-    button.className = 'gengage-simrel-atc';
+    button.className = 'gengage-simrel-atc gengage-chat-product-card-cta';
     button.type = 'button';
     const label = element.props?.['label'];
     button.textContent = typeof label === 'string' ? label : context.i18n.addToCartButton;

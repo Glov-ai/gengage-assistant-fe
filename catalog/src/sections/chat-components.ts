@@ -8,11 +8,37 @@ import { renderUISpecWithRegistry } from '@gengage/assistant-fe/common';
 import { createDefaultChatUISpecRegistry } from '@gengage/assistant-fe/chat';
 import { CHAT_SPECS } from '../mock-data/chat-specs.js';
 import { createNoopChatContext, setCurrentConsole } from '../utils/noop-context.js';
+import { getThemeOverride } from '../layout.js';
+import { getMerchantConfig } from '../merchant-configs.js';
 
 export const CHAT_COMPONENT_NAMES = Object.keys(CHAT_SPECS);
 
 /** Components that render in the side panel (not the message stream). */
 const PANEL_COMPONENTS = new Set(['ProductDetailsPanel']);
+
+function applyFrameAvatarContent(avatar: HTMLElement): void {
+  const merchantId = getThemeOverride();
+  const merchantConfig = merchantId ? getMerchantConfig(merchantId) : undefined;
+  const avatarUrl = merchantConfig?.chatHeaderAvatarUrl;
+
+  avatar.replaceChildren();
+  if (avatarUrl) {
+    const img = document.createElement('img');
+    img.src = avatarUrl;
+    img.alt = merchantConfig?.chatI18n?.headerTitle ?? merchantConfig?.chatI18n?.poweredBy ?? 'Assistant';
+    avatar.appendChild(img);
+    return;
+  }
+
+  avatar.textContent = '🤖';
+}
+
+function createFrameAvatar(): HTMLElement {
+  const avatar = document.createElement('div');
+  avatar.className = 'catalog-chat-frame-avatar';
+  applyFrameAvatarContent(avatar);
+  return avatar;
+}
 
 export function renderChatComponent(container: HTMLElement, name: string): void {
   const entry = CHAT_SPECS[name];
@@ -67,7 +93,6 @@ export function renderChatComponent(container: HTMLElement, name: string): void 
   } else {
     preview.appendChild(buildChatFrame(componentDom));
   }
-
   card.appendChild(preview);
 
   // Mini console for action logs
@@ -88,6 +113,26 @@ export function renderChatComponent(container: HTMLElement, name: string): void 
   card.appendChild(source);
 
   container.appendChild(card);
+
+  // Keep avatar preview aligned with live theme dropdown changes.
+  const refreshFrameAvatars = () => {
+    const avatars = card.querySelectorAll('.catalog-chat-frame-avatar');
+    for (const avatar of avatars) {
+      applyFrameAvatarContent(avatar as HTMLElement);
+    }
+  };
+  const onThemeChange = () => refreshFrameAvatars();
+  window.addEventListener('catalog:theme-change', onThemeChange);
+
+  // Cleanup event listeners when this preview card is removed by route navigation.
+  const observerRoot = container.parentElement ?? container;
+  const observer = new MutationObserver(() => {
+    if (!card.isConnected) {
+      window.removeEventListener('catalog:theme-change', onThemeChange);
+      observer.disconnect();
+    }
+  });
+  observer.observe(observerRoot, { childList: true, subtree: true });
 }
 
 /** Builds a chat-drawer-like frame with header + message area. */
@@ -99,9 +144,7 @@ function buildChatFrame(componentDom: HTMLElement): HTMLElement {
   const hdr = document.createElement('div');
   hdr.className = 'catalog-chat-frame-header';
 
-  const avatar = document.createElement('div');
-  avatar.className = 'catalog-chat-frame-avatar';
-  avatar.textContent = '🤖';
+  const avatar = createFrameAvatar();
   hdr.appendChild(avatar);
 
   const info = document.createElement('div');
@@ -153,9 +196,7 @@ function buildPanelFrame(componentDom: HTMLElement): HTMLElement {
 
   const hdr = document.createElement('div');
   hdr.className = 'catalog-panel-frame-chat-header';
-  const avatar = document.createElement('div');
-  avatar.className = 'catalog-chat-frame-avatar';
-  avatar.textContent = '🤖';
+  const avatar = createFrameAvatar();
   hdr.appendChild(avatar);
   const title = document.createElement('div');
   title.style.cssText = 'font-size:14px;font-weight:700';

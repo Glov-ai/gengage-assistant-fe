@@ -13,6 +13,21 @@ function createDrawer() {
   return { container, drawer };
 }
 
+function createTouchEvent(type: string, clientX: number, clientY: number): Event {
+  const event = new Event(type, { bubbles: true });
+  Object.defineProperty(event, 'changedTouches', {
+    value: [{ clientX, clientY }],
+  });
+  return event;
+}
+
+function setViewportWidth(width: number): void {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    value: width,
+  });
+}
+
 describe('ChatDrawer panel collapse/expand', () => {
   let container: HTMLElement;
   let drawer: ChatDrawer;
@@ -88,6 +103,22 @@ describe('ChatDrawer panel collapse/expand', () => {
     const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
     expect(divider.classList.contains('gengage-chat-panel-divider--hidden')).toBe(true);
   });
+
+  it('clearPanel keeps collapsed preference for the next panel render', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+    drawer.togglePanel();
+    expect(drawer.isPanelCollapsed()).toBe(true);
+
+    drawer.clearPanel();
+
+    const nextContent = document.createElement('div');
+    drawer.setPanelContent(nextContent);
+    const panel = container.querySelector('.gengage-chat-panel');
+
+    expect(drawer.isPanelCollapsed()).toBe(true);
+    expect(panel?.classList.contains('gengage-chat-panel--collapsed')).toBe(true);
+  });
 });
 
 describe('Panel sessionStorage persistence', () => {
@@ -137,7 +168,7 @@ describe('Panel sessionStorage persistence', () => {
   });
 });
 
-describe('Panel force-expanded mode', () => {
+describe('Panel expanded-start mode', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -151,23 +182,23 @@ describe('Panel force-expanded mode', () => {
     container.remove();
   });
 
-  it('togglePanel is a no-op in force-expanded mode', () => {
+  it('togglePanel can still collapse after setForceExpanded', () => {
     const { drawer, container } = createDrawer();
     drawer.setForceExpanded();
     drawer.togglePanel();
 
-    expect(drawer.isPanelCollapsed()).toBe(false);
+    expect(drawer.isPanelCollapsed()).toBe(true);
     container.remove();
   });
 
-  it('setPanelCollapsed is a no-op in force-expanded mode', () => {
+  it('setPanelCollapsed(true) works after setForceExpanded', () => {
     const { drawer, container } = createDrawer();
     drawer.setForceExpanded();
     drawer.setPanelCollapsed(true);
 
-    expect(drawer.isPanelCollapsed()).toBe(false);
+    expect(drawer.isPanelCollapsed()).toBe(true);
     const panel = container.querySelector('.gengage-chat-panel');
-    expect(panel?.classList.contains('gengage-chat-panel--collapsed')).toBe(false);
+    expect(panel?.classList.contains('gengage-chat-panel--collapsed')).toBe(true);
     container.remove();
   });
 
@@ -183,12 +214,86 @@ describe('Panel force-expanded mode', () => {
     container.remove();
   });
 
-  it('divider toggle is hidden in force-expanded mode', () => {
+  it('divider toggle remains visible in expanded-start mode', () => {
     const { drawer, container } = createDrawer();
     drawer.setForceExpanded();
 
     const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
-    expect(divider.classList.contains('gengage-chat-panel-divider--hidden')).toBe(true);
+    expect(divider.classList.contains('gengage-chat-panel-divider--hidden')).toBe(false);
+    container.remove();
+  });
+});
+
+describe('Panel mobile swipe gestures', () => {
+  const originalInnerWidth = window.innerWidth;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    sessionStorage.clear();
+    setViewportWidth(390);
+  });
+
+  afterEach(() => {
+    setViewportWidth(originalInnerWidth);
+  });
+
+  it('swipe up on divider collapses an expanded panel', () => {
+    const { drawer, container } = createDrawer();
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    divider.dispatchEvent(createTouchEvent('touchstart', 120, 220));
+    divider.dispatchEvent(createTouchEvent('touchend', 124, 140));
+
+    expect(drawer.isPanelCollapsed()).toBe(true);
+    container.remove();
+  });
+
+  it('swipe down on divider expands a collapsed panel', () => {
+    const { drawer, container } = createDrawer();
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+    drawer.togglePanel();
+    expect(drawer.isPanelCollapsed()).toBe(true);
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    divider.dispatchEvent(createTouchEvent('touchstart', 120, 140));
+    divider.dispatchEvent(createTouchEvent('touchend', 124, 220));
+
+    expect(drawer.isPanelCollapsed()).toBe(false);
+    container.remove();
+  });
+
+  it('ignores horizontal swipe gestures on divider', () => {
+    const { drawer, container } = createDrawer();
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    divider.dispatchEvent(createTouchEvent('touchstart', 100, 180));
+    divider.dispatchEvent(createTouchEvent('touchend', 180, 185));
+
+    expect(drawer.isPanelCollapsed()).toBe(false);
+    container.remove();
+  });
+
+  it('ignores the first click after a swipe toggle to avoid accidental bounce', () => {
+    const { drawer, container } = createDrawer();
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    divider.dispatchEvent(createTouchEvent('touchstart', 120, 220));
+    divider.dispatchEvent(createTouchEvent('touchend', 120, 140));
+    expect(drawer.isPanelCollapsed()).toBe(true);
+
+    const toggle = container.querySelector('.gengage-chat-panel-divider-toggle') as HTMLButtonElement;
+    toggle.click();
+    expect(drawer.isPanelCollapsed()).toBe(true);
+
+    toggle.click();
+    expect(drawer.isPanelCollapsed()).toBe(false);
     container.remove();
   });
 });

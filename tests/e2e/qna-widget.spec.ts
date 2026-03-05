@@ -45,6 +45,14 @@ test.describe('QNA widget', () => {
     expect(text).toBeTruthy();
   });
 
+  test('QNA text input and send button are rendered', async ({ page }) => {
+    const input = page.locator('#koctas-qna-section .gengage-qna-input');
+    await expect(input).toBeVisible({ timeout: 10000 });
+
+    const send = page.locator('#koctas-qna-section .gengage-qna-send');
+    await expect(send).toBeVisible({ timeout: 10000 });
+  });
+
   test('QNA has button group with accessible role', async ({ page }) => {
     const buttonGroup = page.locator('.gengage-qna-buttons[role="group"]');
     await expect(buttonGroup).toBeAttached({ timeout: 10000 });

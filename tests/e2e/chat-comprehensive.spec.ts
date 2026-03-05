@@ -120,8 +120,8 @@ test.describe('Chat widget — drawer structure', () => {
   });
 
   test('conversation pane width is approximately 400px on desktop', async ({ page }) => {
-    // The drawer uses force-expanded panel mode by default, so the overall drawer
-    // width is wider than the conversation column. Test the conversation pane
+    // The drawer can include a side panel, so the overall drawer may be wider
+    // than the conversation column. Validate the conversation pane itself,
     // which is the ~400px element (--gengage-chat-conversation-width: 396px).
     const conversation = page.locator('.gengage-chat-conversation');
     await expect(conversation).toBeVisible({ timeout: 5000 });

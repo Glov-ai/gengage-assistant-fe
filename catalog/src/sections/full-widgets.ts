@@ -4,6 +4,9 @@
 
 import { installMockBackend } from '../utils/mock-backend.js';
 
+type DestroyableWidget = { destroy: () => void };
+type QnaBridgeAction = { title: string; type: string; payload?: unknown };
+
 export function renderFullWidgets(container: HTMLElement): void {
   const h2 = document.createElement('h2');
   h2.textContent = 'Full Widgets (Mock Backend)';
@@ -60,23 +63,47 @@ export function renderFullWidgets(container: HTMLElement): void {
 
   // Install mock backend and init widgets
   const restoreFetch = installMockBackend();
+  const widgets: Array<DestroyableWidget> = [];
+  const routeCleanups: Array<() => void> = [];
+  let cleanedUp = false;
 
-  void initWidgets().catch((err) => {
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    restoreFetch();
+    for (const fn of routeCleanups) {
+      try {
+        fn();
+      } catch (err) {
+        console.warn('[catalog] Route cleanup failed:', err);
+      }
+    }
+    for (const widget of widgets) {
+      try {
+        widget.destroy();
+      } catch (err) {
+        console.warn('[catalog] Widget destroy failed:', err);
+      }
+    }
+    observer.disconnect();
+  };
+
+  void initWidgets(widgets, routeCleanups).catch((err) => {
     console.error('[catalog] Widget init error:', err);
   });
 
   // Cleanup when navigating away — observe container removal
   const observer = new MutationObserver(() => {
     if (!document.getElementById('catalog-chat-mount')) {
-      restoreFetch();
-      observer.disconnect();
+      cleanup();
     }
   });
   observer.observe(container.parentElement ?? document.body, { childList: true, subtree: true });
 }
 
-async function initWidgets(): Promise<void> {
+async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Array<() => void>): Promise<void> {
   // Dynamic imports so these only load when the section is visited
+  const { GengageChat } = await import('@gengage/assistant-fe/chat');
   const { GengageQNA } = await import('@gengage/assistant-fe/qna');
   const { GengageSimRel } = await import('@gengage/assistant-fe/simrel');
 
@@ -92,6 +119,33 @@ async function initWidgets(): Promise<void> {
     },
   };
 
+  let chatApi:
+    | {
+        open: () => void;
+        openWithAction: (action: QnaBridgeAction) => void;
+      }
+    | null = null;
+
+  // Init Chat (floating launcher + drawer)
+  try {
+    const chat = new GengageChat();
+    await chat.init({
+      ...baseConfig,
+      locale: 'tr',
+      variant: 'floating',
+      i18n: {
+        headerTitle: 'Ürün Uzmanı',
+        inputPlaceholder: 'Ürün ara, soru sor',
+      },
+    });
+    chatApi = chat;
+    widgets.push(chat);
+  } catch (err) {
+    console.warn('[catalog] Chat init failed:', err);
+    const mount = document.getElementById('catalog-chat-mount');
+    if (mount) mount.textContent = `Chat init error: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
   // Init QNA
   try {
     const qna = new GengageQNA();
@@ -99,10 +153,27 @@ async function initWidgets(): Promise<void> {
       ...baseConfig,
       mountTarget: '#catalog-qna-mount',
     });
+    widgets.push(qna);
   } catch (err) {
     console.warn('[catalog] QNA init failed:', err);
     const mount = document.getElementById('catalog-qna-mount');
     if (mount) mount.textContent = `QNA init error: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  // Wire QNA → Chat bridge for full widget interaction parity with demos.
+  if (chatApi) {
+    const onQnaAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<QnaBridgeAction>).detail;
+      if (!detail) return;
+      chatApi?.openWithAction(detail);
+    };
+    const onQnaOpenChat = () => chatApi?.open();
+    window.addEventListener('gengage:qna:action', onQnaAction);
+    window.addEventListener('gengage:qna:open-chat', onQnaOpenChat);
+    routeCleanups.push(() => {
+      window.removeEventListener('gengage:qna:action', onQnaAction);
+      window.removeEventListener('gengage:qna:open-chat', onQnaOpenChat);
+    });
   }
 
   // Init SimRel
@@ -113,20 +184,21 @@ async function initWidgets(): Promise<void> {
       sku: 'DRILL-001',
       mountTarget: '#catalog-simrel-mount',
     });
+    widgets.push(simrel);
   } catch (err) {
     console.warn('[catalog] SimRel init failed:', err);
     const mount = document.getElementById('catalog-simrel-mount');
     if (mount) mount.textContent = `SimRel init error: ${err instanceof Error ? err.message : String(err)}`;
   }
 
-  // Chat widget — show a placeholder since Chat uses Shadow DOM and needs
-  // a floating launcher pattern that doesn't fit neatly into a column.
+  // Chat uses a floating launcher pattern, so we keep explanatory text in-column.
   const chatMount = document.getElementById('catalog-chat-mount');
   if (chatMount) {
     const info = document.createElement('div');
     info.style.cssText = 'padding: 20px; color: #666; font-size: 13px; text-align: center;';
-    info.innerHTML = '<p>Chat widget uses Shadow DOM with a floating launcher.<br>It renders as an overlay on the host page.</p>' +
-      '<p style="margin-top: 12px;">Use <code>npm run dev -- koctascomtr</code> for a full Chat experience.</p>';
+    info.innerHTML =
+      '<p>Chat widget is active in this preview.</p>' +
+      '<p style="margin-top: 8px;">Use the floating launcher at the bottom-right to open it.</p>';
     chatMount.appendChild(info);
   }
 }

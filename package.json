@@ -61,9 +61,15 @@
       "import": "./dist/common.js",
       "require": "./dist/common.cjs"
     },
+    "./native": {
+      "types": "./dist/native/index.d.ts",
+      "import": "./dist/native.js",
+      "require": "./dist/native.cjs"
+    },
     "./chat.iife": "./dist/chat.iife.js",
     "./qna.iife": "./dist/qna.iife.js",
     "./simrel.iife": "./dist/simrel.iife.js",
+    "./native.iife": "./dist/native.iife.js",
     "./qna/style.css": "./dist/qna.css",
     "./simrel/style.css": "./dist/simrel.css"
   },
@@ -77,7 +83,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\" && eslint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.ts\" && eslint src --fix && npm run typecheck",
     "test": "vitest run",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:fullstack": "playwright test --project=full-stack",

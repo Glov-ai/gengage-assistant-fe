@@ -3,22 +3,87 @@
  * All callbacks log to console (visible in devtools).
  */
 
+import type { ActionPayload } from '@gengage/assistant-fe/common';
+import type { ChatUISpecRenderContext, ProductSortState } from '@gengage/assistant-fe/chat';
+import type { QNAUISpecRenderContext } from '@gengage/assistant-fe/qna';
+import type { SimRelUISpecRenderContext, SimilarProduct } from '@gengage/assistant-fe/simrel';
+
 /** Noop chat context — logs all actions to console. */
-export function createNoopChatContext(): Record<string, unknown> {
+export function createNoopChatContext(): ChatUISpecRenderContext {
+  const i18n = {
+    headerTitle: 'Urun Uzmani',
+    inputPlaceholder: 'Urun ara, soru sor',
+    sendButton: 'Gonder',
+    closeButton: 'Kapat',
+    openButton: 'Sohbeti ac',
+    newChatButton: 'Yeni sohbet',
+    poweredBy: 'Powered by Gengage',
+    errorMessage: 'Bir hata olustu. Lutfen tekrar deneyin.',
+    retryButton: 'Tekrar Dene',
+    loadingMessage: 'Dusunuyorum...',
+    productCtaLabel: 'Incele',
+    attachImageButton: 'Resim ekle',
+    removeAttachmentButton: 'Resmi kaldir',
+    invalidFileType: 'Sadece JPEG, PNG ve WebP dosyalari destekleniyor.',
+    fileTooLarge: "Dosya boyutu 5 MB'dan kucuk olmalidir.",
+    aiTopPicksTitle: 'Sizin Icin En Iyiler',
+    roleWinner: 'En Begedigim',
+    roleBestValue: 'En Uygun Fiyatli',
+    roleBestAlternative: 'En Iyi Alternatif',
+    viewDetails: 'Detaylari Gor',
+    groundingReviewCta: 'Yorumlari Oku',
+    groundingReviewSubtitle: '{count} yorum mevcut',
+    variantsLabel: 'Varyantlar',
+    sortRelated: 'Onerilen',
+    sortPriceAsc: 'Fiyat \u2191',
+    sortPriceDesc: 'Fiyat \u2193',
+    compareSelected: 'Karsilastir',
+    panelTitleProductDetails: 'Urun Detayi',
+    panelTitleSimilarProducts: 'Benzer Urunler',
+    panelTitleComparisonResults: 'Karsilastirma Sonuclari',
+    panelTitleCategories: 'Kategoriler',
+    panelTitleSearchResults: 'Arama Sonuclari',
+    inStockLabel: 'Stokta',
+    outOfStockLabel: 'Tukendi',
+    findSimilarLabel: 'Benzerlerini Bul',
+    choicePrompterHeading: 'Kararsiz mi kaldin?',
+    choicePrompterSuggestion: 'Urunleri secip karsilastirabilirsin',
+    choicePrompterCta: 'Sec ve Karsilastir',
+    viewMoreLabel: 'Daha Fazla Goster',
+    similarProductsLabel: 'Benzer Urunler',
+    addToCartButton: 'Sepete Ekle',
+    shareButton: 'Paylas',
+    productInfoTab: 'Urun Bilgileri',
+    specificationsTab: 'Teknik Ozellikler',
+    recommendedChoiceLabel: 'Onerilen Secim',
+    highlightsLabel: 'One Cikan Ozellikler',
+    keyDifferencesLabel: 'Temel Farklar',
+    specialCasesLabel: 'Ozel Durumlar Icin',
+    emptyReviewsMessage: 'Yorum ozeti bulunamadi.',
+    closeAriaLabel: 'Kapat',
+    startChatLabel: 'Sohbete Basla',
+    voiceButton: 'Sesli giris',
+    voiceListening: 'Dinleniyor...',
+    voiceNotSupported: 'Sesli giris bu tarayicida desteklenmiyor.',
+    voicePermissionDenied: 'Mikrofon erisimi reddedildi.',
+    voiceError: 'Sesli giris hatasi.',
+    handoffHeading: 'Destek temsilcisine aktariliyor',
+  };
+
   return {
-    onAction: (action: unknown) => {
+    onAction: (action: ActionPayload) => {
       console.log('[catalog] onAction:', action);
       appendToMiniConsole(`onAction: ${JSON.stringify(action)}`);
     },
-    onProductClick: (params: unknown) => {
+    onProductClick: (params: { sku: string; url: string }) => {
       console.log('[catalog] onProductClick:', params);
       appendToMiniConsole(`onProductClick: ${JSON.stringify(params)}`);
     },
-    onAddToCart: (params: unknown) => {
+    onAddToCart: (params: { sku: string; cartCode: string; quantity: number }) => {
       console.log('[catalog] onAddToCart:', params);
       appendToMiniConsole(`onAddToCart: ${JSON.stringify(params)}`);
     },
-    onProductSelect: (product: unknown) => {
+    onProductSelect: (product: Record<string, unknown>) => {
       console.log('[catalog] onProductSelect:', product);
       appendToMiniConsole(`onProductSelect: ${JSON.stringify(product)}`);
     },
@@ -28,75 +93,18 @@ export function createNoopChatContext(): Record<string, unknown> {
       thousandsSeparator: '.',
       decimalSeparator: ',',
     },
-    i18n: {
-      headerTitle: 'Urun Uzmani',
-      inputPlaceholder: 'Urun ara, soru sor',
-      sendButton: 'Gonder',
-      closeButton: 'Kapat',
-      openButton: 'Sohbeti ac',
-      newChatButton: 'Yeni sohbet',
-      poweredBy: 'Powered by Gengage',
-      errorMessage: 'Bir hata olustu. Lutfen tekrar deneyin.',
-      retryButton: 'Tekrar Dene',
-      loadingMessage: 'Dusunuyorum...',
-      productCtaLabel: 'Incele',
-      attachImageButton: 'Resim ekle',
-      removeAttachmentButton: 'Resmi kaldir',
-      invalidFileType: 'Sadece JPEG, PNG ve WebP dosyalari destekleniyor.',
-      fileTooLarge: 'Dosya boyutu 5 MB\'dan kucuk olmalidir.',
-      aiTopPicksTitle: 'Sizin Icin En Iyiler',
-      roleWinner: 'En Begedigim',
-      roleBestValue: 'En Uygun Fiyatli',
-      roleBestAlternative: 'En Iyi Alternatif',
-      viewDetails: 'Detaylari Gor',
-      groundingReviewCta: 'Yorumlari Oku',
-      groundingReviewSubtitle: '{count} yorum mevcut',
-      variantsLabel: 'Varyantlar',
-      sortRelated: 'Onerilen',
-      sortPriceAsc: 'Fiyat \u2191',
-      sortPriceDesc: 'Fiyat \u2193',
-      compareSelected: 'Karsilastir',
-      panelTitleProductDetails: 'Urun Detayi',
-      panelTitleSimilarProducts: 'Benzer Urunler',
-      panelTitleComparisonResults: 'Karsilastirma Sonuclari',
-      panelTitleCategories: 'Kategoriler',
-      inStockLabel: 'Stokta',
-      outOfStockLabel: 'Tukendi',
-      findSimilarLabel: 'Benzerlerini Bul',
-      choicePrompterHeading: 'Kararsiz mi kaldin?',
-      choicePrompterSuggestion: 'Urunleri secip karsilastirabilirsin',
-      choicePrompterCta: 'Sec ve Karsilastir',
-      viewMoreLabel: 'Daha Fazla Goster',
-      similarProductsLabel: 'Benzer Urunler',
-      addToCartButton: 'Sepete Ekle',
-      shareButton: 'Paylas',
-      productInfoTab: 'Urun Bilgileri',
-      specificationsTab: 'Teknik Ozellikler',
-      recommendedChoiceLabel: 'Onerilen Secim',
-      highlightsLabel: 'One Cikan Ozellikler',
-      keyDifferencesLabel: 'Temel Farklar',
-      specialCasesLabel: 'Ozel Durumlar Icin',
-      emptyReviewsMessage: 'Yorum ozeti bulunamadi.',
-      closeAriaLabel: 'Kapat',
-      startChatLabel: 'Sohbete Basla',
-      voiceButton: 'Sesli giris',
-      voiceListening: 'Dinleniyor...',
-      voiceNotSupported: 'Sesli giris bu tarayicida desteklenmiyor.',
-      voicePermissionDenied: 'Mikrofon erisimi reddedildi.',
-      voiceError: 'Sesli giris hatasi.',
-      handoffHeading: 'Destek temsilcisine aktariliyor',
-    },
+    i18n: i18n as unknown as ChatUISpecRenderContext['i18n'],
     productSort: { type: 'related' as const },
-    onSortChange: (sort: unknown) => {
+    onSortChange: (sort: ProductSortState) => {
       console.log('[catalog] onSortChange:', sort);
     },
   };
 }
 
 /** Noop QNA context. */
-export function createNoopQnaContext(): Record<string, unknown> {
+export function createNoopQnaContext(): QNAUISpecRenderContext {
   return {
-    onAction: (action: unknown) => {
+    onAction: (action: ActionPayload) => {
       console.log('[catalog] qna onAction:', action);
       appendToMiniConsole(`qna onAction: ${JSON.stringify(action)}`);
     },
@@ -116,17 +124,17 @@ export function createNoopQnaContext(): Record<string, unknown> {
 }
 
 /** Noop SimRel context. */
-export function createNoopSimrelContext(): Record<string, unknown> {
+export function createNoopSimrelContext(): SimRelUISpecRenderContext {
   return {
-    onClick: (product: unknown) => {
+    onClick: (product: SimilarProduct) => {
       console.log('[catalog] simrel onClick:', product);
       appendToMiniConsole(`simrel onClick: ${JSON.stringify(product)}`);
     },
-    onAddToCart: (params: unknown) => {
+    onAddToCart: (params: { sku: string; quantity: number; cartCode: string }) => {
       console.log('[catalog] simrel onAddToCart:', params);
       appendToMiniConsole(`simrel onAddToCart: ${JSON.stringify(params)}`);
     },
-    onAction: (action: unknown) => {
+    onAction: (action: ActionPayload) => {
       console.log('[catalog] simrel onAction:', action);
       appendToMiniConsole(`simrel onAction: ${JSON.stringify(action)}`);
     },

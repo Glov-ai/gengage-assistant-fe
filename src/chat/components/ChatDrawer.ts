@@ -61,7 +61,6 @@ export class ChatDrawer {
   private _panelEl: HTMLElement;
   private _panelVisible = false;
   private _panelCollapsed = false;
-  private _panelForceExpanded = false;
   private _dividerEl: HTMLElement;
   private _onPanelToggle: (() => void) | undefined = undefined;
   private _pendingAttachment: File | null = null;
@@ -84,6 +83,7 @@ export class ChatDrawer {
   private _micBtn: HTMLButtonElement | null = null;
   private _voiceEnabled = false;
   private _voiceLang = 'tr-TR';
+  private _ignoreNextDividerClick = false;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
@@ -220,9 +220,51 @@ export class ChatDrawer {
     chevron.setAttribute('aria-label', 'Toggle panel');
     chevron.textContent = '\u00BB'; // » (collapse right)
     chevron.addEventListener('click', () => {
+      if (this._ignoreNextDividerClick) {
+        this._ignoreNextDividerClick = false;
+        return;
+      }
       this.togglePanel();
       this._onPanelToggle?.();
     });
+    let touchStartX: number | null = null;
+    let touchStartY: number | null = null;
+    const swipeThreshold = 24;
+    this._dividerEl.addEventListener(
+      'touchstart',
+      (event) => {
+        if (window.innerWidth > 768) return;
+        const touch = event.changedTouches?.[0];
+        if (!touch) return;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      },
+      { passive: true },
+    );
+    this._dividerEl.addEventListener(
+      'touchend',
+      (event) => {
+        if (window.innerWidth > 768) return;
+        if (touchStartX === null || touchStartY === null) return;
+        const touch = event.changedTouches?.[0];
+        if (!touch) return;
+
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        touchStartX = null;
+        touchStartY = null;
+
+        // Vertical swipe only. Swipe up collapses panel, swipe down expands.
+        if (Math.abs(deltaY) < swipeThreshold || Math.abs(deltaY) < Math.abs(deltaX)) return;
+        const nextCollapsed = deltaY < 0;
+        if (nextCollapsed === this._panelCollapsed) return;
+
+        this._ignoreNextDividerClick = true;
+        this.setPanelCollapsed(nextCollapsed);
+        this._onPanelToggle?.();
+      },
+      { passive: true },
+    );
     this._dividerEl.appendChild(chevron);
     body.appendChild(this._dividerEl);
 
@@ -756,9 +798,7 @@ export class ChatDrawer {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
-    if (!this._panelForceExpanded) {
-      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
-    }
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -772,9 +812,7 @@ export class ChatDrawer {
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
     this._panelEl.appendChild(el);
-    if (!this._panelForceExpanded) {
-      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
-    }
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -810,9 +848,7 @@ export class ChatDrawer {
 
   /** Show loading skeleton in the panel. Variant depends on contentType hint. */
   showPanelLoading(contentType?: string): void {
-    if (!this._panelForceExpanded) {
-      this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
-    }
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     const skeleton = document.createElement('div');
@@ -881,12 +917,12 @@ export class ChatDrawer {
    * Hide the panel and clear its content. Always hides — even in force-expanded mode.
    * Callers: _hideDrawer (stale panel cleanup), stream onDone (loading skeleton cleanup),
    * thread navigation (no snapshot to restore). All require full hide.
+   * Keeps `_panelCollapsed` untouched so user collapse preference survives future panel renders.
    */
   clearPanel(): void {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelVisible = false;
-    this._panelCollapsed = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
@@ -903,9 +939,11 @@ export class ChatDrawer {
     }
   }
 
-  /** Force the panel to stay expanded (panelMode: 'expanded'). Hides the divider toggle. */
+  /**
+   * Ensure the panel starts expanded (panelMode: 'expanded').
+   * Users can still collapse/expand via the divider chevron.
+   */
   setForceExpanded(): void {
-    this._panelForceExpanded = true;
     this._panelCollapsed = false;
     this._panelEl.classList.remove('gengage-chat-panel--collapsed');
     // Show panel immediately even if empty
@@ -914,13 +952,11 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--visible');
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
-    // Hide divider toggle — user cannot collapse
-    this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+    this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
   }
 
   /** Toggle panel between collapsed and expanded. */
   togglePanel(): void {
-    if (this._panelForceExpanded) return;
     this.setPanelCollapsed(!this._panelCollapsed);
   }
 
@@ -931,7 +967,6 @@ export class ChatDrawer {
 
   /** Programmatically set panel collapsed state. */
   setPanelCollapsed(collapsed: boolean): void {
-    if (this._panelForceExpanded) return;
     this._panelCollapsed = collapsed;
     if (collapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
@@ -958,16 +993,18 @@ export class ChatDrawer {
     }
   }
 
-  /** Restore panel collapsed state from sessionStorage. */
-  restorePanelState(accountId: string): void {
+  /** Restore panel collapsed state from sessionStorage. Returns true when restored as collapsed. */
+  restorePanelState(accountId: string): boolean {
     try {
       const key = `gengage:panel:${accountId}`;
       if (sessionStorage.getItem(key) === 'collapsed') {
         this._panelCollapsed = true;
+        return true;
       }
     } catch {
       // sessionStorage may be unavailable in restricted environments
     }
+    return false;
   }
 
   /** Re-render thinking steps inside the existing typing indicator container. */

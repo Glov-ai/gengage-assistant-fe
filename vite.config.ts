@@ -11,6 +11,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      '@gengage/assistant-fe/native': resolve(__dirname, 'src/native/index.ts'),
       '@gengage/assistant-fe': resolve(__dirname, 'src/index.ts'),
       '@gengage/common': resolve(__dirname, 'src/common/index.ts'),
       '@gengage/chat': resolve(__dirname, 'src/chat/index.ts'),
@@ -37,6 +38,7 @@ export default defineConfig({
         qna: resolve(__dirname, 'src/qna/index.ts'),
         simrel: resolve(__dirname, 'src/simrel/index.ts'),
         common: resolve(__dirname, 'src/common/index.ts'),
+        native: resolve(__dirname, 'src/native/index.ts'),
       },
       formats: ['es', 'cjs'],
     },

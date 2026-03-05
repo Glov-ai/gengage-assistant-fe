@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <link rel="icon" href="data:," />
   <title>Gengage Native Overlay</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -28,12 +29,9 @@
   <div id="gengage-qna"></div>
   <div id="gengage-simrel"></div>
 
-  <!-- Step 1: Load native bridge synchronously (before widgets) -->
-  <script src="native-bridge.js"></script>
-
-  <!-- Step 2: Initialize widgets -->
+  <!-- Initialize widgets -->
   <script type="module">
-    import { initOverlayWidgets } from '@gengage/assistant-fe';
+    import { initNativeOverlayWidgets, applyNativeSession, createNativeWebViewBridge } from '@gengage/assistant-fe/native';
 
     // Config source priority:
     // 1. window.gengageNativeConfig (injected by native app via WKUserScript / evaluateJavascript)
@@ -48,17 +46,18 @@
     var sku = nativeConfig.sku || params.get('sku') || undefined;
     var locale = nativeConfig.locale || params.get('locale') || 'tr';
     var pageType = nativeConfig.pageType || params.get('pageType') || (sku ? 'pdp' : 'other');
+    var bridge = createNativeWebViewBridge();
 
     // Apply native-injected session before widget init
     if (nativeConfig.sessionId) {
-      window.gengageNative.receive({ type: 'setSession', payload: { sessionId: nativeConfig.sessionId } });
+      applyNativeSession({ sessionId: nativeConfig.sessionId });
     }
     if (nativeConfig.userId) {
-      window.gengageNative.receive({ type: 'setSession', payload: { userId: nativeConfig.userId } });
+      applyNativeSession({ userId: nativeConfig.userId });
     }
 
     try {
-      var controller = await initOverlayWidgets({
+      await initNativeOverlayWidgets({
         accountId: accountId,
         middlewareUrl: middlewareUrl,
         locale: locale,
@@ -68,33 +67,9 @@
           variant: 'floating',
           mobileInitialState: nativeConfig.mobileInitialState || 'full',
         },
-        onAddToCart: function (params) {
-          window.gengageNative.sendToNative('addToCart', {
-            sku: params.sku,
-            quantity: params.quantity,
-            cartCode: params.cartCode,
-          });
-        },
-        onProductNavigate: function (url, prodSku, sessionId) {
-          window.gengageNative.sendToNative('productNavigate', {
-            url: url,
-            sku: prodSku,
-            sessionId: sessionId,
-          });
-        },
-      });
-
-      // Signal readiness to native app
-      window.gengageNative.sendToNative('ready', {
-        sessionId: controller.session.sessionId,
-        widgets: {
-          chat: controller.chat !== null,
-          qna: controller.qna !== null,
-          simrel: controller.simrel !== null,
-        },
       });
     } catch (err) {
-      window.gengageNative.sendToNative('error', {
+      bridge.sendToNative('error', {
         message: err instanceof Error ? err.message : String(err),
       });
     }

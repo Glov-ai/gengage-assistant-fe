@@ -19,6 +19,7 @@ contextual Q&A buttons, and a similar-products grid.
 | **Chat** | `@gengage/assistant-fe/chat` | Floating AI chat drawer with streaming responses |
 | **QNA** | `@gengage/assistant-fe/qna` | Contextual action buttons for product pages |
 | **SimRel** | `@gengage/assistant-fe/simrel` | Similar / related product grid |
+| **Native Bridge** | `@gengage/assistant-fe/native` | Android/iOS WebView bridge + native-ready overlay bootstrap |
 
 > **`middlewareUrl` is required.** Set it in your initialization script to point to your
 > Gengage backend. The SDK has no built-in default — you must always provide it explicitly.
@@ -108,6 +109,103 @@ wireQNAToChat();   // auto-wires QNA button clicks → chat.openWithAction()
 
 `initOverlayWidgets()` is safe to call multiple times from GTM; it de-duplicates by idempotency key.
 
+## Native WebView SDK (Android / iOS)
+
+Use the native helper package to bridge widget events with:
+- iOS WKWebView (`webkit.messageHandlers`)
+- Android `JavascriptInterface` (`window.GengageNative.postMessage`)
+- React Native WebView (`window.ReactNativeWebView.postMessage`)
+
+```ts
+import { initNativeOverlayWidgets, applyNativeSession } from '@gengage/assistant-fe/native';
+
+applyNativeSession({
+  sessionId: 'native-session-id',
+  userId: 'native-user-id',
+});
+
+const { controller, bridge } = await initNativeOverlayWidgets({
+  accountId: 'yatasbeddingcomtr',
+  middlewareUrl: 'https://YOUR_MIDDLEWARE_URL',
+  locale: 'tr',
+  pageContext: { pageType: 'pdp', sku: '1066800' },
+  chat: {
+    variant: 'floating',
+    mobileInitialState: 'full',
+  },
+  qna: { mountTarget: '#gengage-qna' },
+  simrel: { mountTarget: '#gengage-simrel' },
+});
+
+// Optional manual command from JS side:
+bridge.receive({ type: 'openChat', payload: { state: 'full' } });
+```
+
+Inbound native commands supported by `bridge.receive(...)`:
+`openChat`, `closeChat`, `updateContext`, `updateSku`, `setSession`, `destroy`.
+
+Mobile SDK defaults (out-of-box):
+- Commands received before overlay init are queued and replayed after controller is ready.
+- `onAddToCart` and `onProductNavigate` auto-forward to native bridge messages if not provided.
+- QNA/SimRel are auto-disabled when no mount exists (no noisy mount warnings).
+- If QNA/SimRel are explicitly enabled but mount is missing, a default mount is auto-created.
+
+Supported shorthand command envelopes:
+
+```ts
+bridge.receive('openChat');
+bridge.receive({ command: 'updateSku', data: '1066800' } as unknown as { type: string });
+bridge.receive({ action: 'setSession', sessionId: 's1', userId: 'u1' } as unknown as { type: string });
+```
+
+### React Native (`react-native-webview`) host example
+
+```tsx
+import React, { useMemo } from 'react';
+import { WebView } from 'react-native-webview';
+
+const NATIVE_HTML = `
+<!doctype html>
+<html>
+  <body>
+    <div id="gengage-qna"></div>
+    <div id="gengage-simrel"></div>
+    <script type="module">
+      import { initNativeOverlayWidgets } from 'https://cdn.jsdelivr.net/npm/@gengage/assistant-fe/dist/native.js';
+      await initNativeOverlayWidgets({
+        accountId: 'yatasbeddingcomtr',
+        middlewareUrl: 'https://YOUR_MIDDLEWARE_URL',
+        pageContext: { pageType: 'pdp', sku: '1066800' },
+      });
+    </script>
+  </body>
+</html>`;
+
+export function GengageNativeOverlay() {
+  const injectedJavaScript = useMemo(
+    () =>
+      `window.gengageNative && window.gengageNative.receive(${JSON.stringify({
+        type: 'setSession',
+        payload: { sessionId: 'native-session-id', userId: 'native-user-id' },
+      })}); true;`,
+    [],
+  );
+
+  return (
+    <WebView
+      originWhitelist={['*']}
+      source={{ html: NATIVE_HTML }}
+      injectedJavaScript={injectedJavaScript}
+      onMessage={(event) => {
+        // event.nativeEvent.data is JSON from window.ReactNativeWebView.postMessage(...)
+        const message = JSON.parse(event.nativeEvent.data);
+        console.log('gengage-native-event', message);
+      }}
+    />
+  );
+}
+```
+
 ---
 
 ## Repository Structure
@@ -123,6 +221,7 @@ gengage-assistant-fe/
 │   │   └── components/    # Vanilla TS renderers (ChatDrawer, AITopPicks, etc.)
 │   ├── qna/               # QNA widget (same structure)
 │   ├── simrel/            # Similar Products widget (same structure)
+│   ├── native/            # Native WebView bridge helper exports
 │   └── index.ts           # Barrel export
 ├── demos/
 │   ├── koctascomtr/       # Koçtaş branded PDP (inline config)
@@ -247,6 +346,7 @@ is the fully-wired reference. Copy it as a starting point for a new account.
 | [docs/wire-protocol.md](docs/wire-protocol.md) | Backend ↔ frontend NDJSON contract |
 | [docs/config-files.md](docs/config-files.md) | File-driven self-service account configuration |
 | [docs/analytics-contract.md](docs/analytics-contract.md) | Stream/token/metering/history/checkout analytics contract |
+| [docs/native-mobile-sdk.md](docs/native-mobile-sdk.md) | Android/iOS/React Native WebView integration guide |
 | [CUSTOMIZATION-GUIDE.md](CUSTOMIZATION-GUIDE.md) | Fork/customize/deploy playbook for integrators and coding agents |
 | [CONTRIBUTION-GUIDE.md](CONTRIBUTION-GUIDE.md) | SDK/core development guide for contributors and coding agents |
 

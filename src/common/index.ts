@@ -36,6 +36,21 @@ export type {
   OverlayQNAOptions,
   OverlaySimRelOptions,
 } from './overlay.js';
+export {
+  detectNativeEnvironment,
+  applyNativeSession,
+  createNativeWebViewBridge,
+  initNativeOverlayWidgets,
+} from './native-webview.js';
+export type {
+  NativeBridgeEnvironment,
+  NativeSessionPayload,
+  NativeBridgeMessage,
+  NativeWebViewBridgeOptions,
+  NativeWebViewBridge,
+  NativeOverlayInitOptions,
+  NativeOverlayInitResult,
+} from './native-webview.js';
 
 export { buildChatEndpointUrl, normalizeMiddlewareUrl } from './api-paths.js';
 export type { ChatTransportConfig, ChatEndpointName } from './api-paths.js';

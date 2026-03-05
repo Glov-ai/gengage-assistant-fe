@@ -30,21 +30,24 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     wrapper.innerHTML = sanitizeHtml(renderCard(product, index));
     wrapper.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).closest('.gengage-simrel-atc')) return;
+      if ((e.target as HTMLElement).closest('.gengage-chat-product-card-atc')) return;
       onClick(product);
     });
     return wrapper;
   }
 
   const card = document.createElement('article');
-  card.className = 'gengage-simrel-card';
+  // Intentional class coupling: reuse chat product-card classes so SimRel and chat stay visually identical.
+  card.className = 'gengage-simrel-card gengage-chat-product-card';
   card.setAttribute('role', 'listitem');
   card.dataset['sku'] = product.sku;
 
   // Image
   const imgWrapper = document.createElement('div');
-  imgWrapper.className = 'gengage-simrel-card-image';
+  imgWrapper.className = 'gengage-simrel-card-image gengage-chat-product-card-img-wrapper';
   if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
     const img = document.createElement('img');
+    img.className = 'gengage-chat-product-card-img';
     img.src = product.imageUrl;
     img.alt = product.name;
     img.loading = 'lazy';
@@ -55,7 +58,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   // Discount badge
   if (discountType === 'badge' && product.discountPercent && product.discountPercent > 0) {
     const badge = document.createElement('span');
-    badge.className = 'gengage-simrel-badge';
+    badge.className = 'gengage-simrel-badge gengage-chat-product-card-discount-badge';
     badge.textContent = `%${clampDiscount(product.discountPercent)}`;
     imgWrapper.appendChild(badge);
   }
@@ -64,30 +67,30 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
 
   // Info section
   const info = document.createElement('div');
-  info.className = 'gengage-simrel-card-info';
+  info.className = 'gengage-simrel-card-info gengage-chat-product-card-body';
 
   // Brand
   if (product.brand) {
     const brandEl = document.createElement('div');
-    brandEl.className = 'gengage-simrel-card-brand';
+    brandEl.className = 'gengage-simrel-card-brand gengage-chat-product-card-brand';
     brandEl.textContent = product.brand;
     info.appendChild(brandEl);
   }
 
   // Name
   const nameEl = document.createElement('div');
-  nameEl.className = 'gengage-simrel-card-name';
+  nameEl.className = 'gengage-simrel-card-name gengage-chat-product-card-name';
   nameEl.textContent = product.name;
   info.appendChild(nameEl);
 
   // Rating
   if (product.rating != null && product.rating > 0) {
     const ratingEl = document.createElement('div');
-    ratingEl.className = 'gengage-simrel-card-rating';
+    ratingEl.className = 'gengage-simrel-card-rating gengage-chat-product-card-rating';
     ratingEl.textContent = renderStarRating(product.rating);
     if (product.reviewCount != null) {
       const count = document.createElement('span');
-      count.className = 'gengage-simrel-card-review-count';
+      count.className = 'gengage-simrel-card-review-count gengage-chat-product-card-review-count';
       count.textContent = ` (${product.reviewCount})`;
       ratingEl.appendChild(count);
     }
@@ -96,12 +99,12 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
 
   // Price
   const priceContainer = document.createElement('div');
-  priceContainer.className = 'gengage-simrel-card-price';
+  priceContainer.className = 'gengage-simrel-card-price gengage-chat-product-card-price';
 
   if (product.originalPrice && product.originalPrice !== product.price) {
     if (discountType === 'strike-through' || !discountType) {
       const original = document.createElement('span');
-      original.className = 'gengage-simrel-card-price-original';
+      original.className = 'gengage-simrel-card-price-original gengage-chat-product-card-original-price';
       original.textContent = formatPrice(product.originalPrice, pricing);
       priceContainer.appendChild(original);
     }
@@ -109,7 +112,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
 
   if (product.price) {
     const current = document.createElement('span');
-    current.className = 'gengage-simrel-card-price-current';
+    current.className = 'gengage-simrel-card-price-current gengage-chat-product-card-price-current';
     current.textContent = formatPrice(product.price, pricing);
     priceContainer.appendChild(current);
   }
@@ -117,23 +120,37 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   info.appendChild(priceContainer);
   card.appendChild(info);
 
+  // Keep SimRel cards aligned with chat product-card structure.
+  const cta = document.createElement('button');
+  cta.className = 'gengage-simrel-card-cta gengage-chat-product-card-cta';
+  cta.type = 'button';
+  cta.textContent = 'İncele';
+  cta.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick(product);
+  });
+  card.appendChild(cta);
+
   // Add to cart stepper (only when in stock)
   if (product.cartCode && product.inStock !== false) {
     const cartCode = product.cartCode;
     const stepper = createQuantityStepper({
-      compact: false,
+      compact: true,
       label: i18n?.addToCartButton ?? 'Sepete Ekle',
       onSubmit: (quantity) => {
         onAddToCart({ sku: product.sku, quantity, cartCode });
       },
     });
-    stepper.classList.add('gengage-simrel-atc');
+    stepper.classList.add('gengage-simrel-atc', 'gengage-chat-product-card-atc');
     card.appendChild(stepper);
   }
 
   // Card click → navigate
   card.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('.gengage-simrel-atc')) return;
+    if ((e.target as HTMLElement).closest('.gengage-chat-product-card-atc')) return;
+    if ((e.target as HTMLElement).closest('.gengage-chat-product-card-cta')) return;
     onClick(product);
   });
 

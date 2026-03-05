@@ -41,7 +41,7 @@ describe('KvkkBanner', () => {
     });
     const btn = el.querySelector('button');
     expect(btn).not.toBeNull();
-    expect(btn?.getAttribute('aria-label')).toBe('Kapat');
+    expect(btn?.getAttribute('aria-label')).toBe('KVKK bildirimini kapat');
     expect(btn?.textContent).toBe('\u00D7');
   });
 });

@@ -7,11 +7,13 @@ export default defineConfig({
   root: __dirname,
   resolve: {
     alias: {
-      '@gengage/assistant-fe/chat': resolve(ROOT, 'dist/chat.js'),
-      '@gengage/assistant-fe/qna': resolve(ROOT, 'dist/qna.js'),
-      '@gengage/assistant-fe/simrel': resolve(ROOT, 'dist/simrel.js'),
-      '@gengage/assistant-fe/common': resolve(ROOT, 'dist/common.js'),
-      '@gengage/assistant-fe': resolve(ROOT, 'dist/index.js'),
+      // Resolve directly to source modules so catalog remains stable even while
+      // dist/ is being rebuilt in parallel during development.
+      '@gengage/assistant-fe/chat': resolve(ROOT, 'src/chat/index.ts'),
+      '@gengage/assistant-fe/qna': resolve(ROOT, 'src/qna/index.ts'),
+      '@gengage/assistant-fe/simrel': resolve(ROOT, 'src/simrel/index.ts'),
+      '@gengage/assistant-fe/common': resolve(ROOT, 'src/common/index.ts'),
+      '@gengage/assistant-fe': resolve(ROOT, 'src/index.ts'),
     },
   },
   server: {

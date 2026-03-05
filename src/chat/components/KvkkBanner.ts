@@ -19,7 +19,7 @@ export function createKvkkBanner(options: KvkkBannerOptions): HTMLElement {
   const dismiss = document.createElement('button');
   dismiss.className = 'gengage-chat-kvkk-dismiss';
   dismiss.type = 'button';
-  dismiss.setAttribute('aria-label', options.closeAriaLabel ?? 'Kapat');
+  dismiss.setAttribute('aria-label', options.closeAriaLabel ?? 'KVKK bildirimini kapat');
   dismiss.textContent = '\u00D7';
   dismiss.addEventListener('click', options.onDismiss);
   banner.appendChild(dismiss);

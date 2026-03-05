@@ -139,6 +139,12 @@ describe('global error event dispatch', () => {
       message: 'Connection issue. Please try again.',
     });
 
+    // QNA should remain usable even when launcher fetch fails.
+    const input = host.querySelector('.gengage-qna-input');
+    const send = host.querySelector('.gengage-qna-send');
+    expect(input).toBeTruthy();
+    expect(send).toBeTruthy();
+
     collector.stop();
     qna.destroy();
   });

@@ -5,7 +5,7 @@ export interface QNAWidgetConfig extends BaseWidgetConfig {
   /** Where to mount the QNA buttons container. Required. */
   mountTarget: HTMLElement | string;
 
-  /** CTA label for the "ask anything" input (default: 'Başka bir şey sor'). */
+  /** CTA label for the "open chat" pill/button (default: 'Başka bir şey sor'). */
   ctaText?: string;
 
   /** Placeholder text cycling inside the free-text input.

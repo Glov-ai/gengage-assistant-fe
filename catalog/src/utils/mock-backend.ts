@@ -7,9 +7,9 @@ import {
   CHAT_GREETING_STREAM,
   CHAT_SEARCH_STREAM,
   QNA_ACTIONS_STREAM,
-  SIMREL_PRODUCTS_STREAM,
   ANALYTICS_OK,
 } from '../mock-data/ndjson-sequences.js';
+import { PRODUCTS } from '../mock-data/products.js';
 
 const originalFetch = globalThis.fetch;
 
@@ -21,6 +21,46 @@ function mockResponse(body: string, contentType = 'application/x-ndjson'): Respo
 }
 
 let requestCount = 0;
+
+function toV1Product(product: (typeof PRODUCTS)[number]): Record<string, unknown> {
+  return {
+    sku: product.sku,
+    name: product.name,
+    brand: product.brand,
+    images: [product.imageUrl, ...product.images],
+    price: Number(product.originalPrice || product.price),
+    price_discounted: Number(product.price),
+    url: product.url,
+    rating: product.rating,
+    review_count: product.reviewCount,
+    cart_code: product.cartCode,
+    in_stock: product.inStock,
+    promotions: product.promotions,
+    variants: product.variants,
+  };
+}
+
+const SIMREL_PRODUCTS_JSON = JSON.stringify({
+  results: PRODUCTS.map((product) => toV1Product(product)),
+  count: PRODUCTS.length,
+  source_sku: 'DRILL-001',
+});
+
+const SIMREL_GROUPINGS_JSON = JSON.stringify({
+  count: 2,
+  product_groupings: [
+    {
+      name: 'One Cikanlar',
+      highlight: 'En populer secimler',
+      group_products: PRODUCTS.slice(0, 3).map((product) => toV1Product(product)),
+    },
+    {
+      name: 'Alternatifler',
+      highlight: 'Butce ve ihtiyaca gore',
+      group_products: PRODUCTS.slice(3).map((product) => toV1Product(product)),
+    },
+  ],
+});
 
 function interceptedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -40,12 +80,12 @@ function interceptedFetch(input: RequestInfo | URL, init?: RequestInit): Promise
 
   // SimRel similar products
   if (url.includes('/chat/similar_products')) {
-    return Promise.resolve(mockResponse(SIMREL_PRODUCTS_STREAM));
+    return Promise.resolve(mockResponse(SIMREL_PRODUCTS_JSON, 'application/json'));
   }
 
   // SimRel product groupings
   if (url.includes('/chat/product_groupings')) {
-    return Promise.resolve(mockResponse('{}', 'application/json'));
+    return Promise.resolve(mockResponse(SIMREL_GROUPINGS_JSON, 'application/json'));
   }
 
   // Analytics

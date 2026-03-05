@@ -195,18 +195,14 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
           ? result.actions.map((a) => a.title)
           : cfgPlaceholders === true
             ? this._i18n.defaultInputPlaceholder
-            : cfgPlaceholders;
+            : (cfgPlaceholders ?? this._i18n.defaultInputPlaceholder);
 
       const renderContext: QNAUISpecRenderContext = {
         onAction: this._actionHandler,
         i18n: this._i18n,
+        onOpenChat: this._openChatHandler,
       };
-      // When a standalone TextInput will be rendered (inputPlaceholder is set),
-      // its submit button takes over the CTA role — don't duplicate in ButtonRow.
-      if (cfgPlaceholders === undefined) {
-        renderContext.onOpenChat = this._openChatHandler;
-        if (this.config.ctaText !== undefined) renderContext.ctaText = this.config.ctaText;
-      }
+      if (this.config.ctaText !== undefined) renderContext.ctaText = this.config.ctaText;
       if (effectivePlaceholders !== undefined) renderContext.inputPlaceholder = effectivePlaceholders;
 
       const fallbackSpec = this._buildFallbackActionsSpec(result.actions);
@@ -222,23 +218,9 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
         ga.trackShow('qna');
       }
 
-      const shouldRenderStandaloneInput =
-        cfgPlaceholders !== undefined && !this._specIncludesType(nonEmptySpecs, 'TextInput');
+      const shouldRenderStandaloneInput = !this._specIncludesType(nonEmptySpecs, 'TextInput');
       if (shouldRenderStandaloneInput) {
-        const inputSpec: UISpec = {
-          root: 'root',
-          elements: {
-            root: {
-              type: 'TextInput',
-              props: {
-                placeholder: effectivePlaceholders,
-                ctaLabel: this.config.ctaText,
-              },
-            },
-          },
-        };
-        const renderedInput = this._renderUISpec(inputSpec, renderContext);
-        this._contentEl.appendChild(renderedInput);
+        this._appendStandaloneInput(renderContext, effectivePlaceholders);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -257,6 +239,23 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
           widget: 'qna',
         }),
       );
+
+      // Keep QNA usable during backend hiccups: render at least free-text input.
+      if (this._contentEl) {
+        this._cleanupTextInputTimers();
+        this._contentEl.innerHTML = '';
+        const fallbackPlaceholders =
+          this.config.inputPlaceholder === true
+            ? this._i18n.defaultInputPlaceholder
+            : (this.config.inputPlaceholder ?? this._i18n.defaultInputPlaceholder);
+        const fallbackContext: QNAUISpecRenderContext = {
+          onAction: this._actionHandler,
+          i18n: this._i18n,
+          onOpenChat: this._openChatHandler,
+        };
+        if (this.config.ctaText !== undefined) fallbackContext.ctaText = this.config.ctaText;
+        this._appendStandaloneInput(fallbackContext, fallbackPlaceholders);
+      }
 
       if (import.meta.env?.DEV) {
         console.error('[gengage:qna] Failed to fetch launcher actions:', err);
@@ -344,6 +343,23 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     };
   }
 
+  private _appendStandaloneInput(context: QNAUISpecRenderContext, placeholder?: string | string[]): void {
+    if (!this._contentEl) return;
+    const inputSpec: UISpec = {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'TextInput',
+          props: {
+            placeholder,
+          },
+        },
+      },
+    };
+    const renderedInput = this._renderUISpec(inputSpec, context);
+    this._contentEl.appendChild(renderedInput);
+  }
+
   private _handleAction(action: ActionPayload): void {
     ga.trackSuggestedQuestion(action.title, action.type);
     this.config.onActionSelected?.(action);
@@ -351,6 +367,11 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
   }
 
   private _handleOpenChat(): void {
+    // Couple CTA with the inline QNA text input when available.
+    const input = this._contentEl?.querySelector<HTMLInputElement>('.gengage-qna-input');
+    if (input) {
+      input.focus();
+    }
     this.config.onOpenChat?.();
     dispatch('gengage:qna:open-chat', {});
   }

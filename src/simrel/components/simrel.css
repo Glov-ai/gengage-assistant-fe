@@ -47,6 +47,7 @@
 .gengage-simrel-card {
   display: flex;
   flex-direction: column;
+  position: relative;
   border: 1px solid #eee;
   border-radius: var(--gengage-simrel-card-radius, 16px);
   overflow: hidden;
@@ -56,6 +57,12 @@
     box-shadow 0.2s ease,
     transform 0.1s ease;
   box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+}
+
+.gengage-simrel-grid .gengage-simrel-card.gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 .gengage-simrel-card:hover {
@@ -149,7 +156,18 @@
   color: #0f172a;
 }
 
-.gengage-simrel-atc {
+.gengage-simrel-card-cta {
+  width: 100%;
+  min-height: 40px;
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.gengage-simrel-container .gengage-simrel-atc {
   display: flex;
   width: 100%;
   border-top: 1px solid var(--_gengage-border-color);
@@ -160,7 +178,7 @@
   background: transparent;
 }
 
-.gengage-simrel-atc.gengage-qty-stepper {
+.gengage-simrel-container .gengage-simrel-atc.gengage-qty-stepper {
   gap: 0;
   overflow: hidden;
   border-radius: 0;
@@ -170,24 +188,24 @@
   border-bottom: none;
 }
 
-.gengage-simrel-atc .gengage-qty-btn {
+.gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn {
   width: 32px;
   height: 36px;
   color: #64748b;
   font-size: 14px;
 }
 
-.gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
+.gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
   background: #f1f5f9;
 }
 
-.gengage-simrel-atc .gengage-qty-value {
+.gengage-simrel-container .gengage-simrel-atc .gengage-qty-value {
   min-width: 24px;
   font-size: 13px;
   color: #334155;
 }
 
-.gengage-simrel-atc .gengage-qty-submit {
+.gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit {
   flex: 1;
   border-left: 1px solid var(--_gengage-border-color);
   background: transparent;
@@ -203,7 +221,7 @@
     background 0.15s ease;
 }
 
-.gengage-simrel-atc .gengage-qty-submit:hover {
+.gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit:hover {
   color: var(--gengage-primary-color, #0b24d6);
   background: #f8fafc;
 }
@@ -220,6 +238,7 @@
   background: #f8fafc;
   color: #334155;
   border-radius: 999px;
+  min-height: 40px;
   padding: 8px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -254,6 +273,7 @@
 }
 
 .gengage-simrel-tab {
+  min-height: 40px;
   padding: 10px 14px;
   border: none;
   background: transparent;
@@ -306,22 +326,24 @@
     padding-top: 8px;
   }
 
-  .gengage-simrel-atc.gengage-qty-stepper {
-    flex-wrap: wrap;
+  .gengage-simrel-card-cta,
+  .gengage-simrel-quick-action,
+  .gengage-simrel-tab {
+    min-height: 44px;
   }
 
   /* Ensure 44x44px minimum touch targets on mobile (WCAG 2.5.5) */
-  .gengage-simrel-atc .gengage-qty-btn {
+  .gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn {
     width: 44px;
     height: 44px;
     font-size: 16px;
   }
 
-  .gengage-simrel-atc .gengage-qty-submit {
+  .gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit {
     min-height: 44px;
-    flex-basis: 100%;
-    border-left: none;
-    border-top: 1px solid var(--_gengage-border-color);
+    flex-basis: auto;
+    border-left: 1px solid var(--_gengage-border-color);
+    border-top: none;
   }
 }
 

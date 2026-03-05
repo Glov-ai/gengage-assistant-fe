@@ -49,11 +49,23 @@ export const QNA_ACTIONS_STREAM = ndjsonLines([
   {
     type: 'launcherAction',
     payload: {
-      actions: [
-        { title: 'Bu urun hakkinda bilgi ver', type: 'product_info' },
-        { title: 'Benzer urunler goster', type: 'findSimilar' },
-        { title: 'Kargo ne zaman gelir?', type: 'shipping_info' },
-        { title: 'Musteri yorumlari', type: 'reviews' },
+      action_list: [
+        {
+          title: 'Bu urun hakkinda bilgi ver',
+          requestDetails: { type: 'product_info', payload: { sku: 'DRILL-001' } },
+        },
+        {
+          title: 'Benzer urunler goster',
+          requestDetails: { type: 'findSimilar', payload: { sku: 'DRILL-001' } },
+        },
+        {
+          title: 'Kargo ne zaman gelir?',
+          requestDetails: { type: 'inputText', payload: 'Kargo suresi nedir?' },
+        },
+        {
+          title: 'Musteri yorumlari',
+          requestDetails: { type: 'reviews', payload: { sku: 'DRILL-001' } },
+        },
       ],
     },
   },

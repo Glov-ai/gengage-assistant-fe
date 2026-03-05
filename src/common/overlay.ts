@@ -79,6 +79,11 @@ export interface OverlayChatOptions {
   variant?: ChatWidgetConfig['variant'];
   mountTarget?: HTMLElement | string;
   launcherSvg?: string;
+  headerTitle?: string;
+  headerAvatarUrl?: string;
+  headerBadge?: string;
+  headerCartUrl?: string;
+  headerFavoritesToggle?: boolean;
   hideMobileLauncher?: boolean;
   mobileBreakpoint?: number;
   mobileInitialState?: 'half' | 'full';
@@ -139,6 +144,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
   private _qna: GengageQNA | null = null;
   private _simrel: GengageSimRel | null = null;
   private _analyticsClient: import('./analytics.js').AnalyticsClient | null = null;
+  private _offQnaWire: (() => void) | null = null;
   private _pageContext: PageContext;
   private _destroyed = false;
   private _queue: Promise<void> = Promise.resolve();
@@ -179,11 +185,12 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     window.gengage.pageContext = this._pageContext;
 
     await this._initChat();
-    await this._syncPdpWidgets();
 
     if (this.options.wireQnaToChat !== false) {
-      wireQNAToChat();
+      this._offQnaWire = wireQNAToChat();
     }
+
+    await this._syncPdpWidgets();
 
     window.gengage.overlay = this;
   }
@@ -219,6 +226,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this._destroyed) return;
     this._destroyed = true;
 
+    this._offQnaWire?.();
+    this._offQnaWire = null;
+
     this._chat?.destroy();
     this._qna?.destroy();
     this._simrel?.destroy();
@@ -252,6 +262,15 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.pricing !== undefined) config.pricing = this.options.pricing;
     if (this.options.chat?.mountTarget !== undefined) config.mountTarget = this.options.chat.mountTarget;
     if (this.options.chat?.launcherSvg !== undefined) config.launcherSvg = this.options.chat.launcherSvg;
+    if (this.options.chat?.headerTitle !== undefined) config.headerTitle = this.options.chat.headerTitle;
+    if (this.options.chat?.headerAvatarUrl !== undefined) {
+      config.headerAvatarUrl = this.options.chat.headerAvatarUrl;
+    }
+    if (this.options.chat?.headerBadge !== undefined) config.headerBadge = this.options.chat.headerBadge;
+    if (this.options.chat?.headerCartUrl !== undefined) config.headerCartUrl = this.options.chat.headerCartUrl;
+    if (this.options.chat?.headerFavoritesToggle !== undefined) {
+      config.headerFavoritesToggle = this.options.chat.headerFavoritesToggle;
+    }
     if (this.options.chat?.hideMobileLauncher !== undefined) {
       config.hideMobileLauncher = this.options.chat.hideMobileLauncher;
     }

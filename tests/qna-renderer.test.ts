@@ -49,7 +49,7 @@ describe('renderQnaUISpec', () => {
     });
   });
 
-  it('renders TextInput using context placeholders and CTA text', () => {
+  it('renders TextInput using context placeholders and i18n send label', () => {
     const spec: UISpec = {
       root: 'root',
       elements: {
@@ -68,7 +68,30 @@ describe('renderQnaUISpec', () => {
     const input = result.querySelector('.gengage-qna-input') as HTMLInputElement;
     const send = result.querySelector('.gengage-qna-send') as HTMLButtonElement;
     expect(input.placeholder).toBe('Montaj nasil?');
-    expect(send.textContent).toBe('Soru Sor');
+    expect(send.textContent).toBe('Sor');
+  });
+
+  it('submits TextInput as plain-string user_message payload', () => {
+    const onAction = vi.fn();
+    const spec: UISpec = {
+      root: 'root',
+      elements: {
+        root: { type: 'TextInput' },
+      },
+    };
+
+    const result = renderQnaUISpec(spec, makeContext({ onAction }));
+    const input = result.querySelector('.gengage-qna-input') as HTMLInputElement;
+    const send = result.querySelector('.gengage-qna-send') as HTMLButtonElement;
+
+    input.value = 'Bu urun nefes alabilir mi?';
+    send.click();
+
+    expect(onAction).toHaveBeenCalledWith({
+      title: 'Bu urun nefes alabilir mi?',
+      type: 'user_message',
+      payload: 'Bu urun nefes alabilir mi?',
+    });
   });
 
   it('renders ProductCard as no-op (QNA shows only buttons, matching reference)', () => {

@@ -217,6 +217,14 @@ body {
   flex-shrink: 0;
 }
 
+.catalog-chat-frame-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
+}
+
 .catalog-chat-frame-info {
   flex: 1;
   min-width: 0;
@@ -568,4 +576,91 @@ body {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .catalog-shell {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .catalog-sidebar {
+    width: 100%;
+    max-height: 220px;
+    border-bottom: 1px solid #333;
+  }
+
+  .catalog-main {
+    min-width: 0;
+  }
+
+  .catalog-topbar {
+    padding: 10px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .catalog-content {
+    padding: 12px;
+  }
+
+  .catalog-full-widgets {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .catalog-theme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-responsive-frames {
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .catalog-responsive-frame {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .catalog-responsive-frame-body {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .catalog-card-preview {
+    padding: 12px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .catalog-panel-frame {
+    flex-direction: column;
+  }
+
+  .catalog-panel-frame-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+    max-height: none;
+  }
+
+  .catalog-chat-frame,
+  .catalog-qna-frame,
+  .catalog-simrel-frame {
+    width: 100%;
+  }
+
+  .catalog-overview table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }

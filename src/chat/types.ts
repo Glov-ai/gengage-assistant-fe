@@ -51,7 +51,7 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
    * Panel display mode:
    *   - 'auto'      : Panel appears/hides with content; user can toggle (default)
    *   - 'collapsed'  : Panel starts collapsed; user can expand
-   *   - 'expanded'   : Panel always expanded (empty placeholder if no content)
+   *   - 'expanded'   : Panel starts expanded (users can still collapse/expand)
    */
   panelMode?: 'auto' | 'collapsed' | 'expanded';
 

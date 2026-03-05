@@ -121,6 +121,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
   private _pdpLaunched = false;
+  /** True while the initial silent PDP launch request is in flight. */
+  private _pdpPrimingInFlight = false;
+  /** User messages queued until silent PDP priming completes. */
+  private _queuedUserMessages: Array<{ text: string; attachment?: File }> = [];
   private _productContextUnavailableSku: string | null = null;
   private _i18n: ChatI18n = CHAT_I18N_TR;
   private _extendedModeManager: ExtendedModeManager | null = null;
@@ -248,15 +252,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Restore panel state from session
-    this._drawer.restorePanelState(config.accountId);
+    const restoredCollapsedPanel = this._drawer.restorePanelState(config.accountId);
 
-    // Panel mode: 'collapsed' hides panel, 'expanded' locks it open, 'auto' (default) expands but allows toggle
+    // Panel mode: 'collapsed' starts hidden, 'expanded' starts open, 'auto' (default) expands when content arrives
     const panelMode = config.panelMode ?? 'auto';
     if (panelMode === 'collapsed') {
       this._drawer.setPanelCollapsed(true);
     } else if (panelMode === 'expanded') {
       this._drawer.setForceExpanded();
-    } else {
+    } else if (!restoredCollapsedPanel) {
       // 'auto': panel starts expanded but user can toggle via chevron
       this._drawer.expandPanel();
     }
@@ -418,13 +422,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Auto-launch PDP context on first open when SKU is available
     if (!this._pdpLaunched && this.config.pageContext?.sku) {
       this._pdpLaunched = true;
+      this._pdpPrimingInFlight = true;
       this._sendAction(
         {
           title: '',
           type: 'launchSingleProduct',
           payload: { sku: this.config.pageContext.sku },
         },
-        { silent: true },
+        { silent: true, isPdpPrime: true },
       );
     }
   }
@@ -580,6 +585,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._chatCreatedAt = new Date().toISOString();
     // Allow PDP auto-launch for new SKU
     this._pdpLaunched = false;
+    this._pdpPrimingInFlight = false;
+    this._queuedUserMessages = [];
     this._productContextUnavailableSku = null;
   }
 
@@ -866,6 +873,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _sendMessage(text: string, attachment?: File): void {
+    if (this._pdpPrimingInFlight) {
+      this._queuedUserMessages.push(attachment !== undefined ? { text, attachment } : { text });
+      return;
+    }
+
     ga.trackMessageSent();
     // Track conversation start on first user message in a new thread
     const hasUserMessages = this._messages.some((m) => m.role === 'user');
@@ -884,9 +896,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
+  private _flushQueuedUserMessages(): void {
+    if (this._pdpPrimingInFlight || this._queuedUserMessages.length === 0) return;
+    const queued = [...this._queuedUserMessages];
+    this._queuedUserMessages = [];
+    for (const item of queued) {
+      this._sendMessage(item.text, item.attachment);
+    }
+  }
+
   private _sendAction(
     action: ActionPayload,
-    options?: { silent?: boolean; attachment?: File; preservePanel?: boolean },
+    options?: { silent?: boolean; attachment?: File; preservePanel?: boolean; isPdpPrime?: boolean },
   ): void {
     // Cancel any running typewriter animation and TTS playback
     this._activeTypewriter?.cancel();
@@ -946,7 +967,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // For preservePanel actions (like/addToCart), don't overwrite _activeRequestThreadId
     // to avoid silencing concurrent streams. Instead, track validity locally.
     const isPreservePanel = options?.preservePanel === true;
-    const isPdpAutoLaunch = action.type === 'launchSingleProduct' && options?.silent === true;
+    const isPdpAutoLaunch =
+      action.type === 'launchSingleProduct' && options?.silent === true && options?.isPdpPrime === true;
     if (!isPreservePanel) {
       this._activeRequestThreadId = threadId;
     }
@@ -1371,6 +1393,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             !isChoicePrompterDismissed()
           ) {
             this._choicePrompterEl?.remove();
+            this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
             this._choicePrompterEl = createChoicePrompter({
               heading: this._i18n.choicePrompterHeading,
               suggestion: this._i18n.choicePrompterSuggestion,
@@ -1384,9 +1407,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 this._choicePrompterEl = null;
               },
             });
-            // Append to panel element
-            const panelEl = this._shadow?.querySelector('.gengage-chat-panel');
-            panelEl?.appendChild(this._choicePrompterEl);
+            // Mount into the visible pane. On mobile (and when panel is collapsed),
+            // panel can be off-screen; mounting there makes CTA unreachable.
+            const shouldMountInConversation = this._isMobileViewport || this._drawer?.isPanelCollapsed();
+            const mountSelector = shouldMountInConversation ? '.gengage-chat-conversation' : '.gengage-chat-panel';
+            const mountEl = this._shadow?.querySelector(mountSelector);
+            if (mountEl) {
+              mountEl.appendChild(this._choicePrompterEl);
+            } else {
+              this._choicePrompterEl = null;
+            }
           }
 
           // Extract suggestion pills / input-area chips from ActionButtons UISpec
@@ -1635,6 +1665,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._drawer?.showError(this._i18n.errorMessage);
             }
           }
+          if (isPdpAutoLaunch) {
+            this._pdpPrimingInFlight = false;
+            this._flushQueuedUserMessages();
+          }
           // Only overwrite status if message hasn't already completed (isFinal text chunk sets 'done')
           if (botMsg.status === 'streaming') {
             botMsg.status = 'error';
@@ -1671,6 +1705,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             this._ensureAssistantMessageRendered(botMsg);
             this._drawer?.updateBotMessage(botMsg.id, fallback);
             this._markUnavailableProductContext();
+          }
+          if (isPdpAutoLaunch) {
+            this._pdpPrimingInFlight = false;
+            this._flushQueuedUserMessages();
           }
 
           if (botMsg.status === 'streaming') {

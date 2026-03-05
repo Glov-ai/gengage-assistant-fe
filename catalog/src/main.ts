@@ -1,8 +1,7 @@
-// Widget CSS — chat.css is ?inline in dist (Shadow DOM), so import source directly.
-// Vite resolves these via the filesystem, not URL paths.
+// Widget CSS imports from source keep catalog independent from dist rebuilds.
 import '../../src/chat/components/chat.css';
-import '../../dist/qna.css';
-import '../../dist/simrel.css';
+import '../../src/qna/components/qna.css';
+import '../../src/simrel/components/simrel.css';
 
 import { mountLayout, updateBreadcrumb, highlightActiveNav, getContentEl } from './layout.js';
 import { onRouteChange, getCurrentPath } from './router.js';

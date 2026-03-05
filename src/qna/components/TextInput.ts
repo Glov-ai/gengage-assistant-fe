@@ -54,7 +54,8 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
     options.onSubmit({
       title: text,
       type: 'user_message',
-      payload: { text },
+      // Align with chat composer: user_message payload is plain string.
+      payload: text,
     });
     input.value = '';
   };

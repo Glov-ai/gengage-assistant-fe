@@ -126,7 +126,8 @@ const DEFAULT_QNA_UI_SPEC_REGISTRY: QNAUISpecRegistry = {
     const placeholder = element.props?.['placeholder'];
     const placeholders =
       typeof placeholder === 'string' || Array.isArray(placeholder) ? placeholder : context.inputPlaceholder;
-    const ctaLabel = typeof element.props?.['ctaLabel'] === 'string' ? element.props['ctaLabel'] : context.ctaText;
+    // Keep input submit label independent from the quick-question CTA text.
+    const ctaLabel = typeof element.props?.['ctaLabel'] === 'string' ? element.props['ctaLabel'] : undefined;
 
     const options: import('./TextInput.js').TextInputOptions = {
       onSubmit: context.onAction,
