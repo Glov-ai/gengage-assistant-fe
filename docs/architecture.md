@@ -451,11 +451,11 @@ The Chat widget uses Shadow DOM for CSS isolation. This decision lives entirely 
 ## Component Catalog
 
 The `catalog/` directory contains a visual component catalog that renders every widget
-component with mock data — no backend needed. It imports from `dist/` (not `src/`) to
-validate the npm package as consumers would see it.
+component with mock data — no backend needed. It resolves package aliases directly to
+`src/` so component changes are visible immediately during development.
 
 ```bash
-npm run build && npm run catalog    # http://localhost:3002
+npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 Key details:

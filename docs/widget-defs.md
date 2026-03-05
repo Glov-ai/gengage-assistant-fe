@@ -3,7 +3,7 @@
 This document maps every NDJSON response type from the backend to its frontend rendering —
 where it appears (chat pane vs panel), what the UI looks like, and how users interact with it.
 
-> **Tip:** Run `npm run build && npm run catalog` to see every component rendered live
+> **Tip:** Run `npm run catalog` to see every component rendered live
 > with mock data at `http://localhost:3002`.
 
 ---

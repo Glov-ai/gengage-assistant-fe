@@ -7,6 +7,7 @@
  *
  * Usage:
  *   npm run dev -- koctascomtr --sku=1000465056
+ *   npm run dev -- --client=koctascomtr --sku=1000465056
  *   npm run dev -- vanilla-script
  *   npm run dev -- react --sku=DEMO-001 --port=3005
  *
@@ -16,7 +17,7 @@
  */
 
 import { createServer, type Plugin } from 'vite';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '..');
@@ -32,23 +33,84 @@ interface DevOptions {
   backendUrl: string;
 }
 
+function buildDevQuery(opts: Pick<DevOptions, 'sku' | 'backendUrl'>): URLSearchParams {
+  const query = new URLSearchParams();
+  if (opts.sku) query.set('sku', opts.sku);
+  if (opts.backendUrl) query.set('middlewareUrl', opts.backendUrl);
+  return query;
+}
+
+function printUsage(): void {
+  console.error('Usage: npm run dev -- <demo> [--sku=SKU] [--port=3000] [--backend-url=URL]');
+  console.error('   or: npm run dev -- --client=<demo> [--sku=SKU] [--port=3000] [--backend-url=URL]');
+  console.error('');
+  console.error('Available demos:');
+  for (const name of getAvailableDemos()) {
+    console.error(`  ${name}`);
+  }
+}
+
+function failUsage(message: string): never {
+  console.error(message);
+  console.error('');
+  printUsage();
+  process.exit(1);
+}
+
 function parseArgs(argv: string[]): DevOptions {
   const args = argv.slice(2);
-  if (args.length === 0) {
-    console.error('Usage: npm run dev -- <demo> [--sku=SKU] [--port=3000] [--backend-url=URL]');
-    console.error('');
-    console.error('Available demos:');
-    for (const name of getAvailableDemos()) {
-      console.error(`  ${name}`);
-    }
+  const knownFlagPrefixes = ['--client=', '--sku=', '--port=', '--backend-url='];
+  const unknownFlags = args.filter((a) => a.startsWith('--') && !knownFlagPrefixes.some((p) => a.startsWith(p)));
+  if (unknownFlags.length > 0) {
+    failUsage(`Unknown option(s): ${unknownFlags.join(', ')}`);
+  }
+
+  const positionalArgs = args.filter((a) => !a.startsWith('--'));
+  const namedDemo = args.find((a) => a.startsWith('--client='))?.slice('--client='.length);
+  const positionalDemo = positionalArgs[0];
+  if (namedDemo !== undefined && namedDemo.trim() === '') {
+    failUsage('Invalid --client value: cannot be empty.');
+  }
+
+  if (namedDemo && positionalDemo && namedDemo !== positionalDemo) {
+    failUsage(`Conflicting demo values: positional "${positionalDemo}" vs --client="${namedDemo}".`);
+  }
+
+  const demo = positionalDemo ?? namedDemo;
+
+  if (!demo) {
+    printUsage();
     process.exit(1);
   }
 
-  const demo = args[0]!;
-  const positionalSku = args[1] && !args[1].startsWith('--') ? args[1] : undefined;
-  const sku = args.find((a) => a.startsWith('--sku='))?.split('=')[1] ?? positionalSku;
-  const port = parseInt(args.find((a) => a.startsWith('--port='))?.split('=')[1] ?? '3000', 10);
-  const backendUrl = args.find((a) => a.startsWith('--backend-url='))?.split('=')[1] ?? '';
+  // Legacy positional SKU support:
+  // - npm run dev -- koctascomtr 1000465056
+  // - npm run dev -- --client=koctascomtr 1000465056
+  const positionalSku = positionalDemo ? positionalArgs[1] : positionalArgs[0];
+  const extraPositionals = positionalDemo ? positionalArgs.slice(2) : positionalArgs.slice(positionalSku ? 1 : 0);
+  if (extraPositionals.length > 0) {
+    failUsage(`Unexpected positional argument(s): ${extraPositionals.join(', ')}`);
+  }
+
+  const flagSku = args.find((a) => a.startsWith('--sku='))?.slice('--sku='.length);
+  if (flagSku !== undefined && flagSku.trim() === '') {
+    failUsage('Invalid --sku value: cannot be empty.');
+  }
+  if (flagSku && positionalSku) {
+    failUsage('Provide SKU either as positional arg or --sku=..., not both.');
+  }
+
+  const portRaw = args.find((a) => a.startsWith('--port='))?.slice('--port='.length);
+  if (portRaw !== undefined && portRaw.trim() === '') {
+    failUsage('Invalid --port value: cannot be empty.');
+  }
+  const port = parseInt(portRaw ?? '3000', 10);
+  if (!Number.isFinite(port) || Number.isNaN(port) || port <= 0) {
+    failUsage(`Invalid --port value: "${portRaw ?? ''}".`);
+  }
+
+  const backendUrl = args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? '';
+  const sku = flagSku ?? positionalSku;
 
   return { demo, sku, port, backendUrl };
 }
@@ -60,6 +122,8 @@ function parseArgs(argv: string[]): DevOptions {
 function gengageDevPlugin(opts: DevOptions): Plugin {
   const demoDir = resolve(ROOT, 'demos', opts.demo);
   const htmlPath = resolve(demoDir, 'index.html');
+  const queryParam = buildDevQuery(opts).toString();
+  const querySuffix = queryParam ? `?${queryParam}` : '';
 
   return {
     name: 'gengage-dev',
@@ -68,10 +132,21 @@ function gengageDevPlugin(opts: DevOptions): Plugin {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? '/';
+        // Keep dev options sticky even if users open bare "/" URL shown by Vite.
+        if ((url === '/' || url === '/index.html') && querySuffix) {
+          res.statusCode = 302;
+          res.setHeader('Location', `/${querySuffix}`);
+          res.end();
+          return;
+        }
         if (url === '/' || url === '/index.html' || url.startsWith('/?')) {
           const html = readFileSync(htmlPath, 'utf-8');
+          // Vite caches transformed html-proxy modules by URL. Version by
+          // HTML mtime so demo config edits are reflected without restart.
+          const htmlVersion = existsSync(htmlPath) ? Math.trunc(statSync(htmlPath).mtimeMs) : Date.now();
+          const transformUrl = `/__gengage_dev__/${opts.demo}/index.html?v=${htmlVersion}`;
           server
-            .transformIndexHtml('/', html)
+            .transformIndexHtml(transformUrl, html)
             .then((transformed) => {
               res.setHeader('Content-Type', 'text/html');
               res.end(transformed);
@@ -114,14 +189,16 @@ async function main() {
     process.exit(1);
   }
 
-  // Build URL with sku query param
-  const skuParam = opts.sku ? `?sku=${opts.sku}` : '';
+  // Build URL with optional query params consumed by demos.
+  const query = buildDevQuery(opts);
+  const queryParam = query.toString();
+  const querySuffix = queryParam ? `?${queryParam}` : '';
 
   console.log('\n── Gengage Dev Server ──────────────────────────────');
   console.log(`  Demo:     ${opts.demo}`);
   if (opts.sku) console.log(`  SKU:      ${opts.sku}`);
   console.log(`  Backend:  ${opts.backendUrl}`);
-  console.log(`  URL:      http://localhost:${opts.port}${skuParam}`);
+  console.log(`  URL:      http://localhost:${opts.port}${querySuffix}`);
   console.log('────────────────────────────────────────────────────\n');
 
   const server = await createServer({

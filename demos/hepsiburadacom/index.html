@@ -474,6 +474,7 @@
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -482,7 +483,7 @@
 
       const controller = await initOverlayWidgets({
         accountId: 'hepsiburadacom',
-        middlewareUrl: 'https://chatbe-dev.gengage.ai',
+        middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },

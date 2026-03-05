@@ -273,8 +273,8 @@ The snippets above show minimal configs. For complete working examples with
 inline configs (transport, analytics, GTM guards, action handling, theme
 tokens), see any account demo:
 
-- [`demos/koctascomtr/index.html`](../demos/koctascomtr/index.html) — reference implementation
-- [`demos/vanilla-esm/index.html`](../demos/vanilla-esm/index.html) — minimal ESM embed
+- `demos/koctascomtr/index.html` — reference implementation
+- `demos/vanilla-esm/index.html` — minimal ESM embed
 
 The runtime config schema is validated by `src/common/config-schema.ts`.
 

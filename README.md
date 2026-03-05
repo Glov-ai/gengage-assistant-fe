@@ -56,14 +56,20 @@ npm install @gengage/assistant-fe
 import { GengageChat, GengageQNA, GengageSimRel, bootstrapSession, wireQNAToChat } from '@gengage/assistant-fe';
 
 const sessionId = bootstrapSession();
+const middlewareUrl = 'https://YOUR_MIDDLEWARE_URL';
 
 const chat = new GengageChat();
-await chat.init({ accountId: 'mystore', session: { sessionId } });
+await chat.init({
+  accountId: 'mystore',
+  middlewareUrl,
+  session: { sessionId },
+});
 
 // On PDP pages — mount QNA buttons and similar products
 const qna = new GengageQNA();
 await qna.init({
   accountId: 'mystore',
+  middlewareUrl,
   mountTarget: '#qna-section',
   pageContext: { pageType: 'pdp', sku: currentSku },
   session: { sessionId },
@@ -72,6 +78,7 @@ await qna.init({
 const simrel = new GengageSimRel();
 await simrel.init({
   accountId: 'mystore',
+  middlewareUrl,
   sku: currentSku,
   mountTarget: '#similar-section',
   session: { sessionId },
@@ -236,7 +243,7 @@ gengage-assistant-fe/
 │   └── native/            # Mobile WebView overlay
 ├── catalog/                # Visual component catalog (no backend needed)
 │   ├── index.html          # SPA shell
-│   ├── vite.config.ts      # Resolves @gengage/assistant-fe → dist/
+│   ├── vite.config.ts      # Resolves @gengage/assistant-fe → src/
 │   └── src/                # Router, layout, mock data, sections
 ├── scripts/
 │   └── dev.ts             # Dev server entry point (npm run dev)
@@ -254,13 +261,16 @@ gengage-assistant-fe/
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev -- <accountId> <sku>` | Start local dev server in PDP mode for an account + SKU |
+| `npm run dev -- <demo> [--sku=SKU] [--port=3000] [--backend-url=URL]` | Start local dev server for any demo |
+| `npm run dev -- --client=<demo> [--sku=SKU] [--port=3000] [--backend-url=URL]` | Same as above, using named demo flag |
 | `npm run kill` | Kill zombie listeners on ports 3000-3010 |
-| `npm run prerequisites:check` | Validate kickoff prerequisites (docs/config/schema/action routing) |
+| `npm run format` | Prettier + ESLint fix + `typecheck` + `typecheck:catalog` |
 | `npm run dev -- koctascomtr --sku=1000465056` | Example: Koçtaş PDP with SKU 1000465056 |
 | `npm run dev -- n11com --sku=ABC123 --port=3005` | Custom port |
+| `npm run dev -- --client=yatasbeddingcomtr --sku=1066800 --backend-url=https://staging.example.com` | Demo alias + backend override |
 | `npm run build` | Build all widgets to `dist/` |
 | `npm run typecheck` | TypeScript strict check (no emit) |
+| `npm run typecheck:catalog` | TypeScript check for `catalog/` |
 | `npm run lint` | ESLint `src/` |
 | `npm run test` | Vitest unit tests |
 | `npm run test:e2e` | Playwright smoke tests |
@@ -269,21 +279,16 @@ gengage-assistant-fe/
 
 ### `npm run dev` — Local Widget Test Server
 
-The dev server spins up an account-aware PDP host shell with all three widgets initialised
-for the given account and SKU. Every invocation generates fresh UUIDs printed to the console:
-
-Current focus is PDP mode (`product details`) with a concrete SKU.
-PLP mode (`category / sku-list`) is planned and will be added as a separate harness flow.
+The dev server serves `demos/<demo>/index.html` with HMR and supports optional query
+injection via CLI flags (`--sku`, `--backend-url`). It also supports `--client=<demo>`
+as an alias for the positional demo argument.
 
 ```
 ── Gengage Dev Server ──────────────────────────────
-  Account:    koctascomtr
+  Demo:     koctascomtr
   SKU:        1234567
-  Page type:  pdp
-  Session ID: 550e8400-e29b-41d4-a716-446655440000
-  User ID:    6ba7b810-9dad-11d1-80b4-00c04fd430c8
-  View ID:    6ba7b811-9dad-11d1-80b4-00c04fd430c8
-  URL:        http://localhost:3000
+  Backend:  https://staging.example.com
+  URL:      http://localhost:3000?sku=1234567&middlewareUrl=https%3A%2F%2Fstaging.example.com
 ────────────────────────────────────────────────────
 ```
 
@@ -296,16 +301,16 @@ The page shows:
 
 HMR is active — editing `src/` files updates the page without a full reload.
 
-> The dev server serves the account's demo page from `demos/<accountId>/index.html`,
-> generating fresh session/user/view IDs on each start.
+> The dev server serves the selected demo page from `demos/<demo>/index.html`,
+> and keeps query options sticky if you open `/` directly.
 
 ### Component Catalog (`npm run catalog`)
 
 A visual catalog that renders every component with mock data — no backend needed.
-Imports from `dist/` (validates the npm package as consumers would see it).
+`npm run catalog` already runs `npm run build` first.
 
 ```bash
-npm run build && npm run catalog    # Build first, then serve at :3002
+npm run catalog    # Serves at :3002 (and builds first)
 ```
 
 Open `http://localhost:3002` to see:
@@ -319,7 +324,7 @@ Open `http://localhost:3002` to see:
 - **Theme Comparison** — same component rendered across all 12 merchant themes
 - **Responsive Preview** — mobile / tablet / desktop viewport frames
 
-The catalog lives in `catalog/` and is excluded from npm publish (`files: ["dist/"]`).
+The catalog lives in `catalog/` and is excluded from npm publish (`files` publishes `dist/`, `README.md`, and `LICENSE`).
 
 ---
 

@@ -19,20 +19,19 @@ Build account-specific frontend customizations while keeping shared logic centra
 
 ```bash
 npm install
-npm run prerequisites:check
 npm run kill
 ```
 
 Use this local workflow for PDP mode:
 
 ```bash
-npm run dev -- <accountId> <sku>
+npm run dev -- <accountId> --sku=<sku>
 ```
 
 Example:
 
 ```bash
-npm run dev -- koctascomtr 1000197232
+npm run dev -- koctascomtr --sku=1000197232
 ```
 
 ## Where To Change What
@@ -40,7 +39,7 @@ npm run dev -- koctascomtr 1000197232
 1. `src/common/*`: cross-account primitives, shared factories, eventing, transport, analytics, overlay orchestration.
 2. `src/chat/*`, `src/qna/*`, `src/simrel/*`: widget behavior and shared UI implementation.
 3. `demos/<accountId>/index.html`: account-level demo with inline config.
-4. `catalog/`: visual component catalog — browse all components with mock data at `:3002` (`npm run build && npm run catalog`).
+4. `catalog/`: visual component catalog — browse all components with mock data at `:3002` (`npm run catalog`).
 5. `scripts/dev.ts`: dev server entry point (serves demos directly).
 6. `tests/*`: regression and parity checks.
 
@@ -70,7 +69,7 @@ Avoid adding new duplicated constants (middleware URL, analytics defaults, PDP p
 Use the account-aware dev shell for all accounts (not only Koctas):
 
 ```bash
-npm run dev -- <accountId> <sku>
+npm run dev -- <accountId> --sku=<sku>
 ```
 
 The shell is expected to provide:
@@ -92,7 +91,7 @@ Use Playwright as a merge gate for high-risk UI changes:
 For visual regression across all components and themes, use the component catalog:
 
 ```bash
-npm run build && npm run catalog   # Serve catalog at :3002
+npm run catalog   # Serve catalog at :3002 (builds first)
 npx playwright test --project=catalog   # Screenshot every component + theme grid
 ```
 
@@ -105,7 +104,7 @@ npm run test:e2e
 For manual local parity checks:
 
 ```bash
-npm run dev -- <accountId> <sku> --port=3000
+npm run dev -- <accountId> --sku=<sku> --port=3000
 ```
 
 Then run Playwright against that URL.
@@ -128,7 +127,7 @@ Run before opening a PR:
 
 ```bash
 npm run kill
-npm run typecheck
+npm run format
 npm run build
 npm run test
 npm run test:e2e
@@ -150,7 +149,7 @@ Every PR should include:
 
 Customization work is considered done when:
 
-1. account boots via `npm run dev -- <accountId> <sku>`,
+1. account boots via `npm run dev -- <accountId> --sku=<sku>`,
 2. widgets render in realistic host-shell context,
 3. cross-account/shared logic is centralized in `src/common`/core,
 4. account files contain only true overrides,

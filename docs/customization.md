@@ -98,7 +98,7 @@ Before customizing components, browse the visual catalog to see every component 
 with mock data. No backend needed.
 
 ```bash
-npm run build && npm run catalog    # http://localhost:3002
+npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 The catalog shows all 25+ components in realistic frames (chat drawer, PDP section, etc.)

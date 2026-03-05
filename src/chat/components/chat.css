@@ -241,8 +241,8 @@
 }
 
 .gengage-chat-root--mobile .gengage-chat-launcher-container {
-  right: 16px;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  right: var(--gengage-chat-launcher-mobile-right, 16px);
+  bottom: calc(var(--gengage-chat-launcher-mobile-bottom, 16px) + env(safe-area-inset-bottom, 0px));
 }
 
 .gengage-chat-root--mobile .gengage-chat-drawer {

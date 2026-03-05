@@ -121,13 +121,14 @@
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? '1000465056';
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       document.getElementById('demo-sku').textContent = sku;
 
       // ---- CONFIGURE THESE VALUES ----
       const controller = await initOverlayWidgets({
         accountId: 'koctascomtr',
-        middlewareUrl: 'https://chatbe-dev.gengage.ai',
+        middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: 'pdp', sku },

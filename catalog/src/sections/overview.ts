@@ -17,7 +17,7 @@ export function renderOverview(container: HTMLElement): void {
 
   const badge = document.createElement('span');
   badge.className = 'version-badge';
-  badge.textContent = '@gengage/assistant-fe v0.1.2';
+  badge.textContent = `@gengage/assistant-fe v${__GENGAGE_VERSION__}`;
   wrapper.appendChild(badge);
 
   const intro = document.createElement('p');

@@ -474,6 +474,7 @@
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -482,7 +483,7 @@
 
       const controller = await initOverlayWidgets({
         accountId: 'yatasbeddingcomtr',
-        middlewareUrl: 'https://chatbe-dev.gengage.ai',
+        middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
@@ -512,6 +513,7 @@
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
+          headerTitle: "Yataş'a Sor",
           launcherSvg:
             '<img src="https://storage.googleapis.com/gengage-resources-fr/launcher-image/glov-yatasbeddingcomtr-launcher.svg" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border-radius:50%">',
           headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',

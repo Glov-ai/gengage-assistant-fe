@@ -67,8 +67,8 @@ See the event matrix in [docs/wire-protocol.md](docs/wire-protocol.md) for the f
 
 - **Unit tests:** Vitest (`npm run test`).
 - **E2E tests:** Playwright (`npm run test:e2e`). Smoke-level currently.
-- **Visual catalog:** `npm run build && npm run catalog` — renders every component with mock data at `:3002`. Useful for verifying UI changes across all component types and merchant themes.
-- **Type checking:** `npm run typecheck` (strict mode, `exactOptionalPropertyTypes: true`).
+- **Visual catalog:** `npm run catalog` — renders every component with mock data at `:3002` (builds first). Useful for verifying UI changes across all component types and merchant themes.
+- **Type checking:** `npm run typecheck` and `npm run typecheck:catalog` (strict mode, `exactOptionalPropertyTypes: true`).
 
 All tests must pass before opening a PR.
 
@@ -78,7 +78,7 @@ Run before opening a PR:
 
 ```bash
 npm run kill
-npm run typecheck
+npm run format
 npm run build
 npm run test
 npm run test:e2e

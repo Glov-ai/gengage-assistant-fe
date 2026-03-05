@@ -12,10 +12,11 @@ The primary way to test widgets is the local dev server:
 npm run dev -- koctascomtr --sku=1000465056
 npm run dev -- arcelikcomtr --sku=ABC123 --port=3005
 npm run dev -- n11com --sku=XYZ789 --port=3010
+npm run dev -- --client=yatasbeddingcomtr --sku=1066800 --backend-url=https://staging.example.com
 ```
 
 The dev server serves the corresponding `demos/<accountId>/index.html` with HMR.
-Backend calls go to the `middlewareUrl` configured in each demo's `index.html`.
+Backend URL can come from demo defaults or be overridden with `--backend-url`.
 
 ---
 
@@ -59,11 +60,11 @@ Backend calls go to the `middlewareUrl` configured in each demo's `index.html`.
 
 ## Testing Against a Different Backend
 
-Override the backend URL by editing the `middlewareUrl` in the demo's `index.html`, or pass
-it via query parameter if the demo supports `?backendUrl=`:
+Override the backend URL by editing `middlewareUrl` in the demo's `index.html`, using
+`--backend-url=...`, or by setting `middlewareUrl` in the URL query:
 
 ```bash
-http://localhost:3000/?sku=1000465056&backendUrl=https://your-staging-backend.example.com
+http://localhost:3000/?sku=1000465056&middlewareUrl=https://your-staging-backend.example.com
 ```
 
 This is useful for testing backend changes before they reach production.
@@ -75,7 +76,7 @@ This is useful for testing backend changes before they reach production.
 For visual verification of all components without a backend:
 
 ```bash
-npm run build && npm run catalog    # http://localhost:3002
+npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 The catalog renders every component (Chat, QNA, SimRel) with mock data inside realistic
@@ -93,10 +94,9 @@ Useful for:
 Run this after every significant change:
 
 ```bash
-npm run typecheck          # No TypeScript errors
-npm run build              # Clean Vite build
-npm run prerequisites:check  # All required docs and config present
-npm run test:e2e           # Playwright smoke tests
+npm run format            # Prettier + ESLint + typecheck + typecheck:catalog
+npm run build             # Clean Vite build
+npm run test:e2e          # Playwright smoke tests
 ```
 
 Then manually verify with the dev server:
@@ -124,5 +124,5 @@ npm run dev -- koctascomtr --sku=1000465056
 | `hepsiburadacom` | High-traffic marketplace, tests performance |
 | `yatasbeddingcomtr` | Furniture, tests large product images and variants |
 
-Use real SKUs from each account's catalog. The dev server prints the session ID,
-user ID, and view ID on startup — copy these for debugging backend logs.
+Use real SKUs from each account's catalog. The dev server startup log prints demo,
+SKU, backend, and local URL (including sticky query params).

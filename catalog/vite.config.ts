@@ -1,10 +1,30 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
 
 const ROOT = resolve(__dirname, '..');
 
+function readPackageVersion(): string {
+  const parsed: unknown = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid package.json: expected an object.');
+  }
+
+  const version = (parsed as { version?: unknown }).version;
+  if (typeof version !== 'string' || version.trim() === '') {
+    throw new Error('Invalid package.json: missing non-empty string "version".');
+  }
+
+  return version;
+}
+
+const PACKAGE_VERSION = readPackageVersion();
+
 export default defineConfig({
   root: __dirname,
+  define: {
+    __GENGAGE_VERSION__: JSON.stringify(PACKAGE_VERSION),
+  },
   resolve: {
     alias: {
       // Resolve directly to source modules so catalog remains stable even while

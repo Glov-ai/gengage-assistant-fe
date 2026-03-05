@@ -246,7 +246,7 @@ button — it does not need a mount point in the HTML.
 Before testing with a live backend, preview all widget components with the visual catalog:
 
 ```bash
-npm run build && npm run catalog    # http://localhost:3002
+npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 Use the global theme selector to see how your merchant's theme tokens look on every
@@ -273,6 +273,7 @@ This starts a Vite dev server with HMR at `http://localhost:3000`. You will see:
 npm run dev -- mystorecom --sku=ABC123              # Default port 3000
 npm run dev -- mystorecom --sku=ABC123 --port=3005  # Custom port
 npm run dev -- mystorecom                           # No SKU (non-PDP page)
+npm run dev -- --client=mystorecom --sku=ABC123     # Named alias for demo
 ```
 
 When no `--sku` is provided, the page loads as a non-PDP page and the QNA/SimRel
@@ -395,7 +396,7 @@ await controller.updateSku('NEW-SKU-789');
   full list of stepper tokens.
 - **Share button:** The share button appears automatically when a product has a URL. On
   desktop it copies the URL to clipboard; on mobile it invokes the native share sheet.
-- **Voice input:** Enable voice input on the chat widget with `enableVoiceInput: true` in
+- **Voice input:** Enable voice input on the chat widget with `voiceEnabled: true` in
   the top-level config. Requires microphone permission from the user.
 - **Theme defaults:** Define your account's theme tokens (primary color, font, border radius)
   directly in the demo's `initOverlayWidgets()` call. See existing demos for reference.

@@ -52,7 +52,7 @@ Additional optional fields:
 |-------|------|-------------|
 | `enableHeartbeat` | `boolean` | Enable session keepalive polling via `/v2/heartbeat`. Default: `false`. |
 | `pricing` | `PriceFormatConfig` | Locale-aware price formatting (currency symbol, position, separators). See `src/common/price-formatter.ts`. |
-| `enableVoiceInput` | `boolean` | Enable speech-to-text input on the chat widget. Default: `false`. |
+| `voiceEnabled` | `boolean` | Enable speech-to-text input on the chat widget. Default: `false`. |
 | `kvkk` | `{ message, linkUrl, linkText }` | Turkish data protection (KVKK) consent banner config. When set, a consent notice is displayed before the first user message. |
 
 Include transport fields:

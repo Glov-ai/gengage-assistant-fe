@@ -58,10 +58,12 @@
     <script src="https://unpkg.com/@gengage/assistant-fe/dist/simrel.iife.js"></script>
 
     <script>
+      var params = new URLSearchParams(location.search);
+
       // ---- CONFIGURE THESE VALUES ----
       var ACCOUNT_ID = 'koctascomtr';
-      var MIDDLEWARE_URL = 'https://chatbe-dev.gengage.ai';
-      var SKU = new URLSearchParams(location.search).get('sku') || '1000465056';
+      var MIDDLEWARE_URL = params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      var SKU = params.get('sku') || '1000465056';
       var LOCALE = 'tr';
 
       document.getElementById('demo-sku').textContent = SKU;
