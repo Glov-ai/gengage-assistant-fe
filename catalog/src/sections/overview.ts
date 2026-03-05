@@ -21,7 +21,8 @@ export function renderOverview(container: HTMLElement): void {
   wrapper.appendChild(badge);
 
   const intro = document.createElement('p');
-  intro.textContent = 'Visual catalog of all UI components across Chat, QNA, and SimRel widgets. Click a component name to see it rendered with mock data.';
+  intro.textContent =
+    'Visual catalog of all UI components across Chat, QNA, and SimRel widgets. Click a component name to see it rendered with mock data.';
   intro.style.marginBottom = '24px';
   intro.style.color = '#666';
   wrapper.appendChild(intro);

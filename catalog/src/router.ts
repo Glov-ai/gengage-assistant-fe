@@ -8,7 +8,10 @@ export interface Route {
 export const ROUTES: Route[] = [
   { path: '/', label: 'Overview' },
   {
-    path: '/chat', label: 'Chat Components', section: 'chat', children: [
+    path: '/chat',
+    label: 'Chat Components',
+    section: 'chat',
+    children: [
       { path: '/chat/ActionButtons', label: 'ActionButtons' },
       { path: '/chat/ActionButton', label: 'ActionButton' },
       { path: '/chat/ProductCard', label: 'ProductCard' },
@@ -28,7 +31,10 @@ export const ROUTES: Route[] = [
     ],
   },
   {
-    path: '/qna', label: 'QNA Components', section: 'qna', children: [
+    path: '/qna',
+    label: 'QNA Components',
+    section: 'qna',
+    children: [
       { path: '/qna/ButtonRow', label: 'ButtonRow' },
       { path: '/qna/ActionButton', label: 'ActionButton' },
       { path: '/qna/TextInput', label: 'TextInput' },
@@ -36,7 +42,10 @@ export const ROUTES: Route[] = [
     ],
   },
   {
-    path: '/simrel', label: 'SimRel Components', section: 'simrel', children: [
+    path: '/simrel',
+    label: 'SimRel Components',
+    section: 'simrel',
+    children: [
       { path: '/simrel/ProductGrid', label: 'ProductGrid' },
       { path: '/simrel/ProductCard', label: 'ProductCard' },
       { path: '/simrel/AddToCartButton', label: 'AddToCartButton' },
@@ -74,7 +83,7 @@ export function findRoute(path: string): Route | undefined {
   for (const route of ROUTES) {
     if (route.path === path) return route;
     if (route.children) {
-      const child = route.children.find(c => c.path === path);
+      const child = route.children.find((c) => c.path === path);
       if (child) return child;
     }
   }
@@ -86,7 +95,7 @@ export function getBreadcrumb(path: string): string[] {
   for (const route of ROUTES) {
     if (route.path === path) return [route.label];
     if (route.children) {
-      const child = route.children.find(c => c.path === path);
+      const child = route.children.find((c) => c.path === path);
       if (child) return [route.label, child.label];
     }
   }

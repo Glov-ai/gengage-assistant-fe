@@ -1,140 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="data:," />
-  <title>Gengage — Vanilla ESM Demo</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage — Vanilla ESM Demo</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      background: #f5f6f8;
-      color: #111827;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.5;
-    }
+      body {
+        margin: 0;
+        background: #f5f6f8;
+        color: #111827;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.5;
+      }
 
-    .page-header {
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+      .page-header {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
-    .page-header__brand {
-      font-weight: 700;
-      font-size: 18px;
-      color: #1e40af;
-    }
+      .page-header__brand {
+        font-weight: 700;
+        font-size: 18px;
+        color: #1e40af;
+      }
 
-    .page-header__nav {
-      display: flex;
-      gap: 16px;
-      color: #6b7280;
-      font-size: 14px;
-    }
+      .page-header__nav {
+        display: flex;
+        gap: 16px;
+        color: #6b7280;
+        font-size: 14px;
+      }
 
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 16px;
-    }
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
 
-    .product-card {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-    }
+      .product-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
 
-    .product-card h1 {
-      margin: 0 0 8px;
-      font-size: 24px;
-    }
+      .product-card h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
 
-    .product-card .sku {
-      color: #6b7280;
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
+      .product-card .sku {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
 
-    .product-card .price {
-      font-size: 28px;
-      font-weight: 800;
-      color: #1e40af;
-    }
+      .product-card .price {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1e40af;
+      }
 
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 20px;
-    }
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
 
-    .widget-section {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      min-height: 120px;
-    }
-  </style>
-</head>
-<body>
+      .widget-section {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        min-height: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="page-header__brand">Gengage Demo Store</div>
+      <nav class="page-header__nav">
+        <span>Products</span>
+        <span>Categories</span>
+        <span>Support</span>
+      </nav>
+    </header>
 
-  <header class="page-header">
-    <div class="page-header__brand">Gengage Demo Store</div>
-    <nav class="page-header__nav">
-      <span>Products</span>
-      <span>Categories</span>
-      <span>Support</span>
-    </nav>
-  </header>
+    <main class="container">
+      <section class="product-card">
+        <h1>Lorem Ipsum Demo</h1>
+        <p class="sku">SKU: <span id="demo-sku">—</span></p>
+        <p class="price">XXX TL</p>
+      </section>
 
-  <main class="container">
-    <section class="product-card">
-      <h1>Lorem Ipsum Demo</h1>
-      <p class="sku">SKU: <span id="demo-sku">—</span></p>
-      <p class="price">XXX TL</p>
-    </section>
+      <section class="widget-section">
+        <h2 class="section-title">Questions &amp; Answers</h2>
+        <div id="gengage-qna"></div>
+      </section>
 
-    <section class="widget-section">
-      <h2 class="section-title">Questions &amp; Answers</h2>
-      <div id="gengage-qna"></div>
-    </section>
+      <section class="widget-section">
+        <h2 class="section-title">Similar Products</h2>
+        <div id="gengage-simrel"></div>
+      </section>
+    </main>
 
-    <section class="widget-section">
-      <h2 class="section-title">Similar Products</h2>
-      <div id="gengage-simrel"></div>
-    </section>
-  </main>
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
 
-  <script type="module">
-    import { initOverlayWidgets } from '@gengage/assistant-fe';
+      const params = new URLSearchParams(location.search);
+      const sku = params.get('sku') ?? '1000465056';
 
-    const params = new URLSearchParams(location.search);
-    const sku = params.get('sku') ?? '1000465056';
+      document.getElementById('demo-sku').textContent = sku;
 
-    document.getElementById('demo-sku').textContent = sku;
+      // ---- CONFIGURE THESE VALUES ----
+      const controller = await initOverlayWidgets({
+        accountId: 'koctascomtr',
+        middlewareUrl: 'https://chatbe-dev.gengage.ai',
+        locale: 'tr',
+        sku,
+        pageContext: { pageType: 'pdp', sku },
+        qna: { mountTarget: '#gengage-qna' },
+        simrel: { mountTarget: '#gengage-simrel' },
+        onAddToCart: (p) => console.log('[demo] add-to-cart', p),
+        onProductNavigate: (url) => {
+          window.location.href = url;
+        },
+      });
 
-    // ---- CONFIGURE THESE VALUES ----
-    const controller = await initOverlayWidgets({
-      accountId: 'koctascomtr',
-      middlewareUrl: 'https://chatbe-dev.gengage.ai',
-      locale: 'tr',
-      sku,
-      pageContext: { pageType: 'pdp', sku },
-      qna: { mountTarget: '#gengage-qna' },
-      simrel: { mountTarget: '#gengage-simrel' },
-      onAddToCart: (p) => console.log('[demo] add-to-cart', p),
-      onProductNavigate: (url) => { window.location.href = url; },
-    });
-
-    console.log('[vanilla-esm] Widgets ready. Session:', controller.session.sessionId);
-  </script>
-</body>
+      console.log('[vanilla-esm] Widgets ready. Session:', controller.session.sessionId);
+    </script>
+  </body>
 </html>

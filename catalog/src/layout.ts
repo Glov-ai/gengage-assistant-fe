@@ -85,9 +85,18 @@ export function mountLayout(root: HTMLElement): HTMLElement {
   themeDropdownEl.appendChild(noneOpt);
 
   const merchantIds = [
-    'koctascomtr', 'n11com', 'hepsiburadacom', 'arcelikcomtr',
-    'yatasbeddingcomtr', 'trendyolcom', 'boynercomtr', 'evideacom',
-    'aygazcomtr', 'otokoccomtr', 'divanpastanelericomtr', 'screwfixcom',
+    'koctascomtr',
+    'n11com',
+    'hepsiburadacom',
+    'arcelikcomtr',
+    'yatasbeddingcomtr',
+    'trendyolcom',
+    'boynercomtr',
+    'evideacom',
+    'aygazcomtr',
+    'otokoccomtr',
+    'divanpastanelericomtr',
+    'screwfixcom',
   ];
   for (const id of merchantIds) {
     const opt = document.createElement('option');

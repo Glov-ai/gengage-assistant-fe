@@ -1,8 +1,12 @@
 /* Catalog chrome styles */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #f5f5f7;
   color: #1d1d1f;
   overflow: hidden;
@@ -52,7 +56,9 @@ body {
   text-decoration: none;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .catalog-nav > li > a:hover,
@@ -189,7 +195,9 @@ body {
   max-width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   background: var(--gengage-background-color, #fff);
@@ -203,14 +211,14 @@ body {
   min-height: 56px;
   background: var(--gengage-chat-header-bg, #1d2939);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .catalog-chat-frame-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -249,7 +257,7 @@ body {
   width: 32px;
   height: 32px;
   border: none;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border-radius: 50%;
   font-size: 14px;
@@ -276,7 +284,9 @@ body {
   max-width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   background: var(--gengage-background-color, #fff);
 }
@@ -332,7 +342,7 @@ body {
   max-width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   background: var(--gengage-background-color, #fff);
 }
 
@@ -365,7 +375,7 @@ body {
   max-width: 900px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   background: var(--gengage-background-color, #fff);
 }
 
@@ -413,7 +423,7 @@ body {
   padding: 8px 20px;
   background: #1e1e1e;
   color: #4ec9b0;
-  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 11px;
   max-height: 120px;
   overflow-y: auto;

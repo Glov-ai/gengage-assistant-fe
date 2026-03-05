@@ -2,24 +2,38 @@
  * UISpec fixtures for all SimRel catalog components.
  */
 
-import { PRODUCTS, productAsRecord } from './products.js';
+import { PRODUCTS } from './products.js';
 
 const p = PRODUCTS;
 
-function simrelProduct(product: typeof p[0]) {
+function getProduct(index: number): (typeof PRODUCTS)[number] {
+  const product = p[index];
+  if (!product) {
+    throw new Error(`Missing mock product at index ${index}`);
+  }
+  return product;
+}
+
+const p0 = getProduct(0);
+const p1 = getProduct(1);
+const p2 = getProduct(2);
+const p3 = getProduct(3);
+const p4 = getProduct(4);
+
+function simrelProduct(product: (typeof PRODUCTS)[number]) {
   return {
-    sku: product!.sku,
-    name: product!.name,
-    imageUrl: product!.imageUrl,
-    price: product!.price,
-    originalPrice: product!.originalPrice,
-    discountPercent: product!.discountPercent,
-    url: product!.url,
-    brand: product!.brand,
-    rating: product!.rating,
-    reviewCount: product!.reviewCount,
-    cartCode: product!.cartCode,
-    inStock: product!.inStock,
+    sku: product.sku,
+    name: product.name,
+    imageUrl: product.imageUrl,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    discountPercent: product.discountPercent,
+    url: product.url,
+    brand: product.brand,
+    rating: product.rating,
+    reviewCount: product.reviewCount,
+    cartCode: product.cartCode,
+    inStock: product.inStock,
   };
 }
 
@@ -34,10 +48,10 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
           props: { layout: 'grid', columns: 4 },
           children: ['c0', 'c1', 'c2', 'c3'],
         },
-        c0: { type: 'ProductCard', props: { product: simrelProduct(p[0]), index: 0 } },
-        c1: { type: 'ProductCard', props: { product: simrelProduct(p[1]), index: 1 } },
-        c2: { type: 'ProductCard', props: { product: simrelProduct(p[2]), index: 2 } },
-        c3: { type: 'ProductCard', props: { product: simrelProduct(p[3]), index: 3 } },
+        c0: { type: 'ProductCard', props: { product: simrelProduct(p0), index: 0 } },
+        c1: { type: 'ProductCard', props: { product: simrelProduct(p1), index: 1 } },
+        c2: { type: 'ProductCard', props: { product: simrelProduct(p2), index: 2 } },
+        c3: { type: 'ProductCard', props: { product: simrelProduct(p3), index: 3 } },
       },
     },
   },
@@ -50,7 +64,7 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
         root: {
           type: 'ProductCard',
           props: {
-            product: simrelProduct(p[0]),
+            product: simrelProduct(p0),
             index: 0,
             discountType: 'badge',
           },
@@ -67,9 +81,9 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
         root: {
           type: 'AddToCartButton',
           props: {
-            sku: p[0]!.sku,
+            sku: p0.sku,
             label: 'Sepete Ekle',
-            cartCode: p[0]!.cartCode,
+            cartCode: p0.cartCode,
           },
         },
       },
@@ -85,8 +99,11 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
           type: 'QuickActions',
           props: {
             actions: [
-              { label: 'Karsilastir', action: { title: 'Karsilastir', type: 'compare', payload: { sku: p[0]!.sku } } },
-              { label: 'Benzer Goster', action: { title: 'Benzer Goster', type: 'findSimilar', payload: { sku: p[0]!.sku } } },
+              { label: 'Karsilastir', action: { title: 'Karsilastir', type: 'compare', payload: { sku: p0.sku } } },
+              {
+                label: 'Benzer Goster',
+                action: { title: 'Benzer Goster', type: 'findSimilar', payload: { sku: p0.sku } },
+              },
             ],
           },
         },
@@ -121,15 +138,15 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
               {
                 name: 'Benzer Urunler',
                 highlight: 'Ayni kategoride en populer urunler',
-                products: [simrelProduct(p[0]), simrelProduct(p[1]), simrelProduct(p[2])],
+                products: [simrelProduct(p0), simrelProduct(p1), simrelProduct(p2)],
               },
               {
                 name: 'Ayni Fiyat Araliginda',
-                products: [simrelProduct(p[2]), simrelProduct(p[4])],
+                products: [simrelProduct(p2), simrelProduct(p4)],
               },
               {
                 name: 'Ayni Marka',
-                products: [simrelProduct(p[0])],
+                products: [simrelProduct(p0)],
               },
             ],
           },

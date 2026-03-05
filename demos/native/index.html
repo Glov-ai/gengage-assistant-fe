@@ -1,79 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <link rel="icon" href="data:," />
-  <title>Gengage Native Overlay</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      overflow: hidden;
-      height: 100%;
-      /* iOS safe area support */
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-    /* Hidden by default — widgets manage their own visibility */
-    #gengage-qna, #gengage-simrel { display: none; }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Native Overlay</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        overflow: hidden;
+        height: 100%;
+        /* iOS safe area support */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      /* Hidden by default — widgets manage their own visibility */
+      #gengage-qna,
+      #gengage-simrel {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Mount targets for PDP widgets (shown only when context is PDP) -->
+    <div id="gengage-qna"></div>
+    <div id="gengage-simrel"></div>
 
-  <!-- Mount targets for PDP widgets (shown only when context is PDP) -->
-  <div id="gengage-qna"></div>
-  <div id="gengage-simrel"></div>
+    <!-- Initialize widgets -->
+    <script type="module">
+      import {
+        initNativeOverlayWidgets,
+        applyNativeSession,
+        createNativeWebViewBridge,
+      } from '@gengage/assistant-fe/native';
 
-  <!-- Initialize widgets -->
-  <script type="module">
-    import { initNativeOverlayWidgets, applyNativeSession, createNativeWebViewBridge } from '@gengage/assistant-fe/native';
+      // Config source priority:
+      // 1. window.gengageNativeConfig (injected by native app via WKUserScript / evaluateJavascript)
+      // 2. URL query params (?accountId=...&sku=...&middlewareUrl=...)
+      // 3. Defaults
 
-    // Config source priority:
-    // 1. window.gengageNativeConfig (injected by native app via WKUserScript / evaluateJavascript)
-    // 2. URL query params (?accountId=...&sku=...&middlewareUrl=...)
-    // 3. Defaults
+      var nativeConfig = window.gengageNativeConfig || {};
+      var params = new URLSearchParams(window.location.search);
 
-    var nativeConfig = window.gengageNativeConfig || {};
-    var params = new URLSearchParams(window.location.search);
+      var accountId = nativeConfig.accountId || params.get('accountId') || 'demo';
+      var middlewareUrl = nativeConfig.middlewareUrl || params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      var sku = nativeConfig.sku || params.get('sku') || undefined;
+      var locale = nativeConfig.locale || params.get('locale') || 'tr';
+      var pageType = nativeConfig.pageType || params.get('pageType') || (sku ? 'pdp' : 'other');
+      var bridge = createNativeWebViewBridge();
 
-    var accountId = nativeConfig.accountId || params.get('accountId') || 'demo';
-    var middlewareUrl = nativeConfig.middlewareUrl || params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
-    var sku = nativeConfig.sku || params.get('sku') || undefined;
-    var locale = nativeConfig.locale || params.get('locale') || 'tr';
-    var pageType = nativeConfig.pageType || params.get('pageType') || (sku ? 'pdp' : 'other');
-    var bridge = createNativeWebViewBridge();
+      // Apply native-injected session before widget init
+      if (nativeConfig.sessionId) {
+        applyNativeSession({ sessionId: nativeConfig.sessionId });
+      }
+      if (nativeConfig.userId) {
+        applyNativeSession({ userId: nativeConfig.userId });
+      }
 
-    // Apply native-injected session before widget init
-    if (nativeConfig.sessionId) {
-      applyNativeSession({ sessionId: nativeConfig.sessionId });
-    }
-    if (nativeConfig.userId) {
-      applyNativeSession({ userId: nativeConfig.userId });
-    }
-
-    try {
-      await initNativeOverlayWidgets({
-        accountId: accountId,
-        middlewareUrl: middlewareUrl,
-        locale: locale,
-        sku: sku,
-        pageContext: { pageType: pageType, sku: sku },
-        chat: {
-          variant: 'floating',
-          mobileInitialState: nativeConfig.mobileInitialState || 'full',
-        },
-      });
-    } catch (err) {
-      bridge.sendToNative('error', {
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  </script>
-
-</body>
+      try {
+        await initNativeOverlayWidgets({
+          accountId: accountId,
+          middlewareUrl: middlewareUrl,
+          locale: locale,
+          sku: sku,
+          pageContext: { pageType: pageType, sku: sku },
+          chat: {
+            variant: 'floating',
+            mobileInitialState: nativeConfig.mobileInitialState || 'full',
+          },
+        });
+      } catch (err) {
+        bridge.sendToNative('error', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    </script>
+  </body>
 </html>

@@ -8,13 +8,18 @@ import { PRODUCTS, productAsRecord } from './products.js';
 const p = PRODUCTS;
 
 function ndjsonLines(events: Record<string, unknown>[]): string {
-  return events.map(e => JSON.stringify(e)).join('\n') + '\n';
+  return events.map((e) => JSON.stringify(e)).join('\n') + '\n';
 }
 
 /** POST /chat/process_action — greeting stream */
 export const CHAT_GREETING_STREAM = ndjsonLines([
   { type: 'loading', payload: { text: 'Dusunuyorum...' } },
-  { type: 'outputText', payload: { text: '<p>Merhaba! Size nasil yardimci olabilirim? Urun aramanizda, karsilastirmanizda veya teknik sorularinizda yardimci olabilirim.</p>' } },
+  {
+    type: 'outputText',
+    payload: {
+      text: '<p>Merhaba! Size nasil yardimci olabilirim? Urun aramanizda, karsilastirmanizda veya teknik sorularinizda yardimci olabilirim.</p>',
+    },
+  },
   {
     type: 'suggestedActions',
     payload: {
@@ -25,7 +30,14 @@ export const CHAT_GREETING_STREAM = ndjsonLines([
       ],
     },
   },
-  { type: 'context', payload: { panel: { screen_type: 'product_list', conversation_stage: 'exploring' }, messages: [], message_id: 'msg-001' } },
+  {
+    type: 'context',
+    payload: {
+      panel: { screen_type: 'product_list', conversation_stage: 'exploring' },
+      messages: [],
+      message_id: 'msg-001',
+    },
+  },
   { type: 'chatStreamEnd', payload: {} },
 ]);
 
@@ -40,7 +52,14 @@ export const CHAT_SEARCH_STREAM = ndjsonLines([
       endOfList: false,
     },
   },
-  { type: 'context', payload: { panel: { screen_type: 'product_list', last_search_query: 'akulu matkap' }, messages: [], message_id: 'msg-002' } },
+  {
+    type: 'context',
+    payload: {
+      panel: { screen_type: 'product_list', last_search_query: 'akulu matkap' },
+      messages: [],
+      message_id: 'msg-002',
+    },
+  },
   { type: 'chatStreamEnd', payload: {} },
 ]);
 
@@ -76,7 +95,7 @@ export const SIMREL_PRODUCTS_STREAM = ndjsonLines([
   {
     type: 'productDetailsSimilars',
     payload: {
-      products: PRODUCTS.map(pp => ({
+      products: PRODUCTS.map((pp) => ({
         sku: pp.sku,
         name: pp.name,
         imageUrl: pp.imageUrl,

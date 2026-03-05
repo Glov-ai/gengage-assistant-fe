@@ -39,7 +39,10 @@ export function renderSimrelComponent(container: HTMLElement, name: string): voi
   try {
     const registry = createDefaultSimRelUISpecRegistry();
     const ctx = createNoopSimrelContext();
-    const spec = entry.spec as { root: string; elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }> };
+    const spec = entry.spec as {
+      root: string;
+      elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }>;
+    };
     componentDom = renderUISpecWithRegistry({
       spec,
       context: ctx,

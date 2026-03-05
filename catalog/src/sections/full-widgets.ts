@@ -14,7 +14,8 @@ export function renderFullWidgets(container: HTMLElement): void {
   container.appendChild(h2);
 
   const note = document.createElement('p');
-  note.textContent = 'All widgets are running with an intercepted fetch() returning canned NDJSON. Open DevTools console to see action callbacks.';
+  note.textContent =
+    'All widgets are running with an intercepted fetch() returning canned NDJSON. Open DevTools console to see action callbacks.';
   note.style.color = '#666';
   note.style.fontSize = '13px';
   note.style.marginBottom = '20px';
@@ -119,12 +120,10 @@ async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Arr
     },
   };
 
-  let chatApi:
-    | {
-        open: () => void;
-        openWithAction: (action: QnaBridgeAction) => void;
-      }
-    | null = null;
+  let chatApi: {
+    open: () => void;
+    openWithAction: (action: QnaBridgeAction) => void;
+  } | null = null;
 
   // Init Chat (floating launcher + drawer)
   try {

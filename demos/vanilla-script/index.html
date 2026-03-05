@@ -1,123 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="data:," />
-  <title>Gengage — Vanilla Script Tag Demo</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { color: #111; }
-    .product { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
-    .product h2 { margin-top: 0; }
-    code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-  </style>
-</head>
-<body>
-  <h1>Gengage — Vanilla Script Tag Demo</h1>
-  <p>This demo uses IIFE bundles via <code>&lt;script&gt;</code> tags — no bundler required.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage — Vanilla Script Tag Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      h1 {
+        color: #111;
+      }
+      .product {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+      }
+      .product h2 {
+        margin-top: 0;
+      }
+      code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gengage — Vanilla Script Tag Demo</h1>
+    <p>This demo uses IIFE bundles via <code>&lt;script&gt;</code> tags — no bundler required.</p>
 
-  <div class="product">
-    <h2>Lorem Ipsum Demo</h2>
-    <p>SKU: <code id="demo-sku">—</code></p>
-    <p>Bu alan yer tutucu PDP kabuğudur. Widget verileri backend tarafından sağlanır.</p>
-  </div>
+    <div class="product">
+      <h2>Lorem Ipsum Demo</h2>
+      <p>SKU: <code id="demo-sku">—</code></p>
+      <p>Bu alan yer tutucu PDP kabuğudur. Widget verileri backend tarafından sağlanır.</p>
+    </div>
 
-  <div id="gengage-qna"></div>
-  <div id="gengage-simrel"></div>
+    <div id="gengage-qna"></div>
+    <div id="gengage-simrel"></div>
 
-  <!--
+    <!--
     Load IIFE bundles from npm via CDN.
     Each bundle extends window.Gengage with its widget class:
       chat.iife.js   -> Gengage.GengageChat
       qna.iife.js    -> Gengage.GengageQNA
       simrel.iife.js -> Gengage.GengageSimRel
   -->
-  <script src="https://unpkg.com/@gengage/assistant-fe/dist/chat.iife.js"></script>
-  <script src="https://unpkg.com/@gengage/assistant-fe/dist/qna.iife.js"></script>
-  <script src="https://unpkg.com/@gengage/assistant-fe/dist/simrel.iife.js"></script>
+    <script src="https://unpkg.com/@gengage/assistant-fe/dist/chat.iife.js"></script>
+    <script src="https://unpkg.com/@gengage/assistant-fe/dist/qna.iife.js"></script>
+    <script src="https://unpkg.com/@gengage/assistant-fe/dist/simrel.iife.js"></script>
 
-  <script>
-    // ---- CONFIGURE THESE VALUES ----
-    var ACCOUNT_ID = 'koctascomtr';
-    var MIDDLEWARE_URL = 'https://chatbe-dev.gengage.ai';
-    var SKU = new URLSearchParams(location.search).get('sku') || '1000465056';
-    var LOCALE = 'tr';
+    <script>
+      // ---- CONFIGURE THESE VALUES ----
+      var ACCOUNT_ID = 'koctascomtr';
+      var MIDDLEWARE_URL = 'https://chatbe-dev.gengage.ai';
+      var SKU = new URLSearchParams(location.search).get('sku') || '1000465056';
+      var LOCALE = 'tr';
 
-    document.getElementById('demo-sku').textContent = SKU;
+      document.getElementById('demo-sku').textContent = SKU;
 
-    // Generate a shared session ID so all widgets correlate to the same session.
-    var SESSION_ID = crypto.randomUUID();
-    var session = { sessionId: SESSION_ID };
+      // Generate a shared session ID so all widgets correlate to the same session.
+      var SESSION_ID = crypto.randomUUID();
+      var session = { sessionId: SESSION_ID };
 
-    // ------------------------------------------------------------------
-    // The IIFE bundles expose individual widget classes on window.Gengage.
-    // There is no initOverlayWidgets() in the per-widget IIFE builds —
-    // that helper lives in the full ESM library bundle. Instead, we
-    // instantiate each widget directly.
-    // ------------------------------------------------------------------
+      // ------------------------------------------------------------------
+      // The IIFE bundles expose individual widget classes on window.Gengage.
+      // There is no initOverlayWidgets() in the per-widget IIFE builds —
+      // that helper lives in the full ESM library bundle. Instead, we
+      // instantiate each widget directly.
+      // ------------------------------------------------------------------
 
-    (async function() {
-      try {
-        // --- Chat widget (floating launcher + drawer) ---
-        var chat = new Gengage.GengageChat();
-        await chat.init({
-          accountId: ACCOUNT_ID,
-          middlewareUrl: MIDDLEWARE_URL,
-          session: session,
-          variant: 'floating',
-          locale: LOCALE,
-          pageContext: { pageType: 'pdp', sku: SKU },
-        });
+      (async function () {
+        try {
+          // --- Chat widget (floating launcher + drawer) ---
+          var chat = new Gengage.GengageChat();
+          await chat.init({
+            accountId: ACCOUNT_ID,
+            middlewareUrl: MIDDLEWARE_URL,
+            session: session,
+            variant: 'floating',
+            locale: LOCALE,
+            pageContext: { pageType: 'pdp', sku: SKU },
+          });
 
-        // --- QNA widget (contextual action buttons) ---
-        var qna = new Gengage.GengageQNA();
-        await qna.init({
-          accountId: ACCOUNT_ID,
-          middlewareUrl: MIDDLEWARE_URL,
-          session: session,
-          pageContext: { pageType: 'pdp', sku: SKU },
-          mountTarget: '#gengage-qna',
-          locale: LOCALE,
-        });
+          // --- QNA widget (contextual action buttons) ---
+          var qna = new Gengage.GengageQNA();
+          await qna.init({
+            accountId: ACCOUNT_ID,
+            middlewareUrl: MIDDLEWARE_URL,
+            session: session,
+            pageContext: { pageType: 'pdp', sku: SKU },
+            mountTarget: '#gengage-qna',
+            locale: LOCALE,
+          });
 
-        // --- SimRel widget (similar products) ---
-        var simrel = new Gengage.GengageSimRel();
-        await simrel.init({
-          accountId: ACCOUNT_ID,
-          middlewareUrl: MIDDLEWARE_URL,
-          session: session,
-          sku: SKU,
-          mountTarget: '#gengage-simrel',
-          locale: LOCALE,
-          onAddToCart: function(p) {
-            console.log('[demo] add-to-cart', p);
-          },
-          onProductNavigate: function(url, productSku, sid) {
-            chat.saveSession(sid || SESSION_ID, productSku);
-            window.location.href = url;
-          },
-        });
+          // --- SimRel widget (similar products) ---
+          var simrel = new Gengage.GengageSimRel();
+          await simrel.init({
+            accountId: ACCOUNT_ID,
+            middlewareUrl: MIDDLEWARE_URL,
+            session: session,
+            sku: SKU,
+            mountTarget: '#gengage-simrel',
+            locale: LOCALE,
+            onAddToCart: function (p) {
+              console.log('[demo] add-to-cart', p);
+            },
+            onProductNavigate: function (url, productSku, sid) {
+              chat.saveSession(sid || SESSION_ID, productSku);
+              window.location.href = url;
+            },
+          });
 
-        // Wire QNA → Chat bridge.
-        // initOverlayWidgets() does this automatically, but per-widget IIFE
-        // bundles require manual wiring after all widgets are initialised.
-        window.addEventListener('gengage:qna:action', function(e) {
-          if (window.gengage && window.gengage.chat) {
-            window.gengage.chat.openWithAction(e.detail);
-          }
-        });
-        window.addEventListener('gengage:qna:open-chat', function() {
-          if (window.gengage && window.gengage.chat) {
-            window.gengage.chat.open();
-          }
-        });
+          // Wire QNA → Chat bridge.
+          // initOverlayWidgets() does this automatically, but per-widget IIFE
+          // bundles require manual wiring after all widgets are initialised.
+          window.addEventListener('gengage:qna:action', function (e) {
+            if (window.gengage && window.gengage.chat) {
+              window.gengage.chat.openWithAction(e.detail);
+            }
+          });
+          window.addEventListener('gengage:qna:open-chat', function () {
+            if (window.gengage && window.gengage.chat) {
+              window.gengage.chat.open();
+            }
+          });
 
-        console.log('[vanilla-script] All widgets ready. Session:', SESSION_ID);
-      } catch (err) {
-        console.error('[vanilla-script] Widget init failed:', err);
-      }
-    })();
-  </script>
-</body>
+          console.log('[vanilla-script] All widgets ready. Session:', SESSION_ID);
+        } catch (err) {
+          console.error('[vanilla-script] Widget init failed:', err);
+        }
+      })();
+    </script>
+  </body>
 </html>

@@ -75,7 +75,10 @@ export function renderResponsivePreview(container: HTMLElement): void {
       try {
         const registry = createDefaultChatUISpecRegistry();
         const ctx = createNoopChatContext();
-        const spec = specEntry.spec as { root: string; elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }> };
+        const spec = specEntry.spec as {
+          root: string;
+          elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }>;
+        };
         const dom = renderUISpecWithRegistry({
           spec,
           context: ctx,

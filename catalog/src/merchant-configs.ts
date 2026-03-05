@@ -8,7 +8,7 @@
  * SDK consumers define their own theme/locale in their integration code.
  */
 
-import type { WidgetTheme } from '@gengage/assistant-fe';
+import type { WidgetTheme } from '@gengage/assistant-fe/common';
 
 export interface MerchantConfig {
   accountId: string;

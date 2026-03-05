@@ -39,7 +39,10 @@ export function renderQnaComponent(container: HTMLElement, name: string): void {
   try {
     const registry = createDefaultQnaUISpecRegistry();
     const ctx = createNoopQnaContext();
-    const spec = entry.spec as { root: string; elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }> };
+    const spec = entry.spec as {
+      root: string;
+      elements: Record<string, { type: string; props?: Record<string, unknown>; children?: string[] }>;
+    };
     componentDom = renderUISpecWithRegistry({
       spec,
       context: ctx,

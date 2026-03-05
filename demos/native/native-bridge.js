@@ -238,10 +238,7 @@
 
       default:
         // Forward unknown messages via postMessage for CommunicationBridge
-        window.postMessage(
-          { gengage: 'native', type: type, payload: payload },
-          window.location.origin
-        );
+        window.postMessage({ gengage: 'native', type: type, payload: payload }, window.location.origin);
         break;
     }
   }

@@ -17,8 +17,14 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
           type: 'ActionButtons',
           props: {
             buttons: [
-              { label: 'Benzer urunler goster', action: { title: 'Benzer urunler goster', type: 'findSimilar', payload: { sku: p[0]!.sku } } },
-              { label: 'Yorumlari oku', action: { title: 'Yorumlari oku', type: 'fetch_reviews', payload: { sku: p[0]!.sku } } },
+              {
+                label: 'Benzer urunler goster',
+                action: { title: 'Benzer urunler goster', type: 'findSimilar', payload: { sku: p[0]!.sku } },
+              },
+              {
+                label: 'Yorumlari oku',
+                action: { title: 'Yorumlari oku', type: 'fetch_reviews', payload: { sku: p[0]!.sku } },
+              },
               { label: 'Fiyat karsilastir', action: { title: 'Fiyat karsilastir', type: 'compare', payload: {} } },
             ],
           },
@@ -98,10 +104,30 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
           type: 'ReviewHighlights',
           props: {
             reviews: [
-              { review_class: 'positive', review_text: 'Harika bir urun, cok memnun kaldim. Sik kullaniyorum.', review_rating: '5', review_tag: 'Kalite' },
-              { review_class: 'positive', review_text: 'Fiyat/performans orani cok iyi. Tavsiye ederim.', review_rating: '4', review_tag: 'Deger' },
-              { review_class: 'negative', review_text: 'Aku omru kisa, 2 saat sonra bitiyor.', review_rating: '2', review_tag: 'Aku' },
-              { review_class: 'neutral', review_text: 'Fena degil ama bekledigimden hafif. Is goruyor.', review_rating: '3', review_tag: 'Genel' },
+              {
+                review_class: 'positive',
+                review_text: 'Harika bir urun, cok memnun kaldim. Sik kullaniyorum.',
+                review_rating: '5',
+                review_tag: 'Kalite',
+              },
+              {
+                review_class: 'positive',
+                review_text: 'Fiyat/performans orani cok iyi. Tavsiye ederim.',
+                review_rating: '4',
+                review_tag: 'Deger',
+              },
+              {
+                review_class: 'negative',
+                review_text: 'Aku omru kisa, 2 saat sonra bitiyor.',
+                review_rating: '2',
+                review_tag: 'Aku',
+              },
+              {
+                review_class: 'neutral',
+                review_text: 'Fena degil ama bekledigimden hafif. Is goruyor.',
+                review_rating: '3',
+                review_tag: 'Genel',
+              },
             ],
           },
         },
@@ -117,17 +143,48 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
         root: {
           type: 'ComparisonTable',
           props: {
-            recommended: { sku: p[0]!.sku, name: p[0]!.name, price: p[0]!.price, imageUrl: p[0]!.imageUrl, rating: p[0]!.rating, reviewCount: p[0]!.reviewCount },
+            recommended: {
+              sku: p[0]!.sku,
+              name: p[0]!.name,
+              price: p[0]!.price,
+              imageUrl: p[0]!.imageUrl,
+              rating: p[0]!.rating,
+              reviewCount: p[0]!.reviewCount,
+            },
             products: [
-              { sku: p[0]!.sku, name: p[0]!.name, price: p[0]!.price, imageUrl: p[0]!.imageUrl, rating: p[0]!.rating, reviewCount: p[0]!.reviewCount },
-              { sku: p[1]!.sku, name: p[1]!.name, price: p[1]!.price, imageUrl: p[1]!.imageUrl, rating: p[1]!.rating, reviewCount: p[1]!.reviewCount },
-              { sku: p[2]!.sku, name: p[2]!.name, price: p[2]!.price, imageUrl: p[2]!.imageUrl, rating: p[2]!.rating, reviewCount: p[2]!.reviewCount },
+              {
+                sku: p[0]!.sku,
+                name: p[0]!.name,
+                price: p[0]!.price,
+                imageUrl: p[0]!.imageUrl,
+                rating: p[0]!.rating,
+                reviewCount: p[0]!.reviewCount,
+              },
+              {
+                sku: p[1]!.sku,
+                name: p[1]!.name,
+                price: p[1]!.price,
+                imageUrl: p[1]!.imageUrl,
+                rating: p[1]!.rating,
+                reviewCount: p[1]!.reviewCount,
+              },
+              {
+                sku: p[2]!.sku,
+                name: p[2]!.name,
+                price: p[2]!.price,
+                imageUrl: p[2]!.imageUrl,
+                rating: p[2]!.rating,
+                reviewCount: p[2]!.reviewCount,
+              },
             ],
             attributes: [
               { label: 'Marka', values: [p[0]!.brand, p[1]!.brand, p[2]!.brand] },
               { label: 'Fiyat', values: [p[0]!.price + ' TL', p[1]!.price + ' TL', p[2]!.price + ' TL'] },
               { label: 'Puan', values: [String(p[0]!.rating), String(p[1]!.rating), String(p[2]!.rating)] },
-              { label: 'Yorum Sayisi', values: [String(p[0]!.reviewCount), String(p[1]!.reviewCount), String(p[2]!.reviewCount)] },
+              {
+                label: 'Yorum Sayisi',
+                values: [String(p[0]!.reviewCount), String(p[1]!.reviewCount), String(p[2]!.reviewCount)],
+              },
             ],
             highlights: ['En yuksek puan', 'En cok yorum', 'Profesyonel seri'],
             recommendedText: 'Genel performans ve deger acisindan en iyi secim.',
@@ -214,9 +271,24 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
           type: 'AIGroupingCards',
           props: {
             entries: [
-              { name: 'Akulu Matkaplar', image: `https://placehold.co/200x200/0077cc/fff?text=Matkaplar`, description: 'Profesyonel ve hobi kullanimi icin akulu matkaplar.', action: { title: 'Akulu Matkaplar', type: 'search', payload: { query: 'akulu matkap' } } },
-              { name: 'Daire Testereler', image: `https://placehold.co/200x200/00897b/fff?text=Testereler`, description: 'Ahsap ve metal kesim icin daire testereler.', action: { title: 'Daire Testereler', type: 'search', payload: { query: 'daire testere' } } },
-              { name: 'Zimparalar', image: `https://placehold.co/200x200/FFB300/222?text=Zimparalar`, description: 'Yuzey hazirlama ve bitirme islemleri icin.', action: { title: 'Zimparalar', type: 'search', payload: { query: 'zimpara' } } },
+              {
+                name: 'Akulu Matkaplar',
+                image: `https://placehold.co/200x200/0077cc/fff?text=Matkaplar`,
+                description: 'Profesyonel ve hobi kullanimi icin akulu matkaplar.',
+                action: { title: 'Akulu Matkaplar', type: 'search', payload: { query: 'akulu matkap' } },
+              },
+              {
+                name: 'Daire Testereler',
+                image: `https://placehold.co/200x200/00897b/fff?text=Testereler`,
+                description: 'Ahsap ve metal kesim icin daire testereler.',
+                action: { title: 'Daire Testereler', type: 'search', payload: { query: 'daire testere' } },
+              },
+              {
+                name: 'Zimparalar',
+                image: `https://placehold.co/200x200/FFB300/222?text=Zimparalar`,
+                description: 'Yuzey hazirlama ve bitirme islemleri icin.',
+                action: { title: 'Zimparalar', type: 'search', payload: { query: 'zimpara' } },
+              },
             ],
           },
         },
@@ -233,9 +305,25 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
           type: 'AISuggestedSearchCards',
           props: {
             entries: [
-              { shortName: 'Akulu Matkap Seti', detailedMessage: 'Matkap + canta + sarj aleti + 2 aku iceren komple setler.', whyDifferent: 'Tek tek almaktan daha uygun.', image: `https://placehold.co/200x200/0077cc/fff?text=Set`, action: { title: 'Akulu Matkap Seti', type: 'search', payload: { query: 'akulu matkap seti' } } },
-              { shortName: 'Darbeli Matkap', detailedMessage: 'Beton ve tugla delme ozelligi olan matkaplar.', whyDifferent: 'Duvar isleri icin darbe fonksiyonu sart.', action: { title: 'Darbeli Matkap', type: 'search', payload: { query: 'darbeli matkap' } } },
-              { shortName: 'Mini Matkap', detailedMessage: 'Dar alanlar ve hassas isler icin kompakt matkaplar.', whyDifferent: 'Daha hafif ve kucuk govde.', action: { title: 'Mini Matkap', type: 'search', payload: { query: 'mini matkap' } } },
+              {
+                shortName: 'Akulu Matkap Seti',
+                detailedMessage: 'Matkap + canta + sarj aleti + 2 aku iceren komple setler.',
+                whyDifferent: 'Tek tek almaktan daha uygun.',
+                image: `https://placehold.co/200x200/0077cc/fff?text=Set`,
+                action: { title: 'Akulu Matkap Seti', type: 'search', payload: { query: 'akulu matkap seti' } },
+              },
+              {
+                shortName: 'Darbeli Matkap',
+                detailedMessage: 'Beton ve tugla delme ozelligi olan matkaplar.',
+                whyDifferent: 'Duvar isleri icin darbe fonksiyonu sart.',
+                action: { title: 'Darbeli Matkap', type: 'search', payload: { query: 'darbeli matkap' } },
+              },
+              {
+                shortName: 'Mini Matkap',
+                detailedMessage: 'Dar alanlar ve hassas isler icin kompakt matkaplar.',
+                whyDifferent: 'Daha hafif ve kucuk govde.',
+                action: { title: 'Mini Matkap', type: 'search', payload: { query: 'mini matkap' } },
+              },
             ],
           },
         },
@@ -257,10 +345,7 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
               'Hafif govde (1.1 kg)',
               'LED aydinlatma karanlikta kullanimi kolaylastirir',
             ],
-            cons: [
-              '2.0 Ah aku ile calisma suresi kisitli',
-              'Sarj aleti pakete dahil degil',
-            ],
+            cons: ['2.0 Ah aku ile calisma suresi kisitli', 'Sarj aleti pakete dahil degil'],
           },
         },
       },
@@ -286,7 +371,10 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
               },
             ],
             filterTags: [
-              { title: 'Tumunu Goster', action: { title: 'Tumunu Goster', type: 'filter', payload: { filter: 'all' } } },
+              {
+                title: 'Tumunu Goster',
+                action: { title: 'Tumunu Goster', type: 'filter', payload: { filter: 'all' } },
+              },
               { title: 'Indirimli', action: { title: 'Indirimli', type: 'filter', payload: { filter: 'discount' } } },
               { title: 'Yeni', action: { title: 'Yeni', type: 'filter', payload: { filter: 'new' } } },
             ],
@@ -304,7 +392,8 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
         root: {
           type: 'HandoffNotice',
           props: {
-            summary: 'Musterimiz akulu matkap arasindan karar veremiyor. Bosch ve Makita modelleri hakkinda karsilastirma istendi.',
+            summary:
+              'Musterimiz akulu matkap arasindan karar veremiyor. Bosch ve Makita modelleri hakkinda karsilastirma istendi.',
             products_discussed: [p[0]!.name, p[1]!.name],
             user_sentiment: 'undecided',
           },

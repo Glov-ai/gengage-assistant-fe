@@ -44,9 +44,9 @@ export const PRODUCTS: MockProduct[] = [
       { key: 'Agirlik', value: '1.1 kg' },
     ],
     variants: [
-      { name: '2.0 Ah Akulu', sku: 'DRILL-001-2AH', price: 4299.90 },
-      { name: '4.0 Ah Akulu', sku: 'DRILL-001-4AH', price: 5199.90 },
-      { name: 'Govde (Akusuz)', sku: 'DRILL-001-BARE', price: 3099.90 },
+      { name: '2.0 Ah Akulu', sku: 'DRILL-001-2AH', price: 4299.9 },
+      { name: '4.0 Ah Akulu', sku: 'DRILL-001-4AH', price: 5199.9 },
+      { name: 'Govde (Akusuz)', sku: 'DRILL-001-BARE', price: 3099.9 },
     ],
     images: [
       `${PLACEHOLDER}/600x600/0077cc/fff?text=Matkap+1`,
@@ -76,13 +76,10 @@ export const PRODUCTS: MockProduct[] = [
       { key: 'Agirlik', value: '3.3 kg' },
     ],
     variants: [
-      { name: 'Govde (Akusuz)', sku: 'SAW-002-BARE', price: 6749.00 },
-      { name: '5.0 Ah Kit', sku: 'SAW-002-5AH', price: 8999.00 },
+      { name: 'Govde (Akusuz)', sku: 'SAW-002-BARE', price: 6749.0 },
+      { name: '5.0 Ah Kit', sku: 'SAW-002-5AH', price: 8999.0 },
     ],
-    images: [
-      `${PLACEHOLDER}/600x600/00897b/fff?text=Testere+1`,
-      `${PLACEHOLDER}/600x600/00897b/fff?text=Testere+2`,
-    ],
+    images: [`${PLACEHOLDER}/600x600/00897b/fff?text=Testere+1`, `${PLACEHOLDER}/600x600/00897b/fff?text=Testere+2`],
     promotions: ['Ucretsiz Kargo'],
   },
   {
@@ -106,9 +103,7 @@ export const PRODUCTS: MockProduct[] = [
       { key: 'Agirlik', value: '1.28 kg' },
     ],
     variants: [],
-    images: [
-      `${PLACEHOLDER}/600x600/FFB300/222?text=Zimpara`,
-    ],
+    images: [`${PLACEHOLDER}/600x600/FFB300/222?text=Zimpara`],
     promotions: [],
   },
   {
@@ -132,13 +127,10 @@ export const PRODUCTS: MockProduct[] = [
       { key: 'Agirlik', value: '2.6 kg' },
     ],
     variants: [
-      { name: 'Govde', sku: 'JIG-004-BARE', price: 5899.00 },
-      { name: '5.0 Ah Kit', sku: 'JIG-004-5AH', price: 7499.00 },
+      { name: 'Govde', sku: 'JIG-004-BARE', price: 5899.0 },
+      { name: '5.0 Ah Kit', sku: 'JIG-004-5AH', price: 7499.0 },
     ],
-    images: [
-      `${PLACEHOLDER}/600x600/DB0032/fff?text=Dekupaj+1`,
-      `${PLACEHOLDER}/600x600/DB0032/fff?text=Dekupaj+2`,
-    ],
+    images: [`${PLACEHOLDER}/600x600/DB0032/fff?text=Dekupaj+1`, `${PLACEHOLDER}/600x600/DB0032/fff?text=Dekupaj+2`],
     promotions: ['Stokta Yok - On Siparis'],
   },
   {
@@ -162,9 +154,7 @@ export const PRODUCTS: MockProduct[] = [
       { key: 'Agirlik', value: '2.1 kg' },
     ],
     variants: [],
-    images: [
-      `${PLACEHOLDER}/600x600/2B7A2B/fff?text=Taslama`,
-    ],
+    images: [`${PLACEHOLDER}/600x600/2B7A2B/fff?text=Taslama`],
     promotions: ['Ucretsiz Kargo', '%10 Indirim Kodu'],
   },
 ];
