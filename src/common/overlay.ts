@@ -7,6 +7,7 @@ import type { SimRelWidgetConfig } from '../simrel/types.js';
 import { DEFAULT_IDEMPOTENCY_KEY } from './config-schema.js';
 import { resolveSession } from './context.js';
 import { wireQNAToChat } from './events.js';
+import { isSafeUrl } from './safe-html.js';
 import type { PageContext, SessionContext, WidgetTheme } from './types.js';
 
 const DEFAULT_OVERLAY_KEY_PREFIX = `${DEFAULT_IDEMPOTENCY_KEY}_overlay_`;
@@ -373,6 +374,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
             simRelConfig.onProductNavigate = this.options.onProductNavigate;
           } else {
             simRelConfig.onProductNavigate = (url, productSku, sessionId) => {
+              if (!isSafeUrl(url)) return;
               this._chat?.saveSession(sessionId ?? this.session.sessionId, productSku);
               window.location.href = url;
             };
@@ -415,6 +417,25 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
   }
 }
 
+/**
+ * Initialize all three widgets (chat, QNA, SimRel) in a single call.
+ * Idempotent — safe to call multiple times from GTM; deduplicates by account + SKU key.
+ *
+ * @example
+ * ```ts
+ * import { initOverlayWidgets } from '@gengage/assistant-fe';
+ *
+ * const controller = await initOverlayWidgets({
+ *   accountId: 'mystore',
+ *   middlewareUrl: 'https://chat.gengage.ai',
+ *   sku: window.productSku,
+ *   pageContext: { pageType: 'pdp' },
+ *   chat: { variant: 'floating' },
+ *   qna: { mountTarget: '#qna-section' },
+ *   simrel: { mountTarget: '#similar-products' },
+ * });
+ * ```
+ */
 export async function initOverlayWidgets(options: OverlayWidgetsOptions): Promise<OverlayWidgetsController> {
   const key = buildOverlayKey(options);
   const registry = getOverlayRegistry();

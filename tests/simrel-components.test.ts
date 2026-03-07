@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { NormalizedProduct } from '../src/common/v1-protocol-adapter.js';
+import type { NormalizedProduct } from '../src/common/protocol-adapter.js';
 import type { SimRelI18n } from '../src/simrel/types.js';
 import { renderProductCard } from '../src/simrel/components/ProductCard.js';
 import { renderProductGrid } from '../src/simrel/components/ProductGrid.js';

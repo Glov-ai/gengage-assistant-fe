@@ -158,7 +158,7 @@ describe('Favorites UI', () => {
 
     const heart = result.querySelector('.gengage-chat-favorite-btn');
     expect(heart).not.toBeNull();
-    expect(heart!.getAttribute('aria-label')).toBe('Favorilere ekle');
+    expect(heart!.getAttribute('aria-label')).toBe('Add to favorites');
   });
 
   it('heart click toggles active class', () => {

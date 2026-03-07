@@ -1,11 +1,11 @@
 import { buildChatEndpointUrl } from '../common/api-paths.js';
 import { consumeStream } from '../common/streaming.js';
 import {
-  adaptV1Event,
+  adaptBackendEvent,
   normalizeSimilarProductsResponse,
   normalizeProductGroupingsResponse,
-} from '../common/v1-protocol-adapter.js';
-import type { NormalizedProduct } from '../common/v1-protocol-adapter.js';
+} from '../common/protocol-adapter.js';
+import type { NormalizedProduct } from '../common/protocol-adapter.js';
 import type { StreamEvent } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 
@@ -42,7 +42,7 @@ async function collectProductsFromStream(response: Response, signal?: AbortSigna
   const products: NormalizedProduct[] = [];
   const opts: import('../common/streaming.js').StreamOptions = {
     onEvent: (event: StreamEvent) => {
-      const normalized = adaptV1Event(event as unknown as Record<string, unknown>);
+      const normalized = adaptBackendEvent(event as unknown as Record<string, unknown>);
       if (!normalized || normalized.type !== 'ui_spec') return;
 
       for (const el of Object.values(normalized.spec.elements)) {
@@ -98,7 +98,7 @@ async function collectGroupingsFromStream(response: Response, signal?: AbortSign
 
   const opts: import('../common/streaming.js').StreamOptions = {
     onEvent: (event: StreamEvent) => {
-      const normalized = adaptV1Event(event as unknown as Record<string, unknown>);
+      const normalized = adaptBackendEvent(event as unknown as Record<string, unknown>);
       if (!normalized) return;
 
       if (normalized.type === 'metadata' && normalized.meta) {

@@ -31,14 +31,6 @@ export type UISpecRenderContext = ChatUISpecRenderContext;
 
 export type ChatUISpecRegistry = UISpecDomRegistry<UISpecRenderContext>;
 
-/**
- * @deprecated Use `formatPrice()` from `../../common/price-formatter.js` instead.
- * Kept for backwards compatibility — delegates to `formatPrice()` with Turkish defaults.
- */
-export function formatTurkishPrice(raw: string): string {
-  return formatPrice(raw);
-}
-
 export type { PriceFormatConfig };
 
 function isMobileViewport(): boolean {
@@ -52,7 +44,12 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   ProductDetailsPanel: ({ element, context }) => renderProductDetailsPanel(element, context),
   ProductGrid: ({ element, spec, renderElement, context }) => renderProductGrid(element, spec, renderElement, context),
   ReviewHighlights: ({ element, context }) =>
-    renderReviewHighlightsComponent(element, { emptyReviewsMessage: context.i18n?.emptyReviewsMessage }),
+    renderReviewHighlightsComponent(element, {
+      emptyReviewsMessage: context.i18n?.emptyReviewsMessage,
+      reviewFilterAll: context.i18n?.reviewFilterAll,
+      reviewFilterPositive: context.i18n?.reviewFilterPositive,
+      reviewFilterNegative: context.i18n?.reviewFilterNegative,
+    }),
   ComparisonTable: ({ element, context }) => renderComparisonTableElement(element, context),
   AITopPicks: ({ element, context }) => renderAITopPicks(element, context),
   GroundingReviewCard: ({ element, context }) => renderGroundingReviewCard(element, context),
@@ -137,7 +134,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   const card = document.createElement('div');
   card.className = 'gengage-chat-product-card';
 
-  // Product data may be nested under `product` prop (v1 adapter) or flat in props
+  // Product data may be nested under `product` prop (adapter) or flat in props
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
   if (!product) return card;
 
@@ -184,11 +181,11 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const pill = document.createElement('button');
       pill.className = 'gengage-chat-find-similar-pill';
       pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul';
+      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
       pill.addEventListener('click', (e) => {
         e.stopPropagation();
         ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul',
+          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
           type: 'findSimilar',
           payload: { sku: findSimilarSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
         });
@@ -202,7 +199,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const heart = document.createElement('button');
       heart.className = 'gengage-chat-favorite-btn';
       heart.type = 'button';
-      heart.setAttribute('aria-label', 'Favorilere ekle');
+      heart.setAttribute('aria-label', ctx.i18n?.addToFavoritesLabel ?? 'Add to favorites');
       const isFav = ctx.favoritedSkus?.has(favSku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');
       const svgFill = isFav ? 'currentColor' : 'none';
@@ -300,7 +297,9 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   if (typeof inStock === 'boolean') {
     const stock = document.createElement('div');
     stock.className = `gengage-chat-product-card-stock ${inStock ? 'is-in-stock' : 'is-out-of-stock'}`;
-    stock.textContent = inStock ? (ctx.i18n?.inStockLabel ?? 'Stokta') : (ctx.i18n?.outOfStockLabel ?? 'Tükendi');
+    stock.textContent = inStock
+      ? (ctx.i18n?.inStockLabel ?? 'In Stock')
+      : (ctx.i18n?.outOfStockLabel ?? 'Out of Stock');
     body.appendChild(stock);
   }
 
@@ -328,7 +327,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const cta = document.createElement('button');
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
-    cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'Incele';
+    cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
     cta.addEventListener('click', () => ctx.onAction(action));
     card.appendChild(cta);
   } else if (url && isSafeUrl(url)) {
@@ -337,7 +336,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     safeSetAttribute(cta, 'href', url);
     safeSetAttribute(cta, 'target', '_blank');
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-    cta.textContent = ctx.i18n?.productCtaLabel ?? 'İncele';
+    cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
     cta.addEventListener('click', (e) => {
       if (ctx.onProductClick && sku) {
         e.preventDefault();
@@ -352,10 +351,12 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   if (cartCode && sku && inStock !== false) {
     const stepper = createQuantityStepper({
       compact: true,
-      label: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
+      label: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+      decreaseLabel: ctx.i18n?.decreaseLabel,
+      increaseLabel: ctx.i18n?.increaseLabel,
       onSubmit: (quantity) => {
         ctx.onAction({
-          title: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
+          title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
           type: 'addToCart',
           payload: { sku, cartCode, quantity },
         });
@@ -481,10 +482,10 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const pill = document.createElement('button');
       pill.className = 'gengage-chat-find-similar-pill';
       pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul';
+      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
       pill.addEventListener('click', () => {
         ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul',
+          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
           type: 'findSimilar',
           payload: { sku: detailsSku, ...(firstSafe ? { image_url: firstSafe } : {}) },
         });
@@ -511,10 +512,10 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const pill = document.createElement('button');
       pill.className = 'gengage-chat-find-similar-pill';
       pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul';
+      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
       pill.addEventListener('click', () => {
         ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Benzerlerini Bul',
+          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
           type: 'findSimilar',
           payload: { sku: detailsSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
         });
@@ -595,7 +596,9 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   if (typeof inStock === 'boolean') {
     const stock = document.createElement('div');
     stock.className = `gengage-chat-product-details-stock ${inStock ? 'is-in-stock' : 'is-out-of-stock'}`;
-    stock.textContent = inStock ? 'Stokta var' : 'Stokta yok';
+    stock.textContent = inStock
+      ? (ctx.i18n?.inStockLabel ?? 'In Stock')
+      : (ctx.i18n?.outOfStockLabel ?? 'Out of Stock');
     content.appendChild(stock);
   }
 
@@ -621,7 +624,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const variantLabel = document.createElement('div');
     variantLabel.className = 'gengage-chat-product-variants-label';
-    variantLabel.textContent = ctx.i18n?.variantsLabel ?? 'Varyantlar';
+    variantLabel.textContent = ctx.i18n?.variantsLabel ?? 'Variants';
     variantSection.appendChild(variantLabel);
 
     const variantList = document.createElement('div');
@@ -671,7 +674,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const actionBtn = document.createElement('button');
     actionBtn.className = 'gengage-chat-product-details-cta';
     actionBtn.type = 'button';
-    actionBtn.textContent = action.title || ctx.i18n?.productCtaLabel || 'Incele';
+    actionBtn.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
     actionBtn.addEventListener('click', () => ctx.onAction(action));
     actionRow.appendChild(actionBtn);
   } else {
@@ -682,7 +685,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       safeSetAttribute(cta, 'href', url);
       safeSetAttribute(cta, 'target', '_blank');
       safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-      cta.textContent = ctx.i18n?.productCtaLabel ?? 'Incele';
+      cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
       cta.addEventListener('click', (e) => {
         if (ctx.onProductClick && sku) {
           e.preventDefault();
@@ -693,14 +696,16 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     }
   }
 
-  // "Sepete Ekle" stepper — shown when the product has a cartCode and is in stock
+  // Add to Cart stepper — shown when the product has a cartCode and is in stock
   if (cartCode && sku && inStock !== false) {
     const stepper = createQuantityStepper({
       compact: false,
-      label: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
+      label: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+      decreaseLabel: ctx.i18n?.decreaseLabel,
+      increaseLabel: ctx.i18n?.increaseLabel,
       onSubmit: (quantity) => {
         ctx.onAction({
-          title: ctx.i18n?.addToCartButton ?? 'Sepete Ekle',
+          title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
           type: 'addToCart',
           payload: { sku, cartCode, quantity },
         });
@@ -716,7 +721,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const shareBtn = document.createElement('button');
     shareBtn.className = 'gengage-chat-product-details-share';
     shareBtn.type = 'button';
-    const shareLabel = ctx.i18n?.shareButton ?? 'Paylaş';
+    const shareLabel = ctx.i18n?.shareButton ?? 'Share';
     shareBtn.title = shareLabel;
     shareBtn.setAttribute('aria-label', shareLabel);
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -773,7 +778,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
   panel.appendChild(content);
 
-  // Product detail tabs: "Ürün Bilgileri" / "Teknik Özellikler"
+  // Product detail tabs: "Product Info" / "Specifications"
   const description = product['description'] as string | undefined;
   const specifications = product['specifications'] as
     | Record<string, string>
@@ -804,7 +809,7 @@ function renderProductDetailTabs(
     const tab = document.createElement('button');
     tab.className = 'gengage-chat-product-detail-tab gengage-chat-product-detail-tab--active';
     tab.type = 'button';
-    tab.textContent = ctx.i18n?.productInfoTab ?? 'Ürün Bilgileri';
+    tab.textContent = ctx.i18n?.productInfoTab ?? 'Product Info';
     tabBar.appendChild(tab);
 
     const panel = document.createElement('div');
@@ -818,7 +823,7 @@ function renderProductDetailTabs(
     const tab = document.createElement('button');
     tab.className = `gengage-chat-product-detail-tab${!description ? ' gengage-chat-product-detail-tab--active' : ''}`;
     tab.type = 'button';
-    tab.textContent = ctx.i18n?.specificationsTab ?? 'Teknik Özellikler';
+    tab.textContent = ctx.i18n?.specificationsTab ?? 'Specifications';
     tabBar.appendChild(tab);
 
     const panel = document.createElement('div');
@@ -921,9 +926,9 @@ function renderProductGrid(
     const sort = ctx.productSort ?? { type: 'related' as const };
 
     const buttons: Array<{ label: string; sortState: ProductSortState }> = [
-      { label: ctx.i18n?.sortRelated ?? 'Önerilen', sortState: { type: 'related' } },
-      { label: ctx.i18n?.sortPriceAsc ?? 'Fiyat ↑', sortState: { type: 'price', direction: 'asc' } },
-      { label: ctx.i18n?.sortPriceDesc ?? 'Fiyat ↓', sortState: { type: 'price', direction: 'desc' } },
+      { label: ctx.i18n?.sortRelated ?? 'Related', sortState: { type: 'related' } },
+      { label: ctx.i18n?.sortPriceAsc ?? 'Price ↑', sortState: { type: 'price', direction: 'asc' } },
+      { label: ctx.i18n?.sortPriceDesc ?? 'Price ↓', sortState: { type: 'price', direction: 'desc' } },
     ];
 
     for (const btn of buttons) {
@@ -956,7 +961,7 @@ function renderProductGrid(
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
       }
-      compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Karşılaştır';
+      compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Compare';
       compareBtn.addEventListener('click', () => {
         // Toggle is handled by the parent — dispatched via onToggleComparisonSku with empty string
         // to signal mode toggle (convention: empty sku = toggle mode)
@@ -994,7 +999,7 @@ function renderProductGrid(
     const viewMoreBtn = document.createElement('button');
     viewMoreBtn.className = 'gengage-chat-product-grid-view-more';
     viewMoreBtn.type = 'button';
-    viewMoreBtn.textContent = ctx?.i18n?.viewMoreLabel ?? 'Daha Fazla Göster';
+    viewMoreBtn.textContent = ctx?.i18n?.viewMoreLabel ?? 'Show More';
     viewMoreBtn.addEventListener('click', () => {
       ctx?.onAction({ title: 'More', type: 'moreProductList', payload: {} });
     });

@@ -19,10 +19,10 @@ describe('ReviewHighlights', () => {
       ]),
     );
     const tabs = el.querySelectorAll('.gengage-chat-review-tab');
-    expect(tabs.length).toBe(3); // Tümü, Olumlu, Olumsuz
-    expect(tabs[0]?.textContent).toContain('Tümü (2)');
-    expect(tabs[1]?.textContent).toContain('Olumlu (1)');
-    expect(tabs[2]?.textContent).toContain('Olumsuz (1)');
+    expect(tabs.length).toBe(3); // All, Positive, Negative
+    expect(tabs[0]?.textContent).toContain('All (2)');
+    expect(tabs[1]?.textContent).toContain('Positive (1)');
+    expect(tabs[2]?.textContent).toContain('Negative (1)');
   });
 
   it('filters items when tab is clicked', () => {

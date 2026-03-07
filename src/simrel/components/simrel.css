@@ -6,7 +6,10 @@
   /* Semantic color tokens (overridable by customers) */
   --_gengage-border-color: var(--gengage-border-color, #e5e7eb);
   --_gengage-discount-color: var(--gengage-discount-color, #ef4444);
+  --_gengage-text-primary: var(--gengage-text-primary, #1f2937);
   --_gengage-text-secondary: var(--gengage-text-secondary, #6b7280);
+  --_gengage-surface-muted: var(--gengage-surface-muted, #f8fafc);
+  --_gengage-rating-color: var(--gengage-rating-color, #d97706);
 }
 
 .gengage-simrel-uispec > * {
@@ -48,7 +51,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  border: 1px solid #eee;
+  border: 1px solid var(--_gengage-border-color);
   border-radius: var(--gengage-simrel-card-radius, 16px);
   overflow: hidden;
   background: var(--gengage-background-color, #fff);
@@ -108,13 +111,13 @@
 
 .gengage-simrel-card-brand {
   font-size: 10px;
-  color: #666;
+  color: var(--_gengage-text-secondary);
 }
 
 .gengage-simrel-card-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -127,11 +130,11 @@
 
 .gengage-simrel-card-rating {
   font-size: 12px;
-  color: #f59e0b;
+  color: var(--_gengage-rating-color);
 }
 
 .gengage-simrel-card-review-count {
-  color: #9ca3af;
+  color: var(--_gengage-text-secondary);
 }
 
 .gengage-simrel-card-price {
@@ -145,7 +148,7 @@
 
 .gengage-simrel-card-price-original {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--_gengage-text-secondary);
   font-weight: 400;
   font-size: 12px;
 }
@@ -153,14 +156,14 @@
 .gengage-simrel-card-price-current {
   font-size: 16px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--_gengage-text-primary);
 }
 
 .gengage-simrel-card-cta {
   width: 100%;
   min-height: 40px;
   border: none;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
   border-radius: 0;
   background: transparent;
   font-family: inherit;
@@ -182,7 +185,7 @@
   gap: 0;
   overflow: hidden;
   border-radius: 0;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
   border-left: none;
   border-right: none;
   border-bottom: none;
@@ -191,18 +194,18 @@
 .gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn {
   width: 32px;
   height: 36px;
-  color: #64748b;
+  color: var(--_gengage-text-secondary);
   font-size: 14px;
 }
 
 .gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-simrel-container .gengage-simrel-atc .gengage-qty-value {
   min-width: 24px;
   font-size: 13px;
-  color: #334155;
+  color: var(--_gengage-text-primary);
 }
 
 .gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit {
@@ -223,7 +226,7 @@
 
 .gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit:hover {
   color: var(--gengage-primary-color, #0b24d6);
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-simrel-quick-actions {
@@ -234,9 +237,9 @@
 }
 
 .gengage-simrel-quick-action {
-  border: 1px solid #d2d8e3;
-  background: #f8fafc;
-  color: #334155;
+  border: 1px solid var(--_gengage-border-color);
+  background: var(--_gengage-surface-muted);
+  color: var(--_gengage-text-primary);
   border-radius: 999px;
   min-height: 40px;
   padding: 8px 10px;

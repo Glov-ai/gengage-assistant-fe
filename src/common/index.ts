@@ -126,11 +126,11 @@ export { preflightDiagnostics } from './preflight.js';
 export type { PreflightResult, PreflightWarning } from './preflight.js';
 
 export {
-  adaptV1Event,
+  adaptBackendEvent,
   productToNormalized,
   normalizeSimilarProductsResponse,
   normalizeProductGroupingsResponse,
-} from './v1-protocol-adapter.js';
+} from './protocol-adapter.js';
 
 export { wireGADataLayer } from './ga-datalayer.js';
 export { isVoiceInputSupported, VoiceInput } from './voice-input.js';
@@ -138,8 +138,7 @@ export type { VoiceInputState, VoiceInputErrorCode, VoiceInputCallbacks, VoiceIn
 export { detectPageType, extractSkuFromUrl, autoDetectPageContext } from './page-detect.js';
 export type { DetectablePageType, PageDetectionRule } from './page-detect.js';
 export type {
-  V1Product,
   NormalizedProduct,
   SimilarProductsJsonResponse,
   ProductGroupingsJsonResponse,
-} from './v1-protocol-adapter.js';
+} from './protocol-adapter.js';

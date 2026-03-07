@@ -264,7 +264,7 @@ For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork re
 | `--gengage-z-index` | `9999` | Chat widget z-index |
 | `--gengage-chat-width` | `400px` | Floating chat drawer width |
 | `--gengage-chat-launcher-size` | `56px` | Launcher button diameter |
-| `--gengage-chat-launcher-bottom` | `72px` | Launcher distance from viewport bottom |
+| `--gengage-chat-launcher-bottom` | `20px` | Launcher distance from viewport bottom |
 | `--gengage-chat-launcher-right` | `20px` | Launcher distance from viewport right |
 | `--gengage-chat-shell-radius` | `12px` | Floating chat drawer radius |
 | `--gengage-chat-header-height` | `60px` | Chat header min-height |
@@ -278,12 +278,51 @@ For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork re
 | `--gengage-keyboard-offset` | `0px` | iOS virtual keyboard offset (set via JS internally) |
 | `--gengage-chat-header-bg` | `#1d2939` | Chat header background color |
 | `--gengage-chat-header-foreground` | `#fff` | Chat header text color |
+| `--gengage-chat-panel-bg` | `#fff` | Product detail panel background color |
 | `--gengage-chat-text-secondary` | `#666` | Chat secondary text (timestamps, etc.) |
 | `--gengage-chat-success` | `#4caf50` | Success indicator (in-stock badge, etc.) |
 | `--gengage-chat-primary` | `#1976d2` | Chat-specific primary (CTA buttons) |
 | `--gengage-chat-shadow` | `0 12px 40px rgba(15,23,42,.18)` | Floating drawer box-shadow |
 | `--gengage-chat-offset` | `20px` | General spacing offset for the chat drawer |
 | `--gengage-simrel-columns` | `4` | Number of columns in the similar products grid |
+
+#### Semantic Color Tokens
+
+These tokens provide fine-grained control over semantic colors used throughout the widgets.
+They are optional — if not set, each falls back to a sensible default.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--gengage-primary` | `#2563eb` | Alternate primary accent (active tabs, selected states) |
+| `--gengage-primary-hover` | `#2563eb` | Primary color hover state |
+| `--gengage-accent-primary` | `#3b82f6` | Accent color (blockquote borders, loading spinners) |
+| `--gengage-text` | `#374151` | Body text color (category labels, grouping cards) |
+| `--gengage-text-color` | `#1e293b` | Text color variant (search cards, comparison items) |
+| `--gengage-text-primary` | `#1f2937` | Primary text emphasis |
+| `--gengage-text-secondary` | `#64748b` | Secondary/muted text |
+| `--gengage-text-muted` | `#64748b` | De-emphasized text (hints, timestamps) |
+| `--gengage-bg` | `#fff` | Category/grouping card backgrounds |
+| `--gengage-bg-hover` | `#f3f4f6` | Hover state backgrounds |
+| `--gengage-bg-secondary` | `#f9fafb` | Secondary backgrounds (pros/cons panels) |
+| `--gengage-surface-color` | `#f8fafc` | Card surfaces (search, comparison, grouping) |
+| `--gengage-surface-secondary` | `#f3f4f6` | Secondary surface (assistant message bubbles) |
+| `--gengage-surface-muted` | `#f8fafc` | Muted surface (skeleton loaders) |
+| `--gengage-surface-dark` | `#1e293b` | Dark surface (offline bar) |
+| `--gengage-border` | `#e2e8f0` | Generic border (loading spinners) |
+| `--gengage-border-color` | `#e5e7eb` | Border color (cards, dividers, inputs) |
+| `--gengage-hover-color` | `#f1f5f9` | Hover background for interactive cards |
+| `--gengage-success-color` | `#16a34a` | Success state (in-stock, add-to-cart confirmation) |
+| `--gengage-discount-color` | `#ef4444` | Discount text color |
+| `--gengage-discount-bg` | `#ef4444` | Discount badge background |
+| `--gengage-rating-color` | `#d97706` | Star rating color |
+| `--gengage-chat-pill-bg` | `rgba(0,0,0,0.7)` | "Find Similar" pill background |
+| `--gengage-chat-pill-text` | `#fff` | "Find Similar" pill text color |
+| `--gengage-chat-promo-bg` | `#e8f5e9` | Promotional badge background |
+| `--gengage-chat-promo-text` | `#2e7d32` | Promotional badge text |
+| `--gengage-chat-launcher-mobile-bottom` | `16px` | Mobile launcher bottom offset |
+| `--gengage-chat-launcher-mobile-right` | `16px` | Mobile launcher right offset |
+| `--gengage-qty-btn-size` | `28px` | Quantity stepper button size |
+| `--gengage-qty-btn-size-compact` | `24px` | Compact stepper button size |
 
 ### Quantity Stepper
 
@@ -492,39 +531,6 @@ new CommunicationBridge({
   onMessage: (msg) => { /* ... */ },
 });
 ```
-
----
-
-## Proactive Agent Popup
-
-The chat widget can show a proactive popup after the user has been idle for a
-configurable period. This is driven by the `ActivityTracker` class
-(`src/common/activity-tracker.ts`), which monitors mouse, keyboard, touch, scroll,
-and visibility events.
-
-### Config Options
-
-```js
-await chatWidget.init({
-  // ...
-  proactiveMessage: 'Merhaba! Size yardımcı olabilir miyim?',
-  proactiveDelayMs: 30000, // ms of idle before popup shows (default: 30000)
-});
-```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `proactiveMessage` | `string` | (none) | Message text shown in the popup. If omitted, no popup is shown. |
-| `proactiveDelayMs` | `number` | `30000` | Idle time in ms before the popup appears. |
-
-### Behavior
-
-- The popup appears after the user is idle for `proactiveDelayMs` milliseconds.
-- It is only shown once per widget lifecycle (not re-triggered after dismissal).
-- It is only shown when the chat drawer is closed.
-- The user can click to accept (opens the chat drawer) or dismiss.
-- The popup auto-dismisses after 15 seconds if the user does not interact.
-- When `prefers-reduced-motion` is active, the popup appears without animation.
 
 ---
 
@@ -867,7 +873,6 @@ block that disables animations and transitions:
   .gengage-chat-drawer,
   .gengage-chat-bubble,
   .gengage-chat-launcher,
-  .gengage-chat-proactive,
   /* ... and other animated elements */ {
     animation: none !important;
     transition: none !important;
@@ -876,8 +881,8 @@ block that disables animations and transitions:
 }
 ```
 
-This covers the chat drawer slide-in, typing indicator animation, proactive popup
-entrance, launcher hover effects, pill scroll, and skeleton loading shimmer.
+This covers the chat drawer slide-in, typing indicator animation,
+launcher hover effects, pill scroll, and skeleton loading shimmer.
 
 ### Quantity Stepper Live Region
 
@@ -991,6 +996,6 @@ window.gengage.chat.flushMeteringSummary({
 - Core endpoint semantics and payload shapes (`/chat/*` paths), not per-widget custom logic.
 - NDJSON event types and shapes — changing these requires a backend release.
 - The session/correlation ID mechanism — required for analytics.
-- Dashboard analytics auth model (`/v2/analytics/*`) — `X-API-Key` when V2 auth is enabled.
+- Analytics auth model — account-configured, not customizable per-widget.
 
 These constraints are what make the system predictable across all customer deployments.

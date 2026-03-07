@@ -23,7 +23,7 @@ export function renderFloatingComparisonButton(selectedSkus: string[], ctx: Chat
   button.className = 'gengage-chat-comparison-floating-btn';
   button.type = 'button';
 
-  const label = ctx.i18n?.compareSelected ?? 'Karşılaştır';
+  const label = ctx.i18n?.compareSelected ?? 'Compare';
   button.textContent = `${label} (${selectedSkus.length})`;
 
   button.addEventListener('click', () => {

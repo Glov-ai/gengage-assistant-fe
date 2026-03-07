@@ -106,7 +106,8 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     const img = document.createElement('img');
     img.className = 'gengage-chat-ai-toppick-img';
     safeSetAttribute(img, 'src', imageUrl);
-    img.alt = (product['name'] as string) ?? '';
+    img.loading = 'lazy';
+    img.alt = (product['name'] as string) || 'Product image';
     addImageErrorHandler(img);
     card.appendChild(img);
   }
@@ -223,7 +224,8 @@ function renderCompactCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     const img = document.createElement('img');
     img.className = 'gengage-chat-ai-toppick-img';
     safeSetAttribute(img, 'src', imageUrl);
-    img.alt = (product['name'] as string) ?? '';
+    img.loading = 'lazy';
+    img.alt = (product['name'] as string) || 'Product image';
     addImageErrorHandler(img);
     card.appendChild(img);
   }

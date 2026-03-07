@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage — GTM Custom Integration Demo</title>
+    <style>
+      :root {
+        --brand-primary: #e63946;
+        --brand-dark: #1d3557;
+        --brand-light: #f1faee;
+        --brand-accent: #a8dadc;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--brand-light);
+        color: #333;
+      }
+      .page-header {
+        background: var(--brand-dark);
+        color: #fff;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .page-header h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .page-header .badge {
+        background: var(--brand-primary);
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .page-body {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      .product-hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      @media (max-width: 768px) {
+        .product-hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      .product-image {
+        background: #f3f4f6;
+        border-radius: 8px;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-size: 1.5rem;
+      }
+      .product-info h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+      }
+      .product-price {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--brand-primary);
+        margin: 1rem 0;
+      }
+      .product-price .original {
+        font-size: 1rem;
+        color: #9ca3af;
+        text-decoration: line-through;
+        margin-left: 0.5rem;
+        font-weight: 400;
+      }
+      .product-meta {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+      }
+      .product-meta code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+      }
+      .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 2rem 0 1rem;
+        color: var(--brand-dark);
+      }
+      .ga4-log {
+        margin-top: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      .ga4-log h3 {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+      }
+      #ga4-events {
+        font-family: 'SF Mono', monospace;
+        font-size: 0.8rem;
+        color: #374151;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre;
+      }
+      #ga4-events:empty::before {
+        content: 'No events yet — interact with the widgets above.';
+        color: #9ca3af;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-header">
+      <h1>MyStore</h1>
+      <span class="badge">GTM Demo</span>
+    </div>
+
+    <div class="page-body">
+      <div class="product-hero">
+        <div class="product-image">Product Image</div>
+        <div class="product-info">
+          <h2>Professional Power Drill 750W</h2>
+          <div class="product-price">₺1.199 <span class="original">₺1.499</span></div>
+          <p class="product-meta">SKU: <code id="demo-sku">—</code></p>
+          <p class="product-meta">Brand: Stanley | Rating: 4.5/5 (120 reviews)</p>
+          <p class="product-meta" style="margin-top: 1rem">
+            This demo shows a GTM-style integration with custom theme, product card overrides, and GA4 event tracking
+            for all widget interactions.
+          </p>
+        </div>
+      </div>
+
+      <!-- Widget mount targets -->
+      <h3 class="section-title">Quick Questions</h3>
+      <div id="gengage-qna"></div>
+
+      <h3 class="section-title">Similar Products</h3>
+      <div id="gengage-simrel"></div>
+
+      <!-- GA4 event log (for demo visibility) -->
+      <div class="ga4-log">
+        <h3>GA4 Event Log (window.dataLayer)</h3>
+        <div id="ga4-events"></div>
+      </div>
+    </div>
+
+    <!-- Dev server injects from local build; production would use CDN -->
+    <script type="module">
+      import { initOverlayWidgets } from '/src/common/overlay.js';
+      import { wireQNAToChat } from '/src/common/events.js';
+
+      const params = new URLSearchParams(location.search);
+      const ACCOUNT_ID = params.get('accountId') || 'koctascomtr';
+      const MIDDLEWARE_URL = params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      const SKU = params.get('sku') || '1000465056';
+
+      document.getElementById('demo-sku').textContent = SKU;
+
+      // ---- GA4 Data Layer Setup ----
+      window.dataLayer = window.dataLayer || [];
+      const ga4Log = document.getElementById('ga4-events');
+      const originalPush = window.dataLayer.push.bind(window.dataLayer);
+      window.dataLayer.push = function (...args) {
+        originalPush(...args);
+        for (const item of args) {
+          if (item && typeof item === 'object' && item.event) {
+            const line = `${new Date().toLocaleTimeString()} | ${item.event} | ${JSON.stringify(item, null, 0).slice(0, 120)}\n`;
+            ga4Log.textContent += line;
+            ga4Log.scrollTop = ga4Log.scrollHeight;
+          }
+        }
+      };
+
+      // ---- Custom theme ----
+      const theme = {
+        primaryColor: '#e63946',
+        primaryForeground: '#ffffff',
+        borderRadius: '8px',
+        fontFamily: '"Inter", system-ui, sans-serif',
+      };
+
+      // ---- Init all widgets ----
+      const SESSION_ID = crypto.randomUUID();
+      const USER_ID = crypto.randomUUID();
+      const VIEW_ID = crypto.randomUUID();
+
+      const { chat, qna, simrel } = await initOverlayWidgets({
+        accountId: ACCOUNT_ID,
+        middlewareUrl: MIDDLEWARE_URL,
+        session: { sessionId: SESSION_ID, userId: USER_ID, viewId: VIEW_ID },
+        locale: 'tr',
+        pageContext: { pageType: 'pdp', sku: SKU },
+        theme,
+        chat: {
+          variant: 'floating',
+          headerTitle: 'MyStore Asistanı',
+          headerBadge: 'AI',
+          i18n: {
+            inputPlaceholder: 'Ürün ara veya soru sor...',
+          },
+          onOpen: () => {
+            window.dataLayer.push({ event: 'gengage_chat_open' });
+          },
+          onClose: () => {
+            window.dataLayer.push({ event: 'gengage_chat_close' });
+          },
+        },
+        qna: {
+          mountTarget: '#gengage-qna',
+        },
+        simrel: {
+          mountTarget: '#gengage-simrel',
+          sku: SKU,
+          onAddToCart: (p) => {
+            window.dataLayer.push({
+              event: 'gengage_add_to_cart',
+              sku: p.sku,
+              quantity: p.quantity,
+              cart_code: p.cartCode,
+            });
+            console.log('[gtm-custom] ATC tracked:', p);
+          },
+          onProductNavigate: (url, productSku, sid) => {
+            window.dataLayer.push({
+              event: 'gengage_product_click',
+              sku: productSku,
+              url,
+            });
+            chat?.saveSession(sid || SESSION_ID, productSku);
+            window.location.href = url;
+          },
+        },
+      });
+
+      wireQNAToChat();
+
+      // Dev info
+      const devSku = document.getElementById('demo-sku');
+      if (devSku) devSku.textContent = SKU;
+
+      // Add dev info badges like other demos
+      const devSession = document.createElement('span');
+      devSession.id = 'dev-session';
+      devSession.textContent = SESSION_ID;
+      devSession.style.display = 'none';
+      document.body.appendChild(devSession);
+
+      console.log('[gtm-custom] Ready. Session:', SESSION_ID);
+    </script>
+  </body>
+</html>

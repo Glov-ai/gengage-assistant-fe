@@ -39,7 +39,7 @@ export function renderButtonRow(options: ButtonRowOptions): HTMLElement {
   if (options.ctaText || options.onOpenChat) {
     const cta = document.createElement('button');
     cta.className = 'gengage-qna-cta';
-    cta.textContent = options.ctaText ?? options.defaultCtaText ?? 'Başka bir şey sor';
+    cta.textContent = options.ctaText ?? options.defaultCtaText ?? 'Ask something else';
     cta.type = 'button';
     cta.addEventListener('click', () => {
       options.onOpenChat?.();

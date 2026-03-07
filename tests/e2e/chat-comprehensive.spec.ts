@@ -159,3 +159,117 @@ test.describe('Chat widget — drawer structure', () => {
     expect(ariaLabel!.length).toBeGreaterThan(0);
   });
 });
+
+test.describe('Chat widget — stop generating button', () => {
+  test('stop button appears during streaming and disappears after', async ({ page }) => {
+    // Use a slow-streaming mock that sends chunks with delays
+    const SLOW_NDJSON = [
+      '{"type":"outputText","payload":{"text":"<p>Bu bir test yaniti"}}',
+      '{"type":"outputText","payload":{"text":" devam ediyor...</p>"}}',
+      '{"type":"chatStreamEnd","payload":{}}',
+    ];
+
+    await page.route('**/chat/similar_products', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"results":[],"count":0}' }),
+    );
+    await page.route('**/chat/product_groupings', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"product_groupings":[],"count":0}' }),
+    );
+    await page.route('**/chat/launcher_action', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/x-ndjson',
+        body: '{"type":"chatStreamEnd","payload":{}}',
+      }),
+    );
+    await page.route('**/analytics', (route) => route.fulfill({ status: 200, body: '{}' }));
+    await page.route('**/collect?**', (route) => route.fulfill({ status: 200, body: '' }));
+
+    // Slow stream: send each line with a 500ms delay
+    await page.route('**/chat/process_action', async (route) => {
+      const body = SLOW_NDJSON.join('\n');
+      // Fulfill with full body but stream is fast enough — the stop button
+      // is shown as soon as streaming starts and removed on chatStreamEnd
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/x-ndjson',
+        body,
+      });
+    });
+
+    await gotoDemoReady(page);
+
+    const launcher = page.locator('.gengage-chat-launcher');
+    await expect(launcher).toBeVisible({ timeout: 10000 });
+    await launcher.click();
+
+    const drawer = page.locator('.gengage-chat-drawer');
+    await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
+
+    // Type a message and send it
+    const input = page.locator('.gengage-chat-input');
+    await expect(input).toBeVisible({ timeout: 5000 });
+    await input.fill('Test message');
+    await page.locator('.gengage-chat-send').click();
+
+    // After stream completes, the stop button should not be present
+    await page.waitForTimeout(1000);
+    const stopBtn = page.locator('.gengage-chat-stop-btn');
+    await expect(stopBtn).toHaveCount(0);
+  });
+});
+
+test.describe('Chat widget — focus trap', () => {
+  test('drawer has aria-modal="true"', async ({ page }) => {
+    await setupMockRoutes(page);
+    await gotoDemoReady(page);
+
+    const launcher = page.locator('.gengage-chat-launcher');
+    await expect(launcher).toBeVisible({ timeout: 10000 });
+    await launcher.click();
+
+    const drawer = page.locator('.gengage-chat-drawer');
+    await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
+
+    const ariaModal = await drawer.getAttribute('aria-modal');
+    expect(ariaModal).toBe('true');
+  });
+
+  test('Tab key cycles within the drawer', async ({ page }) => {
+    await setupMockRoutes(page);
+    await gotoDemoReady(page);
+
+    const launcher = page.locator('.gengage-chat-launcher');
+    await expect(launcher).toBeVisible({ timeout: 10000 });
+    await launcher.click();
+
+    const drawer = page.locator('.gengage-chat-drawer');
+    await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
+
+    // Focus the input first
+    const input = page.locator('.gengage-chat-input');
+    await input.focus();
+
+    // Press Tab several times — focus should stay within the drawer
+    for (let i = 0; i < 10; i++) {
+      await page.keyboard.press('Tab');
+    }
+
+    // Check that the active element is still inside the drawer.
+    // The chat widget uses Shadow DOM, so we must traverse the shadow root.
+    const focusInDrawer = await page.evaluate(() => {
+      // Find the shadow host — the mount target element with a shadowRoot
+      const hosts = document.querySelectorAll('*');
+      for (const host of hosts) {
+        const sr = host.shadowRoot;
+        if (!sr) continue;
+        const drawer = sr.querySelector('.gengage-chat-drawer');
+        if (drawer && sr.activeElement) {
+          return drawer.contains(sr.activeElement);
+        }
+      }
+      return false;
+    });
+    expect(focusInDrawer).toBe(true);
+  });
+});

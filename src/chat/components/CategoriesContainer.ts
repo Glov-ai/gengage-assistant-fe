@@ -3,14 +3,14 @@
  * and optional filter tags.
  *
  * Backend sends `groupList` with `{ group_list: [{ group_name, product_list }], filter_tags }`.
- * The v1 adapter normalizes this into a CategoriesContainer UISpec element.
+ * The protocol adapter normalizes this into a CategoriesContainer UISpec element.
  *
  * XSS safety: All text is set via textContent. No innerHTML.
  */
 
 import type { UIElement } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
-import type { NormalizedProduct } from '../../common/v1-protocol-adapter.js';
+import type { NormalizedProduct } from '../../common/protocol-adapter.js';
 import { isSafeImageUrl } from '../../common/safe-html.js';
 
 interface GroupData {

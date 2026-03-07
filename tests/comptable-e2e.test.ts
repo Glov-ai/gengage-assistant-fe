@@ -1,13 +1,13 @@
 /**
- * ma-v2-comptable E2E smoke verification.
+ * comparisonTable E2E smoke verification.
  *
  * Confirms that `comparisonTable` payloads round-trip correctly through the
- * V1 adapter: full payloads, edge cases (empty, single product, missing
- * optional fields), and V2 wire format compatibility.
+ * protocol adapter: full payloads, edge cases (empty, single product, missing
+ * optional fields).
  */
 
 import { describe, it, expect } from 'vitest';
-import { adaptV1Event } from '../src/common/v1-protocol-adapter.js';
+import { adaptBackendEvent } from '../src/common/protocol-adapter.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -24,7 +24,7 @@ type UISpecResult = {
 };
 
 function adaptAndAssertComparisonTable(raw: Record<string, unknown>): UISpecResult {
-  const result = adaptV1Event(raw);
+  const result = adaptBackendEvent(raw);
   expect(result).not.toBeNull();
   expect(result!.type).toBe('ui_spec');
   const uiSpec = result as UISpecResult;
@@ -380,67 +380,5 @@ describe('comparisonTable: edge cases', () => {
     const props = getComparisonProps(uiSpec);
     const products = props['products'] as Array<Record<string, unknown>>;
     expect(products).toHaveLength(0);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// V2 wire format compatibility
-// ---------------------------------------------------------------------------
-
-describe('comparisonTable: V2 wire format', () => {
-  it('adapts comparisonTable with version:"v2" correctly', () => {
-    const raw = {
-      type: 'comparisonTable',
-      payload: {
-        multiple_product_details: [
-          { sku: 'V2-A', name: 'V2 Product A', price: 100, url: 'https://example.com/v2-a' },
-          { sku: 'V2-B', name: 'V2 Product B', price: 200, url: 'https://example.com/v2-b' },
-        ],
-        table: {
-          color: ['Red', 'Blue'],
-        },
-        product_comparison_framework: {
-          recommended_choice_sku: 'V2-B',
-          key_differences: ['Color preference'],
-          compared_field_names: ['color'],
-          criteria_view: { color: 'Renk' },
-        },
-      },
-      version: 'v2',
-      messageId: 'msg-comp-1',
-      threadId: 'thread-42',
-      from: 'assistant',
-    };
-
-    const uiSpec = adaptAndAssertComparisonTable(raw);
-    const props = getComparisonProps(uiSpec);
-
-    const products = props['products'] as Array<Record<string, unknown>>;
-    expect(products).toHaveLength(2);
-
-    const recommended = props['recommended'] as Record<string, unknown>;
-    expect(recommended['sku']).toBe('V2-B');
-
-    const attributes = props['attributes'] as Array<{ label: string; values: string[] }>;
-    expect(attributes).toEqual([{ label: 'Renk', values: ['Red', 'Blue'] }]);
-
-    expect(props['highlights']).toEqual(['Color preference']);
-  });
-
-  it('V2 wire fields do not leak into comparison props', () => {
-    const raw = {
-      type: 'comparisonTable',
-      payload: {
-        multiple_product_details: [{ sku: 'X1', name: 'X', price: 50, url: 'https://example.com/x' }],
-      },
-      version: 'v2',
-      messageId: 'msg-leak-test',
-    };
-
-    const uiSpec = adaptAndAssertComparisonTable(raw);
-    const props = getComparisonProps(uiSpec);
-    // version and messageId should NOT appear in the comparison props
-    expect(props['version']).toBeUndefined();
-    expect(props['messageId']).toBeUndefined();
   });
 });

@@ -106,4 +106,108 @@ describe('routeStreamAction', () => {
     routeStreamAction(event, { navigate: handler });
     expect(handler).toHaveBeenCalledWith({ url: 'https://example.com' });
   });
+
+  it('blocks default navigation to javascript: URLs', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const event: StreamEventAction = {
+      type: 'action',
+      action: { kind: 'navigate', url: 'javascript:alert(1)' },
+    };
+    // No custom handler — falls through to defaultNavigate which should block
+    routeStreamAction(event, {});
+    // defaultNavigate validates URL safety and blocks javascript: protocol
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Blocked navigation'), expect.any(String));
+    warnSpy.mockRestore();
+  });
+
+  it('allows default navigation to https: URLs', () => {
+    const event: StreamEventAction = {
+      type: 'action',
+      action: { kind: 'navigate', url: 'https://example.com/product' },
+    };
+    // This would normally navigate; in test env, window.location.href is mocked/no-op
+    expect(() => routeStreamAction(event, {})).not.toThrow();
+  });
+
+  it('allows default navigation to relative URLs', () => {
+    const event: StreamEventAction = {
+      type: 'action',
+      action: { kind: 'navigate', url: '/product/123' },
+    };
+    expect(() => routeStreamAction(event, {})).not.toThrow();
+  });
+
+  it('treats navigate without url string as unknown action', () => {
+    const navigate = vi.fn();
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    routeStreamAction(
+      { type: 'action', action: { kind: 'navigate' } as StreamEventAction['action'] },
+      { navigate },
+      { logger },
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('treats save_session with missing sku as unknown action', () => {
+    const saveSession = vi.fn();
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    routeStreamAction(
+      { type: 'action', action: { kind: 'save_session', sessionId: 's1' } as StreamEventAction['action'] },
+      { saveSession },
+      { logger },
+    );
+    expect(saveSession).not.toHaveBeenCalled();
+  });
+
+  it('treats add_to_cart with wrong quantity type as unknown action', () => {
+    const addToCart = vi.fn();
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    routeStreamAction(
+      {
+        type: 'action',
+        action: {
+          kind: 'add_to_cart',
+          sku: 'X',
+          quantity: 'bad',
+          cartCode: 'C',
+        } as unknown as StreamEventAction['action'],
+      },
+      { addToCart },
+      { logger },
+    );
+    expect(addToCart).not.toHaveBeenCalled();
+  });
+
+  it('treats script_call with missing name as unknown action', () => {
+    const scriptCall = vi.fn();
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    routeStreamAction(
+      { type: 'action', action: { kind: 'script_call' } as StreamEventAction['action'] },
+      { scriptCall },
+      { logger },
+    );
+    expect(scriptCall).not.toHaveBeenCalled();
+  });
+
+  it('logs warning when delegate policy has no unknown handler', () => {
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    routeStreamAction(
+      { type: 'action', action: { kind: 'custom_thing' } },
+      {},
+      { unknownActionPolicy: 'delegate', logger },
+    );
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn.mock.calls[0]![0]).toContain('without delegate handler');
+  });
+
+  it('routes script_call without payload (name only)', () => {
+    const scriptCall = vi.fn();
+    routeStreamAction(
+      { type: 'action', action: { kind: 'script_call', name: 'noPayload' } },
+      { scriptCall },
+      { logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn() } },
+    );
+    expect(scriptCall).toHaveBeenCalledWith({ name: 'noPayload' });
+  });
 });

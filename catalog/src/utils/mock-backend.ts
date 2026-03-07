@@ -93,16 +93,6 @@ function interceptedFetch(input: RequestInfo | URL, init?: RequestInit): Promise
     return Promise.resolve(mockResponse(ANALYTICS_OK, 'application/json'));
   }
 
-  // Heartbeat
-  if (url.includes('/heartbeat')) {
-    return Promise.resolve(mockResponse('{}', 'application/json'));
-  }
-
-  // Proactive
-  if (url.includes('/proactive')) {
-    return Promise.resolve(mockResponse('{}', 'application/json'));
-  }
-
   // Fall through to real fetch
   return originalFetch(input, init);
 }

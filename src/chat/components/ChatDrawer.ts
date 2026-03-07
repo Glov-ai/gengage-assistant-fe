@@ -1,5 +1,5 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
-import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
+import { sanitizeHtml, isSafeImageUrl, safeSetAttribute } from '../../common/safe-html.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
 import { createKvkkBanner } from './KvkkBanner.js';
@@ -84,6 +84,10 @@ export class ChatDrawer {
   private _voiceEnabled = false;
   private _voiceLang = 'tr-TR';
   private _ignoreNextDividerClick = false;
+  private readonly _cleanups: Array<() => void> = [];
+  private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
+  private _previouslyFocusedElement: HTMLElement | null = null;
+  private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
@@ -135,7 +139,7 @@ export class ChatDrawer {
     titleRow.className = 'gengage-chat-header-title-row';
     const title = document.createElement('span');
     title.className = 'gengage-chat-header-title';
-    title.textContent = options.headerTitle ?? this.i18n.headerTitle ?? 'Gengage Asistan\u0131';
+    title.textContent = options.headerTitle ?? this.i18n.headerTitle ?? 'Product Expert';
     titleRow.appendChild(title);
 
     if (options.headerBadge) {
@@ -164,10 +168,10 @@ export class ChatDrawer {
     if (options.headerCartUrl) {
       const cartLink = document.createElement('a');
       cartLink.className = 'gengage-chat-header-btn';
-      cartLink.href = options.headerCartUrl;
+      safeSetAttribute(cartLink, 'href', options.headerCartUrl);
       cartLink.target = '_blank';
       cartLink.rel = 'noopener noreferrer';
-      cartLink.setAttribute('aria-label', 'Sepetim');
+      cartLink.setAttribute('aria-label', this.i18n.cartAriaLabel);
       cartLink.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
       headerRight.appendChild(cartLink);
     }
@@ -177,7 +181,7 @@ export class ChatDrawer {
       const favBtn = document.createElement('button');
       favBtn.className = 'gengage-chat-header-btn';
       favBtn.type = 'button';
-      favBtn.setAttribute('aria-label', 'Favorilerim');
+      favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
       favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
       favBtn.addEventListener('click', () => options.onFavoritesClick?.());
       headerRight.appendChild(favBtn);
@@ -192,6 +196,73 @@ export class ChatDrawer {
     headerRight.appendChild(closeBtn);
     header.appendChild(headerRight);
 
+    // Swipe-to-dismiss on mobile: drag header down to close the drawer
+    {
+      let swipeStartY: number | null = null;
+      let swipeDeltaY = 0;
+      const DISMISS_THRESHOLD = 80;
+
+      header.addEventListener(
+        'touchstart',
+        (e) => {
+          // Only on mobile-sized viewports
+          if (window.innerWidth > 768) return;
+          const t = e.changedTouches?.[0];
+          if (!t) return;
+          swipeStartY = t.clientY;
+          swipeDeltaY = 0;
+          // Disable transition during drag for immediate visual feedback
+          this.root.style.transition = 'none';
+        },
+        { passive: true },
+      );
+
+      header.addEventListener(
+        'touchmove',
+        (e) => {
+          if (swipeStartY === null) return;
+          const t = e.changedTouches?.[0];
+          if (!t) return;
+          swipeDeltaY = Math.max(0, t.clientY - swipeStartY); // Only allow downward drag
+          this.root.style.transform = `translateY(${swipeDeltaY}px)`;
+          this.root.style.opacity = String(1 - swipeDeltaY / 300);
+        },
+        { passive: true },
+      );
+
+      header.addEventListener(
+        'touchend',
+        () => {
+          if (swipeStartY === null) return;
+          swipeStartY = null;
+          // Re-enable transition
+          this.root.style.transition = '';
+          if (swipeDeltaY >= DISMISS_THRESHOLD) {
+            // Dismiss — let the CSS transition handle the animation
+            options.onClose();
+          }
+          // Reset transform
+          this.root.style.transform = '';
+          this.root.style.opacity = '';
+          swipeDeltaY = 0;
+        },
+        { passive: true },
+      );
+
+      header.addEventListener(
+        'touchcancel',
+        () => {
+          if (swipeStartY === null) return;
+          swipeStartY = null;
+          this.root.style.transition = '';
+          this.root.style.transform = '';
+          this.root.style.opacity = '';
+          swipeDeltaY = 0;
+        },
+        { passive: true },
+      );
+    }
+
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
     body.className = 'gengage-chat-body';
@@ -204,6 +275,8 @@ export class ChatDrawer {
     this._panelTopBar = new PanelTopBar({
       onBack: () => options.onPanelBack?.(),
       onForward: () => options.onPanelForward?.(),
+      backAriaLabel: this.i18n.backAriaLabel,
+      forwardAriaLabel: this.i18n.forwardAriaLabel,
     });
     this._panelEl.appendChild(this._panelTopBar.getElement());
 
@@ -213,11 +286,11 @@ export class ChatDrawer {
     this._dividerEl = document.createElement('div');
     this._dividerEl.className = 'gengage-chat-panel-divider gengage-chat-panel-divider--hidden';
     this._dividerEl.setAttribute('role', 'separator');
-    this._dividerEl.setAttribute('aria-label', 'Toggle panel');
+    this._dividerEl.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
     const chevron = document.createElement('button');
     chevron.className = 'gengage-chat-panel-divider-toggle';
     chevron.type = 'button';
-    chevron.setAttribute('aria-label', 'Toggle panel');
+    chevron.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
     chevron.textContent = '\u00BB'; // » (collapse right)
     chevron.addEventListener('click', () => {
       if (this._ignoreNextDividerClick) {
@@ -273,6 +346,26 @@ export class ChatDrawer {
     conversation.className = 'gengage-chat-conversation';
     conversation.appendChild(header);
 
+    // Offline status bar (hidden by default, shown when navigator.onLine === false)
+    const offlineBar = document.createElement('div');
+    offlineBar.className = 'gengage-chat-offline-bar';
+    offlineBar.setAttribute('role', 'status');
+    offlineBar.setAttribute('aria-live', 'polite');
+    offlineBar.textContent = this.i18n.offlineMessage;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      offlineBar.classList.add('gengage-chat-offline-bar--visible');
+    }
+    conversation.appendChild(offlineBar);
+
+    const onOffline = () => offlineBar.classList.add('gengage-chat-offline-bar--visible');
+    const onOnline = () => offlineBar.classList.remove('gengage-chat-offline-bar--visible');
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    this._cleanups.push(() => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+    });
+
     // KVKK banner slot (inserted above messages)
     this._kvkkSlot = document.createElement('div');
     this._kvkkSlot.className = 'gengage-chat-kvkk-slot';
@@ -283,7 +376,7 @@ export class ChatDrawer {
     this.messagesEl.className = 'gengage-chat-messages';
     this.messagesEl.setAttribute('role', 'log');
     this.messagesEl.setAttribute('aria-live', 'polite');
-    this.messagesEl.setAttribute('aria-label', 'Chat messages');
+    this.messagesEl.setAttribute('aria-label', this.i18n.chatMessagesAriaLabel);
 
     // Track user scroll position to avoid auto-scrolling when reading history
     let scrollRafPending = false;
@@ -313,7 +406,7 @@ export class ChatDrawer {
     this._pillsEl = document.createElement('div');
     this._pillsEl.className = 'gengage-chat-pills';
     this._pillsEl.setAttribute('role', 'toolbar');
-    this._pillsEl.setAttribute('aria-label', 'Suggestions');
+    this._pillsEl.setAttribute('aria-label', this.i18n.suggestionsAriaLabel);
     this._pillsEl.style.display = 'none';
 
     const pillsScroll = document.createElement('div');
@@ -323,7 +416,7 @@ export class ChatDrawer {
     const pillsArrow = document.createElement('button');
     pillsArrow.className = 'gengage-chat-pills-arrow';
     pillsArrow.type = 'button';
-    pillsArrow.setAttribute('aria-label', 'More suggestions');
+    pillsArrow.setAttribute('aria-label', this.i18n.moreSuggestionsAriaLabel);
     pillsArrow.textContent = '\u203A'; // › single right-pointing angle
     pillsArrow.addEventListener('click', () => {
       pillsScroll.scrollBy({ left: 150, behavior: 'smooth' });
@@ -535,13 +628,13 @@ export class ChatDrawer {
     this.root.appendChild(footer);
 
     // Escape key to close drawer
-    this.root.addEventListener('keydown', (e) => {
+    const escapeHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         options.onClose();
       }
-    });
-
-    this._trapFocus();
+    };
+    this.root.addEventListener('keydown', escapeHandler);
+    this._cleanups.push(() => this.root.removeEventListener('keydown', escapeHandler));
 
     container.appendChild(this.root);
   }
@@ -599,7 +692,7 @@ export class ChatDrawer {
       const rollbackBtn = document.createElement('button');
       rollbackBtn.className = 'gengage-chat-rollback-btn';
       rollbackBtn.type = 'button';
-      rollbackBtn.setAttribute('aria-label', 'Rollback to this message');
+      rollbackBtn.setAttribute('aria-label', this.i18n.rollbackAriaLabel);
       rollbackBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
       rollbackBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -642,6 +735,21 @@ export class ChatDrawer {
 
     this.messagesEl.appendChild(container);
     this._scrollToBottom(true);
+
+    // Start "still working" timer — shows a hint after 10s with no text chunks
+    this._clearStillWorkingTimer();
+    this._stillWorkingTimer = setTimeout(() => {
+      this._stillWorkingTimer = null;
+      const typing = this.messagesEl.querySelector('.gengage-chat-typing');
+      if (!typing) return;
+      // Only add if not already present
+      if (typing.querySelector('.gengage-chat-still-working')) return;
+      const hint = document.createElement('div');
+      hint.className = 'gengage-chat-still-working';
+      hint.textContent = this.i18n.stillWorkingMessage;
+      typing.appendChild(hint);
+      this._scrollToBottom(true);
+    }, 10_000);
   }
 
   /** Accumulate a new thinking step (shown as a checklist in the typing indicator). */
@@ -651,9 +759,47 @@ export class ChatDrawer {
   }
 
   removeTypingIndicator(): void {
+    this._clearStillWorkingTimer();
     const existing = this.messagesEl.querySelector('.gengage-chat-typing');
     existing?.remove();
     this._thinkingSteps = [];
+    this.hideStopButton();
+  }
+
+  private _clearStillWorkingTimer(): void {
+    if (this._stillWorkingTimer !== null) {
+      clearTimeout(this._stillWorkingTimer);
+      this._stillWorkingTimer = null;
+    }
+  }
+
+  /** Show a "Stop generating" button below the typing indicator. */
+  showStopButton(onStop: () => void): void {
+    this.hideStopButton();
+    const btn = document.createElement('button');
+    btn.className = 'gengage-chat-stop-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', this.i18n.stopGenerating);
+    // Square stop icon + label
+    const icon = document.createElement('span');
+    icon.className = 'gengage-chat-stop-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    btn.appendChild(icon);
+    const label = document.createElement('span');
+    label.textContent = this.i18n.stopGenerating;
+    btn.appendChild(label);
+    btn.addEventListener('click', () => {
+      this.hideStopButton();
+      onStop();
+    });
+    this.messagesEl.appendChild(btn);
+    this._scrollToBottom(true);
+  }
+
+  /** Remove the stop-generating button if present. */
+  hideStopButton(): void {
+    const existing = this.messagesEl.querySelector('.gengage-chat-stop-btn');
+    existing?.remove();
   }
 
   showError(message?: string, onRetry?: () => void): void {
@@ -750,7 +896,7 @@ export class ChatDrawer {
 
   showKvkkBanner(html: string, onDismiss: () => void): void {
     this._kvkkSlot.innerHTML = '';
-    const banner = createKvkkBanner({ htmlContent: html, onDismiss });
+    const banner = createKvkkBanner({ htmlContent: html, onDismiss, closeAriaLabel: this.i18n.closeAriaLabel });
     this._kvkkSlot.appendChild(banner);
   }
 
@@ -1056,35 +1202,6 @@ export class ChatDrawer {
     container.appendChild(list);
   }
 
-  private _trapFocus(): void {
-    this.root.addEventListener('keydown', (e) => {
-      if (e.key !== 'Tab') return;
-      const focusable = this.root.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-
-      // Use getRootNode() to resolve activeElement inside Shadow DOM
-      const rootNode = this.root.getRootNode();
-      const active = (rootNode as ShadowRoot).activeElement ?? document.activeElement;
-
-      if (e.shiftKey) {
-        if (active === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    });
-  }
-
   private _submit(): void {
     const text = this.inputEl.value.trim();
     const attachment = this._pendingAttachment;
@@ -1225,5 +1342,66 @@ export class ChatDrawer {
 
   hideThumbnails(): void {
     this._thumbnailsColumn.hide();
+  }
+
+  /** Activate focus trap — Tab/Shift+Tab cycles within the drawer. */
+  trapFocus(): void {
+    this._previouslyFocusedElement = document.activeElement as HTMLElement | null;
+    this.releaseFocus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusable = this.root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+
+      // Use getRootNode() to resolve activeElement inside Shadow DOM
+      const rootNode = this.root.getRootNode();
+      const active = rootNode instanceof ShadowRoot ? rootNode.activeElement : document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first || !this.root.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last || !this.root.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    this._focusTrapHandler = handler;
+    this.root.addEventListener('keydown', handler);
+  }
+
+  /** Release the focus trap and restore previously focused element. */
+  releaseFocus(): void {
+    if (this._focusTrapHandler) {
+      this.root.removeEventListener('keydown', this._focusTrapHandler);
+      this._focusTrapHandler = null;
+    }
+    if (this._previouslyFocusedElement) {
+      try {
+        this._previouslyFocusedElement.focus();
+      } catch {
+        // Element may no longer be in the DOM
+      }
+      this._previouslyFocusedElement = null;
+    }
+  }
+
+  /** Clean up event listeners and child resources (VoiceInput, timers). */
+  destroy(): void {
+    this.releaseFocus();
+    this._clearStillWorkingTimer();
+    for (const cleanup of this._cleanups) cleanup();
+    this._cleanups.length = 0;
+    this._voiceInput?.destroy();
+    this._voiceInput = null;
   }
 }

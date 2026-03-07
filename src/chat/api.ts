@@ -1,5 +1,5 @@
 import { consumeStream } from '../common/streaming.js';
-import { adaptV1Event } from '../common/v1-protocol-adapter.js';
+import { adaptBackendEvent } from '../common/protocol-adapter.js';
 import { buildChatEndpointUrl } from '../common/api-paths.js';
 import type { StreamEvent, UISpec, PageContext } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
@@ -62,7 +62,7 @@ export interface ActionEnrichmentContext {
 }
 
 /**
- * Enriches action payloads with fields the v1 backend expects.
+ * Enriches action payloads with fields the backend expects.
  * Only adds fields that are not already present in the payload.
  */
 export function enrichActionPayload(
@@ -158,7 +158,7 @@ const ACTION_TYPE_MAP: Record<string, string> = {
 };
 
 /**
- * Builds the request body for `/chat/process_action` (v1 backend).
+ * Builds the request body for `/chat/process_action`.
  *
  * Backend expects `type` and `payload` at the top level —
  * matching chat_api.py's current schema.
@@ -180,53 +180,6 @@ function buildRequestBody(request: ProcessActionRequest): string {
   return JSON.stringify(body);
 }
 
-/**
- * Builds the request body for ACAP backend (`/api/chat/:siteId/message`).
- *
- * ACAP expects: { message, session_id, user_id, output_language, screen_context }
- */
-function buildAcapRequestBody(request: ProcessActionRequest): string {
-  const rawType = request.type ?? request.action?.type ?? 'inputText';
-  const rawPayload = request.payload ?? request.action?.payload;
-
-  // Extract user message text from various payload shapes
-  let message = request.action?.title ?? '';
-  if (rawType === 'inputText' || rawType === 'user_message') {
-    if (typeof rawPayload === 'string') {
-      message = rawPayload;
-    } else if (rawPayload && typeof rawPayload === 'object' && 'text' in rawPayload) {
-      message = String((rawPayload as Record<string, unknown>).text);
-    }
-  }
-
-  const body: Record<string, unknown> = {
-    message,
-    session_id: request.session_id,
-  };
-
-  if (request.user_id) body.user_id = request.user_id;
-  if (request.locale) body.output_language = request.locale;
-  if (request.meta?.outputLanguage) body.output_language = request.meta.outputLanguage;
-
-  // Map page context to ACAP screen_context
-  if (request.sku || request.page_type) {
-    const screenContext: Record<string, unknown> = {};
-    if (request.page_type) screenContext.screen_type = request.page_type;
-    if (request.sku) screenContext.sku_list = [request.sku];
-    body.screen_context = screenContext;
-  }
-
-  // For non-message actions, send the action type and payload
-  if (rawType !== 'inputText' && rawType !== 'user_message') {
-    body.action_type = rawType;
-    if (rawPayload !== undefined) {
-      body.action_payload = typeof rawPayload === 'string' ? { text: rawPayload } : rawPayload;
-    }
-  }
-
-  return JSON.stringify(body);
-}
-
 export function sendChatMessage(
   request: ProcessActionRequest,
   callbacks: StreamCallbacks,
@@ -237,7 +190,7 @@ export function sendChatMessage(
 
   const run = async (): Promise<void> => {
     try {
-      const requestBody = transport.backendType === 'acap' ? buildAcapRequestBody(request) : buildRequestBody(request);
+      const requestBody = buildRequestBody(request);
 
       // Use FormData only when an attachment is present; otherwise send JSON.
       const useFormData = transport.attachment !== undefined;
@@ -291,7 +244,7 @@ export function sendChatMessage(
 
       await consumeStream(response, {
         onEvent: (event: StreamEvent) => {
-          const normalized = adaptV1Event(event as unknown as Record<string, unknown>);
+          const normalized = adaptBackendEvent(event as unknown as Record<string, unknown>);
 
           if (!normalized) return;
 
@@ -336,22 +289,4 @@ export function sendChatMessage(
 
   void run();
   return controller;
-}
-
-export async function fetchProactiveAction(
-  request: { account_id: string; sku?: string; page_type?: string; output_language?: string; mode?: string },
-  transport: ChatTransportConfig,
-): Promise<{ title?: string; question?: string; actions?: unknown[] } | null> {
-  const url = buildChatEndpointUrl('proactive_action', transport);
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as { title?: string; question?: string; actions?: unknown[] };
-  } catch {
-    return null;
-  }
 }

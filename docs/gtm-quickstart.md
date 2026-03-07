@@ -37,9 +37,6 @@ Set the trigger to **DOM Ready** (or **All Pages** if your config sets
         simrel: '#gengage-simrel',
       },
 
-      // Optional: heartbeat polling
-      enableHeartbeat: true,
-
       // Optional: price formatting
       pricing: { currencySymbol: 'TL', currencyPosition: 'suffix' },
     },
@@ -90,9 +87,6 @@ you want the QNA and SimRel widgets to appear.
         simrel: '#gengage-simrel',
       },
 
-      // Optional: heartbeat polling
-      enableHeartbeat: true,
-
       // Optional: price formatting
       pricing: { currencySymbol: 'TL', currencyPosition: 'suffix' },
     },
@@ -137,7 +131,6 @@ import runtimeConfig from './gengage-config.json';
 const controller = await initGengageClient({
   runtimeConfig,
   // runtimeConfig can include optional fields:
-  //   enableHeartbeat: true,
   //   pricing: { currencySymbol: 'TL', currencyPosition: 'suffix' },
 
   contextResolver: () => ({
@@ -229,6 +222,56 @@ hostActions: {
 
 All three callbacks are optional. When omitted, the SDK uses safe defaults
 (navigation via `window.location.href`, no-op for cart and script calls).
+
+---
+
+## Opening Chat with a SKU or Initial Text
+
+By default, the chat widget opens empty and waits for user input. You can
+optionally auto-open with a specific product or pre-filled query.
+
+### Auto-open on a product page (SKU init)
+
+When the page context includes a `sku`, the widget automatically sends a
+`launchSingleProduct` request on first open:
+
+```ts
+await initGengageClient({
+  runtimeConfig: { /* ... */ },
+  contextResolver: () => ({
+    pageType: 'pdp',
+    sku: '1000465056',  // product SKU from your page data
+  }),
+});
+```
+
+### Send an initial text message on open
+
+To pre-fill and auto-send a message when the chat opens:
+
+```ts
+const controller = await initGengageClient({
+  runtimeConfig: { /* ... */ },
+});
+
+// Open the chat and send an initial query
+controller.chat?.open();
+controller.chat?.sendMessage('Show me kitchen tables');
+```
+
+### Open via event bus (loose coupling)
+
+If you don't have a reference to the controller, use the event bus:
+
+```ts
+// Open the chat drawer
+window.dispatchEvent(new CustomEvent('gengage:chat:open'));
+
+// Send a message programmatically
+window.dispatchEvent(new CustomEvent('gengage:chat:send', {
+  detail: { text: 'I need help choosing a product' }
+}));
+```
 
 ---
 

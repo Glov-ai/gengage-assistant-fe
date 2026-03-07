@@ -1,5 +1,7 @@
 import type { UnknownActionPolicy } from './config-schema.js';
 import type { ActionPayload, StreamEventAction } from './types.js';
+import { isSafeUrl } from './safe-html.js';
+import { debugLog } from './debug.js';
 
 export interface HostActionHandlers {
   openChat?: (payload?: ActionPayload | unknown) => void;
@@ -25,6 +27,7 @@ export function routeStreamAction(
 ): void {
   const action = event.action;
   const logger = options.logger ?? defaultLogger;
+  debugLog('action', `routing action: ${action.kind}`, action);
 
   switch (action.kind) {
     case 'open_chat': {
@@ -119,6 +122,10 @@ function handleUnknownAction(
 
 function defaultNavigate(url: string, newTab?: boolean): void {
   if (typeof window === 'undefined') return;
+  if (!isSafeUrl(url)) {
+    console.warn('[gengage] Blocked navigation to unsafe URL:', url);
+    return;
+  }
   if (newTab) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;

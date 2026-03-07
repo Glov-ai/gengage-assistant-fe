@@ -93,8 +93,6 @@ export const MOCK_CHAT_NDJSON = [
   '{"type":"chatStreamEnd","payload":{}}',
 ].join('\n');
 
-export const MOCK_PROACTIVE_NDJSON = ['{"type":"chatStreamEnd","payload":{}}'].join('\n');
-
 /** Chat NDJSON that sends a productList (triggers sort toolbar in panel) */
 export const MOCK_CHAT_PRODUCT_LIST_NDJSON = [
   '{"type":"outputText","payload":{"text":"<p>İşte size uygun ürünler:</p>"}}',
@@ -185,15 +183,6 @@ export async function setupMockRoutes(page: Page, options?: { processActionBody?
       status: 200,
       contentType: 'application/x-ndjson',
       body: options?.processActionBody ?? MOCK_CHAT_NDJSON,
-    });
-  });
-
-  // Chat: proactive_action
-  await page.route('**/chat/proactive_action', (route) => {
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/x-ndjson',
-      body: MOCK_PROACTIVE_NDJSON,
     });
   });
 

@@ -142,9 +142,6 @@ lives here in a single `initOverlayWidgets()` call:
       mountTarget: '#mystore-similar-products',
     },
 
-    // ── Optional: heartbeat for proactive messages ──
-    // enableHeartbeat: true,
-
     // ── Optional: price formatting (defaults to Turkish) ──
     // pricing: { currencySymbol: 'TL', currencyPosition: 'suffix' },
 

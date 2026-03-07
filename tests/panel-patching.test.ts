@@ -51,9 +51,9 @@ describe('Panel patching (Item 11)', () => {
   });
 
   it('similarsAppend flag is set in productDetailsSimilars adapter output', async () => {
-    // This is tested in v1-adapter.test.ts, but verify the flag value
-    const { adaptV1Event } = await import('../src/common/v1-protocol-adapter.js');
-    const result = adaptV1Event({
+    // This is tested in protocol-adapter.test.ts, but verify the flag value
+    const { adaptBackendEvent } = await import('../src/common/protocol-adapter.js');
+    const result = adaptBackendEvent({
       type: 'productDetailsSimilars',
       payload: {
         similarProducts: [{ sku: 'S1', name: 'Similar', price: 50, url: 'https://example.com' }],

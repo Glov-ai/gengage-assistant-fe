@@ -5,7 +5,7 @@
  * Renders when `productDetails` arrives — the full ProductDetailsPanel goes
  * to the left panel while this compact summary appears inline in chat messages.
  *
- * Layout: [image 64×64] [name · rating · price] [İncele link]
+ * Layout: [image 64×64] [name · rating · price] [View link]
  */
 
 import type { UIElement } from '../../common/types.js';
@@ -34,9 +34,10 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
     const imgWrap = document.createElement('div');
     imgWrap.className = 'gengage-chat-product-summary__image';
     const img = document.createElement('img');
+    img.loading = 'lazy';
     safeSetAttribute(img, 'src', imageUrl);
     const name = product['name'] as string | undefined;
-    if (name) img.alt = name;
+    img.alt = name || 'Product image';
     addImageErrorHandler(img);
     imgWrap.appendChild(img);
     card.appendChild(imgWrap);
@@ -104,7 +105,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
     safeSetAttribute(cta, 'href', url);
     safeSetAttribute(cta, 'target', '_blank');
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-    cta.textContent = ctx.i18n?.productCtaLabel ?? 'İncele';
+    cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
     card.appendChild(cta);
   }
 

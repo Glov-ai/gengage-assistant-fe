@@ -13,6 +13,7 @@ export interface ChoicePrompterOptions {
   ctaLabel: string;
   onCtaClick: () => void;
   onDismiss?: () => void;
+  dismissAriaLabel?: string;
 }
 
 export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElement {
@@ -44,7 +45,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.type = 'button';
   dismiss.className = 'gengage-chat-choice-prompter-dismiss';
   dismiss.textContent = '\u00D7'; // × close
-  dismiss.setAttribute('aria-label', 'Dismiss');
+  dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed();
     card.remove();

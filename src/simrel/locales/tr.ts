@@ -4,5 +4,6 @@ export const SIMREL_I18N_TR: SimRelI18n = {
   similarProductsAriaLabel: 'Benzer ürünler',
   emptyStateMessage: 'Benzer ürün bulunamadı.',
   addToCartButton: 'Sepete Ekle',
+  ctaLabel: 'İncele',
   priceSuffix: ' TL',
 };

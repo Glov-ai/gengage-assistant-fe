@@ -127,6 +127,7 @@ export class VoiceInput {
   private readonly silenceTimeoutMs: number;
   private readonly autoSubmit: boolean;
   private intentionalStop = false;
+  private _lastRestartAt = 0;
 
   constructor(callbacks: VoiceInputCallbacks, options?: VoiceInputOptions) {
     this.callbacks = callbacks;
@@ -219,6 +220,14 @@ export class VoiceInput {
       this.clearSilenceTimer();
       // Auto-restart if still in listening state (browser may stop recognition arbitrarily)
       if (this._state === 'listening' && !this.intentionalStop) {
+        const now = Date.now();
+        // Prevent rapid restart loop on Chrome — if onend fires within 500ms
+        // of the last restart, the browser is refusing to stay active.
+        if (now - this._lastRestartAt < 500) {
+          this.setState('idle');
+          return;
+        }
+        this._lastRestartAt = now;
         try {
           recognition.start();
         } catch {

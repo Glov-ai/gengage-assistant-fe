@@ -90,7 +90,7 @@ describe('ComparisonTable', () => {
       highlights: [],
       onProductClick: () => {},
     });
-    expect(el.querySelector('h3')?.textContent).toContain('KARŞILAŞTIRMA');
+    expect(el.querySelector('h3')?.textContent).toContain('COMPARISON');
   });
 
   it('does not render image for unsafe URLs', () => {
@@ -151,7 +151,7 @@ describe('ComparisonTable', () => {
     });
     expect(el.querySelector('.gengage-chat-comparison-recommended-title')?.textContent).toBe('Best Product');
     expect(el.querySelector('.gengage-chat-comparison-recommended-price')?.textContent).toBe('1.299 TL');
-    expect(el.querySelector('.gengage-chat-comparison-recommended-label')?.textContent).toBe('Önerilen Seçim');
+    expect(el.querySelector('.gengage-chat-comparison-recommended-label')?.textContent).toBe('Recommended Choice');
   });
 
   it('renders recommended text explanation when present', () => {

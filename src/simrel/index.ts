@@ -6,7 +6,7 @@
  */
 
 import type { PageContext, UISpec, UIElement } from '../common/types.js';
-import type { NormalizedProduct } from '../common/v1-protocol-adapter.js';
+import type { NormalizedProduct } from '../common/protocol-adapter.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
@@ -32,6 +32,25 @@ import * as ga from '../common/ga-datalayer.js';
 
 import './components/simrel.css';
 
+/**
+ * Similar / related products widget for product pages.
+ * Fetches AI-powered product recommendations and renders them as a scrollable grid.
+ *
+ * @example
+ * ```ts
+ * import { GengageSimRel, bootstrapSession } from '@gengage/assistant-fe';
+ *
+ * const simrel = new GengageSimRel();
+ * await simrel.init({
+ *   accountId: 'mystore',
+ *   middlewareUrl: 'https://chat.gengage.ai',
+ *   sku: '12345',
+ *   mountTarget: '#similar-products',
+ *   session: { sessionId: bootstrapSession() },
+ *   onAddToCart: ({ sku, quantity }) => cart.add(sku, quantity),
+ * });
+ * ```
+ */
 export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
   private _abortController: AbortController | null = null;
   private _contentEl: HTMLElement | null = null;
@@ -282,10 +301,26 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       if (import.meta.env?.DEV) {
         console.error('[gengage:simrel] Failed to fetch similar products:', err);
       }
-      // Hide the widget gracefully — no user-facing error for backend unavailability
+      // Show inline error with retry instead of hiding silently
       if (this._contentEl) {
         this._contentEl.innerHTML = '';
-        this._contentEl.style.display = 'none';
+        const errorEl = document.createElement('div');
+        errorEl.className = 'gengage-simrel-error';
+        errorEl.style.cssText = 'text-align:center;padding:16px;color:#6b7280;font-size:13px;';
+        const msgEl = document.createElement('span');
+        msgEl.textContent = this.config.locale?.startsWith('tr')
+          ? 'Benzer \u00FCr\u00FCnler y\u00FCklenemedi.'
+          : 'Could not load similar products.';
+        errorEl.appendChild(msgEl);
+        const retryBtn = document.createElement('button');
+        retryBtn.textContent = this.config.locale?.startsWith('tr') ? 'Tekrar dene' : 'Try again';
+        retryBtn.style.cssText =
+          'margin-left:8px;border:1px solid #d1d5db;background:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;color:#374151;';
+        retryBtn.addEventListener('click', () => {
+          void this._fetchAndRender(this.config.sku);
+        });
+        errorEl.appendChild(retryBtn);
+        this._contentEl.appendChild(errorEl);
       }
     }
   }

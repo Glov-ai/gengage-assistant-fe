@@ -50,14 +50,55 @@ Additional optional fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `enableHeartbeat` | `boolean` | Enable session keepalive polling via `/v2/heartbeat`. Default: `false`. |
 | `pricing` | `PriceFormatConfig` | Locale-aware price formatting (currency symbol, position, separators). See `src/common/price-formatter.ts`. |
 | `voiceEnabled` | `boolean` | Enable speech-to-text input on the chat widget. Default: `false`. |
 | `kvkk` | `{ message, linkUrl, linkText }` | Turkish data protection (KVKK) consent banner config. When set, a consent notice is displayed before the first user message. |
 
-Include transport fields:
-- optional analytics ingestion endpoint/auth settings.
-- response compatibility mode toggles if needed (v1 wire protocol adapter and JSON similars/groupings handling).
+### Mount Selectors (`mounts`)
+
+Override default mount targets for QNA and SimRel widgets:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `mounts.chat` | `string` | (auto-injected) | CSS selector for chat mount point |
+| `mounts.qna` | `string` | (auto-injected) | CSS selector for QNA button row |
+| `mounts.simrel` | `string` | (auto-injected) | CSS selector for similar products grid |
+
+### Analytics (`analytics`)
+
+Controls the fire-and-forget analytics client:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `analytics.enabled` | `boolean` | `true` | Enable/disable analytics entirely |
+| `analytics.endpoint` | `string` | `"/analytics"` | Analytics ingestion URL (relative to `middlewareUrl`) |
+| `analytics.auth.mode` | `enum` | `"none"` | Auth mode: `none`, `x-api-key-header`, `bearer-header`, `body-api-key` |
+| `analytics.auth.key` | `string` | — | API key or bearer token (when `mode` is not `none`) |
+| `analytics.auth.headerName` | `string` | — | Custom header name (for `x-api-key-header` mode) |
+| `analytics.auth.bodyField` | `string` | `"api_key"` | JSON body field name (for `body-api-key` mode) |
+| `analytics.fireAndForget` | `boolean` | `true` | Don't await analytics responses |
+| `analytics.useBeacon` | `boolean` | `true` | Use `navigator.sendBeacon` on page unload |
+| `analytics.keepaliveFetch` | `boolean` | `true` | Use `fetch({ keepalive: true })` for reliable delivery |
+| `analytics.timeoutMs` | `number` | `4000` | Request timeout in milliseconds |
+| `analytics.maxRetries` | `number` | `1` | Max retry attempts (0–5) |
+
+### GTM (`gtm`)
+
+Controls GTM-based initialization behavior:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `gtm.idempotencyKey` | `string` | `"__gengageWidgetsInit"` | Window property key to prevent double-mount |
+| `gtm.requireDomReady` | `boolean` | `true` | Wait for `DOMContentLoaded` before init |
+
+### Action Handling (`actionHandling`)
+
+Controls how the widget handles unknown or dangerous action types:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `actionHandling.unknownActionPolicy` | `enum` | `"log-and-ignore"` | Policy for unrecognized action types: `log-and-ignore`, `throw`, `delegate` |
+| `actionHandling.allowScriptCall` | `boolean` | `false` | Allow `scriptCall` actions (executes host-page functions — security risk) |
 
 Notes:
 - Keep the schema versioned (`version`) to support future migrations.

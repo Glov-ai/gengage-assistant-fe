@@ -8,6 +8,8 @@
 export interface PanelTopBarOptions {
   onBack: () => void;
   onForward: () => void;
+  backAriaLabel?: string;
+  forwardAriaLabel?: string;
 }
 
 export class PanelTopBar {
@@ -24,7 +26,7 @@ export class PanelTopBar {
     this._backBtn.className = 'gengage-chat-panel-topbar-back';
     this._backBtn.type = 'button';
     this._backBtn.disabled = true;
-    this._backBtn.setAttribute('aria-label', 'Back');
+    this._backBtn.setAttribute('aria-label', options.backAriaLabel ?? 'Back');
     this._backBtn.textContent = '\u2190'; // ←
     this._backBtn.addEventListener('click', () => options.onBack());
 
@@ -35,7 +37,7 @@ export class PanelTopBar {
     this._forwardBtn.className = 'gengage-chat-panel-topbar-forward';
     this._forwardBtn.type = 'button';
     this._forwardBtn.disabled = true;
-    this._forwardBtn.setAttribute('aria-label', 'Forward');
+    this._forwardBtn.setAttribute('aria-label', options.forwardAriaLabel ?? 'Forward');
     this._forwardBtn.textContent = '\u2192'; // →
     this._forwardBtn.addEventListener('click', () => options.onForward());
 

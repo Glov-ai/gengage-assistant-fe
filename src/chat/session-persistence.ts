@@ -9,6 +9,7 @@
 
 import type { GengageIndexedDB } from '../common/indexed-db.js';
 import type { CommunicationBridge } from '../common/communication-bridge.js';
+import { isSafeUrl } from '../common/safe-html.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
@@ -32,6 +33,8 @@ export class SessionPersistence {
   private _db: GengageIndexedDB | null;
   /** Favorited product SKUs (loaded from IDB). */
   readonly favoritedSkus: Set<string> = new Set();
+  /** Async mutex: serializes persist() calls to prevent interleaved IDB writes. */
+  private _persistLock: Promise<void> = Promise.resolve();
 
   constructor(db: GengageIndexedDB | null) {
     this._db = db;
@@ -50,6 +53,22 @@ export class SessionPersistence {
    * Called after each stream completion (onDone). Non-fatal on failure.
    */
   async persist(params: PersistSessionParams): Promise<void> {
+    if (!this._db) return;
+    // Serialize through mutex to prevent interleaved IDB writes
+    const prev = this._persistLock;
+    let unlock: () => void;
+    this._persistLock = new Promise<void>((r) => {
+      unlock = r;
+    });
+    await prev;
+    try {
+      await this._persistImpl(params);
+    } finally {
+      unlock!();
+    }
+  }
+
+  private async _persistImpl(params: PersistSessionParams): Promise<void> {
     if (!this._db) return;
 
     const serializableMessages: SerializableChatMessage[] = params.messages.map((m) => {
@@ -131,7 +150,9 @@ export class SessionPersistence {
     // should handle the bridge event synchronously or call event.preventDefault()
     // on the gengage:navigate CustomEvent to suppress the fallback navigation.
     bridge?.send('openURLInNewTab', { url });
-    window.location.href = url;
+    if (isSafeUrl(url)) {
+      window.location.href = url;
+    }
   }
 
   /**

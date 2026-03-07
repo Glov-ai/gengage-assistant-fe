@@ -115,15 +115,6 @@ across page loads as long as the same origin is used. GTM tags that inject widge
 should not reset or override `session_id` between navigations — the SDK handles
 session continuity automatically via IndexedDB.
 
-## Heartbeat in GTM
-
-When `enableHeartbeat: true` is set in the runtime config, the widget polls
-`/v2/heartbeat` at regular intervals to keep the session alive and detect
-backend availability. GTM tags and custom scripts should not interfere with
-this polling (e.g., do not override `fetch` or block requests to the
-middleware URL). The heartbeat is fire-and-forget and does not affect widget
-rendering if the endpoint is temporarily unreachable.
-
 ## Acceptance Signals
 
 1. GTM tag can be published without manual page-code edits.

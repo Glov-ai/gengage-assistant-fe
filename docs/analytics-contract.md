@@ -120,23 +120,10 @@ Minimum payload fields:
 The event bus dispatches `gengage:chat:voice` with a `{ payload }` detail when the backend
 sends TTS audio data during a stream.
 
-### Session and Heartbeat
+### Session
 
-- `session.heartbeat`
 - `session.save`
 - `session.restore`
-
-Heartbeat polling (`src/chat/heartbeat.ts`) sends periodic `POST /v2/heartbeat` requests
-containing session state signals:
-- `idle_seconds` — time since last user interaction
-- `session_duration_seconds` — total session lifetime
-- `searches_count` — number of searches in this session
-- `actions_count` — number of actions in this session
-- `trigger_fire_counts` — how many times each proactive trigger has fired
-
-The backend evaluates proactive trigger rules and may return a message (idle nudge,
-cart abandonment reminder). Heartbeat is gated behind `ChatWidgetConfig.enableHeartbeat`
-(default: false).
 
 Session persistence events (`src/chat/session-persistence.ts`) are emitted when the
 chat session state is saved to IndexedDB (after each stream completion) or restored

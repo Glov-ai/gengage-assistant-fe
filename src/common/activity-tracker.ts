@@ -1,6 +1,6 @@
 /**
  * Tracks user activity signals (page views, idle, scroll depth) for
- * engagement analytics and proactive-agent triggering.
+ * engagement analytics.
  */
 
 export interface ActivityEvent {

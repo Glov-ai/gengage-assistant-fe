@@ -85,52 +85,11 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   isDemoWebsite?: boolean;
 
   // -------------------------------------------------------------------------
-  // Proactive agent
-  // -------------------------------------------------------------------------
-
-  /** Proactive popup message shown after idle timeout. */
-  proactiveMessage?: string;
-
-  /** Delay in ms before proactive popup appears (default: 30000). */
-  proactiveDelayMs?: number;
-
-  /** Accept button label for proactive popup. */
-  proactiveAcceptLabel?: string;
-
-  /** Minimum scroll depth (0–1) before proactive popup can appear (default: 0 = no threshold). */
-  proactiveMinScrollDepth?: number;
-
-  /** Fetch proactive actions from backend /chat/proactive_action instead of using
-   *  static proactiveMessage. When true, renders per-action buttons like legacy. */
-  proactiveFetchActions?: boolean;
-
-  /** Proactive cooldown in ms stored in localStorage (default: 3600000 = 1 hour).
-   *  Prevents re-showing the proactive popup within the cooldown window. */
-  proactiveCooldownMs?: number;
-
-  // -------------------------------------------------------------------------
-  // V2 heartbeat polling
-  // -------------------------------------------------------------------------
-
-  // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
   // -------------------------------------------------------------------------
 
   /** Enable browser-native voice input. Default: false. */
   voiceEnabled?: boolean;
-
-  /**
-   * Backend type:
-   *   - 'v1'   : standard backend (default) — /chat/process_action
-   *   - 'acap' : ACAP platform backend — /api/chat/:siteId/message
-   */
-  backendType?: import('../common/api-paths.js').BackendType;
-
-  /** Enable V2 heartbeat polling for proactive engagement triggers (default: false). */
-  enableHeartbeat?: boolean;
-
-  /** Heartbeat polling interval in ms (default: 30000). */
-  heartbeatIntervalMs?: number;
 
   // -------------------------------------------------------------------------
   // Lifecycle callbacks (alternative to .on() event listeners)
@@ -169,6 +128,7 @@ export interface ChatI18n {
   sortPriceAsc: string;
   sortPriceDesc: string;
   compareSelected: string;
+  compareMinHint: string;
   panelTitleProductDetails: string;
   panelTitleSimilarProducts: string;
   panelTitleComparisonResults: string;
@@ -200,6 +160,27 @@ export interface ChatI18n {
   voiceError: string;
   handoffHeading: string;
   productNotFoundMessage: string;
+  stopGenerating: string;
+  offlineMessage: string;
+  stillWorkingMessage: string;
+  cartAriaLabel: string;
+  favoritesAriaLabel: string;
+  addToFavoritesLabel: string;
+  customerReviewsTitle: string;
+  togglePanelAriaLabel: string;
+  chatMessagesAriaLabel: string;
+  suggestionsAriaLabel: string;
+  moreSuggestionsAriaLabel: string;
+  rollbackAriaLabel: string;
+  backAriaLabel: string;
+  forwardAriaLabel: string;
+  dismissAriaLabel: string;
+  cartAddErrorMessage: string;
+  reviewFilterAll: string;
+  reviewFilterPositive: string;
+  reviewFilterNegative: string;
+  decreaseLabel: string;
+  increaseLabel: string;
 }
 
 export interface ChatUISpecRenderContext {
@@ -245,6 +226,13 @@ export interface ChatUISpecRenderContext {
     | 'closeAriaLabel'
     | 'startChatLabel'
     | 'handoffHeading'
+    | 'customerReviewsTitle'
+    | 'addToFavoritesLabel'
+    | 'reviewFilterAll'
+    | 'reviewFilterPositive'
+    | 'reviewFilterNegative'
+    | 'decreaseLabel'
+    | 'increaseLabel'
   >;
   productSort?: ProductSortState | undefined;
   onSortChange?: ((sort: ProductSortState) => void) | undefined;

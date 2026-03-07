@@ -35,6 +35,25 @@ import { QNA_I18N_TR, resolveQnaLocale } from './locales/index.js';
 // Inline CSS import marker - Vite will bundle this
 import './components/qna.css';
 
+/**
+ * Contextual Q&A action buttons for product pages.
+ * Renders quick-action buttons that open the chat widget with a pre-built query.
+ *
+ * @example
+ * ```ts
+ * import { GengageQNA, wireQNAToChat, bootstrapSession } from '@gengage/assistant-fe';
+ *
+ * const qna = new GengageQNA();
+ * await qna.init({
+ *   accountId: 'mystore',
+ *   middlewareUrl: 'https://chat.gengage.ai',
+ *   mountTarget: '#qna-section',
+ *   pageContext: { pageType: 'pdp', sku: '12345' },
+ *   session: { sessionId: bootstrapSession() },
+ * });
+ * wireQNAToChat(); // Wire button clicks to chat.openWithAction()
+ * ```
+ */
 export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
   private _abortController: AbortController | null = null;
   private _debounceTimer: ReturnType<typeof setTimeout> | null = null;

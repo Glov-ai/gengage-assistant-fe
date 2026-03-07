@@ -1,6 +1,6 @@
 import { consumeStream } from '../common/streaming.js';
 import { buildChatEndpointUrl } from '../common/api-paths.js';
-import { adaptV1Event } from '../common/v1-protocol-adapter.js';
+import { adaptBackendEvent } from '../common/protocol-adapter.js';
 import type { StreamEvent, UISpec } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 
@@ -42,7 +42,7 @@ export async function fetchLauncherActions(
 
   const streamOpts: import('../common/streaming.js').StreamOptions = {
     onEvent: (event: StreamEvent) => {
-      const normalized = adaptV1Event(event as unknown as Record<string, unknown>);
+      const normalized = adaptBackendEvent(event as unknown as Record<string, unknown>);
 
       if (!normalized) return;
 

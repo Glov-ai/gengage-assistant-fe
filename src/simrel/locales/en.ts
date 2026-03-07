@@ -4,5 +4,6 @@ export const SIMREL_I18N_EN: SimRelI18n = {
   similarProductsAriaLabel: 'Similar products',
   emptyStateMessage: 'No similar products found.',
   addToCartButton: 'Add to cart',
+  ctaLabel: 'View',
   priceSuffix: '',
 };

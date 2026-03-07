@@ -1,4 +1,4 @@
-import type { NormalizedProduct } from '../../common/v1-protocol-adapter.js';
+import type { NormalizedProduct } from '../../common/protocol-adapter.js';
 import type { SimRelI18n } from '../types.js';
 import { renderProductCard } from './ProductCard.js';
 import type { ProductCardOptions } from './ProductCard.js';
@@ -41,7 +41,7 @@ export function renderProductGrid(options: ProductGridOptions): HTMLElement {
   if (options.products.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'gengage-simrel-empty';
-    empty.textContent = options.i18n?.emptyStateMessage ?? 'Benzer ürün bulunamadı.';
+    empty.textContent = options.i18n?.emptyStateMessage ?? 'No similar products found.';
     grid.appendChild(empty);
   }
 

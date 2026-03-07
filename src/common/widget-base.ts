@@ -24,6 +24,7 @@ import { listen } from './events.js';
 import { resolveSession } from './context.js';
 import { withDefaultWidgetTheme } from './ui-theme.js';
 import { registerGlobalErrorToastListener } from './global-error-toast.js';
+import { debugLog } from './debug.js';
 
 type AnyHandler = (...args: unknown[]) => void;
 
@@ -66,6 +67,11 @@ export abstract class BaseWidget<
     const off = listen('gengage:context:update', (patch) => this.update(patch));
     this._cleanups.push(off);
 
+    debugLog('lifecycle', `${this.constructor.name}.init`, {
+      accountId: config.accountId,
+      sku: config.pageContext?.sku,
+    });
+
     try {
       await this.onInit(this.config);
     } catch (err) {
@@ -73,6 +79,7 @@ export abstract class BaseWidget<
       throw err;
     }
     this.isInitialised = true;
+    debugLog('lifecycle', `${this.constructor.name} ready`);
     this.emit('ready');
   }
 

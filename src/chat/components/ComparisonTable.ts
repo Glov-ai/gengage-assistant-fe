@@ -10,47 +10,55 @@ import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { formatPrice } from '../../common/price-formatter.js';
 import type { PriceFormatConfig } from '../../common/price-formatter.js';
 
-/** Fallback display names for common Turkish e-commerce product attributes. */
+/**
+ * Fallback display names for common e-commerce product attributes.
+ * Used when the backend sends raw field names (e.g., "screen_size")
+ * and no locale-specific criteriaLabels map is provided via i18n.
+ */
 const CRITERIA_DISPLAY_NAMES: Record<string, string> = {
-  screen_size: 'Ekran Boyutu',
-  weight: 'Ağırlık',
-  battery_capacity: 'Batarya Kapasitesi',
-  battery_life: 'Batarya Ömrü',
-  storage: 'Depolama',
-  memory: 'Bellek',
+  screen_size: 'Screen Size',
+  weight: 'Weight',
+  battery_capacity: 'Battery Capacity',
+  battery_life: 'Battery Life',
+  storage: 'Storage',
+  memory: 'Memory',
   ram: 'RAM',
-  processor: 'İşlemci',
-  camera: 'Kamera',
-  resolution: 'Çözünürlük',
-  display_type: 'Ekran Tipi',
-  refresh_rate: 'Yenileme Hızı',
-  color: 'Renk',
-  material: 'Malzeme',
-  dimensions: 'Boyutlar',
-  warranty: 'Garanti',
-  connectivity: 'Bağlantı',
-  water_resistance: 'Su Dayanıklılığı',
-  operating_system: 'İşletim Sistemi',
-  brand: 'Marka',
+  processor: 'Processor',
+  camera: 'Camera',
+  resolution: 'Resolution',
+  display_type: 'Display Type',
+  refresh_rate: 'Refresh Rate',
+  color: 'Color',
+  material: 'Material',
+  dimensions: 'Dimensions',
+  warranty: 'Warranty',
+  connectivity: 'Connectivity',
+  water_resistance: 'Water Resistance',
+  operating_system: 'Operating System',
+  brand: 'Brand',
   model: 'Model',
-  price: 'Fiyat',
-  energy_class: 'Enerji Sınıfı',
-  noise_level: 'Gürültü Seviyesi',
-  capacity: 'Kapasite',
-  power: 'Güç',
-  voltage: 'Voltaj',
-  width: 'Genişlik',
-  height: 'Yükseklik',
-  depth: 'Derinlik',
+  price: 'Price',
+  energy_class: 'Energy Class',
+  noise_level: 'Noise Level',
+  capacity: 'Capacity',
+  power: 'Power',
+  voltage: 'Voltage',
+  width: 'Width',
+  height: 'Height',
+  depth: 'Depth',
 };
 
 /**
  * Map a raw criteria field name to a human-readable label.
- * Uses the Turkish fallback map first, then falls back to a simple
- * formatting heuristic (replace underscores, capitalize first letter).
+ * Checks locale-specific `criteriaLabels` first (from i18n), then the
+ * built-in fallback map, then applies a formatting heuristic.
  */
-export function formatCriteriaName(rawName: string): string {
-  return CRITERIA_DISPLAY_NAMES[rawName] ?? rawName.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+export function formatCriteriaName(rawName: string, criteriaLabels?: Record<string, string>): string {
+  return (
+    criteriaLabels?.[rawName] ??
+    CRITERIA_DISPLAY_NAMES[rawName] ??
+    rawName.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+  );
 }
 
 export interface ComparisonProduct {
@@ -74,6 +82,8 @@ export interface ComparisonTableI18n {
   keyDifferencesLabel?: string;
   specialCasesLabel?: string;
   addToCartButton?: string;
+  /** Locale-specific attribute display names (e.g., { screen_size: 'Screen Size' }). */
+  criteriaLabels?: Record<string, string>;
 }
 
 export interface ComparisonTableOptions {
@@ -101,7 +111,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
   // Heading
   const heading = document.createElement('h3');
   heading.className = 'gengage-chat-comparison-heading';
-  heading.textContent = i18n?.comparisonHeading ?? 'KARŞILAŞTIRMA SONUÇLARI';
+  heading.textContent = i18n?.comparisonHeading ?? 'COMPARISON RESULTS';
   container.appendChild(heading);
 
   // Recommended card
@@ -111,7 +121,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
 
     const recLabel = document.createElement('div');
     recLabel.className = 'gengage-chat-comparison-recommended-label';
-    recLabel.textContent = i18n?.recommendedChoiceLabel ?? 'Önerilen Seçim';
+    recLabel.textContent = i18n?.recommendedChoiceLabel ?? 'Recommended Choice';
     recCard.appendChild(recLabel);
 
     const recBody = document.createElement('div');
@@ -157,7 +167,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       hlSection.className = 'gengage-chat-comparison-highlights';
       const hlLabel = document.createElement('div');
       hlLabel.className = 'gengage-chat-comparison-highlights-label';
-      hlLabel.textContent = i18n?.highlightsLabel ?? 'Öne Çıkan Özellikler';
+      hlLabel.textContent = i18n?.highlightsLabel ?? 'Key Highlights';
       hlSection.appendChild(hlLabel);
       const ul = document.createElement('ul');
       for (const hl of highlights) {
@@ -185,7 +195,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     const kdSection = document.createElement('div');
     kdSection.className = 'gengage-chat-comparison-key-differences';
     const kdHeading = document.createElement('h4');
-    kdHeading.textContent = i18n?.keyDifferencesLabel ?? 'Temel Farklar';
+    kdHeading.textContent = i18n?.keyDifferencesLabel ?? 'Key Differences';
     kdSection.appendChild(kdHeading);
     const kdContent = document.createElement('div');
     kdContent.className = 'gengage-chat-comparison-key-differences-content';
@@ -199,7 +209,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     const special = document.createElement('details');
     special.className = 'gengage-chat-comparison-special';
     const summary = document.createElement('summary');
-    summary.textContent = i18n?.specialCasesLabel ?? 'Özel Durumlar İçin';
+    summary.textContent = i18n?.specialCasesLabel ?? 'For Special Cases';
     special.appendChild(summary);
     const list = document.createElement('ul');
     for (const sc of specialCases) {
@@ -258,7 +268,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       const row = document.createElement('tr');
       const labelTd = document.createElement('td');
       labelTd.className = 'gengage-chat-comparison-label';
-      labelTd.textContent = formatCriteriaName(attr.label);
+      labelTd.textContent = formatCriteriaName(attr.label, i18n?.criteriaLabels);
       row.appendChild(labelTd);
       for (let i = 0; i < attr.values.length; i++) {
         const td = document.createElement('td');
@@ -298,6 +308,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
 }
 
 function formatKeyDifferences(text: string): string {
+  // If the backend already sent HTML with list elements, pass through as-is
+  if (/<[uo]l[\s>]/i.test(text) || /<li[\s>]/i.test(text)) return text;
   const lines = text.split('\n').filter((l) => l.trim());
   if (lines.length <= 1) return text;
   return '<ul>' + lines.map((l) => `<li>${l.trim()}</li>`).join('') + '</ul>';

@@ -259,7 +259,7 @@ export interface UIElement {
 
 /**
  * Shape of `context.panel` as returned by the backend's `context` event
- * and sent back with each request. Field names match the V2 `SessionContext`.
+ * and sent back with each request. Field names match the backend `SessionContext`.
  *
  * This is intentionally extensible (index signature) because the backend
  * may add fields without a frontend release.

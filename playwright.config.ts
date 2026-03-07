@@ -16,8 +16,13 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /full-stack-smoke|catalog-visual/,
+      testIgnore: /full-stack-smoke|catalog-visual|catalog-components|mobile-/,
       fullyParallel: false,
+    },
+    {
+      name: 'mobile',
+      use: { ...devices['iPhone 13'] },
+      testMatch: /mobile-/,
     },
     {
       name: 'full-stack',
@@ -30,7 +35,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:3002',
       },
-      testMatch: /catalog-visual/,
+      testMatch: /catalog-visual|catalog-components/,
     },
   ],
   webServer: [

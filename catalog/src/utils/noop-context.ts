@@ -139,9 +139,10 @@ export function createNoopSimrelContext(): SimRelUISpecRenderContext {
       appendToMiniConsole(`simrel onAction: ${JSON.stringify(action)}`);
     },
     i18n: {
-      similarProductsAriaLabel: 'Benzer Urunler',
-      emptyStateMessage: 'Bu urun icin benzer urun bulunamadi.',
-      addToCartButton: 'Sepete Ekle',
+      similarProductsAriaLabel: 'Similar Products',
+      emptyStateMessage: 'No similar products found.',
+      addToCartButton: 'Add to Cart',
+      ctaLabel: 'View',
       priceSuffix: ' TL',
     },
     pricing: {

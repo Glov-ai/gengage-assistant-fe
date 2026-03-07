@@ -4,6 +4,12 @@
   font-size: var(--gengage-font-size, 14px);
 }
 
+.gengage-chat-root button,
+.gengage-chat-root [role='button'],
+.gengage-chat-root a {
+  cursor: pointer;
+}
+
 .gengage-chat-root {
   position: fixed;
   z-index: var(--gengage-z-index, 2147483647);
@@ -26,7 +32,12 @@
   --_gengage-border-color: var(--gengage-border-color, #e5e7eb);
   --_gengage-discount-color: var(--gengage-discount-color, #ef4444);
   --_gengage-success-color: var(--gengage-success-color, #16a34a);
+  --_gengage-text-primary: var(--gengage-text-primary, #1f2937);
   --_gengage-text-secondary: var(--gengage-text-secondary, #64748b);
+  --_gengage-surface-secondary: var(--gengage-surface-secondary, #f3f4f6);
+  --_gengage-surface-muted: var(--gengage-surface-muted, #f8fafc);
+  --_gengage-surface-dark: var(--gengage-surface-dark, #1e293b);
+  --_gengage-rating-color: var(--gengage-rating-color, #d97706);
 
   /* Quantity stepper geometry tokens */
   --_gengage-qty-btn-size: var(--gengage-qty-btn-size, 28px);
@@ -115,7 +126,7 @@
   transform: translateY(-50%);
   padding: 6px 12px;
   border-radius: 8px;
-  background: #1e293b;
+  background: var(--_gengage-surface-dark);
   color: #fff;
   font-size: 13px;
   font-weight: 500;
@@ -133,7 +144,7 @@
   top: 50%;
   transform: translateY(-50%);
   border: 5px solid transparent;
-  border-left-color: #1e293b;
+  border-left-color: var(--_gengage-surface-dark);
 }
 
 .gengage-chat-launcher:hover .gengage-chat-launcher-tooltip {
@@ -143,83 +154,6 @@
 /* Hide tooltip when drawer is open */
 .gengage-chat-root--open .gengage-chat-launcher-tooltip {
   display: none;
-}
-
-/* Proactive popup (appears above launcher before user opens chat) */
-.gengage-chat-proactive {
-  position: fixed;
-  bottom: calc(var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 14px);
-  right: var(--_gengage-chat-launcher-right);
-  width: 280px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.06);
-  opacity: 0;
-  transform: translateY(8px) scale(0.96);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-  z-index: 2147483645;
-}
-
-.gengage-chat-proactive--visible {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.gengage-chat-proactive-message {
-  margin: 0 0 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1f2937;
-}
-
-.gengage-chat-proactive-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.gengage-chat-proactive-accept {
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  background: var(--gengage-primary-color, #3b82f6);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: filter 0.15s ease;
-}
-
-.gengage-chat-proactive-accept:hover {
-  filter: brightness(1.08);
-}
-
-.gengage-chat-proactive-dismiss {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #64748b;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gengage-chat-proactive-dismiss:hover {
-  color: #475569;
-  background: #f1f5f9;
 }
 
 /* Drawer — always right-anchored, full height, slide in/out from the right */
@@ -238,6 +172,12 @@
   flex-direction: column;
   overflow: hidden;
   z-index: var(--gengage-z-index, 2147483647);
+  /* Drawer slide-in animation */
+  transform: translateX(0);
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease;
+  opacity: 1;
 }
 
 .gengage-chat-root--mobile .gengage-chat-launcher-container {
@@ -463,10 +403,11 @@
   box-sizing: border-box;
   width: 440px;
   min-width: 440px;
+  background: var(--gengage-chat-panel-bg, #fff);
   border-right: 1px solid var(--_gengage-border-color);
   overflow-y: auto;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 /* Divider between panel and conversation */
@@ -475,7 +416,7 @@
   align-items: center;
   width: 4px;
   cursor: pointer;
-  background: #e5e7eb;
+  background: var(--_gengage-border-color);
   position: relative;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -515,7 +456,7 @@
 }
 
 .gengage-chat-panel-divider-toggle:hover {
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
   color: #334155;
 }
 
@@ -714,8 +655,8 @@
 
 .gengage-chat-bubble--assistant {
   align-self: flex-start;
-  background: #f3f4f6;
-  color: #1f2937;
+  background: var(--_gengage-surface-secondary);
+  color: var(--_gengage-text-primary);
   border-bottom-left-radius: 4px;
   min-width: 120px;
 }
@@ -822,7 +763,7 @@
 /* When typing indicator has text (search status) or thinking steps, style as assistant bubble */
 .gengage-chat-typing:has(.gengage-chat-typing-text),
 .gengage-chat-typing:has(.gengage-chat-thinking-steps) {
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
   padding: 10px 14px;
   border-radius: 12px;
   border-bottom-left-radius: 4px;
@@ -883,6 +824,81 @@
   min-width: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* Stop generating button */
+.gengage-chat-stop-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--_gengage-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.gengage-chat-stop-btn:hover {
+  background: var(--_gengage-surface-secondary);
+  border-color: #9ca3af;
+}
+.gengage-chat-stop-btn:focus-visible {
+  outline: 2px solid var(--gengage-chat-primary, #f27a1a);
+  outline-offset: 2px;
+}
+.gengage-chat-stop-icon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Offline status bar */
+.gengage-chat-offline-bar {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #92400e;
+  background: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+}
+.gengage-chat-offline-bar--visible {
+  display: flex;
+}
+.gengage-chat-offline-bar::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--_gengage-rating-color);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* "Still working..." hint (shown after 10s of streaming with no text) */
+.gengage-chat-still-working {
+  font-size: 12px;
+  color: var(--gengage-chat-text-secondary, #666);
+  margin-top: 6px;
+  animation: gengage-fade-in 0.3s ease;
+}
+@keyframes gengage-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Thinking steps (checklist in typing indicator) */
@@ -981,7 +997,7 @@
   flex: 1;
   min-width: 0;
   height: 44px;
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
   border: 1px solid var(--_gengage-border-color);
   border-radius: 30px;
   padding: 2px 8px 2px 8px;
@@ -1010,7 +1026,7 @@
   align-content: center;
   outline: none;
   background: transparent;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   resize: none;
   overflow-y: hidden;
 }
@@ -1092,7 +1108,7 @@
   text-align: center;
   font-size: 10px;
   color: #6b7280;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
   background: var(--gengage-background-color, #fff);
 }
 
@@ -1200,7 +1216,7 @@
 .gengage-chat-product-card-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   line-height: 1.35;
   margin-bottom: 0;
   min-height: 0;
@@ -1219,12 +1235,12 @@
 
 .gengage-chat-product-card-rating {
   font-size: 11px;
-  color: #f59e0b;
+  color: var(--_gengage-rating-color);
   line-height: 1;
 }
 
 .gengage-chat-product-card-review-count {
-  color: #64748b;
+  color: #475569;
   font-size: 10px;
 }
 
@@ -1276,7 +1292,8 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
+  cursor: pointer;
   transition:
     color 0.15s ease,
     background 0.15s ease;
@@ -1284,11 +1301,11 @@
 
 .gengage-chat-product-card-cta:hover {
   color: var(--gengage-primary-color, #0b24d6);
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-chat-product-card-cta:active {
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
 }
 
 /*
@@ -1300,7 +1317,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--_gengage-border-color);
   border-radius: 12px;
   background: #fff;
   cursor: pointer;
@@ -1320,7 +1337,7 @@
   height: 64px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--_gengage-surface-secondary);
   background: #f9fafb;
 }
 .gengage-chat-product-summary__image img {
@@ -1352,11 +1369,11 @@
 
 .gengage-chat-product-summary__rating {
   font-size: 11px;
-  color: #f59e0b;
+  color: var(--_gengage-rating-color);
   line-height: 1;
 }
 .gengage-chat-product-summary__review-count {
-  color: #6b7280;
+  color: #475569;
   font-size: 11px;
 }
 
@@ -1449,7 +1466,11 @@
 .gengage-chat-review-text {
   font-size: 13px;
   line-height: 1.45;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .gengage-chat-review-rating {
@@ -1487,11 +1508,11 @@
 }
 
 .gengage-chat-review-tab:hover {
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-chat-review-tab--active {
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
   border-color: #94a3b8;
   color: #0f172a;
 }
@@ -1531,7 +1552,7 @@
 }
 
 .gengage-chat-review-pill[data-tone='positive'] .gengage-chat-review-pill-icon {
-  color: #16a34a;
+  color: var(--_gengage-success-color);
 }
 
 .gengage-chat-review-pill[data-tone='negative'] .gengage-chat-review-pill-icon {
@@ -1541,7 +1562,7 @@
 .gengage-chat-review-pill-count {
   font-size: 10px;
   font-weight: 700;
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
   color: var(--_gengage-text-secondary);
   border-radius: 4px;
   padding: 1px 5px;
@@ -1740,7 +1761,7 @@
   display: block;
   padding: 10px 12px;
   text-align: center;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
   border-radius: 0;
   background: transparent;
   color: var(--gengage-primary-color, #3b82f6);
@@ -1761,7 +1782,7 @@
 }
 
 .gengage-chat-product-details-media {
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--_gengage-surface-muted);
   border-radius: 12px;
   background: #fafafa;
   padding: 12px;
@@ -1967,7 +1988,7 @@
 }
 
 .gengage-chat-product-specs-table tr:nth-child(even) {
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-chat-product-specs-key {
@@ -1975,14 +1996,14 @@
   font-weight: 600;
   color: #475569;
   white-space: nowrap;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--_gengage-surface-muted);
   width: 40%;
 }
 
 .gengage-chat-product-specs-value {
   padding: 6px 10px;
-  color: #1f2937;
-  border-bottom: 1px solid #f1f5f9;
+  color: var(--_gengage-text-primary);
+  border-bottom: 1px solid var(--_gengage-surface-muted);
 }
 
 /* Product card ATC stepper */
@@ -1999,18 +2020,33 @@
   opacity: 1;
 }
 
-/* Hidden state */
+/* Touch devices: always show ATC stepper since :hover doesn't fire */
+@media (hover: none), (pointer: coarse) {
+  .gengage-chat-product-card-atc {
+    opacity: 1;
+    position: relative;
+    bottom: auto;
+    right: auto;
+    margin-top: 4px;
+  }
+}
+
+/* Hidden state — slide out to right (desktop) or down (mobile) */
 .gengage-chat-drawer.gengage-chat-drawer--hidden {
-  display: none !important;
+  transform: translateX(100%);
+  opacity: 0;
   pointer-events: none;
   box-shadow: none;
+  visibility: hidden;
 }
 
 /* Mobile hidden: slide down */
 .gengage-chat-root--mobile .gengage-chat-drawer.gengage-chat-drawer--hidden {
-  display: none !important;
+  transform: translateY(100%);
+  opacity: 0;
   pointer-events: none;
   box-shadow: none;
+  visibility: hidden;
 }
 
 /* Mobile and medium breakpoints */
@@ -2027,7 +2063,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
   border: 1px solid var(--_gengage-border-color);
   border-radius: 8px;
   width: 100%;
@@ -2227,7 +2263,7 @@
     width: 100%;
     min-width: 0;
     max-width: none;
-    max-height: 30dvh;
+    max-height: 25dvh;
     border-right: none;
     border-bottom: 1px solid var(--_gengage-border-color);
     padding: 0 12px 12px;
@@ -2439,7 +2475,7 @@
 .gengage-chat-comparison-recommended-label {
   font-size: 12px;
   font-weight: 700;
-  color: #16a34a;
+  color: var(--_gengage-success-color);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 12px;
@@ -2456,7 +2492,7 @@
   height: 80px;
   object-fit: contain;
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 .gengage-chat-comparison-recommended-info {
@@ -2480,7 +2516,7 @@
 .gengage-chat-comparison-highlights {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
 }
 
 .gengage-chat-comparison-highlights-label {
@@ -2530,7 +2566,7 @@
 .gengage-chat-comparison-table td {
   padding: 10px 12px;
   text-align: center;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--_gengage-surface-muted);
   vertical-align: top;
 }
 
@@ -2545,7 +2581,7 @@
   height: 60px;
   object-fit: contain;
   border-radius: 6px;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
   margin-bottom: 6px;
 }
 
@@ -2611,7 +2647,7 @@
 .gengage-chat-pills {
   position: relative;
   padding: 8px 12px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--_gengage-surface-muted);
   background: var(--gengage-background-color, #fff);
 }
 
@@ -2713,7 +2749,7 @@
 }
 
 .gengage-chat-pills-arrow:hover {
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
   color: #334155;
 }
 
@@ -2726,7 +2762,6 @@
   .gengage-chat-launcher,
   .gengage-chat-pill,
   .gengage-chat-drawer,
-  .gengage-chat-proactive,
   .gengage-chat-typing-dots span,
   .gengage-chat-typing-sparkle,
   .gengage-chat-thinking-step-marker--active,
@@ -2737,7 +2772,8 @@
   .gengage-chat-ai-toppick-spinner::after,
   .gengage-chat-panel-shimmer,
   .gengage-chat-overlay,
-  .gengage-chat-product-details-skeleton-price {
+  .gengage-chat-product-details-skeleton-price,
+  .gengage-chat-still-working {
     animation: none !important;
     transition: none !important;
     transform: none !important;
@@ -2843,7 +2879,7 @@
   width: 100%;
   height: 140px;
   object-fit: contain;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
 }
 
 /* Compact card — horizontal */
@@ -2872,7 +2908,7 @@
   height: 64px;
   object-fit: contain;
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
   flex-shrink: 0;
 }
 
@@ -2951,7 +2987,7 @@
 }
 
 .gengage-chat-ai-toppick-label[data-sentiment='neutral'] {
-  background: #f1f5f9;
+  background: var(--_gengage-surface-muted);
   color: #475569;
 }
 
@@ -3451,19 +3487,21 @@
 .gengage-chat-comparison-checkbox {
   position: absolute;
   top: 8px;
-  left: 8px;
-  z-index: 2;
-  width: 18px;
-  height: 18px;
+  right: 8px;
+  z-index: 4;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   accent-color: var(--gengage-primary-color, #3b82f6);
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-/* Floating comparison button at bottom of product grid */
+/* Floating comparison button — sticky at bottom of product grid */
 .gengage-chat-comparison-floating-btn {
   display: block;
   width: 100%;
-  margin-top: 8px;
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
@@ -3474,10 +3512,20 @@
   cursor: pointer;
   transition: background 0.15s ease;
   text-align: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.gengage-chat-comparison-floating-btn:hover {
+.gengage-chat-comparison-floating-btn:hover:not(:disabled) {
   background: var(--gengage-primary-hover, #2563eb);
+}
+
+.gengage-chat-comparison-floating-btn--disabled {
+  background: #94a3b8;
+  cursor: default;
+  opacity: 0.8;
 }
 
 /* Panel TopBar — navigation arrows + title */
@@ -3487,7 +3535,7 @@
   gap: 8px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--_gengage-border-color);
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
   min-height: 44px;
   flex-shrink: 0;
   position: sticky;
@@ -3519,7 +3567,7 @@
 
 .gengage-chat-panel-topbar-back:hover:not(:disabled),
 .gengage-chat-panel-topbar-forward:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
   border-color: #9ca3af;
 }
 
@@ -3533,7 +3581,7 @@
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3625,7 +3673,7 @@
 }
 
 .gengage-chat-input-chip:hover {
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
   border-color: #d1d5db;
 }
 
@@ -3688,7 +3736,7 @@
 /* ── Find Similar hover pill (floats on product images) ── */
 .gengage-chat-find-similar-pill {
   position: absolute;
-  top: 8px;
+  top: 40px;
   right: 8px;
   opacity: 0;
   pointer-events: none;
@@ -3781,7 +3829,7 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--_gengage-border-color);
   border-radius: 6px;
   background: #fff;
   cursor: pointer;
@@ -3828,7 +3876,7 @@
 .gengage-chat-choice-prompter-heading {
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   margin-bottom: 4px;
 }
 
@@ -3885,7 +3933,7 @@
 /* Pros & Cons */
 .gengage-chat-pros-cons {
   padding: 12px 14px;
-  background: #f8fafc;
+  background: var(--_gengage-surface-muted);
   border-radius: 8px;
   margin: 8px 0;
 }
@@ -3930,8 +3978,8 @@
 }
 
 .gengage-chat-pros-cons-icon--pro {
-  color: #16a34a;
-  background: #dcfce7;
+  color: var(--_gengage-success-color);
+  background: color-mix(in srgb, var(--_gengage-success-color) 15%, #fff);
 }
 
 .gengage-chat-pros-cons-icon--con {
@@ -4156,7 +4204,7 @@
 }
 
 .gengage-qty-btn:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: var(--_gengage-surface-secondary);
 }
 
 .gengage-qty-btn:disabled {
@@ -4169,7 +4217,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--_gengage-text-primary);
   user-select: none;
 }
 
@@ -4194,6 +4242,11 @@
 
 .gengage-qty-submit:active {
   transform: translateY(1px);
+}
+
+.gengage-qty-submit--success {
+  background: var(--_gengage-success-color);
+  transition: background 0.2s ease;
 }
 
 /* Compact variant (product card ATC) */
@@ -4275,7 +4328,7 @@
   transform: translateX(-50%);
   padding: 4px 8px;
   border-radius: 4px;
-  background: #1e293b;
+  background: var(--_gengage-surface-dark);
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -4311,8 +4364,6 @@
 .gengage-chat-close:focus-visible,
 .gengage-chat-header-btn:focus-visible,
 .gengage-chat-header-powered:focus-visible,
-.gengage-chat-proactive-accept:focus-visible,
-.gengage-chat-proactive-dismiss:focus-visible,
 .gengage-chat-send:focus-visible,
 .gengage-chat-action-btn:focus-visible,
 .gengage-chat-pill:focus-visible,
@@ -4356,6 +4407,7 @@
 
 @media (max-width: 768px) {
   .gengage-chat-choice-prompter {
+    position: sticky;
     left: 12px;
     right: 12px;
     width: auto;
@@ -4364,6 +4416,8 @@
       var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px +
         env(safe-area-inset-bottom, 0px)
     );
+    max-height: 40vh;
+    overflow-y: auto;
   }
 
   .gengage-chat-product-sort-btn,

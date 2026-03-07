@@ -182,13 +182,6 @@ test.describe('SimRel widget - flat grid fallback', () => {
         body: '{"type":"chatStreamEnd","payload":{}}\n',
       });
     });
-    await page.route('**/chat/proactive_action', (route) => {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/x-ndjson',
-        body: '{"type":"chatStreamEnd","payload":{}}\n',
-      });
-    });
     await page.route('**/chat/process_action', (route) => {
       return route.fulfill({
         status: 200,

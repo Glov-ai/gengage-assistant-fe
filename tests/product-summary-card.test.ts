@@ -125,9 +125,9 @@ describe('ProductSummaryCard', () => {
     expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('View');
   });
 
-  it('defaults CTA label to İncele', () => {
+  it('defaults CTA label to View', () => {
     const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), makeContext());
-    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('İncele');
+    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('View');
   });
 
   // --- Click handling ---

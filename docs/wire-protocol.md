@@ -4,7 +4,7 @@ The Gengage backend streams responses as **Newline-Delimited JSON (NDJSON)**
 over a single HTTP response. This document is the authoritative contract between frontend widgets
 and the backend.
 
-> **Stability:** All endpoints use `/chat/*` paths. The v1 wire protocol adapter
+> **Stability:** All endpoints use `/chat/*` paths. The wire protocol adapter
 > normalizes backend event types to the canonical frontend model.
 
 ---
@@ -15,7 +15,7 @@ and the backend.
 - **Content-Type request:** `multipart/form-data` (with `"request"` JSON field) **or** `application/json`
 - **Content-Type response:** `application/x-ndjson; charset=utf-8`
 - **Auth:** Integration-configured. Chat commonly uses no auth for process_action.
-  Dashboard analytics reads (`/v2/analytics/*` in supported backend deployments) use `X-API-Key` auth.
+  Analytics endpoint auth is account-configured (see Analytics Transport/Auth section below).
 
 ### Request Body Format
 
@@ -54,7 +54,6 @@ pass it explicitly via widget config or `initOverlayWidgets()`.
 |---|---|---|---|---|
 | `/chat/process_action` | POST | `multipart/form-data` or `application/json` | `application/x-ndjson` | **Primary chat action** — all user interactions |
 | `/chat/launcher_action` | POST | `application/json` | `application/x-ndjson` | Launcher widget content (product survey/questions) |
-| `/chat/proactive_action` | POST | `application/json` | `application/json` (NOT streaming) | Proactive popup suggestions |
 | `/chat/similar_products` | POST | `application/json` | JSON payload (not NDJSON) | Similar products for SimRel widget |
 | `/chat/product_groupings` | POST | `application/json` | JSON payload (not NDJSON) | Grouped products for SimRel widget |
 
@@ -176,7 +175,7 @@ Normalizations applied by the backend:
 
 - `is_launcher: 1` when triggered from the launcher widget
 - `is_suggested_text: 1` when triggered by a suggested action chip click
-- `cache_key` optional, used for proactive cache tracking
+- `cache_key` optional, used for cache tracking
 
 ### `launchSingleProduct` — Open product detail
 
@@ -365,7 +364,7 @@ the result as `inputText`.
 
 These produce only a `dummy` response and are logged. No content processing.
 
-### `launcherQuestionClick` — Proactive question click
+### `launcherQuestionClick` — Launcher question click
 
 ```json
 {
@@ -380,7 +379,7 @@ These produce only a `dummy` response and are logged. No content processing.
 }
 ```
 
-Backend increments the click counter for proactive cache tracking, then processes as `inputText`.
+Backend increments the click counter for cache tracking, then processes as `inputText`.
 
 ---
 
@@ -1114,7 +1113,7 @@ After branch:  A ── B ── F           (C, D, E deleted; F is new branch)
 
 ---
 
-## Launcher & Proactive Endpoints
+## Launcher Endpoints
 
 ### `POST /chat/launcher_action`
 
@@ -1143,44 +1142,12 @@ Response (NDJSON stream) — four launcher response types:
 { "type": "quick_qna", "payload": { "type": "launcherAction", "theme": "dark", "action_list": [{ "title": "Question text", "icon": "other", "requestDetails": { "type": "launcherQuestionClick", "payload": { "text": "...", "sku_list": ["SKU123"] } } }] } }
 ```
 
-### `POST /chat/proactive_action`
-
-Request: same as `launcher_action`.
-
-Response (**JSON, not streaming**):
-```json
-{
-  "title": "Product Question",
-  "question": "Are you considering this product?",
-  "icon": "<svg>...</svg>",
-  "icon_name": "help-circle",
-  "actions": [
-    {
-      "title": "Tell me about this product",
-      "icon": "other",
-      "requestDetails": {
-        "type": "launcherQuestionClick",
-        "payload": {
-          "text": "Tell me about this product",
-          "sku_list": ["SKU123"],
-          "is_suggested_text": 1,
-          "is_launcher": 1,
-          "cache_key": "proactive_SKU123_hash"
-        }
-      }
-    }
-  ]
-}
-```
-
-Returns **404** with `{ "error": "No proactive action available" }` if no survey data exists.
-
 ---
 
-## V1 Wire Protocol Adapter
+## Wire Protocol Adapter
 
-The backend streams the event types listed above. Our v1 wire protocol adapter
-(`src/common/v1-protocol-adapter.ts`) normalizes these to the canonical frontend model:
+The backend streams the event types listed above. The wire protocol adapter
+(`src/common/protocol-adapter.ts`) normalizes these to the canonical frontend model:
 
 | Backend Type | Frontend Normalized Type |
 |---|---|
@@ -1214,7 +1181,7 @@ Analytics write transport is account-configured:
 2. Fire-and-forget transport: `sendBeacon` preferred, `fetch keepalive` fallback.
 3. Auth mode is config-driven (header/body/query as required by account backend).
 
-Dashboard analytics reads (`/v2/analytics/*`) use `X-API-Key` auth.
+Dashboard analytics reads use account-configured auth (header/body/query).
 
 ---
 
@@ -1340,90 +1307,6 @@ class ResponseType(StrEnum):
     LAUNCHER_QUICK_QNA = "quick_qna"
     REDIRECT = "redirect"
 ```
-
----
-
----
-
-## V2 Additions
-
-### Heartbeat Endpoint
-
-The V2 heartbeat allows the backend to deliver proactive engagement messages
-(idle nudges, cart abandonment reminders) without a full chat stream.
-
-**Endpoint:** `POST {middlewareUrl}/v2/heartbeat`
-
-**Request:**
-
-```typescript
-{
-  account_id: string;
-  thread_id: string;
-  output_language: string;           // "TURKISH", "ENGLISH", etc.
-  idle_seconds: number;              // Seconds since last user interaction
-  page_type: string;                 // "pdp" | "plp" | "cart" | "other"
-  current_sku: string;               // SKU on current page (empty if N/A)
-  cart_item_count: number;           // Items in cart (0 if unknown)
-  searches_count: number;            // Search actions performed this session
-  actions_count: number;             // Total actions performed this session
-  session_duration_seconds: number;  // Time since session start
-  trigger_fire_counts: Record<string, number>; // Per-trigger fire counts to avoid re-firing
-}
-```
-
-**Response:**
-
-```typescript
-{
-  action: "noop" | "message";
-  trigger_type?: string;             // Trigger rule that fired (e.g. "idle_nudge")
-  message?: string;                  // Text to display when action === "message"
-  suggested_actions?: Array<{
-    title: string;
-    icon?: string;
-    requestDetails?: { type: string; payload?: unknown };
-  }>;
-}
-```
-
-- `action: "noop"` — no proactive message; discard.
-- `action: "message"` — show `message` in a proactive popup. If `suggested_actions`
-  are present, render them as quick-reply buttons.
-- The frontend tracks `trigger_fire_counts` to send back with each poll, allowing
-  the backend to implement "fire once" or "fire at most N times" policies.
-
-**Frontend gating:** Controlled by `ChatWidgetConfig.enableHeartbeat` (default: `false`)
-and `ChatWidgetConfig.heartbeatIntervalMs` (default: `30000`).
-
-### Flat Request Format
-
-The V2 request format supports top-level `type` and `payload` fields as an alternative
-to the nested `action` wrapper. The frontend prefers this flat format:
-
-```typescript
-// V2 flat format (preferred)
-{
-  account_id: "koctascomtr",
-  type: "inputText",
-  payload: { text: "Show me drills" },
-  session_id: "...",
-  context: { ... },
-  meta: { ... }
-}
-
-// V1 legacy format (still supported)
-{
-  account_id: "koctascomtr",
-  action: { title: "...", type: "inputText", payload: { text: "Show me drills" } },
-  session_id: "...",
-  context: { ... },
-  meta: { ... }
-}
-```
-
-The backend accepts both formats. The `action` wrapper property is deprecated;
-new integrations should use the flat format.
 
 ---
 

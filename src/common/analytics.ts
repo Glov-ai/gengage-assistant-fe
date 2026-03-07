@@ -52,7 +52,7 @@ const DEFAULT_ANALYTICS_CONFIG: Required<Omit<AnalyticsClientConfig, 'auth' | 'm
   useBeacon: true,
   keepaliveFetch: true,
   timeoutMs: 4000,
-  maxRetries: 1,
+  maxRetries: 0,
   batchSize: 10,
   flushIntervalMs: 250,
 };
@@ -64,6 +64,12 @@ const DEFAULT_AUTH: Required<AnalyticsAuthConfig> = {
   bodyField: 'api_key',
 };
 
+/**
+ * Fire-and-forget analytics client.
+ *
+ * All transport errors are silently suppressed — the backend analytics
+ * endpoint is not yet implemented, so callers must never observe failures.
+ */
 export class AnalyticsClient {
   private readonly config: Required<Omit<AnalyticsClientConfig, 'auth'>> & { auth: Required<AnalyticsAuthConfig> };
   private readonly queue: AnalyticsEnvelope[] = [];
@@ -82,7 +88,7 @@ export class AnalyticsClient {
 
     this.onPageHideBound = () => {
       if (this.queue.length === 0) return;
-      void this.flushAll({ preferBeacon: true });
+      this.flushAllSync();
     };
 
     if (typeof window !== 'undefined') {
@@ -103,21 +109,20 @@ export class AnalyticsClient {
     this.scheduleFlush();
   }
 
-  async flush(options: { preferBeacon?: boolean } = {}): Promise<void> {
+  flush(): void {
     if (!this.config.enabled || this.queue.length === 0) return;
 
     const batch = this.queue.splice(0, this.config.batchSize);
     const body = this.buildTransportBody(batch);
     const endpoint = resolveAnalyticsEndpoint(this.config.endpoint, this.config.middlewareUrl);
-    const preferBeacon = options.preferBeacon ?? this.config.useBeacon;
 
-    await this.sendWithRetry(endpoint, body, preferBeacon);
+    this.send(endpoint, body);
   }
 
-  /** Drain the entire queue, flushing in batch-sized chunks. */
-  async flushAll(options: { preferBeacon?: boolean } = {}): Promise<void> {
+  /** Drain the entire queue synchronously (used on page hide). */
+  flushAll(): void {
     while (this.queue.length > 0) {
-      await this.flush(options);
+      this.flush();
     }
   }
 
@@ -126,9 +131,8 @@ export class AnalyticsClient {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
-    // Flush remaining events before tearing down the listener.
     if (this.queue.length > 0) {
-      void this.flushAll({ preferBeacon: true });
+      this.flushAllSync();
     }
     if (typeof window !== 'undefined') {
       window.removeEventListener('pagehide', this.onPageHideBound);
@@ -139,7 +143,7 @@ export class AnalyticsClient {
     if (this.flushTimer) return;
     this.flushTimer = setTimeout(() => {
       this.flushTimer = null;
-      void this.flush();
+      this.flush();
     }, this.config.flushIntervalMs);
   }
 
@@ -148,7 +152,7 @@ export class AnalyticsClient {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
-    void this.flush();
+    this.flush();
   }
 
   private buildTransportBody(events: AnalyticsEnvelope[]): AnalyticsTransportBody {
@@ -159,67 +163,63 @@ export class AnalyticsClient {
     return body;
   }
 
-  private async sendWithRetry(endpoint: string, body: AnalyticsTransportBody, preferBeacon: boolean): Promise<void> {
-    let attempt = 0;
-    while (attempt <= this.config.maxRetries) {
-      attempt += 1;
-      try {
-        const sent = await this.send(endpoint, body, preferBeacon);
-        if (sent) return;
-      } catch {
-        // fire-and-forget transport: swallow and continue retry cycle
-      }
-      // Exponential backoff: 100ms, 200ms, 400ms, 800ms, capped at 1s
-      if (attempt <= this.config.maxRetries) {
-        await new Promise<void>((r) => setTimeout(r, Math.min(1000, 100 * Math.pow(2, attempt - 1))));
-      }
-    }
-  }
-
-  private async send(endpoint: string, body: AnalyticsTransportBody, preferBeacon: boolean): Promise<boolean> {
-    const payload = JSON.stringify(body);
-    const canUseBeacon =
-      preferBeacon &&
-      this.config.useBeacon &&
-      this.config.auth.mode !== 'x-api-key-header' &&
-      this.config.auth.mode !== 'bearer-header' &&
-      hasSendBeacon();
-
-    if (canUseBeacon) {
-      const blob = new Blob([payload], { type: 'application/json' });
-      const ok = navigator.sendBeacon(endpoint, blob);
-      if (ok) return true;
-    }
-
-    if (typeof fetch === 'undefined') return false;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (this.config.auth.mode === 'x-api-key-header' && this.config.auth.key) {
-      headers[this.config.auth.headerName] = this.config.auth.key;
-    }
-    if (this.config.auth.mode === 'bearer-header' && this.config.auth.key) {
-      headers.Authorization = `Bearer ${this.config.auth.key}`;
-    }
-
-    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeout = controller ? setTimeout(() => controller.abort(), this.config.timeoutMs) : null;
-
+  /** Best-effort send — all errors silently suppressed. */
+  private send(endpoint: string, body: AnalyticsTransportBody): void {
     try {
-      const requestInit: RequestInit = {
+      const payload = JSON.stringify(body);
+
+      // Prefer sendBeacon (works during page unload, no response needed)
+      if (
+        this.config.useBeacon &&
+        this.config.auth.mode !== 'x-api-key-header' &&
+        this.config.auth.mode !== 'bearer-header' &&
+        hasSendBeacon()
+      ) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(endpoint, blob);
+        return;
+      }
+
+      if (typeof fetch === 'undefined') return;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (this.config.auth.mode === 'x-api-key-header' && this.config.auth.key) {
+        headers[this.config.auth.headerName] = this.config.auth.key;
+      }
+      if (this.config.auth.mode === 'bearer-header' && this.config.auth.key) {
+        headers.Authorization = `Bearer ${this.config.auth.key}`;
+      }
+
+      // Fire-and-forget: no await, no error handling, keepalive for page unload
+      void fetch(endpoint, {
         method: 'POST',
         headers,
         body: payload,
-        keepalive: this.config.keepaliveFetch && this.config.fireAndForget,
-      };
-      if (controller) {
-        requestInit.signal = controller.signal;
+        keepalive: true,
+      }).catch(() => {
+        // Silently suppress — backend not implemented yet
+      });
+    } catch {
+      // Silently suppress all errors
+    }
+  }
+
+  /** Synchronous flush using sendBeacon only (for page unload). */
+  private flushAllSync(): void {
+    if (!this.config.enabled) return;
+    const endpoint = resolveAnalyticsEndpoint(this.config.endpoint, this.config.middlewareUrl);
+    while (this.queue.length > 0) {
+      const batch = this.queue.splice(0, this.config.batchSize);
+      const body = this.buildTransportBody(batch);
+      try {
+        const payload = JSON.stringify(body);
+        if (hasSendBeacon()) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon(endpoint, blob);
+        }
+      } catch {
+        // Silently suppress
       }
-      const response = await fetch(endpoint, requestInit);
-      return response.ok;
-    } finally {
-      if (timeout) clearTimeout(timeout);
     }
   }
 }

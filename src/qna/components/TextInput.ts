@@ -24,7 +24,7 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
     ? options.placeholders
     : options.placeholders
       ? [options.placeholders]
-      : [options.defaultInputPlaceholder ?? 'Bir soru sorun...'];
+      : [options.defaultInputPlaceholder ?? 'Ask a question...'];
 
   let placeholderIndex = 0;
   input.placeholder = placeholders[0] ?? '';
@@ -45,7 +45,7 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
   const sendBtn = document.createElement('button');
   sendBtn.className = 'gengage-qna-send';
   sendBtn.type = 'button';
-  sendBtn.textContent = options.ctaLabel ?? options.sendButtonText ?? 'Sor';
+  sendBtn.textContent = options.ctaLabel ?? options.sendButtonText ?? 'Ask';
   sendBtn.setAttribute('aria-label', options.sendQuestionAriaLabel ?? 'Send question');
 
   const submit = () => {

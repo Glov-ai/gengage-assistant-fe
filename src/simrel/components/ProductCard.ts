@@ -1,4 +1,4 @@
-import type { NormalizedProduct } from '../../common/v1-protocol-adapter.js';
+import type { NormalizedProduct } from '../../common/protocol-adapter.js';
 import type { SimRelI18n } from '../types.js';
 import type { PriceFormatConfig } from '../../common/price-formatter.js';
 import { formatPrice } from '../../common/price-formatter.js';
@@ -124,7 +124,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   const cta = document.createElement('button');
   cta.className = 'gengage-simrel-card-cta gengage-chat-product-card-cta';
   cta.type = 'button';
-  cta.textContent = 'İncele';
+  cta.textContent = i18n?.ctaLabel ?? 'View';
   cta.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -137,7 +137,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     const cartCode = product.cartCode;
     const stepper = createQuantityStepper({
       compact: true,
-      label: i18n?.addToCartButton ?? 'Sepete Ekle',
+      label: i18n?.addToCartButton ?? 'Add to Cart',
       onSubmit: (quantity) => {
         onAddToCart({ sku: product.sku, quantity, cartCode });
       },

@@ -18,7 +18,7 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   const title = props['title'] as string | undefined;
   const reviewCount = props['reviewCount'] as string | undefined;
   const action = props['action'] as ActionPayload | undefined;
-  const ctaLabel = ctx.i18n?.groundingReviewCta ?? 'Yorumları Oku';
+  const ctaLabel = ctx.i18n?.groundingReviewCta ?? 'Read Reviews';
 
   // Icon
   const icon = document.createElement('span');
@@ -32,7 +32,7 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   // Title
   const titleEl = document.createElement('div');
   titleEl.className = 'gengage-chat-grounding-review-title';
-  titleEl.textContent = title ?? 'M\u00fc\u015fteri Yorumlar\u0131';
+  titleEl.textContent = title ?? ctx.i18n?.customerReviewsTitle ?? 'Customer Reviews';
   body.appendChild(titleEl);
 
   // Subtitle (review count)

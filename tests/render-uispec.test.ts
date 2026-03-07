@@ -374,7 +374,7 @@ describe('renderUISpec', () => {
       expect(variantSection).toBeTruthy();
 
       const label = variantSection!.querySelector('.gengage-chat-product-variants-label');
-      expect(label!.textContent).toBe('Varyantlar');
+      expect(label!.textContent).toBe('Variants');
 
       const buttons = variantSection!.querySelectorAll('.gengage-chat-product-variant-btn');
       expect(buttons).toHaveLength(2);
@@ -541,7 +541,7 @@ describe('renderUISpec', () => {
       const stock = result.querySelector('.gengage-chat-product-card-stock');
       expect(stock).not.toBeNull();
       expect(stock!.classList.contains('is-in-stock')).toBe(true);
-      expect(stock!.textContent).toBe('Stokta');
+      expect(stock!.textContent).toBe('In Stock');
     });
 
     it('renders stock indicator for out-of-stock product', () => {
@@ -567,7 +567,7 @@ describe('renderUISpec', () => {
       const stock = result.querySelector('.gengage-chat-product-card-stock');
       expect(stock).not.toBeNull();
       expect(stock!.classList.contains('is-out-of-stock')).toBe(true);
-      expect(stock!.textContent).toBe('Tükendi');
+      expect(stock!.textContent).toBe('Out of Stock');
     });
 
     it('renders find similar hover pill on product image', () => {
@@ -593,10 +593,10 @@ describe('renderUISpec', () => {
       const result = renderUISpec(spec, makeContext({ onAction }));
       const pill = result.querySelector('.gengage-chat-find-similar-pill') as HTMLButtonElement;
       expect(pill).not.toBeNull();
-      expect(pill.textContent).toBe('Benzerlerini Bul');
+      expect(pill.textContent).toBe('Find Similar');
       pill.click();
       expect(onAction).toHaveBeenCalledWith({
-        title: 'Benzerlerini Bul',
+        title: 'Find Similar',
         type: 'findSimilar',
         payload: { sku: 'FS1', image_url: 'https://img/fs1.jpg' },
       });

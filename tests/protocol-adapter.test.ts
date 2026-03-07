@@ -1,60 +1,60 @@
 import { describe, it, expect } from 'vitest';
 import {
-  adaptV1Event,
+  adaptBackendEvent,
   productToNormalized,
   normalizeSimilarProductsResponse,
   normalizeProductGroupingsResponse,
-} from '../src/common/v1-protocol-adapter.js';
+} from '../src/common/protocol-adapter.js';
 import similarFixture from './fixtures/ndjson/similar-products.json';
 import groupingsFixture from './fixtures/ndjson/product-groupings.json';
 
-describe('adaptV1Event', () => {
+describe('adaptBackendEvent', () => {
   it('passes through normalized events unchanged', () => {
     const event = { type: 'text_chunk', content: 'hello', final: true };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result).toEqual(event);
   });
 
   it('passes through normalized metadata events', () => {
     const event = { type: 'metadata', sessionId: 's1', model: 'gpt-4o' };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result).toEqual(event);
   });
 
   it('passes through normalized done events', () => {
     const event = { type: 'done' };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result).toEqual(event);
   });
 
   it('adapts outputText to text_chunk', () => {
-    const v1 = {
+    const raw = {
       type: 'outputText',
       payload: { text: '<p>Hello</p>', plain_text: 'Hello' },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('text_chunk');
     expect((result as { content: string }).content).toBe('<p>Hello</p>');
     expect((result as { final?: boolean }).final).toBe(true);
   });
 
   it('adapts outputText with is_error to normalized error', () => {
-    const v1 = {
+    const raw = {
       type: 'outputText',
       payload: { text: 'Something went wrong', plain_text: 'Something went wrong', is_error: true },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('error');
     expect((result as { code: string }).code).toBe('BACKEND_ERROR');
     expect((result as { message: string }).message).toBe('Something went wrong');
   });
 
-  it('adapts v1 error payload shape to normalized error', () => {
-    const v1 = {
+  it('adapts backend error payload shape to normalized error', () => {
+    const raw = {
       type: 'error',
       payload: { text: 'Backend failed' },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result).toEqual({
       type: 'error',
       code: 'BACKEND_ERROR',
@@ -63,7 +63,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts suggestedActions to chat ui_spec', () => {
-    const v1 = {
+    const raw = {
       type: 'suggestedActions',
       payload: {
         actions: [
@@ -80,7 +80,7 @@ describe('adaptV1Event', () => {
         ],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as {
       widget: string;
@@ -93,7 +93,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts productList to panel ui_spec with ProductGrid', () => {
-    const v1 = {
+    const raw = {
       type: 'productList',
       payload: {
         product_list: [
@@ -101,7 +101,7 @@ describe('adaptV1Event', () => {
         ],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
     const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
@@ -109,13 +109,13 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
-    const v1 = {
+    const raw = {
       type: 'productDetails',
       payload: {
         productDetails: { sku: 'P1', name: 'Detail Product', price: 200, url: 'https://example.com' },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
     const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
@@ -123,20 +123,20 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts productDetailsSimilars to chat panel ui_spec', () => {
-    const v1 = {
+    const raw = {
       type: 'productDetailsSimilars',
       payload: {
         similarProducts: [{ sku: 'S1', name: 'Similar 1', price: 50, url: 'https://example.com/s1' }],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { widget: string }).widget).toBe('chat');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
   });
 
   it('adapts comparisonTable to panel ComparisonTable ui_spec', () => {
-    const v1 = {
+    const raw = {
       type: 'comparisonTable',
       payload: {
         multiple_product_details: [
@@ -145,7 +145,7 @@ describe('adaptV1Event', () => {
         ],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
     const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
@@ -156,7 +156,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts comparisonTable with rich framework data', () => {
-    const v1 = {
+    const raw = {
       type: 'comparisonTable',
       payload: {
         multiple_product_details: [
@@ -181,7 +181,7 @@ describe('adaptV1Event', () => {
         },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
     const props = uiSpec.spec.elements['root']!.props!;
@@ -198,7 +198,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts context to metadata', () => {
-    const v1 = {
+    const raw = {
       type: 'context',
       payload: {
         panel: { screen_type: 'product_list' },
@@ -206,18 +206,18 @@ describe('adaptV1Event', () => {
         message_id: 'msg-1',
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('metadata');
     const meta = result as { meta?: { panel: unknown } };
     expect(meta.meta?.panel).toEqual({ screen_type: 'product_list' });
   });
 
   it('adapts loading to metadata with loading flag', () => {
-    const v1 = {
+    const raw = {
       type: 'loading',
       payload: { text: 'Dusunuyorum...', is_dynamic: true },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('metadata');
     const meta = result as { meta?: Record<string, unknown> };
     expect(meta.meta?.['loading']).toBe(true);
@@ -226,14 +226,14 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts panelLoading and similarLoading metadata flags', () => {
-    const panelLoading = adaptV1Event({
+    const panelLoading = adaptBackendEvent({
       type: 'panelLoading',
       payload: { pending_type: 'productDetails' },
     }) as { type: string; meta?: Record<string, unknown> };
     expect(panelLoading.type).toBe('metadata');
     expect(panelLoading.meta?.['panelLoading']).toBe(true);
 
-    const similarLoading = adaptV1Event({
+    const similarLoading = adaptBackendEvent({
       type: 'similarLoading',
       payload: { pending_type: 'productDetailsSimilars' },
     }) as { type: string; meta?: Record<string, unknown> };
@@ -243,11 +243,11 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts redirect with url to action(navigate)', () => {
-    const v1 = {
+    const raw = {
       type: 'redirect',
       payload: { url: 'https://example.com/page', new_tab: true },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('action');
     const action = result as { action: { kind: string; url: string; newTab: boolean } };
     expect(action.action.kind).toBe('navigate');
@@ -256,7 +256,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts redirect without url to metadata payload', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'redirect',
       payload: { to: 'voiceLead' },
     }) as { type: string; meta?: Record<string, unknown> };
@@ -265,7 +265,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts launcher text and widgets to qna ui_spec', () => {
-    const heading = adaptV1Event({
+    const heading = adaptBackendEvent({
       type: 'text',
       payload: { text: 'Birlikte inceleyelim' },
     }) as { type: string; widget?: string; spec?: { elements: Record<string, { type: string }> } };
@@ -273,7 +273,7 @@ describe('adaptV1Event', () => {
     expect(heading.widget).toBe('qna');
     expect(heading.spec?.elements['root']?.type).toBe('QuestionHeading');
 
-    const quickQna = adaptV1Event({
+    const quickQna = adaptBackendEvent({
       type: 'quick_qna',
       payload: {
         action_list: [
@@ -290,7 +290,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts reviewHighlights to ui_spec', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'reviewHighlights',
       payload: {
         sku: 'SKU1',
@@ -302,7 +302,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts aiProductSuggestions to AITopPicks ui_spec', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'aiProductSuggestions',
       payload: {
         product_suggestions: [
@@ -346,7 +346,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts aiProductGroupings to AIGroupingCards ui_spec', () => {
-    const groupings = adaptV1Event({
+    const groupings = adaptBackendEvent({
       type: 'aiProductGroupings',
       payload: {
         product_groupings: [
@@ -371,7 +371,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts aiSuggestedSearches to AISuggestedSearchCards ui_spec', () => {
-    const searches = adaptV1Event({
+    const searches = adaptBackendEvent({
       type: 'aiSuggestedSearches',
       payload: {
         suggested_searches: [
@@ -396,7 +396,7 @@ describe('adaptV1Event', () => {
   });
 
   it('normalizes findSimilar suggested-search actions into inputText search actions when detailed text exists', () => {
-    const searches = adaptV1Event({
+    const searches = adaptBackendEvent({
       type: 'aiSuggestedSearches',
       payload: {
         suggested_searches: [
@@ -420,7 +420,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts getGroundingReview to GroundingReviewCard ui_spec', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'getGroundingReview',
       payload: {
         title: 'Yorumlar',
@@ -441,7 +441,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts prosAndCons to ProsAndCons ui_spec', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'prosAndCons',
       payload: {
         pros: ['Dayanıklı malzeme', 'Uygun fiyat'],
@@ -464,7 +464,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts prosAndCons with missing fields', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'prosAndCons',
       payload: {},
     }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
@@ -476,7 +476,7 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts visitorDataResponse to metadata with visitorDataResponse key', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'visitorDataResponse',
       payload: { engagement_type: 'popup', message: 'Welcome!' },
     }) as { type: string; meta?: Record<string, unknown> };
@@ -488,38 +488,38 @@ describe('adaptV1Event', () => {
   });
 
   it('adapts voice and dummy to metadata', () => {
-    const voice = adaptV1Event({
+    const voice = adaptBackendEvent({
       type: 'voice',
       payload: { text: 'Merhaba', audio_base64: 'abc', content_type: 'audio/mpeg' },
     }) as { type: string; meta?: Record<string, unknown> };
     expect(voice.type).toBe('metadata');
     expect(voice.meta?.['voice']).toEqual({ text: 'Merhaba', audio_base64: 'abc', content_type: 'audio/mpeg' });
 
-    const noop = adaptV1Event({ type: 'dummy', payload: {} }) as { type: string; meta?: Record<string, unknown> };
+    const noop = adaptBackendEvent({ type: 'dummy', payload: {} }) as { type: string; meta?: Record<string, unknown> };
     expect(noop.type).toBe('metadata');
     expect(noop.meta?.['noop']).toBe(true);
   });
 
   it('adapts chatStreamEnd to done', () => {
-    const v1 = { type: 'chatStreamEnd', payload: {} };
-    const result = adaptV1Event(v1)!;
+    const raw = { type: 'chatStreamEnd', payload: {} };
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('done');
   });
 
-  it('returns null for unknown v1 event types', () => {
-    const result = adaptV1Event({ type: 'unknownType', payload: { foo: 'bar' } });
+  it('returns null for unknown backend event types', () => {
+    const result = adaptBackendEvent({ type: 'unknownType', payload: { foo: 'bar' } });
     expect(result).toBeNull();
   });
 
   it('returns null for events without type field', () => {
-    const result = adaptV1Event({ data: 'no type field' });
+    const result = adaptBackendEvent({ data: 'no type field' });
     expect(result).toBeNull();
   });
 });
 
 describe('productToNormalized', () => {
-  it('normalizes a full v1 product', () => {
-    const v1 = {
+  it('normalizes a full backend product', () => {
+    const raw = {
       sku: 'P1',
       name: 'Test Product',
       brand: 'TestBrand',
@@ -534,7 +534,7 @@ describe('productToNormalized', () => {
       in_stock: true,
     };
 
-    const result = productToNormalized(v1);
+    const result = productToNormalized(raw);
     expect(result.sku).toBe('P1');
     expect(result.name).toBe('TestBrand Test Product');
     expect(result.imageUrl).toBe('img1.jpg');
@@ -550,26 +550,26 @@ describe('productToNormalized', () => {
   });
 
   it('does not duplicate brand in name if already present', () => {
-    const v1 = {
+    const raw = {
       sku: 'P2',
       name: 'BrandX Special Item',
       brand: 'BrandX',
       price: 100,
       url: 'https://example.com',
     };
-    const result = productToNormalized(v1);
+    const result = productToNormalized(raw);
     expect(result.name).toBe('BrandX Special Item');
   });
 
   it('handles products without discount', () => {
-    const v1 = {
+    const raw = {
       sku: 'P3',
       name: 'No Discount',
       price: 100,
       price_discounted: 0,
       url: 'https://example.com',
     };
-    const result = productToNormalized(v1);
+    const result = productToNormalized(raw);
     expect(result.price).toBe('100');
     expect(result.originalPrice).toBeUndefined();
     expect(result.discountPercent).toBeUndefined();
@@ -602,7 +602,7 @@ describe('normalizeProductGroupingsResponse', () => {
 
 describe('product mentions in outputText', () => {
   it('passes through product_mentions from outputText payload', () => {
-    const v1 = {
+    const raw = {
       type: 'outputText',
       payload: {
         text: '<p>Check the Bosch Drill</p>',
@@ -610,7 +610,7 @@ describe('product mentions in outputText', () => {
         sku_to_product_item: { 'SKU-1': { name: 'Bosch Drill 500W' } },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('text_chunk');
     const textChunk = result as {
       productMentions?: Array<{ sku: string; short_name: string }>;
@@ -621,11 +621,11 @@ describe('product mentions in outputText', () => {
   });
 
   it('omits product mentions when not present in payload', () => {
-    const v1 = {
+    const raw = {
       type: 'outputText',
       payload: { text: '<p>Hello</p>' },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('text_chunk');
     const textChunk = result as { productMentions?: unknown };
     expect(textChunk.productMentions).toBeUndefined();
@@ -638,7 +638,7 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
       type: 'outputText',
       payload: { text: 'hello', sku_to_product_item: { SKU1: { name: 'Product A' } } },
     };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result!.type).toBe('text_chunk');
     if (result!.type === 'text_chunk') {
       expect(result.skuToProductItem).toEqual({ SKU1: { name: 'Product A' } });
@@ -650,7 +650,7 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
       type: 'outputText',
       payload: { text: 'hello', conversation_mode: 'product_search' },
     };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result!.type).toBe('text_chunk');
     if (result!.type === 'text_chunk') {
       expect(result.conversationMode).toBe('product_search');
@@ -659,7 +659,7 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
 
   it('omits conversation_mode when not present', () => {
     const event = { type: 'outputText', payload: { text: 'hello' } };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result!.type).toBe('text_chunk');
     if (result!.type === 'text_chunk') {
       expect(result.conversationMode).toBeUndefined();
@@ -668,7 +668,7 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
 
   it('omits conversation_mode when empty string', () => {
     const event = { type: 'outputText', payload: { text: 'hello', conversation_mode: '' } };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result!.type).toBe('text_chunk');
     if (result!.type === 'text_chunk') {
       expect(result.conversationMode).toBeUndefined();
@@ -677,7 +677,7 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
 
   it('omits conversation_mode when non-string', () => {
     const event = { type: 'outputText', payload: { text: 'hello', conversation_mode: 42 } };
-    const result = adaptV1Event(event);
+    const result = adaptBackendEvent(event);
     expect(result!.type).toBe('text_chunk');
     if (result!.type === 'text_chunk') {
       expect(result.conversationMode).toBeUndefined();
@@ -687,11 +687,11 @@ describe('adaptOutputText — sku_to_product_item & conversation_mode', () => {
 
 describe('productListPreview event', () => {
   it('adapts productListPreview to metadata with analyzeAnimation', () => {
-    const v1 = {
+    const raw = {
       type: 'productListPreview',
       payload: {},
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('metadata');
     const meta = (result as { meta?: Record<string, unknown> }).meta;
     expect(meta?.analyzeAnimation).toBe(true);
@@ -700,7 +700,7 @@ describe('productListPreview event', () => {
 
 describe('groupList event (Item 6)', () => {
   it('adapts groupList to CategoriesContainer UISpec', () => {
-    const v1 = {
+    const raw = {
       type: 'groupList',
       payload: {
         group_list: [
@@ -719,7 +719,7 @@ describe('groupList event (Item 6)', () => {
         ],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as {
       widget: string;
@@ -746,7 +746,7 @@ describe('groupList event (Item 6)', () => {
   });
 
   it('handles empty groupList', () => {
-    const result = adaptV1Event({
+    const result = adaptBackendEvent({
       type: 'groupList',
       payload: { group_list: [], filter_tags: [] },
     })!;
@@ -760,7 +760,7 @@ describe('groupList event (Item 6)', () => {
 
 describe('productList pagination (Item 7)', () => {
   it('passes offset and endOfList props from productList payload', () => {
-    const v1 = {
+    const raw = {
       type: 'productList',
       payload: {
         product_list: [{ sku: 'P1', name: 'Product', price: 100, url: 'https://example.com' }],
@@ -768,7 +768,7 @@ describe('productList pagination (Item 7)', () => {
         end_of_list: true,
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
     const root = uiSpec.spec.elements[uiSpec.spec.root]!;
     expect(root.props?.['offset']).toBe(10);
@@ -776,13 +776,13 @@ describe('productList pagination (Item 7)', () => {
   });
 
   it('omits pagination props when not in payload', () => {
-    const v1 = {
+    const raw = {
       type: 'productList',
       payload: {
         product_list: [{ sku: 'P1', name: 'Product', price: 100, url: 'https://example.com' }],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
     const root = uiSpec.spec.elements[uiSpec.spec.root]!;
     expect(root.props?.['offset']).toBeUndefined();
@@ -792,7 +792,7 @@ describe('productList pagination (Item 7)', () => {
 
 describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
   it('passes keyDifferencesHtml when key_differences is a string', () => {
-    const v1 = {
+    const raw = {
       type: 'comparisonTable',
       payload: {
         multiple_product_details: [
@@ -805,14 +805,14 @@ describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
         },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
     const props = uiSpec.spec.elements['root']!.props!;
     expect(props['keyDifferencesHtml']).toBe('Price is the main factor\nBrand A is lighter');
   });
 
   it('does not add keyDifferencesHtml when key_differences is an array', () => {
-    const v1 = {
+    const raw = {
       type: 'comparisonTable',
       payload: {
         multiple_product_details: [
@@ -825,14 +825,14 @@ describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
         },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
     const props = uiSpec.spec.elements['root']!.props!;
     expect(props['keyDifferencesHtml']).toBeUndefined();
   });
 
   it('passes specialConsiderations when present', () => {
-    const v1 = {
+    const raw = {
       type: 'comparisonTable',
       payload: {
         multiple_product_details: [
@@ -845,7 +845,7 @@ describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
         },
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
     const props = uiSpec.spec.elements['root']!.props!;
     expect(props['specialConsiderations']).toEqual(['Consider X', 'Consider Y']);
@@ -854,13 +854,13 @@ describe('comparisonTable keyDifferencesHtml (Item 10)', () => {
 
 describe('productDetailsSimilars similarsAppend (Item 11)', () => {
   it('adds similarsAppend flag to productDetailsSimilars', () => {
-    const v1 = {
+    const raw = {
       type: 'productDetailsSimilars',
       payload: {
         similarProducts: [{ sku: 'S1', name: 'Similar 1', price: 50, url: 'https://example.com/s1' }],
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     const uiSpec = result as { spec: { root: string; elements: Record<string, { props?: Record<string, unknown> }> } };
     const root = uiSpec.spec.elements[uiSpec.spec.root]!;
     expect(root.props?.['similarsAppend']).toBe(true);
@@ -871,11 +871,11 @@ describe('form events (Item 14)', () => {
   it.each(['formGetInfo', 'formTestDrive', 'formServiceRequest', 'launchFormPage'] as const)(
     'adapts %s to metadata with formType',
     (eventType) => {
-      const v1 = {
+      const raw = {
         type: eventType,
         payload: { formId: 'test-form', sku: 'SKU1' },
       };
-      const result = adaptV1Event(v1)!;
+      const result = adaptBackendEvent(raw)!;
       expect(result.type).toBe('metadata');
       const meta = (result as { meta?: Record<string, unknown> }).meta!;
       expect(meta['formType']).toBe(eventType);
@@ -886,28 +886,28 @@ describe('form events (Item 14)', () => {
 
 describe('launcherContent event (Item 15)', () => {
   it('adapts launcherContent to metadata', () => {
-    const v1 = {
+    const raw = {
       type: 'launcherContent',
       payload: { title: 'Welcome', body: 'Hello world' },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('metadata');
     const meta = (result as { meta?: Record<string, unknown> }).meta!;
     expect(meta['launcherContent']).toEqual({ title: 'Welcome', body: 'Hello world' });
   });
 
   it('handles missing payload gracefully', () => {
-    const v1 = { type: 'launcherContent' };
-    const result = adaptV1Event(v1)!;
+    const raw = { type: 'launcherContent' };
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('metadata');
     const meta = (result as { meta?: Record<string, unknown> }).meta!;
     expect(meta['launcherContent']).toEqual({});
   });
 });
 
-describe('adaptV1Event — handoff', () => {
+describe('adaptBackendEvent — handoff', () => {
   it('adapts handoff to ui_spec with HandoffNotice', () => {
-    const v1 = {
+    const raw = {
       type: 'handoff',
       payload: {
         summary: 'Customer needs help with a return',
@@ -915,7 +915,7 @@ describe('adaptV1Event — handoff', () => {
         user_sentiment: 'frustrated',
       },
     };
-    const result = adaptV1Event(v1)!;
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as {
       spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
@@ -929,8 +929,8 @@ describe('adaptV1Event — handoff', () => {
   });
 
   it('handles handoff with empty payload', () => {
-    const v1 = { type: 'handoff' };
-    const result = adaptV1Event(v1)!;
+    const raw = { type: 'handoff' };
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as {
       spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
@@ -941,8 +941,8 @@ describe('adaptV1Event — handoff', () => {
   });
 
   it('handles handoff with partial payload', () => {
-    const v1 = { type: 'handoff', payload: { summary: 'Need help' } };
-    const result = adaptV1Event(v1)!;
+    const raw = { type: 'handoff', payload: { summary: 'Need help' } };
+    const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     const uiSpec = result as {
       spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };

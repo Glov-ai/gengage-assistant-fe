@@ -1,7 +1,7 @@
 /**
  * ReviewHighlights — renders review summary cards with filter tabs and sentiment tag pills.
  *
- * Production parity: filter tabs (Tümü/Olumlu/Olumsuz), sentiment pill summary,
+ * Production parity: filter tabs (All/Positive/Negative), sentiment pill summary,
  * and the existing per-review cards with tone coloring.
  *
  * All text is set via textContent — no innerHTML, no XSS surface.
@@ -18,7 +18,12 @@ interface ReviewItem {
 
 export function renderReviewHighlights(
   element: UIElement,
-  options?: { emptyReviewsMessage?: string | undefined },
+  options?: {
+    emptyReviewsMessage?: string | undefined;
+    reviewFilterAll?: string | undefined;
+    reviewFilterPositive?: string | undefined;
+    reviewFilterNegative?: string | undefined;
+  },
 ): HTMLElement {
   const container = document.createElement('div');
   container.className = 'gengage-chat-review-highlights';
@@ -27,7 +32,7 @@ export function renderReviewHighlights(
   if (!Array.isArray(reviews) || reviews.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'gengage-chat-review-empty';
-    empty.textContent = options?.emptyReviewsMessage ?? 'Yorum özeti bulunamadı.';
+    empty.textContent = options?.emptyReviewsMessage ?? 'No review summary found.';
     container.appendChild(empty);
     return container;
   }
@@ -48,9 +53,13 @@ export function renderReviewHighlights(
   const tabBar = document.createElement('div');
   tabBar.className = 'gengage-chat-review-tabs';
 
-  const filters: Array<{ label: string; filter: string }> = [{ label: `Tümü (${counts.all})`, filter: 'all' }];
-  if (counts.positive > 0) filters.push({ label: `Olumlu (${counts.positive})`, filter: 'positive' });
-  if (counts.negative > 0) filters.push({ label: `Olumsuz (${counts.negative})`, filter: 'negative' });
+  const allLabel = options?.reviewFilterAll ?? 'All';
+  const positiveLabel = options?.reviewFilterPositive ?? 'Positive';
+  const negativeLabel = options?.reviewFilterNegative ?? 'Negative';
+
+  const filters: Array<{ label: string; filter: string }> = [{ label: `${allLabel} (${counts.all})`, filter: 'all' }];
+  if (counts.positive > 0) filters.push({ label: `${positiveLabel} (${counts.positive})`, filter: 'positive' });
+  if (counts.negative > 0) filters.push({ label: `${negativeLabel} (${counts.negative})`, filter: 'negative' });
 
   let activeFilter = 'all';
 

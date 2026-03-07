@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { consumeStream } from '../src/common/streaming.js';
 import type { StreamEvent } from '../src/common/types.js';
 
@@ -78,6 +78,113 @@ describe('consumeStream', () => {
     });
 
     expect(events).toHaveLength(1);
+  });
+
+  it('calls onDone when [DONE] sentinel is received', async () => {
+    const onDone = vi.fn();
+    const response = makeStreamResponse(['{"type":"text_chunk","content":"hello"}', '[DONE]']);
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onDone when [DONE] sentinel has SSE data: prefix', async () => {
+    const onDone = vi.fn();
+    const response = makeStreamResponse(['{"type":"text_chunk","content":"hello"}', 'data: [DONE]']);
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onDone when [DONE] has trailing whitespace', async () => {
+    const onDone = vi.fn();
+    const encoder = new TextEncoder();
+    const body = '{"type":"text_chunk","content":"hello"}\n[DONE]   \r\n';
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(body));
+        controller.close();
+      },
+    });
+    const response = new Response(stream, {
+      status: 200,
+      headers: { 'Content-Type': 'application/x-ndjson' },
+    });
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onDone when [DONE] arrives split across chunks', async () => {
+    const onDone = vi.fn();
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('{"type":"text_chunk","content":"hi"}\n'));
+        controller.enqueue(encoder.encode('[DO'));
+        controller.enqueue(encoder.encode('NE]\n'));
+        controller.close();
+      },
+    });
+    const response = new Response(stream, {
+      status: 200,
+      headers: { 'Content-Type': 'application/x-ndjson' },
+    });
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onDone when [DONE] is in trailing buffer (no trailing newline)', async () => {
+    const onDone = vi.fn();
+    const encoder = new TextEncoder();
+    const body = '{"type":"text_chunk","content":"hello"}\n[DONE]';
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(body));
+        controller.close();
+      },
+    });
+    const response = new Response(stream, {
+      status: 200,
+      headers: { 'Content-Type': 'application/x-ndjson' },
+    });
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onDone exactly once when both done event and [DONE] are present', async () => {
+    const onDone = vi.fn();
+    const response = makeStreamResponse(['{"type":"text_chunk","content":"hello"}', '{"type":"done"}', '[DONE]']);
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onDone,
+    });
+
+    // done event fires onDone and returns true, so [DONE] is never reached
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 
   it('skips malformed JSON lines', async () => {
@@ -234,5 +341,114 @@ describe('consumeStream', () => {
     const err = events[0] as { type: string; code: string; message: string };
     expect(err.type).toBe('error');
     expect(err.code).toBe('QUOTA_EXCEEDED');
+  });
+
+  it('handles JSON split across multiple chunks', async () => {
+    const events: StreamEvent[] = [];
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        // Split a single JSON line across two chunks
+        controller.enqueue(encoder.encode('{"type":"text_chu'));
+        controller.enqueue(encoder.encode('nk","content":"split"}\n'));
+        controller.enqueue(encoder.encode('{"type":"done"}\n'));
+        controller.close();
+      },
+    });
+    const response = new Response(stream, { status: 200 });
+
+    await consumeStream(response, {
+      onEvent: (e) => events.push(e),
+    });
+
+    expect(events).toHaveLength(2);
+    expect(events[0]!.type).toBe('text_chunk');
+    expect((events[0] as { content: string }).content).toBe('split');
+  });
+
+  it('handles concatenated JSON objects on a single line', async () => {
+    const events: StreamEvent[] = [];
+    const response = makeStreamResponse([
+      '{"type":"text_chunk","content":"a"}{"type":"text_chunk","content":"b"}',
+      '{"type":"done"}',
+    ]);
+
+    await consumeStream(response, {
+      onEvent: (e) => events.push(e),
+    });
+
+    expect(events).toHaveLength(3);
+    expect((events[0] as { content: string }).content).toBe('a');
+    expect((events[1] as { content: string }).content).toBe('b');
+  });
+
+  it('skips events without a type field', async () => {
+    const events: StreamEvent[] = [];
+    const response = makeStreamResponse([
+      '{"type":"text_chunk","content":"valid"}',
+      '{"noType":true}',
+      '{"type":"done"}',
+    ]);
+
+    await consumeStream(response, {
+      onEvent: (e) => events.push(e),
+    });
+
+    expect(events).toHaveLength(2);
+    expect(events[0]!.type).toBe('text_chunk');
+    expect(events[1]!.type).toBe('done');
+  });
+
+  it('handles completely empty stream gracefully', async () => {
+    const events: StreamEvent[] = [];
+    const onDone = vi.fn();
+    const response = makeStreamResponse([]);
+
+    await consumeStream(response, {
+      onEvent: (e) => events.push(e),
+      onDone,
+    });
+
+    expect(events).toHaveLength(0);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onError for stream read errors caught as AbortError', async () => {
+    const onError = vi.fn();
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('{"type":"text_chunk","content":"hi"}\n'));
+        controller.error(new DOMException('Aborted', 'AbortError'));
+      },
+    });
+    const response = new Response(stream, { status: 200 });
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onError,
+    });
+
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('calls onError for non-abort stream read errors', async () => {
+    const onError = vi.fn();
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('{"type":"text_chunk","content":"hi"}\n'));
+        controller.error(new Error('Network failure'));
+      },
+    });
+    const response = new Response(stream, { status: 200 });
+
+    await consumeStream(response, {
+      onEvent: () => {},
+      onError,
+    });
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0]![0].message).toBe('Network failure');
   });
 });

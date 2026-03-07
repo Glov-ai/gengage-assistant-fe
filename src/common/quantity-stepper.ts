@@ -1,17 +1,17 @@
 export interface QuantityStepperOptions {
-  min?: number;
-  max?: number;
-  initial?: number;
-  label?: string;
-  compact?: boolean;
-  decreaseLabel?: string;
-  increaseLabel?: string;
+  min?: number | undefined;
+  max?: number | undefined;
+  initial?: number | undefined;
+  label?: string | undefined;
+  compact?: boolean | undefined;
+  decreaseLabel?: string | undefined;
+  increaseLabel?: string | undefined;
   /** Symbol for decrease button (default: '\u2212' minus sign). */
-  decreaseSymbol?: string;
+  decreaseSymbol?: string | undefined;
   /** Symbol for increase button (default: '+'). */
-  increaseSymbol?: string;
+  increaseSymbol?: string | undefined;
   /** Icon/text for compact mode submit button (default: shopping cart emoji). */
-  submitIcon?: string;
+  submitIcon?: string | undefined;
   onSubmit: (quantity: number) => void;
 }
 
@@ -37,7 +37,7 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
   decBtn.className = 'gengage-qty-btn';
   decBtn.type = 'button';
   decBtn.textContent = options.decreaseSymbol ?? '\u2212'; // minus sign
-  decBtn.setAttribute('aria-label', options.decreaseLabel ?? 'Azalt');
+  decBtn.setAttribute('aria-label', options.decreaseLabel ?? 'Decrease');
 
   const valueEl = document.createElement('span');
   valueEl.className = 'gengage-qty-value';
@@ -49,7 +49,7 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
   incBtn.className = 'gengage-qty-btn';
   incBtn.type = 'button';
   incBtn.textContent = options.increaseSymbol ?? '+';
-  incBtn.setAttribute('aria-label', options.increaseLabel ?? 'Art\u0131r');
+  incBtn.setAttribute('aria-label', options.increaseLabel ?? 'Increase');
 
   const submitBtn = document.createElement('button');
   submitBtn.className = 'gengage-qty-submit';
@@ -57,9 +57,9 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
 
   if (compact) {
     submitBtn.textContent = options.submitIcon ?? '\uD83D\uDED2'; // shopping cart emoji
-    submitBtn.title = options.label ?? 'Sepete Ekle';
+    submitBtn.title = options.label ?? 'Add to Cart';
   } else {
-    submitBtn.textContent = options.label ?? 'Sepete Ekle';
+    submitBtn.textContent = options.label ?? 'Add to Cart';
   }
 
   function updateButtons(): void {
@@ -88,6 +88,16 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
   submitBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     options.onSubmit(quantity);
+    // Brief visual feedback: show checkmark then revert
+    const original = submitBtn.textContent;
+    submitBtn.textContent = '\u2713'; // checkmark
+    submitBtn.classList.add('gengage-qty-submit--success');
+    submitBtn.disabled = true;
+    setTimeout(() => {
+      submitBtn.textContent = original;
+      submitBtn.classList.remove('gengage-qty-submit--success');
+      submitBtn.disabled = false;
+    }, 1200);
   });
 
   // Prevent card click when interacting with stepper

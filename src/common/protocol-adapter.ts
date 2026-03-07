@@ -1,10 +1,10 @@
 /**
- * v1 wire protocol adapter.
+ * Wire protocol adapter.
  *
  * Backend emits NDJSON events with `type` values like
  * `outputText`, `suggestedActions`, `productList`, etc.
  *
- * This module translates those v1 events into the SDK's normalized
+ * This module translates those backend events into the SDK's normalized
  * `StreamEvent` model.
  *
  * Also handles JSON-mode responses from `similar_products` and
@@ -394,7 +394,7 @@ type V1StreamEvent =
   | V1Handoff
   | { type: string; payload?: unknown; [key: string]: unknown };
 
-export function adaptV1Event(raw: Record<string, unknown>): StreamEvent | null {
+export function adaptBackendEvent(raw: Record<string, unknown>): StreamEvent | null {
   const type = raw['type'];
   if (typeof type !== 'string') return null;
 
@@ -474,7 +474,7 @@ export function adaptV1Event(raw: Record<string, unknown>): StreamEvent | null {
       return adaptHandoff(event as V1Handoff);
     default:
       if (import.meta.env?.DEV) {
-        console.warn('[gengage:v1-protocol] Unknown v1 event type:', event.type);
+        console.warn('[gengage:protocol] Unknown backend event type:', event.type);
       }
       return null;
   }
@@ -1213,7 +1213,8 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
     if (!search) continue;
 
     const shortName =
-      firstNonEmptyString(search.short_name, search.chosen_attribute, search.detailed_user_message) ?? `Arama ${i + 1}`;
+      firstNonEmptyString(search.short_name, search.chosen_attribute, search.detailed_user_message) ??
+      `Search ${i + 1}`;
     const fallbackPayload: Record<string, unknown> = {};
     const text = firstNonEmptyString(search.detailed_user_message);
     if (text) fallbackPayload['text'] = text;

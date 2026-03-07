@@ -57,21 +57,14 @@ const DISALLOWED_TAGS = new Set([
   'style',
   'link',
   'meta',
+  'template',
+  'noscript',
 ]);
 
 /**
  * Attributes allowed per-tag. `'*'` means any allowed tag.
- *
- * KNOWN TECH DEBT [SECURITY]: `style` attribute on div/span/p enables CSS-based XSS vectors:
- *   - `style="background:url(javascript:alert(1))"` bypasses hasJavascriptProtocol
- *     (which checks the raw attribute value, not nested CSS url() arguments)
- *   - `style="expression(alert(1))"` on legacy IE
- *   - `style="-moz-binding:url(...)"` on older Firefox
- *   Tracked for fix: either remove `style` from ALLOWED_ATTRS entirely, or implement
- *   a CSS property sanitizer that allowlists specific properties and validates values.
- *   Also add `<template>` to DISALLOWED_TAGS for defense-in-depth.
- *   Risk is mitigated by: (1) modern browsers block javascript: in CSS url(),
- *   (2) backend is trusted first-party, (3) only relevant if backend is compromised.
+ * The `style` attribute is further sanitized by `sanitizeCssStyle()` to
+ * strip dangerous CSS values (url(), expression(), -moz-binding, etc.).
  */
 const ALLOWED_ATTRS: Record<string, Set<string>> = {
   '*': new Set(['class']),
@@ -85,6 +78,88 @@ const ALLOWED_ATTRS: Record<string, Set<string>> = {
 function hasJavascriptProtocol(value: string): boolean {
   // Normalize whitespace + case then check
   return /^\s*javascript\s*:/i.test(value);
+}
+
+/** CSS properties considered safe in style attributes (layout + typography). */
+const SAFE_CSS_PROPERTIES = new Set([
+  'color',
+  'background-color',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'font-family',
+  'text-align',
+  'text-decoration',
+  'line-height',
+  'letter-spacing',
+  'margin',
+  'margin-top',
+  'margin-right',
+  'margin-bottom',
+  'margin-left',
+  'padding',
+  'padding-top',
+  'padding-right',
+  'padding-bottom',
+  'padding-left',
+  'border',
+  'border-top',
+  'border-right',
+  'border-bottom',
+  'border-left',
+  'border-radius',
+  'border-color',
+  'border-width',
+  'border-style',
+  'width',
+  'max-width',
+  'min-width',
+  'height',
+  'max-height',
+  'min-height',
+  'display',
+  'vertical-align',
+  'white-space',
+  'word-break',
+  'overflow',
+  'opacity',
+  'visibility',
+  'list-style',
+  'list-style-type',
+  'text-transform',
+  'text-indent',
+  'text-overflow',
+  'box-sizing',
+  'flex',
+  'flex-direction',
+  'flex-wrap',
+  'justify-content',
+  'align-items',
+  'gap',
+]);
+
+/** Patterns indicating dangerous CSS values that could execute code or load external resources. */
+const DANGEROUS_CSS_VALUE = /url\s*\(|expression\s*\(|javascript\s*:|\bimport\b|-moz-binding|behavior\s*:/i;
+
+/**
+ * Sanitize a CSS style attribute value.
+ * Allowlists safe properties and rejects values containing dangerous patterns.
+ * Returns empty string if nothing is safe.
+ */
+function sanitizeCssStyle(raw: string): string {
+  const safe: string[] = [];
+  for (const decl of raw.split(';')) {
+    const trimmed = decl.trim();
+    if (!trimmed) continue;
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx === -1) continue;
+    const property = trimmed.slice(0, colonIdx).trim().toLowerCase();
+    const value = trimmed.slice(colonIdx + 1).trim();
+    if (!SAFE_CSS_PROPERTIES.has(property)) continue;
+    if (DANGEROUS_CSS_VALUE.test(value)) continue;
+    safe.push(trimmed);
+  }
+  return safe.join('; ');
 }
 
 function sanitizeNode(node: Node, parent: Node): void {
@@ -134,6 +209,17 @@ function sanitizeNode(node: Node, parent: Node): void {
     // Strip javascript: protocol from any attribute value
     if (hasJavascriptProtocol(attr.value)) {
       el.removeAttribute(attr.name);
+      continue;
+    }
+
+    // Sanitize CSS style values to prevent XSS via url(), expression(), etc.
+    if (name === 'style') {
+      const sanitized = sanitizeCssStyle(attr.value);
+      if (sanitized) {
+        el.setAttribute('style', sanitized);
+      } else {
+        el.removeAttribute('style');
+      }
       continue;
     }
   }

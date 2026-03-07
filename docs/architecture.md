@@ -22,7 +22,6 @@ a customer can embed just the chat, just the QNA buttons, or all three together.
              ▼                         ▼
   POST /chat/launcher_action       POST /chat/process_action
   POST /chat/similar_products      POST /chat/product_groupings
-  POST /chat/proactive_action      POST /v2/heartbeat
              │                         │
              └───────────┬─────────────┘
                          │
@@ -123,7 +122,7 @@ POST /chat/process_action  →  NDJSON stream (backend event types)
       ├── {type:"aiProductSuggestions"} → render AI Top Picks cards
       ├── {type:"chatStreamEnd"}     → mark stream complete
       │
-      │   v1 wire protocol adapter normalizes all above to:
+      │   wire protocol adapter normalizes all above to:
       │   text_chunk, ui_spec, action, metadata, done
       │
       └── json-render resolves each ui_spec to:
@@ -145,7 +144,7 @@ POST /chat/launcher_action  →  NDJSON stream
       ├── {type:"productItem"} → trimmed product data
       ├── {type:"text_image"}  → action with image
       └── {type:"quick_qna"}   → question buttons
-               └── v1 adapter normalizes to ui_spec: ButtonRow > ActionButton[]
+               └── adapter normalizes to ui_spec: ButtonRow > ActionButton[]
                       │
                       ▼ (user clicks)
               dispatch('gengage:qna:action', action)
@@ -224,36 +223,6 @@ checks for this key and restores from IndexedDB.
 
 `saveAndOpenURL()` persists the session before navigating away (product links, bot HTML
 links), so state survives the navigation.
-
-## Heartbeat Polling
-
-The `HeartbeatManager` (`src/chat/heartbeat.ts`) enables proactive engagement by periodically
-polling the backend for trigger-based messages.
-
-```
-HeartbeatManager
-    │
-    │  POST /v2/heartbeat  (interval timer)
-    │  ┌──────────────────────────────────┐
-    │  │ { account_id, thread_id,         │
-    │  │   idle_seconds, page_type,       │
-    │  │   current_sku, cart_item_count,   │
-    │  │   searches_count, actions_count,  │
-    │  │   session_duration_seconds,       │
-    │  │   trigger_fire_counts }           │
-    │  └──────────────────────────────────┘
-    │
-    ▼
-Backend evaluates trigger rules
-    │
-    ▼
-{ action: "noop" }  or  { action: "message", message: "...", suggested_actions: [...] }
-```
-
-- Gated by `ChatWidgetConfig.enableHeartbeat` (default: `false`).
-- Records user activity (searches, actions, idle time) and sends counts with each poll.
-- Tracks `trigger_fire_counts` per trigger type to prevent re-firing the same proactive message.
-- Best-effort: fetch failures are silently ignored.
 
 ## Panel Manager
 
@@ -472,7 +441,6 @@ Key details:
 | File | Role |
 |------|------|
 | `src/chat/session-persistence.ts` | IndexedDB persistence for messages, panels, favorites, UISpec payloads |
-| `src/chat/heartbeat.ts` | Proactive engagement via `/v2/heartbeat` polling |
 | `src/chat/panel-manager.ts` | Panel snapshot management, thread navigation, message-to-panel routing |
 | `src/chat/kvkk.ts` | Turkish data protection (KVKK) consent notice filtering and banner |
 | `src/common/voice-input.ts` | Web Speech API voice input with auto-submit |

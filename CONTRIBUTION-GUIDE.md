@@ -58,7 +58,7 @@ Key rule: never break the wire protocol. Preserve `/chat/*` endpoint support.
 
 ## Stream Event Normalization
 
-The v1 wire protocol adapter (`src/common/v1-protocol-adapter.ts`) normalizes backend
+The wire protocol adapter (`src/common/protocol-adapter.ts`) normalizes backend
 event types to the canonical `StreamEvent` model.
 
 See the event matrix in [docs/wire-protocol.md](docs/wire-protocol.md) for the full mapping.

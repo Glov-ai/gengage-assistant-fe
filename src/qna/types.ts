@@ -5,7 +5,7 @@ export interface QNAWidgetConfig extends BaseWidgetConfig {
   /** Where to mount the QNA buttons container. Required. */
   mountTarget: HTMLElement | string;
 
-  /** CTA label for the "open chat" pill/button (default: 'Başka bir şey sor'). */
+  /** CTA label for the "open chat" pill/button (default: 'Ask something else'). */
   ctaText?: string;
 
   /** Placeholder text cycling inside the free-text input.
@@ -28,7 +28,7 @@ export interface QNAWidgetConfig extends BaseWidgetConfig {
   /** Called when a QNA action button is clicked. */
   onActionSelected?: (action: ActionPayload) => void;
 
-  /** Called when "Başka bir şey sor" / open-chat CTA is clicked. */
+  /** Called when the open-chat CTA is clicked. */
   onOpenChat?: () => void;
 }
 

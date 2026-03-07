@@ -29,7 +29,7 @@ describe('Find Similar Hover Pill', () => {
     const result = renderUISpec(spec, makeContext());
     const pill = result.querySelector('.gengage-chat-find-similar-pill');
     expect(pill).not.toBeNull();
-    expect(pill!.textContent).toContain('Benzerlerini Bul');
+    expect(pill!.textContent).toContain('Find Similar');
   });
 
   it('pill click dispatches findSimilar with sku and image_url', () => {
@@ -173,7 +173,7 @@ describe('Find Similar Hover Pill', () => {
     const result = renderUISpec(spec, makeContext());
     const pill = result.querySelector('.gengage-chat-find-similar-pill');
     expect(pill).not.toBeNull();
-    expect(pill!.textContent).toContain('Benzerlerini Bul');
+    expect(pill!.textContent).toContain('Find Similar');
 
     const wrap = result.querySelector('.gengage-chat-product-details-img-wrap');
     expect(wrap).not.toBeNull();

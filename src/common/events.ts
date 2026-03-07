@@ -10,6 +10,7 @@
 
 import type { GengageEventDetailMap, GengageEventName } from './types.js';
 import type { ActionPayload } from './types.js';
+import { isSafeUrl } from './safe-html.js';
 
 /**
  * Dispatch a typed Gengage event on window.
@@ -210,6 +211,8 @@ export function wireSimilarToChat(): () => void {
     if (sessionId) {
       window.gengage?.chat?.saveSession(sessionId, sku);
     }
-    window.location.href = url;
+    if (isSafeUrl(url)) {
+      window.location.href = url;
+    }
   });
 }

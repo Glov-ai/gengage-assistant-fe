@@ -27,18 +27,14 @@ import {
   meteringIncrementEvent,
   chatHistorySnapshotEvent,
 } from '../common/analytics-events.js';
-import { sanitizeHtml } from '../common/safe-html.js';
+import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
 import { validateImageFile } from './attachment-utils.js';
-import { sendChatMessage, enrichActionPayload, fetchProactiveAction } from './api.js';
+import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
-import { createProactivePopup } from './components/ProactivePopup.js';
-import type { ProactiveAction } from './components/ProactivePopup.js';
-import { ActivityTracker } from '../common/activity-tracker.js';
 import { playTtsAudio } from '../common/tts-player.js';
 import type { AudioHandle } from '../common/tts-player.js';
-import { HeartbeatManager } from './heartbeat.js';
 import {
   renderUISpec,
   createDefaultChatUISpecRegistry,
@@ -88,15 +84,28 @@ function isActionLike(value: unknown): value is ActionPayload {
   return typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).type === 'string';
 }
 
+/**
+ * Floating AI chat widget with streaming NDJSON responses, product cards, and comparison tables.
+ *
+ * @example
+ * ```ts
+ * import { GengageChat, bootstrapSession } from '@gengage/assistant-fe';
+ *
+ * const chat = new GengageChat();
+ * await chat.init({
+ *   accountId: 'mystore',
+ *   middlewareUrl: 'https://chat.gengage.ai',
+ *   session: { sessionId: bootstrapSession() },
+ * });
+ * chat.open(); // Programmatically open the drawer
+ * ```
+ */
 export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _shadow: ShadowRoot | null = null;
   private _rootEl: HTMLElement | null = null;
   private _launcher: LauncherElements | null = null;
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
-  private _activityTracker: ActivityTracker | null = null;
-  private _heartbeat: HeartbeatManager | null = null;
-  private _proactiveShown = false;
   private _drawerVisible = false;
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
@@ -156,6 +165,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _session: SessionPersistence | null = null;
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
   private _eventCallbacks = new Map<string, Set<(detail: Record<string, unknown>) => boolean | Promise<boolean>>>();
+  /** Last sent action+options for retry on error. */
+  private _lastSentAction: {
+    action: ActionPayload;
+    options?: { silent?: boolean; attachment?: File; preservePanel?: boolean; isPdpPrime?: boolean } | undefined;
+  } | null = null;
 
   protected async onInit(config: ChatWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
@@ -261,8 +275,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     } else if (panelMode === 'expanded') {
       this._drawer.setForceExpanded();
     } else if (!restoredCollapsedPanel) {
-      // 'auto': panel starts expanded but user can toggle via chevron
-      this._drawer.expandPanel();
+      // 'auto': panel starts collapsed — will expand when content arrives via stream
+      // (prevents empty panel being visible on page load/session restore)
     }
 
     // Restore session if an explicit handoff signal exists (e.g. SimRel product navigation)
@@ -324,71 +338,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       namespace: 'chat',
       onMessage: (msg) => this._handleBridgeMessage(msg),
     });
-
-    // Activity tracker for engagement signals & proactive popup trigger
-    this._activityTracker = new ActivityTracker({
-      idleThresholdMs: config.proactiveDelayMs ?? 30000,
-      onActivity: (event) => {
-        if (event.type === 'idle' && !this._proactiveShown && !this._drawerVisible) {
-          // Check scroll depth threshold (config is 0–1 fraction, tracker reports 0–100)
-          const minDepth = config.proactiveMinScrollDepth ?? 0;
-          if (minDepth > 0 && (this._activityTracker?.maxScrollDepth ?? 0) < minDepth * 100) {
-            return;
-          }
-          // Check sessionStorage guard — don't re-trigger in same session
-          try {
-            if (sessionStorage.getItem('gengage_proactive_shown')) return;
-          } catch {
-            // sessionStorage unavailable (e.g. sandboxed iframe) — proceed
-          }
-          // Check localStorage cooldown (like legacy 60min window)
-          if (this._isProactiveCooldownActive()) return;
-
-          if (config.proactiveFetchActions) {
-            // Fetch backend-driven proactive actions (like legacy /chat/proactive_action)
-            void this._fetchAndShowProactive();
-          } else if (config.proactiveMessage) {
-            // Static message from config
-            this._showProactivePopup(config.proactiveMessage);
-          }
-        }
-      },
-    });
-    this.addCleanup(() => this._activityTracker?.destroy());
-
-    // V2 heartbeat polling (opt-in via config.enableHeartbeat)
-    if (config.enableHeartbeat) {
-      this._heartbeat = new HeartbeatManager({
-        middlewareUrl: config.middlewareUrl,
-        accountId: config.accountId,
-        sessionId: config.session?.sessionId ?? '',
-        locale: config.locale ?? 'tr',
-        intervalMs: config.heartbeatIntervalMs ?? 30000,
-        getPageType: () => this.config.pageContext?.pageType ?? 'other',
-        getCurrentSku: () => this.config.pageContext?.sku ?? '',
-        onMessage: (res) => {
-          if (!this._proactiveShown && !this._drawerVisible && res.message) {
-            // Build action buttons from heartbeat suggested_actions if available
-            const heartbeatActions: ProactiveAction[] = [];
-            if (res.suggested_actions && Array.isArray(res.suggested_actions)) {
-              for (const sa of res.suggested_actions) {
-                if (sa.title && isActionLike(sa.requestDetails)) {
-                  heartbeatActions.push({
-                    title: sa.title,
-                    onSelect: () => {
-                      this.openWithAction(sa.requestDetails as ActionPayload);
-                    },
-                  });
-                }
-              }
-            }
-            this._showProactivePopup(res.message, heartbeatActions.length > 0 ? heartbeatActions : undefined);
-          }
-        },
-      });
-      this._heartbeat.start();
-      this.addCleanup(() => this._heartbeat?.destroy());
-    }
 
     // Track initial SKU for page-change detection
     this._lastSku = this.config.pageContext?.sku;
@@ -453,6 +402,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTypewriter = null;
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
+    this._drawer?.destroy();
+    this._drawer = null;
     this._bridge?.destroy();
     this._bridge = null;
     this._extendedModeManager = null;
@@ -557,6 +508,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Reset all chat state when navigating to a different SKU/page. */
   private _resetForNewPage(): void {
+    // Invalidate any in-flight stream callbacks so they discard themselves
+    // via the `threadId !== this._activeRequestThreadId` guard.
+    this._activeRequestThreadId = null;
     // Abort in-flight streams
     this._abortControllers.forEach((c) => c.abort());
     this._abortControllers.clear();
@@ -706,119 +660,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       el.classList.remove('gengage-chat-drawer--hidden');
     }
     this._applyOpenStateClasses();
+    this._drawer?.trapFocus();
     if (!(this._isMobileViewport && this._openState === 'half')) {
       this._drawer?.focusInput();
     }
     this._extendedModeManager?.setChatShown(true);
   }
 
-  private _showProactivePopup(message: string, actionButtons?: ProactiveAction[]): void {
-    if (this._proactiveShown || !this._rootEl) return;
-    this._proactiveShown = true;
-
-    // Persist across same-session page navigations
-    try {
-      sessionStorage.setItem('gengage_proactive_shown', '1');
-    } catch {
-      // sessionStorage unavailable — proceed without persistence
-    }
-    // Set localStorage cooldown (like legacy 60min window)
-    this._setProactiveCooldown();
-
-    const popupOpts: import('./components/ProactivePopup.js').ProactivePopupOptions = {
-      message,
-      onAccept: () => this.open(),
-      onDismiss: () => {
-        /* no-op — popup auto-removes itself */
-      },
-      ...(actionButtons && actionButtons.length > 0 && { actionButtons }),
-    };
-    if (this.config.proactiveAcceptLabel !== undefined) {
-      popupOpts.acceptLabel = this.config.proactiveAcceptLabel;
-    }
-    const popup = createProactivePopup(popupOpts);
-    this._rootEl.appendChild(popup);
-  }
-
-  /** Fetch proactive actions from backend and show popup with per-action buttons. */
-  private async _fetchAndShowProactive(): Promise<void> {
-    if (this._proactiveShown) return;
-    try {
-      const transport: import('../common/api-paths.js').ChatTransportConfig = {
-        middlewareUrl: this.config.middlewareUrl,
-        accountId: this.config.accountId,
-        backendType: this.config.backendType ?? 'v1',
-      };
-      const sku = this.config.pageContext?.sku;
-      const pageType = this.config.pageContext?.pageType;
-      const locale = this.config.locale;
-      const result = await fetchProactiveAction(
-        {
-          account_id: this.config.accountId,
-          ...(sku && { sku }),
-          ...(pageType && { page_type: pageType }),
-          ...(locale && { output_language: locale }),
-        },
-        transport,
-      );
-      if (!result) return;
-
-      const message = result.question ?? result.title ?? '';
-      if (!message) return;
-
-      // Build per-action buttons from backend response
-      const actionButtons: ProactiveAction[] = [];
-      if (result.actions && Array.isArray(result.actions)) {
-        for (const raw of result.actions) {
-          const a = raw as Record<string, unknown>;
-          const title = a.title as string | undefined;
-          if (title && isActionLike(a.requestDetails)) {
-            const rd = a.requestDetails;
-            actionButtons.push({
-              title,
-              onSelect: () => {
-                this.openWithAction(rd);
-              },
-            });
-          }
-        }
-      }
-
-      this._showProactivePopup(message, actionButtons);
-    } catch {
-      // Non-fatal — proactive fetch failure shouldn't crash the widget
-    }
-  }
-
-  private _proactiveCooldownKey(): string {
-    return `gengage_proactive_time_${this.config.accountId}`;
-  }
-
-  private _isProactiveCooldownActive(): boolean {
-    try {
-      const ts = localStorage.getItem(this._proactiveCooldownKey());
-      if (ts) {
-        const elapsed = Date.now() - parseInt(ts, 10);
-        // parseInt returns NaN for corrupted values → NaN < cooldown is false → no cooldown
-        const cooldown = this.config.proactiveCooldownMs ?? 3_600_000; // 1 hour default
-        return elapsed < cooldown;
-      }
-    } catch {
-      // localStorage unavailable
-    }
-    return false;
-  }
-
-  private _setProactiveCooldown(): void {
-    try {
-      localStorage.setItem(this._proactiveCooldownKey(), String(Date.now()));
-    } catch {
-      // localStorage unavailable
-    }
-  }
-
   private _hideDrawer(): void {
     if (!this._drawerVisible) return;
+    this._drawer?.releaseFocus();
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
     this._activeTtsHandle?.stop();
@@ -915,6 +766,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
 
+    // Track last action for retry on error
+    this._lastSentAction = { action, options };
+
     // Defer actions until init completes
     if (!this._initComplete) {
       if (this._pendingActions.length < 10) {
@@ -926,6 +780,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Remove ChoicePrompter on new action
     this._choicePrompterEl?.remove();
     this._choicePrompterEl = null;
+
+    // Clear comparison mode when starting a new request (unless preservePanel)
+    if (!options?.preservePanel && this._comparisonSelectMode) {
+      this._comparisonSelectMode = false;
+      this._comparisonSelectedSkus = [];
+    }
 
     // Branch deletion: if user is sending from a rewound position, prune future messages
     if (this._currentThreadId && this._lastThreadId && this._lastThreadId > this._currentThreadId) {
@@ -1036,7 +896,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const transport: ChatTransportConfig = {
       middlewareUrl: this.config.middlewareUrl,
-      ...(this.config.backendType ? { backendType: this.config.backendType } : {}),
       ...(this.config.accountId ? { accountId: this.config.accountId } : {}),
     };
     if (options?.attachment !== undefined) {
@@ -1052,7 +911,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         content: m.content ?? '',
       }));
 
-    // Build meta object for v1 backend
+    // Build meta object for backend
     const meta: BackendRequestMeta = {
       outputLanguage: localeToOutputLanguage(this.config.locale),
       parentUrl: window.location.href,
@@ -1094,8 +953,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         // overwrite the up-to-date conversation history built by the widget.
         ...(this._lastBackendContext ?? {}),
         messages: chatHistory,
-        // V1 backend reads session_id from context (not top-level).
-        // Include here for V1 compatibility; V2 uses thread_id from meta.
+        // Backend reads session_id from context.
         session_id: this.config.session?.sessionId ?? '',
       },
     };
@@ -1398,6 +1256,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               heading: this._i18n.choicePrompterHeading,
               suggestion: this._i18n.choicePrompterSuggestion,
               ctaLabel: this._i18n.choicePrompterCta,
+              dismissAriaLabel: this._i18n.dismissAriaLabel,
               onCtaClick: () => {
                 this._comparisonSelectMode = true;
                 this._choicePrompterEl = null;
@@ -1497,6 +1356,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               {
                 openChat: () => this.open(),
                 navigate: (params) => {
+                  if (!isSafeUrl(params.url)) return;
                   this._bridge?.send('navigate', params);
                   if (params.newTab) {
                     window.open(params.url, '_blank', 'noopener,noreferrer');
@@ -1543,7 +1403,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               }
             }
 
-            // Optional voice payload emitted by v1 backend when voiceEnabled is true.
+            // Optional voice payload emitted by backend when voiceEnabled is true.
             if (event.meta.voice) {
               // Dispatch cancelable event — host can call preventDefault() to suppress built-in playback
               const voiceEvent = new CustomEvent('gengage:chat:voice', {
@@ -1662,7 +1522,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // The user is in an active conversation; a toast on top of the
               // chat is confusing and can overlap with prior bot messages.
               this.emit('error', err);
-              this._drawer?.showError(this._i18n.errorMessage);
+              this._drawer?.showError(this._i18n.errorMessage, () => {
+                // Retry: resend the last action
+                if (this._lastSentAction) {
+                  this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
+                }
+              });
             }
           }
           if (isPdpAutoLaunch) {
@@ -1756,6 +1621,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       transport,
     );
     this._abortControllers.add(streamController);
+
+    // Show "Stop generating" button for user-visible streams
+    if (!options?.silent && !isPreservePanel) {
+      const ctrl = streamController;
+      this._drawer?.showStopButton(() => {
+        ctrl.abort();
+        this._abortControllers.delete(ctrl);
+        this._drawer?.removeTypingIndicator();
+        this._bridge?.send('isResponding', false);
+        this._bridge?.send('loadingMessage', { text: null });
+        if (botMsg.status === 'streaming') {
+          botMsg.status = 'done';
+        }
+      });
+    }
   }
 
   /** Return messages visible at the current thread cursor. */
@@ -1773,7 +1653,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!panelEl) return;
     const heading = document.createElement('h3');
     heading.className = 'gengage-chat-product-details-similars-heading';
-    heading.textContent = this._i18n.similarProductsLabel ?? 'Benzer Ürünler';
+    heading.textContent = this._i18n.similarProductsLabel ?? 'Similar Products';
     panelEl.appendChild(heading);
     const grid = this._renderUISpec(spec, ctx);
     grid.classList.add('gengage-chat-product-details-similars');
@@ -2142,6 +2022,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         card.parentNode!.insertBefore(wrapper, card);
         wrapper.appendChild(checkbox);
         wrapper.appendChild(card);
+        // Allow clicking anywhere on the card (not just the tiny checkbox) to toggle selection
+        wrapper.style.cursor = 'pointer';
+        wrapper.addEventListener('click', (e) => {
+          // Avoid double-toggle when the checkbox itself is clicked
+          if (e.target === checkbox) return;
+          checkbox.checked = !checkbox.checked;
+          this._toggleComparisonSku(sku);
+        });
       }
     } else {
       // Remove all checkbox wrappers
@@ -2157,17 +2045,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // 3. Update floating comparison button
     const existingFloating = gridWrapper.querySelector('.gengage-chat-comparison-floating-btn');
-    if (this._comparisonSelectMode && this._comparisonSelectedSkus.length >= 2) {
-      const label = this._i18n.compareSelected ?? 'Karşılaştır';
-      const text = `${label} (${this._comparisonSelectedSkus.length})`;
+    if (this._comparisonSelectMode) {
+      const count = this._comparisonSelectedSkus.length;
+      const canCompare = count >= 2;
+      const label = this._i18n.compareSelected ?? 'Compare';
+      const text = canCompare ? `${label} (${count})` : (this._i18n.compareMinHint ?? 'Select at least 2 products');
       if (existingFloating) {
         existingFloating.textContent = text;
+        (existingFloating as HTMLButtonElement).disabled = !canCompare;
+        existingFloating.classList.toggle('gengage-chat-comparison-floating-btn--disabled', !canCompare);
       } else {
         const btn = document.createElement('button');
         btn.className = 'gengage-chat-comparison-floating-btn';
         btn.type = 'button';
         btn.textContent = text;
+        btn.disabled = !canCompare;
+        if (!canCompare) btn.classList.add('gengage-chat-comparison-floating-btn--disabled');
         btn.addEventListener('click', () => {
+          if (this._comparisonSelectedSkus.length < 2) return;
           ga.trackCompareSelected(this._comparisonSelectedSkus);
           this._sendAction({
             title: label,
@@ -2236,7 +2131,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         // Send addToCart action to backend — preservePanel keeps current products visible
         this._sendAction(
           {
-            title: 'Sepete Ekle',
+            title: this._i18n.addToCartButton ?? 'Add to Cart',
             type: 'addToCart',
             payload: { sku: params.sku, cart_code: params.cartCode, quantity: params.quantity },
           },
@@ -2320,7 +2215,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    */
   private _handleCallbackFailure(eventName: string, _detail: Record<string, unknown>): void {
     if (eventName === 'gengage-cart-add') {
-      const errorText = 'Üzgünüm sepete ekleyemedim, bir sorunla karşılaştım.';
+      const errorText = this._i18n.cartAddErrorMessage;
       const botMsg = this._createMessage('assistant', errorText);
       if (this._currentThreadId) botMsg.threadId = this._currentThreadId;
       this._messages.push(botMsg);

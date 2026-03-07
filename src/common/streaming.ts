@@ -15,6 +15,7 @@
  */
 
 import type { StreamEvent } from './types.js';
+import { debugLog } from './debug.js';
 
 export type StreamEventHandler = (event: StreamEvent) => void;
 
@@ -89,7 +90,10 @@ function processLine(line: string, options: StreamOptions): boolean {
   if (!trimmed || trimmed.startsWith(':')) return false;
 
   const jsonStr = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
-  if (jsonStr === '[DONE]') return true;
+  if (jsonStr === '[DONE]') {
+    options.onDone?.();
+    return true;
+  }
 
   // Try direct parse first (fast path for well-formed NDJSON)
   try {
@@ -100,6 +104,7 @@ function processLine(line: string, options: StreamOptions): boolean {
       }
       return false;
     }
+    debugLog('stream', `event: ${event.type}`, event);
     options.onEvent(event);
     if (event.type === 'done') {
       options.onDone?.();
@@ -223,6 +228,10 @@ export async function consumeStream(response: Response, options: StreamOptions):
     }
   }
 
+  // Guard: only fire onDone if processLine didn't already fire it via a 'done' event.
+  // processLine calls onDone for type:'done' events; if that happened, it returned true
+  // and we exited via `return` above. Reaching here means no 'done' event was received,
+  // so it's safe to fire onDone as a stream-completion fallback.
   options.onDone?.();
 }
 
