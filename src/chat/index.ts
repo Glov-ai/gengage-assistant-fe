@@ -57,7 +57,7 @@ import type {
 import { GengageIndexedDB } from '../common/indexed-db.js';
 import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
-import { PanelManager } from './panel-manager.js';
+import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
 import {
   containsKvkk,
@@ -1130,24 +1130,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             componentType !== 'ActionButtons'; // ActionButtons render as bottom pills only
 
           if (panelHint === 'panel' && this._panel) {
+            const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
 
-            // productDetailsSimilars: append to existing ProductDetailsPanel instead of replacing
-            // Never append to loading skeleton — always replace it
-            if (
-              rootElement?.props?.['similarsAppend'] === true &&
-              this._panel.currentType === 'ProductDetailsPanel' &&
-              this._drawer?.hasPanelContent() &&
-              !this._drawer.isPanelLoading()
-            ) {
+            const panelAction = determinePanelUpdateAction({
+              componentType,
+              similarsAppend: rootElement?.props?.['similarsAppend'] === true,
+              currentPanelType: this._panel.currentType,
+              hasPanelContent: this._drawer?.hasPanelContent() ?? false,
+              isPanelLoading: this._drawer?.isPanelLoading() ?? false,
+              isFirstPanelContentInStream,
+            });
+
+            if (panelAction === 'appendSimilars') {
               this._appendSimilarsToPanel(panelSpec, renderContext);
-            } else if (
-              componentType === 'ProductGrid' &&
-              this._drawer?.hasPanelContent() &&
-              !this._drawer.isPanelLoading()
-            ) {
-              // Append ProductGrid (similar products) below existing panel content
-              this._drawer.appendPanelContent(this._renderUISpec(panelSpec, renderContext));
+            } else if (panelAction === 'append') {
+              this._drawer?.appendPanelContent(this._renderUISpec(panelSpec, renderContext));
             } else {
               // Reset comparison state when new panel content replaces the grid
               this._comparisonSelectMode = false;

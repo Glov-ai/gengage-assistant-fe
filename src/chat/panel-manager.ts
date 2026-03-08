@@ -254,3 +254,45 @@ export class PanelManager {
 function isSearchLikeActionType(actionType: string | null): boolean {
   return actionType === 'user_message' || actionType === 'inputText';
 }
+
+/**
+ * Decide how to apply incoming panel UISpec content.
+ *
+ * - `'replace'` — set as sole panel content (new search, comparison, product details)
+ * - `'append'` — add below existing content (similar products grid after product details)
+ * - `'appendSimilars'` — append via the dedicated similars helper
+ */
+export type PanelUpdateAction = 'replace' | 'append' | 'appendSimilars';
+
+export function determinePanelUpdateAction(opts: {
+  componentType: string;
+  similarsAppend: boolean;
+  currentPanelType: string | null;
+  hasPanelContent: boolean;
+  isPanelLoading: boolean;
+  isFirstPanelContentInStream: boolean;
+}): PanelUpdateAction {
+  // productDetailsSimilars: append to existing ProductDetailsPanel
+  if (
+    opts.similarsAppend &&
+    opts.currentPanelType === 'ProductDetailsPanel' &&
+    opts.hasPanelContent &&
+    !opts.isPanelLoading
+  ) {
+    return 'appendSimilars';
+  }
+
+  // Append ProductGrid only when it follows other panel content in the SAME stream
+  // (e.g. similar products below product details). A ProductGrid that is the first
+  // panel content in a new stream (search results) must REPLACE.
+  if (
+    opts.componentType === 'ProductGrid' &&
+    !opts.isFirstPanelContentInStream &&
+    opts.hasPanelContent &&
+    !opts.isPanelLoading
+  ) {
+    return 'append';
+  }
+
+  return 'replace';
+}
