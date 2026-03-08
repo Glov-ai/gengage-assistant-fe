@@ -194,14 +194,6 @@ function getNamedBridge(win: Window, interfaceName: string): { postMessage: (mes
   return null;
 }
 
-function getAndroidBridge(win: Window, interfaceName: string): { postMessage: (message: string) => void } | null {
-  return getNamedBridge(win, interfaceName);
-}
-
-function getReactNativeBridge(win: Window, interfaceName: string): { postMessage: (message: string) => void } | null {
-  return getNamedBridge(win, interfaceName);
-}
-
 export function detectNativeEnvironment(
   options: Pick<
     NativeWebViewBridgeOptions,
@@ -214,8 +206,8 @@ export function detectNativeEnvironment(
   const reactNativeInterfaceName = options.reactNativeInterfaceName ?? 'ReactNativeWebView';
 
   if (getIosPostMessage(win, iosHandlerName)) return 'ios';
-  if (getAndroidBridge(win, androidInterfaceName)) return 'android';
-  if (getReactNativeBridge(win, reactNativeInterfaceName)) return 'react-native';
+  if (getNamedBridge(win, androidInterfaceName)) return 'android';
+  if (getNamedBridge(win, reactNativeInterfaceName)) return 'react-native';
   return 'browser';
 }
 
@@ -280,13 +272,13 @@ export function createNativeWebViewBridge(options: NativeWebViewBridgeOptions = 
     }
 
     if (env === 'android') {
-      const androidBridge = getAndroidBridge(win, androidInterfaceName);
+      const androidBridge = getNamedBridge(win, androidInterfaceName);
       androidBridge?.postMessage(JSON.stringify(message));
       return;
     }
 
     if (env === 'react-native') {
-      const reactNativeBridge = getReactNativeBridge(win, reactNativeInterfaceName);
+      const reactNativeBridge = getNamedBridge(win, reactNativeInterfaceName);
       reactNativeBridge?.postMessage(JSON.stringify(message));
       return;
     }

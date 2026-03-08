@@ -12,7 +12,7 @@ import type { UIElement } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 import { formatPrice } from '../../common/price-formatter.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
-import { clampRating, addImageErrorHandler, renderStarRating } from '../../common/product-utils.js';
+import { addImageErrorHandler, createStarRatingElement } from '../../common/product-utils.js';
 
 export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
@@ -65,7 +65,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-summary__rating';
-    ratingRow.textContent = renderStarRating(clampRating(rating));
+    ratingRow.appendChild(createStarRatingElement(rating));
     if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
       const count = document.createElement('span');
       count.className = 'gengage-chat-product-summary__review-count';

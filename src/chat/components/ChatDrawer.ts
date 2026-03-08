@@ -202,65 +202,60 @@ export class ChatDrawer {
       let swipeDeltaY = 0;
       const DISMISS_THRESHOLD = 80;
 
-      header.addEventListener(
-        'touchstart',
-        (e) => {
-          // Only on mobile-sized viewports
-          if (window.innerWidth > 768) return;
-          const t = e.changedTouches?.[0];
-          if (!t) return;
-          swipeStartY = t.clientY;
-          swipeDeltaY = 0;
-          // Disable transition during drag for immediate visual feedback
-          this.root.style.transition = 'none';
-        },
-        { passive: true },
-      );
+      const onHeaderTouchStart = (e: TouchEvent) => {
+        // Only on mobile-sized viewports
+        if (window.innerWidth > 768) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        swipeStartY = t.clientY;
+        swipeDeltaY = 0;
+        // Disable transition during drag for immediate visual feedback
+        this.root.style.transition = 'none';
+      };
 
-      header.addEventListener(
-        'touchmove',
-        (e) => {
-          if (swipeStartY === null) return;
-          const t = e.changedTouches?.[0];
-          if (!t) return;
-          swipeDeltaY = Math.max(0, t.clientY - swipeStartY); // Only allow downward drag
-          this.root.style.transform = `translateY(${swipeDeltaY}px)`;
-          this.root.style.opacity = String(1 - swipeDeltaY / 300);
-        },
-        { passive: true },
-      );
+      const onHeaderTouchMove = (e: TouchEvent) => {
+        if (swipeStartY === null) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        swipeDeltaY = Math.max(0, t.clientY - swipeStartY); // Only allow downward drag
+        this.root.style.transform = `translateY(${swipeDeltaY}px)`;
+        this.root.style.opacity = String(1 - swipeDeltaY / 300);
+      };
 
-      header.addEventListener(
-        'touchend',
-        () => {
-          if (swipeStartY === null) return;
-          swipeStartY = null;
-          // Re-enable transition
-          this.root.style.transition = '';
-          if (swipeDeltaY >= DISMISS_THRESHOLD) {
-            // Dismiss — let the CSS transition handle the animation
-            options.onClose();
-          }
-          // Reset transform
-          this.root.style.transform = '';
-          this.root.style.opacity = '';
-          swipeDeltaY = 0;
-        },
-        { passive: true },
-      );
+      const onHeaderTouchEnd = () => {
+        if (swipeStartY === null) return;
+        swipeStartY = null;
+        // Re-enable transition
+        this.root.style.transition = '';
+        if (swipeDeltaY >= DISMISS_THRESHOLD) {
+          // Dismiss — let the CSS transition handle the animation
+          options.onClose();
+        }
+        // Reset transform
+        this.root.style.transform = '';
+        this.root.style.opacity = '';
+        swipeDeltaY = 0;
+      };
 
-      header.addEventListener(
-        'touchcancel',
-        () => {
-          if (swipeStartY === null) return;
-          swipeStartY = null;
-          this.root.style.transition = '';
-          this.root.style.transform = '';
-          this.root.style.opacity = '';
-          swipeDeltaY = 0;
-        },
-        { passive: true },
-      );
+      const onHeaderTouchCancel = () => {
+        if (swipeStartY === null) return;
+        swipeStartY = null;
+        this.root.style.transition = '';
+        this.root.style.transform = '';
+        this.root.style.opacity = '';
+        swipeDeltaY = 0;
+      };
+
+      header.addEventListener('touchstart', onHeaderTouchStart, { passive: true });
+      header.addEventListener('touchmove', onHeaderTouchMove, { passive: true });
+      header.addEventListener('touchend', onHeaderTouchEnd, { passive: true });
+      header.addEventListener('touchcancel', onHeaderTouchCancel, { passive: true });
+      this._cleanups.push(() => {
+        header.removeEventListener('touchstart', onHeaderTouchStart);
+        header.removeEventListener('touchmove', onHeaderTouchMove);
+        header.removeEventListener('touchend', onHeaderTouchEnd);
+        header.removeEventListener('touchcancel', onHeaderTouchCancel);
+      });
     }
 
     // Body: flex container for panel + conversation
@@ -303,41 +298,39 @@ export class ChatDrawer {
     let touchStartX: number | null = null;
     let touchStartY: number | null = null;
     const swipeThreshold = 24;
-    this._dividerEl.addEventListener(
-      'touchstart',
-      (event) => {
-        if (window.innerWidth > 768) return;
-        const touch = event.changedTouches?.[0];
-        if (!touch) return;
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-      },
-      { passive: true },
-    );
-    this._dividerEl.addEventListener(
-      'touchend',
-      (event) => {
-        if (window.innerWidth > 768) return;
-        if (touchStartX === null || touchStartY === null) return;
-        const touch = event.changedTouches?.[0];
-        if (!touch) return;
+    const onDividerTouchStart = (event: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      const touch = event.changedTouches?.[0];
+      if (!touch) return;
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    };
+    const onDividerTouchEnd = (event: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      if (touchStartX === null || touchStartY === null) return;
+      const touch = event.changedTouches?.[0];
+      if (!touch) return;
 
-        const deltaX = touch.clientX - touchStartX;
-        const deltaY = touch.clientY - touchStartY;
-        touchStartX = null;
-        touchStartY = null;
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      touchStartX = null;
+      touchStartY = null;
 
-        // Vertical swipe only. Swipe up collapses panel, swipe down expands.
-        if (Math.abs(deltaY) < swipeThreshold || Math.abs(deltaY) < Math.abs(deltaX)) return;
-        const nextCollapsed = deltaY < 0;
-        if (nextCollapsed === this._panelCollapsed) return;
+      // Vertical swipe only. Swipe up collapses panel, swipe down expands.
+      if (Math.abs(deltaY) < swipeThreshold || Math.abs(deltaY) < Math.abs(deltaX)) return;
+      const nextCollapsed = deltaY < 0;
+      if (nextCollapsed === this._panelCollapsed) return;
 
-        this._ignoreNextDividerClick = true;
-        this.setPanelCollapsed(nextCollapsed);
-        this._onPanelToggle?.();
-      },
-      { passive: true },
-    );
+      this._ignoreNextDividerClick = true;
+      this.setPanelCollapsed(nextCollapsed);
+      this._onPanelToggle?.();
+    };
+    this._dividerEl.addEventListener('touchstart', onDividerTouchStart, { passive: true });
+    this._dividerEl.addEventListener('touchend', onDividerTouchEnd, { passive: true });
+    this._cleanups.push(() => {
+      this._dividerEl.removeEventListener('touchstart', onDividerTouchStart);
+      this._dividerEl.removeEventListener('touchend', onDividerTouchEnd);
+    });
     this._dividerEl.appendChild(chevron);
     body.appendChild(this._dividerEl);
 
@@ -380,19 +373,19 @@ export class ChatDrawer {
 
     // Track user scroll position to avoid auto-scrolling when reading history
     let scrollRafPending = false;
-    this.messagesEl.addEventListener(
-      'scroll',
-      () => {
-        if (scrollRafPending) return;
-        scrollRafPending = true;
-        requestAnimationFrame(() => {
-          scrollRafPending = false;
-          const { scrollTop, scrollHeight, clientHeight } = this.messagesEl;
-          this._userScrolledUp = scrollHeight - scrollTop - clientHeight > 10;
-        });
-      },
-      { passive: true },
-    );
+    const onMessagesScroll = () => {
+      if (scrollRafPending) return;
+      scrollRafPending = true;
+      requestAnimationFrame(() => {
+        scrollRafPending = false;
+        const { scrollTop, scrollHeight, clientHeight } = this.messagesEl;
+        this._userScrolledUp = scrollHeight - scrollTop - clientHeight > 10;
+      });
+    };
+    this.messagesEl.addEventListener('scroll', onMessagesScroll, { passive: true });
+    this._cleanups.push(() => {
+      this.messagesEl.removeEventListener('scroll', onMessagesScroll);
+    });
 
     conversation.appendChild(this.messagesEl);
 
@@ -425,19 +418,19 @@ export class ChatDrawer {
 
     // Hide arrow when fully scrolled
     let pillsRafPending = false;
-    pillsScroll.addEventListener(
-      'scroll',
-      () => {
-        if (pillsRafPending) return;
-        pillsRafPending = true;
-        requestAnimationFrame(() => {
-          pillsRafPending = false;
-          const atEnd = pillsScroll.scrollLeft + pillsScroll.clientWidth >= pillsScroll.scrollWidth - 4;
-          pillsArrow.style.display = atEnd ? 'none' : '';
-        });
-      },
-      { passive: true },
-    );
+    const onPillsScroll = () => {
+      if (pillsRafPending) return;
+      pillsRafPending = true;
+      requestAnimationFrame(() => {
+        pillsRafPending = false;
+        const atEnd = pillsScroll.scrollLeft + pillsScroll.clientWidth >= pillsScroll.scrollWidth - 4;
+        pillsArrow.style.display = atEnd ? 'none' : '';
+      });
+    };
+    pillsScroll.addEventListener('scroll', onPillsScroll, { passive: true });
+    this._cleanups.push(() => {
+      pillsScroll.removeEventListener('scroll', onPillsScroll);
+    });
 
     conversation.appendChild(this._pillsEl);
 

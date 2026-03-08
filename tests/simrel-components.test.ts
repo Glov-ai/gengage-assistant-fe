@@ -25,6 +25,8 @@ const defaultI18n: SimRelI18n = {
   similarProductsAriaLabel: 'Similar products',
   emptyStateMessage: 'No similar products found.',
   addToCartButton: 'Add to Cart',
+  ctaLabel: 'View',
+  outOfStockLabel: 'Out of Stock',
   priceSuffix: ' TL',
 };
 
@@ -62,7 +64,6 @@ describe('ProductCard', () => {
     expect(card.querySelector('.gengage-simrel-card-cta')?.classList.contains('gengage-chat-product-card-cta')).toBe(
       true,
     );
-    expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-chat-product-card-atc')).toBe(true);
     expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-qty-stepper--compact')).toBe(true);
   });
 

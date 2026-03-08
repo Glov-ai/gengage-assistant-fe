@@ -984,6 +984,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  flex-shrink: 0;
   gap: 0;
   padding: 8px 12px;
   border-top: 1px solid var(--_gengage-border-color);
@@ -1138,15 +1139,9 @@
 
 .gengage-chat-action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 6px 0 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.gengage-chat-action-buttons::-webkit-scrollbar {
-  display: none;
 }
 
 .gengage-chat-action-btn {
@@ -1177,6 +1172,8 @@
 
 .gengage-chat-product-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   border: 1px solid #eee;
   border-radius: 16px;
   overflow: hidden;
@@ -1208,6 +1205,7 @@
 .gengage-chat-product-card-body {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 4px;
   padding: 8px 10px 10px;
   text-align: center;
@@ -1219,7 +1217,7 @@
   color: var(--_gengage-text-primary);
   line-height: 1.35;
   margin-bottom: 0;
-  min-height: 0;
+  min-height: calc(2 * 1.35em);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -1239,6 +1237,19 @@
   line-height: 1;
 }
 
+.gengage-star-half {
+  display: inline-block;
+  position: relative;
+}
+
+.gengage-star-half > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  width: 0.5em;
+}
+
 .gengage-chat-product-card-review-count {
   color: #475569;
   font-size: 10px;
@@ -1246,9 +1257,10 @@
 
 .gengage-chat-product-card-price {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
-  gap: 4px;
+  gap: 2px 4px;
   font-size: 16px;
   font-weight: 800;
   color: #0f172a;
@@ -1284,6 +1296,7 @@
 
 .gengage-chat-product-card-cta {
   display: block;
+  margin-top: auto;
   padding: 8px 10px;
   text-align: center;
   background: transparent;
@@ -2849,7 +2862,7 @@
 .gengage-chat-ai-toppick-discount-badge {
   position: absolute;
   top: 8px;
-  left: 8px;
+  right: 8px;
   background: var(--gengage-discount-bg, #ef4444);
   color: #fff;
   font-size: 11px;
@@ -3708,7 +3721,7 @@
   position: absolute;
   top: 6px;
   left: 6px;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
   background: var(--_gengage-discount-color);
   color: #fff;
@@ -4096,6 +4109,13 @@
 .gengage-chat-comparison--mobile {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* Scroll hint — right-edge fade signals horizontal scrollability */
+.gengage-chat-comparison--mobile {
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+  mask-image: linear-gradient(to right, #000 85%, transparent);
 }
 
 .gengage-chat-comparison--mobile .gengage-chat-comparison-table {

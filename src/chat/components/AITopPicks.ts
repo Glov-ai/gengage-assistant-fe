@@ -137,12 +137,19 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     body.appendChild(renderSentimentChips(item.labels));
   }
 
-  // Expert quality score — auto-detect scale from value range
+  // Expert quality score — normalize to 0-10 scale
   if (typeof item.expertQualityScore === 'number') {
     const score = document.createElement('div');
     score.className = 'gengage-chat-ai-toppick-score';
-    const maxScale = item.expertQualityScore <= 5 ? 5 : 10;
-    score.textContent = `${item.expertQualityScore}/${maxScale}`;
+    let displayScore = item.expertQualityScore;
+    let maxScale = 10;
+    if (displayScore > 10) {
+      // Percentage-style score (e.g. 92) → normalize to x/10
+      displayScore = Math.round(displayScore) / 10;
+    } else if (displayScore <= 5) {
+      maxScale = 5;
+    }
+    score.textContent = `${displayScore}/${maxScale}`;
     body.appendChild(score);
   }
 

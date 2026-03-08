@@ -37,6 +37,45 @@ export function renderStarRating(rating: number, halfStars: boolean = true): str
 }
 
 /**
+ * Create a star rating DOM element with proper half-filled star rendering.
+ *
+ * Uses a CSS-clipped full star overlaid on an empty star for the half-star,
+ * giving a visually accurate half-filled appearance instead of the "½" character.
+ *
+ * @param rating - A numeric rating (will be clamped to 0–5).
+ * @returns An HTMLSpanElement containing the star icons.
+ */
+export function createStarRatingElement(rating: number): HTMLSpanElement {
+  const clamped = clampRating(rating);
+  const full = Math.floor(clamped);
+  const hasHalf = clamped - full >= 0.5;
+  const empty = 5 - full - (hasHalf ? 1 : 0);
+
+  const container = document.createElement('span');
+  container.className = 'gengage-star-rating';
+
+  if (full > 0) {
+    container.appendChild(document.createTextNode('\u2605'.repeat(full)));
+  }
+
+  if (hasHalf) {
+    const halfStar = document.createElement('span');
+    halfStar.className = 'gengage-star-half';
+    halfStar.textContent = '\u2606';
+    const filled = document.createElement('span');
+    filled.textContent = '\u2605';
+    halfStar.appendChild(filled);
+    container.appendChild(halfStar);
+  }
+
+  if (empty > 0) {
+    container.appendChild(document.createTextNode('\u2606'.repeat(empty)));
+  }
+
+  return container;
+}
+
+/**
  * Attach a one-time error handler that hides the image on load failure.
  *
  * Works with any HTMLImageElement. Hides the element by setting

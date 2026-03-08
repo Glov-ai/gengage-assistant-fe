@@ -1674,8 +1674,9 @@ export interface NormalizedProduct {
 }
 
 export function productToNormalized(p: V1Product): NormalizedProduct {
-  const price = p.price_discounted != null && p.price_discounted > 0 ? p.price_discounted : p.price;
-  const originalPrice = p.price_discounted != null && p.price_discounted > 0 && p.price != null ? p.price : undefined;
+  const hasDiscount = p.price_discounted != null && p.price_discounted > 0;
+  const price = hasDiscount ? p.price_discounted : p.price;
+  const originalPrice = hasDiscount && p.price != null ? p.price : undefined;
 
   let discountPercent: number | undefined;
   if (originalPrice != null && price != null && originalPrice > 0) {

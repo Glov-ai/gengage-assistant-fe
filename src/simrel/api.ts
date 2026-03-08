@@ -6,7 +6,7 @@ import {
   normalizeProductGroupingsResponse,
 } from '../common/protocol-adapter.js';
 import type { NormalizedProduct } from '../common/protocol-adapter.js';
-import type { StreamEvent } from '../common/types.js';
+import type { StreamEvent, UIElement } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 
 export interface SimilarProductsRequest {
@@ -33,6 +33,19 @@ export interface ProductGroup {
   products: NormalizedProduct[];
 }
 
+function extractProductCardsFromSpec(elements: Record<string, UIElement>): NormalizedProduct[] {
+  const products: NormalizedProduct[] = [];
+  for (const el of Object.values(elements)) {
+    if (el.type === 'ProductCard' && el.props) {
+      const product = (el.props['product'] ?? el.props) as Record<string, unknown>;
+      if (typeof product['sku'] === 'string' && typeof product['name'] === 'string') {
+        products.push(product as unknown as NormalizedProduct);
+      }
+    }
+  }
+  return products;
+}
+
 function isNDJSONResponse(response: Response): boolean {
   const ct = response.headers.get('Content-Type') ?? '';
   return ct.includes('application/x-ndjson') || ct.includes('text/event-stream');
@@ -45,14 +58,7 @@ async function collectProductsFromStream(response: Response, signal?: AbortSigna
       const normalized = adaptBackendEvent(event as unknown as Record<string, unknown>);
       if (!normalized || normalized.type !== 'ui_spec') return;
 
-      for (const el of Object.values(normalized.spec.elements)) {
-        if (el.type === 'ProductCard' && el.props) {
-          const product = (el.props['product'] ?? el.props) as Record<string, unknown>;
-          if (typeof product['sku'] === 'string' && typeof product['name'] === 'string') {
-            products.push(product as unknown as NormalizedProduct);
-          }
-        }
-      }
+      products.push(...extractProductCardsFromSpec(normalized.spec.elements));
     },
   };
   if (signal !== undefined) opts.signal = signal;
@@ -112,14 +118,7 @@ async function collectGroupingsFromStream(response: Response, signal?: AbortSign
       }
 
       if (normalized.type === 'ui_spec' && currentGroup) {
-        for (const el of Object.values(normalized.spec.elements)) {
-          if (el.type === 'ProductCard' && el.props) {
-            const product = (el.props['product'] ?? el.props) as Record<string, unknown>;
-            if (typeof product['sku'] === 'string' && typeof product['name'] === 'string') {
-              currentGroup.products.push(product as unknown as NormalizedProduct);
-            }
-          }
-        }
+        currentGroup.products.push(...extractProductCardsFromSpec(normalized.spec.elements));
       }
     },
   };

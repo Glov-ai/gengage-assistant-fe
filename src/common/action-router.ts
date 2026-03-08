@@ -41,11 +41,7 @@ export function routeStreamAction(
       }
       const newTab = typeof action.newTab === 'boolean' ? action.newTab : undefined;
       if (handlers.navigate) {
-        if (newTab !== undefined) {
-          handlers.navigate({ url: action.url, newTab });
-        } else {
-          handlers.navigate({ url: action.url });
-        }
+        handlers.navigate({ url: action.url, ...(newTab !== undefined && { newTab }) });
         return;
       }
       defaultNavigate(action.url, newTab);
@@ -85,11 +81,7 @@ export function routeStreamAction(
         return;
       }
       const payload = isRecord(action.payload) ? action.payload : undefined;
-      if (payload !== undefined) {
-        handlers.scriptCall?.({ name: action.name, payload });
-      } else {
-        handlers.scriptCall?.({ name: action.name });
-      }
+      handlers.scriptCall?.({ name: action.name, ...(payload !== undefined && { payload }) });
       return;
     }
     default: {

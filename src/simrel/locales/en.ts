@@ -5,5 +5,6 @@ export const SIMREL_I18N_EN: SimRelI18n = {
   emptyStateMessage: 'No similar products found.',
   addToCartButton: 'Add to cart',
   ctaLabel: 'View',
+  outOfStockLabel: 'Out of Stock',
   priceSuffix: '',
 };
