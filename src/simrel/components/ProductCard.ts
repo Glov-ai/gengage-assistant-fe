@@ -4,7 +4,7 @@ import type { PriceFormatConfig } from '../../common/price-formatter.js';
 import { formatPrice } from '../../common/price-formatter.js';
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { createQuantityStepper } from '../../common/quantity-stepper.js';
-import { clampDiscount, addImageErrorHandler, renderStarRating } from '../../common/product-utils.js';
+import { clampDiscount, addImageErrorHandler, createStarRatingElement } from '../../common/product-utils.js';
 
 export interface ProductCardOptions {
   product: NormalizedProduct;
@@ -87,7 +87,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   if (product.rating != null && product.rating > 0) {
     const ratingEl = document.createElement('div');
     ratingEl.className = 'gengage-simrel-card-rating gengage-chat-product-card-rating';
-    ratingEl.textContent = renderStarRating(product.rating);
+    ratingEl.appendChild(createStarRatingElement(product.rating));
     if (product.reviewCount != null) {
       const count = document.createElement('span');
       count.className = 'gengage-simrel-card-review-count gengage-chat-product-card-review-count';
@@ -132,8 +132,13 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   });
   card.appendChild(cta);
 
-  // Add to cart stepper (only when in stock)
-  if (product.cartCode && product.inStock !== false) {
+  // Add to cart stepper or out-of-stock indicator
+  if (product.inStock === false) {
+    const oos = document.createElement('div');
+    oos.className = 'gengage-simrel-card-oos';
+    oos.textContent = i18n?.outOfStockLabel ?? 'Out of Stock';
+    card.appendChild(oos);
+  } else if (product.cartCode) {
     const cartCode = product.cartCode;
     const stepper = createQuantityStepper({
       compact: true,
@@ -142,7 +147,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
         onAddToCart({ sku: product.sku, quantity, cartCode });
       },
     });
-    stepper.classList.add('gengage-simrel-atc', 'gengage-chat-product-card-atc');
+    stepper.classList.add('gengage-simrel-atc');
     card.appendChild(stepper);
   }
 

@@ -25,7 +25,12 @@ import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
 import { createQuantityStepper } from '../../common/quantity-stepper.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
-import { clampRating, clampDiscount, addImageErrorHandler, renderStarRating } from '../../common/product-utils.js';
+import {
+  clampRating,
+  clampDiscount,
+  addImageErrorHandler,
+  createStarRatingElement,
+} from '../../common/product-utils.js';
 
 export type UISpecRenderContext = ChatUISpecRenderContext;
 
@@ -246,7 +251,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   if (typeof rating === 'number' && Number.isFinite(rating)) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-card-rating';
-    ratingRow.textContent = renderStarRating(rating);
+    ratingRow.appendChild(createStarRatingElement(rating));
     if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
       const count = document.createElement('span');
       count.className = 'gengage-chat-product-card-review-count';

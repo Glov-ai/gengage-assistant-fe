@@ -28,23 +28,22 @@
 }
 
 .gengage-simrel-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--gengage-simrel-columns, 4), minmax(0, 1fr));
-  gap: 14px;
-  padding: 10px 0 16px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 0 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
 
-@media (max-width: 992px) {
-  .gengage-simrel-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.gengage-simrel-grid::-webkit-scrollbar {
+  display: none;
 }
 
-@media (max-width: 768px) {
-  .gengage-simrel-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
+.gengage-simrel-grid > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
 }
 
 .gengage-simrel-card {
@@ -60,12 +59,9 @@
     box-shadow 0.2s ease,
     transform 0.1s ease;
   box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
-}
-
-.gengage-simrel-grid .gengage-simrel-card.gengage-chat-product-card {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
 }
 
 .gengage-simrel-card:hover {
@@ -75,15 +71,15 @@
 
 .gengage-simrel-card-image {
   position: relative;
-  aspect-ratio: 1;
   overflow: hidden;
   background: #fff;
 }
 
 .gengage-simrel-card-image img {
   width: 100%;
-  height: 100%;
+  height: 120px;
   object-fit: contain;
+  display: block;
   padding: 8px;
   box-sizing: border-box;
 }
@@ -101,7 +97,6 @@
 }
 
 .gengage-simrel-card-info {
-  flex: 1;
   padding: 8px 10px 10px;
   display: flex;
   flex-direction: column;
@@ -125,7 +120,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 0;
+  min-height: calc(2 * 1.35em);
 }
 
 .gengage-simrel-card-rating {
@@ -133,17 +128,30 @@
   color: var(--_gengage-rating-color);
 }
 
+.gengage-simrel-card-rating .gengage-star-half {
+  display: inline-block;
+  position: relative;
+}
+
+.gengage-simrel-card-rating .gengage-star-half > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  width: 0.5em;
+}
+
 .gengage-simrel-card-review-count {
   color: var(--_gengage-text-secondary);
 }
 
 .gengage-simrel-card-price {
-  margin-top: auto;
   padding-top: 4px;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
-  gap: 4px;
+  gap: 2px 4px;
 }
 
 .gengage-simrel-card-price-original {
@@ -160,17 +168,32 @@
 }
 
 .gengage-simrel-card-cta {
+  display: block;
+  margin-top: auto;
   width: 100%;
-  min-height: 40px;
+  padding: 8px 10px;
+  text-align: center;
   border: none;
   border-top: 1px solid var(--_gengage-surface-muted);
   border-radius: 0;
   background: transparent;
+  color: var(--gengage-primary-color, #3b82f6);
   font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
-.gengage-simrel-container .gengage-simrel-atc {
+.gengage-simrel-card-cta:hover {
+  color: var(--gengage-primary-color, #0b24d6);
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-simrel-card .gengage-simrel-atc {
   display: flex;
   width: 100%;
   border-top: 1px solid var(--_gengage-border-color);
@@ -181,7 +204,7 @@
   background: transparent;
 }
 
-.gengage-simrel-container .gengage-simrel-atc.gengage-qty-stepper {
+.gengage-simrel-card .gengage-simrel-atc.gengage-qty-stepper {
   gap: 0;
   overflow: hidden;
   border-radius: 0;
@@ -191,24 +214,24 @@
   border-bottom: none;
 }
 
-.gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn {
+.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
   width: 32px;
   height: 36px;
   color: var(--_gengage-text-secondary);
   font-size: 14px;
 }
 
-.gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
+.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
   background: var(--_gengage-surface-muted);
 }
 
-.gengage-simrel-container .gengage-simrel-atc .gengage-qty-value {
+.gengage-simrel-card .gengage-simrel-atc .gengage-qty-value {
   min-width: 24px;
   font-size: 13px;
   color: var(--_gengage-text-primary);
 }
 
-.gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit {
+.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
   flex: 1;
   border-left: 1px solid var(--_gengage-border-color);
   background: transparent;
@@ -224,9 +247,20 @@
     background 0.15s ease;
 }
 
-.gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit:hover {
+.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit:hover {
   color: var(--gengage-primary-color, #0b24d6);
   background: var(--_gengage-surface-muted);
+}
+
+.gengage-simrel-card-oos {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: center;
+  border-top: 1px solid var(--_gengage-surface-muted);
+  color: var(--_gengage-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .gengage-simrel-quick-actions {
@@ -260,7 +294,8 @@
 }
 
 .gengage-simrel-empty {
-  grid-column: 1 / -1;
+  width: 100%;
+  flex: 1 0 100%;
   text-align: center;
   padding: 40px 20px;
   color: var(--_gengage-text-secondary);
@@ -327,6 +362,18 @@
   .gengage-simrel-grid {
     gap: 10px;
     padding-top: 8px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .gengage-simrel-card {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    scroll-snap-align: center;
+  }
+
+  .gengage-simrel-card-image img {
+    height: 140px;
   }
 
   .gengage-simrel-card-cta,
@@ -336,13 +383,13 @@
   }
 
   /* Ensure 44x44px minimum touch targets on mobile (WCAG 2.5.5) */
-  .gengage-simrel-container .gengage-simrel-atc .gengage-qty-btn {
+  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
     width: 44px;
     height: 44px;
     font-size: 16px;
   }
 
-  .gengage-simrel-container .gengage-simrel-atc .gengage-qty-submit {
+  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
     min-height: 44px;
     flex-basis: auto;
     border-left: 1px solid var(--_gengage-border-color);

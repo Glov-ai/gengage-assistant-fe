@@ -864,15 +864,25 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       return;
     }
 
-    // Keep panel visible during search — show loading skeleton instead of collapsing.
-    // Skip for preservePanel actions (like/addToCart) that shouldn't disrupt current panel.
-    if (!options?.preservePanel) {
-      if (this._drawer?.hasPanelContent()) {
-        this._drawer.showPanelLoading();
+    // Preserve panel during the request — don't clear or show loading skeleton
+    // until the backend explicitly signals new panel content (panelLoading event).
+    // The snapshot is deferred: only cloned when panelLoading arrives, so the
+    // happy path (backend sends new content) pays no cloning cost.
+    let prePanelSnapshot: HTMLElement | null = null;
+    const snapshotPanelIfNeeded = (): void => {
+      if (prePanelSnapshot || options?.preservePanel) return;
+      const contentEl = this._drawer?.getPanelContentElement();
+      if (contentEl) prePanelSnapshot = contentEl.cloneNode(true) as HTMLElement;
+    };
+    const restoreOrClearPanel = (): void => {
+      if (!this._drawer?.isPanelLoading()) return;
+      if (prePanelSnapshot) {
+        this._drawer.setPanelContent(prePanelSnapshot);
       } else {
-        this._drawer?.clearPanel();
+        this._drawer.clearPanel();
       }
-    }
+      prePanelSnapshot = null;
+    };
 
     // Show typing indicator
     this._drawer?.showTypingIndicator();
@@ -1393,6 +1403,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (event.meta.panelLoading) {
               panelLoadingSeen = true;
               panelContentReceived = false;
+              // Snapshot current panel before replacing with skeleton
+              snapshotPanelIfNeeded();
               const pendingType =
                 typeof event.meta.panelPendingType === 'string' ? event.meta.panelPendingType : undefined;
               if (this._panel) this._panel.currentType = null;
@@ -1438,6 +1450,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (event.meta.analyzeAnimation) {
               panelLoadingSeen = true;
               panelContentReceived = false;
+              snapshotPanelIfNeeded();
               if (this._panel) this._panel.currentType = null;
               this._drawer?.showPanelLoading();
               // Default to product details title during analyze
@@ -1495,9 +1508,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._drawer?.removeTypingIndicator();
           // Capture panel state before resetting — needed for error gating below
           const hadPanelContent = panelContentReceived;
-          if (panelLoadingSeen && !panelContentReceived && this._drawer?.isPanelLoading()) {
-            this._drawer.clearPanel();
-          }
+          if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
           panelContentReceived = false;
           // Skip error toast when the stream already delivered user-facing content
@@ -1556,9 +1567,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
-          if (panelLoadingSeen && !panelContentReceived && this._drawer?.isPanelLoading()) {
-            this._drawer.clearPanel();
-          }
+          if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
           panelContentReceived = false;
           // Detect failed PDP auto-launch: silent launch action that produced

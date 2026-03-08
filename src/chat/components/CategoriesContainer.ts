@@ -12,6 +12,8 @@ import type { UIElement } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 import type { NormalizedProduct } from '../../common/protocol-adapter.js';
 import { isSafeImageUrl } from '../../common/safe-html.js';
+import { formatPrice } from '../../common/price-formatter.js';
+import { addImageErrorHandler } from '../../common/product-utils.js';
 
 interface GroupData {
   groupName: string;
@@ -141,6 +143,8 @@ function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRe
     img.className = 'gengage-chat-product-card-img';
     img.src = product.imageUrl;
     img.alt = product.name;
+    img.loading = 'lazy';
+    addImageErrorHandler(img);
     card.appendChild(img);
   }
 
@@ -155,7 +159,7 @@ function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRe
   if (product.price) {
     const priceEl = document.createElement('div');
     priceEl.className = 'gengage-chat-product-card-price';
-    priceEl.textContent = product.price;
+    priceEl.textContent = formatPrice(product.price, ctx.pricing);
     body.appendChild(priceEl);
   }
 

@@ -143,6 +143,7 @@ export function createNoopSimrelContext(): SimRelUISpecRenderContext {
       emptyStateMessage: 'No similar products found.',
       addToCartButton: 'Add to Cart',
       ctaLabel: 'View',
+      outOfStockLabel: 'Out of Stock',
       priceSuffix: ' TL',
     },
     pricing: {

@@ -82,6 +82,7 @@ export interface SimRelI18n {
   emptyStateMessage: string;
   addToCartButton: string;
   ctaLabel: string;
+  outOfStockLabel: string;
   /**
    * @deprecated Prefer `pricing` config on the widget for locale-aware formatting.
    * Kept for backwards compatibility with existing custom integrations.

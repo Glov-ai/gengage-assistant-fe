@@ -23,13 +23,10 @@ function isEnabled(): boolean {
 /** Log a debug message (only when gengage:debug is enabled). */
 export function debugLog(category: string, message: string, data?: unknown): void {
   if (!isEnabled()) return;
-  if (data !== undefined) {
-    // eslint-disable-next-line no-console -- debug utility, gated by localStorage flag
-    console.debug(`[gengage:${category}]`, message, data);
-  } else {
-    // eslint-disable-next-line no-console -- debug utility, gated by localStorage flag
-    console.debug(`[gengage:${category}]`, message);
-  }
+  const args: unknown[] = [`[gengage:${category}]`, message];
+  if (data !== undefined) args.push(data);
+  // eslint-disable-next-line no-console -- debug utility, gated by localStorage flag
+  console.debug(...args);
 }
 
 /** Reset the cached enabled state (for testing). */

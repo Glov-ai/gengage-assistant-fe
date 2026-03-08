@@ -61,13 +61,12 @@ function extractFreeTextActionMessage(action: ActionPayload): string | null {
     return action.payload.trim();
   }
 
-  if (
-    typeof action.payload === 'object' &&
-    action.payload !== null &&
-    typeof (action.payload as Record<string, unknown>).text === 'string'
-  ) {
-    const text = String((action.payload as Record<string, unknown>).text).trim();
-    if (text.length > 0) return text;
+  if (typeof action.payload === 'object' && action.payload !== null) {
+    const payloadObj = action.payload as Record<string, unknown>;
+    if (typeof payloadObj.text === 'string') {
+      const text = payloadObj.text.trim();
+      if (text.length > 0) return text;
+    }
   }
 
   if (typeof action.title === 'string' && action.title.trim().length > 0) {
