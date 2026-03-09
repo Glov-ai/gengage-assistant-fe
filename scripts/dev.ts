@@ -17,7 +17,7 @@
  */
 
 import { createServer, type Plugin } from 'vite';
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '..');
@@ -140,10 +140,9 @@ function gengageDevPlugin(opts: DevOptions): Plugin {
         }
         if (url === '/' || url === '/index.html' || url.startsWith('/?')) {
           const html = readFileSync(htmlPath, 'utf-8');
-          // Vite caches transformed html-proxy modules by URL. Version by
-          // HTML mtime so demo config edits are reflected without restart.
-          const htmlVersion = existsSync(htmlPath) ? Math.trunc(statSync(htmlPath).mtimeMs) : Date.now();
-          const transformUrl = `/__gengage_dev__/${opts.demo}/index.html?v=${htmlVersion}`;
+          // Use the real filesystem path (relative to Vite root) so Vite's
+          // html-proxy module resolver can find inline <script> modules.
+          const transformUrl = `/demos/${opts.demo}/index.html`;
           server
             .transformIndexHtml(transformUrl, html)
             .then((transformed) => {
@@ -192,8 +191,7 @@ function gengageLauncherPlugin(port: number): Plugin {
           const htmlPath = resolve(demoDir, 'index.html');
           if (existsSync(htmlPath)) {
             const html = readFileSync(htmlPath, 'utf-8');
-            const htmlVersion = Math.trunc(statSync(htmlPath).mtimeMs);
-            const transformUrl = `/__gengage_dev__/${demoName}/index.html?v=${htmlVersion}`;
+            const transformUrl = `/demos/${demoName}/index.html`;
             server
               .transformIndexHtml(transformUrl, html)
               .then((transformed) => {
