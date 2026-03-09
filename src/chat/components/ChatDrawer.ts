@@ -88,6 +88,7 @@ export class ChatDrawer {
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
   private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
+  private _conversationEl: HTMLElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
@@ -342,6 +343,7 @@ export class ChatDrawer {
     // Conversation wrapper — header lives inside so it only spans chat width
     const conversation = document.createElement('div');
     conversation.className = 'gengage-chat-conversation';
+    this._conversationEl = conversation;
     conversation.appendChild(header);
 
     // Offline status bar (hidden by default, shown when navigator.onLine === false)
@@ -618,6 +620,10 @@ export class ChatDrawer {
 
     body.appendChild(conversation);
     this.root.appendChild(body);
+
+    // Horizontal swipe to toggle panel on mobile (GAP-101)
+    this._setupHorizontalSwipe(conversation);
+    this._setupHorizontalSwipe(this._panelEl);
 
     // Footer
     const footer = document.createElement('div');
@@ -1113,6 +1119,40 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+  }
+
+  /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */
+  private _setupHorizontalSwipe(el: HTMLElement): void {
+    let startX = 0;
+    let startY = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      const t = e.touches[0];
+      if (!t) return;
+      startX = t.clientX;
+      startY = t.clientY;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      // Only trigger if horizontal movement > 50px and dominant direction
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 2) {
+        this.togglePanel();
+        this._onPanelToggle?.();
+      }
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    this._cleanups.push(() => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    });
   }
 
   /** Toggle panel between collapsed and expanded. */
