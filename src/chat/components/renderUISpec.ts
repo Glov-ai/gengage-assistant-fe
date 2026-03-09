@@ -308,12 +308,12 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     body.appendChild(stock);
   }
 
-  // Promotion badges (e.g. "Free Shipping", "Flash Sale")
+  // Promotion badges (e.g. "Free Shipping", "Flash Sale") — max 3
   const promotions = product['promotions'] as string[] | undefined;
   if (promotions && promotions.length > 0) {
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-card-promos';
-    for (const promo of promotions) {
+    for (const promo of promotions.slice(0, 3)) {
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-promo-badge';
       badge.textContent = promo;
@@ -607,12 +607,12 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     content.appendChild(stock);
   }
 
-  // Promotion badges (e.g. "Free Shipping", "Flash Sale")
+  // Promotion badges (e.g. "Free Shipping", "Flash Sale") — max 3
   const promotions = product['promotions'] as string[] | undefined;
   if (promotions && promotions.length > 0) {
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-details-promos';
-    for (const promo of promotions) {
+    for (const promo of promotions.slice(0, 3)) {
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-details-promo-badge';
       badge.textContent = promo;
