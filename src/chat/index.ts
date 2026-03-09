@@ -735,11 +735,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!hasUserMessages) {
       ga.trackConversationStart();
     }
-    const action: ActionPayload = {
-      title: text,
-      type: 'user_message',
-      payload: text,
-    };
+    // Image upload from Chat Input uses findSimilar (not inputText) per wire protocol
+    const action: ActionPayload =
+      attachment !== undefined
+        ? { title: text, type: 'findSimilar', payload: text ? { text } : {} }
+        : { title: text, type: 'user_message', payload: text };
     if (attachment !== undefined) {
       this._sendAction(action, { attachment });
     } else {
