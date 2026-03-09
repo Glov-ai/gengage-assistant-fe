@@ -915,7 +915,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const visibleMessages = this._getVisibleMessages();
     const chatHistory = visibleMessages
-      .filter((m) => m.content)
+      // Keep assistant messages even when empty (panel-only responses) so the
+      // backend sees the proper alternating user/model turn structure.  Exclude
+      // the current bot placeholder (just created, not yet populated).
+      .filter((m) => m !== botMsg && (m.content || m.role === 'assistant'))
       .slice(-50)
       .map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
