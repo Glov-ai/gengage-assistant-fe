@@ -1061,6 +1061,10 @@ export class ChatDrawer {
     this._panelTopBar.update(canBack, canForward, title);
   }
 
+  getPanelTopBarTitle(): string {
+    return this._panelTopBar.getTitle();
+  }
+
   /**
    * Hide the panel and clear its content. Always hides — even in force-expanded mode.
    * Callers: _hideDrawer (stale panel cleanup), stream onDone (loading skeleton cleanup),

@@ -161,6 +161,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _threadsWithFirstBot: Set<string> = new Set();
   /** Panel state manager (snapshots, topbar, navigation). */
   private _panel: PanelManager | null = null;
+  /** Client-side panel navigation stack for local drilldowns (e.g. card → detail). */
+  private _localPanelHistory: Array<{ el: HTMLElement; title: string }> = [];
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
@@ -222,7 +224,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.persistPanelState(config.accountId);
       },
       onRollback: (messageId) => this._handleRollback(messageId),
-      onPanelBack: () => this._panel?.navigateBack(),
+      onPanelBack: () => this._navigatePanelBack(),
       onPanelForward: () => this._panel?.navigateForward(),
       headerTitle: config.headerTitle,
       headerAvatarUrl: config.headerAvatarUrl,
@@ -785,6 +787,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!options?.preservePanel && this._comparisonSelectMode) {
       this._comparisonSelectMode = false;
       this._comparisonSelectedSkus = [];
+    }
+
+    // Clear local panel history on new requests (fresh panel context)
+    if (!options?.preservePanel) {
+      this._localPanelHistory = [];
     }
 
     // Branch deletion: if user is sending from a rewound position, prune future messages
@@ -1971,6 +1978,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    * Extracted so both the render-context callback and DOM-created checkboxes
    * share the same state-mutation + refresh path.
    */
+  /**
+   * Panel back navigation: pop local drilldown history first (e.g. card→detail),
+   * then fall back to thread-level history.
+   */
+  private _navigatePanelBack(): void {
+    const prev = this._localPanelHistory.pop();
+    if (prev) {
+      this._drawer?.setPanelContent(prev.el);
+      const canBack = this._localPanelHistory.length > 0 || (this._panel?.threads.length ?? 0) > 1;
+      this._drawer?.updatePanelTopBar(canBack, false, prev.title);
+      return;
+    }
+    this._panel?.navigateBack();
+  }
+
   private _toggleComparisonSku(sku: string): void {
     if (sku === '') {
       this._comparisonSelectMode = !this._comparisonSelectMode;
@@ -2150,6 +2172,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         );
       },
       onProductSelect: (product) => {
+        // Save current panel content to local history so back button can restore it
+        const currentContent = this._drawer?.getPanelContentElement();
+        if (currentContent) {
+          const currentTitle = this._drawer?.getPanelTopBarTitle() ?? '';
+          this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+        }
         const detailSpec: import('../common/types.js').UISpec = {
           root: 'root',
           elements: {
@@ -2160,6 +2188,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           },
         };
         this._drawer?.setPanelContent(this._renderUISpec(detailSpec, ctx));
+        this._drawer?.updatePanelTopBar(true, false, this._i18n.panelTitleProductDetails);
       },
       i18n: this._i18n,
       pricing: this.config.pricing,
