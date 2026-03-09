@@ -77,6 +77,7 @@ export class ChatDrawer {
   private _scrollLockedUntil = 0;
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
+  private _panelFloatingEl: HTMLElement;
   private _thinkingSteps: string[] = [];
   private _firstBotMessageIds: Set<string> = new Set();
   private _voiceInput: VoiceInput | null = null;
@@ -394,6 +395,12 @@ export class ChatDrawer {
       onThumbnailClick: (threadId) => options.onThumbnailClick?.(threadId),
     });
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
+
+    // Floating overlay: sticky zero-height anchor so absolutely-positioned overlays
+    // (e.g. ChoicePrompter) stay fixed to the panel's visible area regardless of scroll.
+    this._panelFloatingEl = document.createElement('div');
+    this._panelFloatingEl.className = 'gengage-chat-panel-float';
+    this._panelEl.appendChild(this._panelFloatingEl);
 
     // Suggestion pills row (between messages and input)
     this._pillsEl = document.createElement('div');
@@ -937,6 +944,7 @@ export class ChatDrawer {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
+    this._panelEl.appendChild(this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -950,7 +958,7 @@ export class ChatDrawer {
 
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
-    this._panelEl.appendChild(el);
+    this._panelEl.insertBefore(el, this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1040,6 +1048,7 @@ export class ChatDrawer {
     }
 
     this._panelEl.appendChild(skeleton);
+    this._panelEl.appendChild(this._panelFloatingEl);
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -1061,6 +1070,7 @@ export class ChatDrawer {
   clearPanel(): void {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelFloatingEl);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');

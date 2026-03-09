@@ -3860,11 +3860,23 @@
   object-fit: cover;
 }
 
+/* ── Panel floating overlay: sticky zero-height anchor at the bottom of the scroll area.
+   Children (e.g. ChoicePrompter) use position:absolute and stay fixed to the visible area. ── */
+.gengage-chat-panel-float {
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* ── ChoicePrompter ── */
 .gengage-chat-choice-prompter {
   position: absolute;
   bottom: 12px;
   right: 12px;
+  pointer-events: auto;
   width: 200px;
   padding: 12px 14px;
   background: #fff;

@@ -1277,7 +1277,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             // Mount into the visible pane. On mobile (and when panel is collapsed),
             // panel can be off-screen; mounting there makes CTA unreachable.
             const shouldMountInConversation = this._isMobileViewport || this._drawer?.isPanelCollapsed();
-            const mountSelector = shouldMountInConversation ? '.gengage-chat-conversation' : '.gengage-chat-panel';
+            // On panel: mount into the sticky floating overlay so the prompter stays fixed
+            // to the visible area regardless of scroll (no layout space consumed).
+            const mountSelector = shouldMountInConversation
+              ? '.gengage-chat-conversation'
+              : '.gengage-chat-panel-float';
             const mountEl = this._shadow?.querySelector(mountSelector);
             if (mountEl) {
               mountEl.appendChild(this._choicePrompterEl);
