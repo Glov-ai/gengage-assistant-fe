@@ -823,6 +823,18 @@ export class ChatDrawer {
     this._scrollToBottom(true);
   }
 
+  /** Show error with recovery action pills ("Try again" + "Ask something else"). */
+  showErrorWithRecovery(
+    message: string,
+    actions: { onRetry: () => void; onNewQuestion: () => void },
+  ): void {
+    this.showError(message);
+    this.setPills([
+      { label: this.i18n.tryAgainButton, onAction: actions.onRetry },
+      { label: this.i18n.askSomethingElseButton, onAction: actions.onNewQuestion },
+    ]);
+  }
+
   clearMessages(): void {
     this.messagesEl.innerHTML = '';
   }

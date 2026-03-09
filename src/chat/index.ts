@@ -170,6 +170,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     action: ActionPayload;
     options?: { silent?: boolean; attachment?: File; preservePanel?: boolean; isPdpPrime?: boolean } | undefined;
   } | null = null;
+  /** Consecutive identical error counter for account-inactive detection. */
+  private _consecutiveErrorCount = 0;
+  /** Last error message text for deduplication. */
+  private _lastErrorMessage = '';
 
   protected async onInit(config: ChatWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
@@ -836,13 +840,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Add user message to UI (skip for silent/auto-launch actions)
     if (!options?.silent) {
-      const userMsg = this._createMessage('user', typeof action.payload === 'string' ? action.payload : action.title);
-      userMsg.threadId = threadId;
-      if (options?.attachment !== undefined) {
-        userMsg.attachment = options.attachment;
+      const userText = typeof action.payload === 'string' ? action.payload : action.title;
+      // Retry deduplication: skip adding a duplicate user bubble when retrying
+      const lastMsg = this._messages.length > 0 ? this._messages[this._messages.length - 1] : undefined;
+      const isDuplicate = lastMsg !== undefined && lastMsg.role === 'user' && lastMsg.content === userText;
+      if (!isDuplicate) {
+        const userMsg = this._createMessage('user', userText);
+        userMsg.threadId = threadId;
+        if (options?.attachment !== undefined) {
+          userMsg.attachment = options.attachment;
+        }
+        this._drawer?.addMessage(userMsg);
+        this._messages.push(userMsg);
       }
-      this._drawer?.addMessage(userMsg);
-      this._messages.push(userMsg);
     }
 
     const shouldShortCircuitUnavailableContext =
@@ -1535,12 +1545,42 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // The user is in an active conversation; a toast on top of the
               // chat is confusing and can overlap with prior bot messages.
               this.emit('error', err);
-              this._drawer?.showError(this._i18n.errorMessage, () => {
-                // Retry: resend the last action
-                if (this._lastSentAction) {
-                  this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
-                }
-              });
+
+              // Track consecutive identical errors — repeated failures suggest
+              // the account is inactive or backend is unreachable.
+              const errMsg = err.message;
+              if (errMsg === this._lastErrorMessage) {
+                this._consecutiveErrorCount++;
+              } else {
+                this._consecutiveErrorCount = 1;
+                this._lastErrorMessage = errMsg;
+              }
+
+              if (this._consecutiveErrorCount >= 2) {
+                // Escalate: show account-inactive message with recovery pills
+                this._drawer?.showErrorWithRecovery(this._i18n.accountInactiveMessage, {
+                  onRetry: () => {
+                    if (this._lastSentAction) {
+                      this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
+                    }
+                  },
+                  onNewQuestion: () => {
+                    this._drawer?.focusInput();
+                  },
+                });
+              } else {
+                // First error: show standard error with retry + recovery pills
+                this._drawer?.showErrorWithRecovery(this._i18n.errorMessage, {
+                  onRetry: () => {
+                    if (this._lastSentAction) {
+                      this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
+                    }
+                  },
+                  onNewQuestion: () => {
+                    this._drawer?.focusInput();
+                  },
+                });
+              }
             }
           }
           if (isPdpAutoLaunch) {
@@ -1566,6 +1606,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           this._activeRequestThreadId = null;
+          // Reset consecutive error counter on successful stream completion
+          this._consecutiveErrorCount = 0;
+          this._lastErrorMessage = '';
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();

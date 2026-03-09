@@ -165,6 +165,9 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     // if onUpdate fires between awaits, `this._abortController` gets swapped
     // but `signal` still refers to this invocation's controller.
     const signal = this._abortController.signal;
+    // Auto-abort after 10s to prevent indefinite loading state
+    const timeoutId = setTimeout(() => this._abortController?.abort(), 10_000);
+    signal.addEventListener('abort', () => clearTimeout(timeoutId));
 
     if (!this._contentEl) return;
     this._contentEl.innerHTML = '';

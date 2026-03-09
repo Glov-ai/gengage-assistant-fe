@@ -188,6 +188,9 @@ export interface ChatI18n {
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
+  tryAgainButton: string;
+  askSomethingElseButton: string;
+  accountInactiveMessage: string;
 }
 
 export interface ChatUISpecRenderContext {
