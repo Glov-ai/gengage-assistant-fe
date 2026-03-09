@@ -36,11 +36,7 @@ function makeContent(id: string): HTMLElement {
  * Simulate the panel update logic from index.ts onUISpec handler.
  * This mirrors the exact branching in the production code.
  */
-function applyPanelUpdate(
-  d: ChatDrawer,
-  content: HTMLElement,
-  action: PanelUpdateAction,
-): void {
+function applyPanelUpdate(d: ChatDrawer, content: HTMLElement, action: PanelUpdateAction): void {
   switch (action) {
     case 'appendSimilars':
     case 'append':

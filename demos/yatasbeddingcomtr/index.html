@@ -469,8 +469,15 @@
       </section>
     </main>
 
+    <link rel="stylesheet" href="/demos/yatasbeddingcomtr/yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import {
+        renderYatasSimRelCard,
+        renderYatasChatProductCard,
+        renderYatasCardElement,
+      } from '/demos/yatasbeddingcomtr/yatas-cards.ts';
+      import yatasCardsCss from '/demos/yatasbeddingcomtr/yatas-cards.css?inline';
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
@@ -514,21 +521,36 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Yataş'a Sor",
-          launcherSvg:
-            '<img src="https://storage.googleapis.com/gengage-resources-fr/launcher-image/glov-yatasbeddingcomtr-launcher.svg" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border-radius:50%">',
+          launcherImageUrl:
+            'https://storage.googleapis.com/gengage-resources-fr/launcher-image/glov-yatasbeddingcomtr-launcher.svg',
           headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
             poweredBy: 'Yataş Bedding AI Asistan',
           },
+          renderer: {
+            registry: {
+              ProductCard: renderYatasChatProductCard,
+            },
+          },
         },
         qna: {
           mountTarget: '#yatas-qna-section',
-          ctaText: 'Bu ürünle ilgili soru sor',
+          hideButtonRowCta: true,
+          inputPlaceholder: true,
+          i18n: {
+            sendButton: 'Bu ürünle ilgili soru sor',
+          },
         },
         simrel: {
           mountTarget: '#yatas-similar-products',
           discountType: 'badge',
+          renderCardElement: renderYatasCardElement,
+          renderer: {
+            registry: {
+              ProductCard: renderYatasSimRelCard,
+            },
+          },
         },
         onAddToCart: (p) => {
           console.log('[yatas] add-to-cart', p);
@@ -541,6 +563,17 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      // Inject Yataş card CSS into chat Shadow DOM (Shadow DOM isolates styles)
+      requestAnimationFrame(() => {
+        for (const el of document.querySelectorAll('*')) {
+          if (el.shadowRoot) {
+            const style = document.createElement('style');
+            style.textContent = yatasCardsCss;
+            el.shadowRoot.appendChild(style);
+          }
+        }
+      });
     </script>
   </body>
 </html>

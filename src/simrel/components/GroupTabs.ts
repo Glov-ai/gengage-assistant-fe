@@ -9,6 +9,7 @@ export interface GroupTabsOptions {
   onClick: (product: NormalizedProduct) => void;
   onAddToCart: (params: { sku: string; quantity: number; cartCode: string }) => void;
   renderCard?: (product: NormalizedProduct, index: number) => string;
+  renderCardElement?: (product: NormalizedProduct, index: number) => HTMLElement | null;
   i18n?: SimRelI18n;
 }
 
@@ -44,6 +45,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     if (options.i18n !== undefined) gridOpts.i18n = options.i18n;
     if (options.discountType !== undefined) gridOpts.discountType = options.discountType;
     if (options.renderCard !== undefined) gridOpts.renderCard = options.renderCard;
+    if (options.renderCardElement !== undefined) gridOpts.renderCardElement = options.renderCardElement;
     return gridOpts;
   };
 

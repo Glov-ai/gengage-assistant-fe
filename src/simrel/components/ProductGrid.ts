@@ -10,6 +10,7 @@ export interface ProductGridOptions {
   onClick: (product: NormalizedProduct) => void;
   onAddToCart: (params: { sku: string; quantity: number; cartCode: string }) => void;
   renderCard?: (product: NormalizedProduct, index: number) => string;
+  renderCardElement?: (product: NormalizedProduct, index: number) => HTMLElement | null;
   i18n?: SimRelI18n;
 }
 
@@ -34,6 +35,7 @@ export function renderProductGrid(options: ProductGridOptions): HTMLElement {
     if (options.i18n !== undefined) cardOpts.i18n = options.i18n;
     if (options.discountType !== undefined) cardOpts.discountType = options.discountType;
     if (options.renderCard !== undefined) cardOpts.renderCard = options.renderCard;
+    if (options.renderCardElement !== undefined) cardOpts.renderCardElement = options.renderCardElement;
     const card = renderProductCard(cardOpts);
     grid.appendChild(card);
   }

@@ -39,6 +39,8 @@ function toSimRelProduct(raw: unknown): SimilarProduct | null {
   if (typeof cartCode === 'string') result.cartCode = cartCode;
   const inStock = obj['inStock'];
   if (typeof inStock === 'boolean') result.inStock = inStock;
+  const extras = obj['extras'];
+  if (extras != null && typeof extras === 'object') result.extras = extras as Record<string, unknown>;
 
   return result;
 }
@@ -100,6 +102,7 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
     };
     if (discountType !== undefined) options.discountType = discountType;
     if (context.renderCard !== undefined) options.renderCard = context.renderCard;
+    if (context.renderCardElement !== undefined) options.renderCardElement = context.renderCardElement;
     if (context.pricing !== undefined) options.pricing = context.pricing;
     return renderProductCard(options);
   },
@@ -138,6 +141,7 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
     };
     if (context.discountType !== undefined) options.discountType = context.discountType;
     if (context.renderCard !== undefined) options.renderCard = context.renderCard;
+    if (context.renderCardElement !== undefined) options.renderCardElement = context.renderCardElement;
     return renderGroupTabs(options);
   },
 

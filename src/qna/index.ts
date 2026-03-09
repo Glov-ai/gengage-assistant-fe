@@ -219,9 +219,11 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       const renderContext: QNAUISpecRenderContext = {
         onAction: this._actionHandler,
         i18n: this._i18n,
-        onOpenChat: this._openChatHandler,
       };
-      if (this.config.ctaText !== undefined) renderContext.ctaText = this.config.ctaText;
+      if (!this.config.hideButtonRowCta) {
+        renderContext.onOpenChat = this._openChatHandler;
+        if (this.config.ctaText !== undefined) renderContext.ctaText = this.config.ctaText;
+      }
       if (effectivePlaceholders !== undefined) renderContext.inputPlaceholder = effectivePlaceholders;
 
       const fallbackSpec = this._buildFallbackActionsSpec(result.actions);

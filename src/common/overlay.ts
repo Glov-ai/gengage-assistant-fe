@@ -80,6 +80,7 @@ export interface OverlayChatOptions {
   variant?: ChatWidgetConfig['variant'];
   mountTarget?: HTMLElement | string;
   launcherSvg?: string;
+  launcherImageUrl?: string;
   headerTitle?: string;
   headerAvatarUrl?: string;
   headerBadge?: string;
@@ -90,19 +91,29 @@ export interface OverlayChatOptions {
   mobileInitialState?: 'half' | 'full';
   i18n?: Partial<ChatI18n>;
   actionHandling?: ChatWidgetConfig['actionHandling'];
+  /** UISpec renderer overrides for chat components. */
+  renderer?: ChatWidgetConfig['renderer'];
 }
 
 export interface OverlayQNAOptions {
   enabled?: boolean;
   mountTarget?: HTMLElement | string;
   ctaText?: string;
+  hideButtonRowCta?: boolean;
   inputPlaceholder?: QNAWidgetConfig['inputPlaceholder'];
+  i18n?: QNAWidgetConfig['i18n'];
+  /** UISpec renderer overrides for QNA components. */
+  renderer?: QNAWidgetConfig['renderer'];
 }
 
 export interface OverlaySimRelOptions {
   enabled?: boolean;
   mountTarget?: HTMLElement | string;
   discountType?: SimRelWidgetConfig['discountType'];
+  /** Custom card element renderer for the direct rendering path (GroupTabs/ProductGrid). */
+  renderCardElement?: SimRelWidgetConfig['renderCardElement'];
+  /** UISpec renderer overrides for simrel components. */
+  renderer?: SimRelWidgetConfig['renderer'];
 }
 
 export interface OverlayWidgetsOptions {
@@ -262,7 +273,8 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.locale !== undefined) config.locale = this.options.locale;
     if (this.options.pricing !== undefined) config.pricing = this.options.pricing;
     if (this.options.chat?.mountTarget !== undefined) config.mountTarget = this.options.chat.mountTarget;
-    if (this.options.chat?.launcherSvg !== undefined) config.launcherSvg = this.options.chat.launcherSvg;
+    if (this.options.chat?.launcherImageUrl !== undefined) config.launcherImageUrl = this.options.chat.launcherImageUrl;
+    else if (this.options.chat?.launcherSvg !== undefined) config.launcherSvg = this.options.chat.launcherSvg;
     if (this.options.chat?.headerTitle !== undefined) config.headerTitle = this.options.chat.headerTitle;
     if (this.options.chat?.headerAvatarUrl !== undefined) {
       config.headerAvatarUrl = this.options.chat.headerAvatarUrl;
@@ -285,6 +297,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.actionHandling !== undefined) {
       config.actionHandling = this.options.chat.actionHandling;
     }
+    if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
     }
@@ -325,9 +338,13 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
           };
           if (this.options.theme !== undefined) qnaConfig.theme = this.options.theme;
           if (this.options.qna?.ctaText !== undefined) qnaConfig.ctaText = this.options.qna.ctaText;
+          if (this.options.qna?.hideButtonRowCta !== undefined)
+            qnaConfig.hideButtonRowCta = this.options.qna.hideButtonRowCta;
           if (this.options.qna?.inputPlaceholder !== undefined) {
             qnaConfig.inputPlaceholder = this.options.qna.inputPlaceholder;
           }
+          if (this.options.qna?.i18n !== undefined) qnaConfig.i18n = this.options.qna.i18n;
+          if (this.options.qna?.renderer !== undefined) qnaConfig.renderer = this.options.qna.renderer;
           await qna.init(qnaConfig);
           this._qna = qna;
         } else {
@@ -366,6 +383,12 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
           if (this.options.pricing !== undefined) simRelConfig.pricing = this.options.pricing;
           if (this.options.simrel?.discountType !== undefined) {
             simRelConfig.discountType = this.options.simrel.discountType;
+          }
+          if (this.options.simrel?.renderCardElement !== undefined) {
+            simRelConfig.renderCardElement = this.options.simrel.renderCardElement;
+          }
+          if (this.options.simrel?.renderer !== undefined) {
+            simRelConfig.renderer = this.options.simrel.renderer;
           }
           if (this.options.onAddToCart !== undefined) {
             simRelConfig.onAddToCart = this.options.onAddToCart;
