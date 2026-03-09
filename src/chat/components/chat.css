@@ -3664,7 +3664,14 @@
   display: flex;
   gap: 6px;
   padding: 4px 12px 2px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gengage-chat-input-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .gengage-chat-input-chip {
