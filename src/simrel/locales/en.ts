@@ -6,5 +6,7 @@ export const SIMREL_I18N_EN: SimRelI18n = {
   addToCartButton: 'Add to cart',
   ctaLabel: 'View',
   outOfStockLabel: 'Out of Stock',
+  decreaseLabel: 'Decrease',
+  increaseLabel: 'Increase',
   priceSuffix: '',
 };

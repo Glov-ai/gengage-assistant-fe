@@ -107,6 +107,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
 
   const container = document.createElement('div');
   container.className = 'gengage-chat-comparison';
+  container.setAttribute('role', 'dialog');
+  container.setAttribute('aria-label', i18n?.comparisonHeading ?? 'Comparison Results');
 
   // Heading
   const heading = document.createElement('h3');

@@ -150,6 +150,8 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     const stepper = createQuantityStepper({
       compact: true,
       label: i18n?.addToCartButton ?? 'Add to Cart',
+      decreaseLabel: i18n?.decreaseLabel,
+      increaseLabel: i18n?.increaseLabel,
       onSubmit: (quantity) => {
         onAddToCart({ sku: product.sku, quantity, cartCode });
       },

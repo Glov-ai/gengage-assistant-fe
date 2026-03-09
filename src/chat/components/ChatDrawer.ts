@@ -183,7 +183,12 @@ export class ChatDrawer {
       favBtn.type = 'button';
       favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
       favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
+      favBtn.setAttribute('aria-pressed', 'false');
+      favBtn.addEventListener('click', () => {
+        const pressed = favBtn.getAttribute('aria-pressed') === 'true';
+        favBtn.setAttribute('aria-pressed', String(!pressed));
+        options.onFavoritesClick?.();
+      });
       headerRight.appendChild(favBtn);
     }
 
@@ -798,6 +803,7 @@ export class ChatDrawer {
   showError(message?: string, onRetry?: () => void): void {
     const errEl = document.createElement('div');
     errEl.className = 'gengage-chat-error';
+    errEl.setAttribute('role', 'alert');
     const textEl = document.createElement('span');
     textEl.textContent = message ?? this.i18n.errorMessage;
     errEl.appendChild(textEl);
@@ -866,8 +872,11 @@ export class ChatDrawer {
       if (pill.description) {
         const desc = document.createElement('span');
         desc.className = 'gengage-chat-pill-desc';
+        const descId = `pill-desc-${Math.random().toString(36).slice(2, 9)}`;
+        desc.id = descId;
         desc.textContent = pill.description;
         btn.appendChild(desc);
+        btn.setAttribute('aria-describedby', descId);
       }
 
       btn.addEventListener('click', () => pill.onAction());

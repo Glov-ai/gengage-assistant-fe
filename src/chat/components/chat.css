@@ -768,6 +768,12 @@
   font-size: 15px;
 }
 
+@media (max-width: 768px) {
+  .gengage-chat-bubble--assistant .gengage-chat-bubble-text {
+    line-height: 1.5;
+  }
+}
+
 /* Typing indicator */
 .gengage-chat-typing {
   display: flex;
@@ -2475,8 +2481,8 @@
   height: 20px;
   border: none;
   background: transparent;
-  color: #92400e;
-  font-size: 16px;
+  color: #78350f;
+  font-size: 18px;
   cursor: pointer;
   padding: 0;
   line-height: 1;
