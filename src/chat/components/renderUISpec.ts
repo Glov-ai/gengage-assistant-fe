@@ -147,10 +147,12 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   const productSku = product['sku'] as string | undefined;
   if (productSku) card.dataset['sku'] = productSku;
 
-  // Make card clickable to show detail in panel
+  // Make card clickable to show detail in panel (disabled in comparison select mode)
   if (ctx.onProductSelect) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', (e) => {
+      // Check live DOM: if card is inside a comparison wrapper, mode is active
+      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-product-card-atc')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-product-card-cta')) return;
       ctx.onProductSelect?.(product);
@@ -333,7 +335,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
     cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
-    cta.addEventListener('click', () => ctx.onAction(action));
+    cta.addEventListener('click', (e) => {
+      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) { e.stopPropagation(); return; }
+      ctx.onAction(action);
+    });
     card.appendChild(cta);
   } else if (url && isSafeUrl(url)) {
     const cta = document.createElement('a');
@@ -343,6 +348,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');
     cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
     cta.addEventListener('click', (e) => {
+      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) { e.preventDefault(); e.stopPropagation(); return; }
       if (ctx.onProductClick && sku) {
         e.preventDefault();
         ctx.onProductClick({ sku, url });
@@ -382,6 +388,14 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     checkbox.checked = ctx.comparisonSelectedSkus?.includes(sku) ?? false;
     checkbox.addEventListener('change', () => {
       ctx.onToggleComparisonSku?.(sku);
+    });
+
+    // Clicking anywhere on the card toggles comparison selection — no product detail navigation.
+    wrapper.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('.gengage-chat-comparison-checkbox')) return;
+      e.stopPropagation();
+      ctx.onToggleComparisonSku?.(sku);
+      checkbox.checked = !checkbox.checked;
     });
 
     wrapper.appendChild(checkbox);
