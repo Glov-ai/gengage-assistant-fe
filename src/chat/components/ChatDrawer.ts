@@ -23,6 +23,8 @@ export { SUGGESTED_ACTION_ICONS };
 export interface ChatDrawerOptions {
   i18n: ChatI18n;
   onSend: (text: string, attachment?: File) => void;
+  /** Callback fired when the cart icon button in the header is clicked. */
+  onCartClick?: (() => void) | undefined;
   onClose: () => void;
   onAttachment?: (file: File) => void;
   onPanelToggle?: () => void;
@@ -31,8 +33,9 @@ export interface ChatDrawerOptions {
   headerAvatarUrl?: string | undefined;
   headerBadge?: string | undefined;
   /** URL for the cart icon link in the header (e.g. "/sepetim"). */
+  /** @deprecated Use onCartClick instead. If set, the cart button will navigate to this URL. */
   headerCartUrl?: string | undefined;
-  /** Show a favorites (heart) toggle button in the header. */
+  /** @deprecated Favorites button is always shown. */
   headerFavoritesToggle?: boolean | undefined;
   onFavoritesClick?: (() => void) | undefined;
   /** Callback fired when the panel back button is clicked. */
@@ -78,6 +81,7 @@ export class ChatDrawer {
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
   private _panelFloatingEl: HTMLElement;
+  private _favBadgeEl: HTMLElement | null = null;
   private _thinkingSteps: string[] = [];
   private _firstBotMessageIds: Set<string> = new Set();
   private _voiceInput: VoiceInput | null = null;
@@ -165,27 +169,25 @@ export class ChatDrawer {
     const headerRight = document.createElement('div');
     headerRight.className = 'gengage-chat-header-right';
 
-    // Cart link (optional — production shows cart icon → /sepetim)
-    if (options.headerCartUrl) {
-      const cartLink = document.createElement('a');
-      cartLink.className = 'gengage-chat-header-btn';
-      safeSetAttribute(cartLink, 'href', options.headerCartUrl);
-      cartLink.target = '_blank';
-      cartLink.rel = 'noopener noreferrer';
-      cartLink.setAttribute('aria-label', this.i18n.cartAriaLabel);
-      cartLink.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
-      headerRight.appendChild(cartLink);
-    }
-
-    // Favorites heart toggle (optional)
-    if (options.headerFavoritesToggle) {
-      const favBtn = document.createElement('button');
-      favBtn.className = 'gengage-chat-header-btn';
-      favBtn.type = 'button';
-      favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
-      favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
-      headerRight.appendChild(favBtn);
+    // Cart button — always visible; navigates to headerCartUrl or fires onCartClick
+    {
+      let cartEl: HTMLElement;
+      if (options.headerCartUrl) {
+        const a = document.createElement('a');
+        safeSetAttribute(a, 'href', options.headerCartUrl);
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        cartEl = a;
+      } else {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.addEventListener('click', () => options.onCartClick?.());
+        cartEl = btn;
+      }
+      cartEl.className = 'gengage-chat-header-btn';
+      cartEl.setAttribute('aria-label', this.i18n.cartAriaLabel);
+      cartEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+      headerRight.appendChild(cartEl);
     }
 
     const closeBtn = document.createElement('button');
@@ -194,6 +196,26 @@ export class ChatDrawer {
     closeBtn.setAttribute('aria-label', this.i18n.closeButton);
     closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     closeBtn.addEventListener('click', options.onClose);
+
+    // Favorites button — always visible, placed just before the close button
+    {
+      const favBtn = document.createElement('button');
+      favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav';
+      favBtn.type = 'button';
+      favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
+      favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
+      const badge = document.createElement('span');
+      badge.className = 'gengage-chat-header-fav-badge';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.style.display = 'none';
+      favBtn.appendChild(badge);
+      this._favBadgeEl = badge;
+
+      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
+      headerRight.appendChild(favBtn);
+    }
+
     headerRight.appendChild(closeBtn);
     header.appendChild(headerRight);
 
@@ -983,6 +1005,11 @@ export class ChatDrawer {
     return null;
   }
 
+  /** Whether the panel is currently visible (may be empty). */
+  isPanelVisible(): boolean {
+    return this._panelVisible;
+  }
+
   /** Whether the panel is currently visible and has rendered content (beyond topbar + thumbnails column). */
   hasPanelContent(): boolean {
     return this._panelVisible && this.getPanelContentElement() !== null;
@@ -1063,6 +1090,17 @@ export class ChatDrawer {
 
   getPanelTopBarTitle(): string {
     return this._panelTopBar.getTitle();
+  }
+
+  /** Update the favorites badge count. Pass 0 to hide the badge. */
+  updateFavoritesBadge(count: number): void {
+    if (!this._favBadgeEl) return;
+    if (count > 0) {
+      this._favBadgeEl.textContent = count > 99 ? '99+' : String(count);
+      this._favBadgeEl.style.display = '';
+    } else {
+      this._favBadgeEl.style.display = 'none';
+    }
   }
 
   /**

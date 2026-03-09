@@ -38,8 +38,11 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Show a favorites (heart) toggle button in the header. */
   headerFavoritesToggle?: boolean;
 
-  /** Callback fired when the favorites header button is clicked. */
+  /** Callback fired when the favorites header button is clicked (before internal favorites panel opens). */
   onFavoritesClick?: () => void;
+
+  /** Callback fired when the cart icon button in the header is clicked (when headerCartUrl is not set). */
+  onCartClick?: () => void;
 
   /** Hide the launcher on mobile viewports. */
   hideMobileLauncher?: boolean;
@@ -181,6 +184,8 @@ export interface ChatI18n {
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
+  favoritesPageTitle: string;
+  emptyFavoritesMessage: string;
 }
 
 export interface ChatUISpecRenderContext {

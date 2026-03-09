@@ -81,4 +81,6 @@ export const CHAT_I18N_TR: ChatI18n = {
   reviewFilterNegative: 'Olumsuz',
   decreaseLabel: 'Azalt',
   increaseLabel: 'Artır',
+  favoritesPageTitle: 'Favorilerim',
+  emptyFavoritesMessage: 'Henüz favori ürün yok. Bir ürünü kalp ikonuna tıklayarak favorilere ekleyebilirsin.',
 };

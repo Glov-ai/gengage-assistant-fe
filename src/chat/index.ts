@@ -231,9 +231,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       headerBadge: config.headerBadge,
       headerCartUrl: config.headerCartUrl,
       headerFavoritesToggle: config.headerFavoritesToggle,
+      onCartClick: () => {
+        if (config.headerCartUrl) {
+          this._saveSessionAndOpenURL(config.headerCartUrl);
+        } else {
+          config.onCartClick?.();
+        }
+      },
       onFavoritesClick: () => {
         ga.trackLikeList();
         config.onFavoritesClick?.();
+        this._openFavoritesPanel();
       },
       onThumbnailClick: (threadId) => this._rollbackToThread(threadId),
       onLinkClick: (url) => {
@@ -1825,6 +1833,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Always restore favorites (user preference, not session state)
     await this._session.loadFavorites(userId, appId);
+    this._drawer?.updateFavoritesBadge(this._session.favoritedSkus.size);
 
     // Only restore chat state on explicit handoff (e.g. SimRel product navigation)
     if (!shouldRestore) return;
@@ -2225,6 +2234,67 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const userId = this.config.session?.userId ?? '';
     const appId = this.config.accountId;
     await this._session.toggleFavorite(userId, appId, sku, product);
+    this._drawer?.updateFavoritesBadge(this._session.favoritedSkus.size);
+  }
+
+  private _openFavoritesPanel(): void {
+    if (!this._drawer) return;
+
+    // Save current panel state to local history (if panel already has content)
+    const currentContent = this._drawer.getPanelContentElement();
+    if (currentContent) {
+      const currentTitle = this._drawer.getPanelTopBarTitle() ?? '';
+      this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+    }
+
+    this._drawer.setPanelContent(this._buildFavoritesPageEl());
+    this._drawer.updatePanelTopBar(true, false, this._i18n.favoritesPageTitle);
+  }
+
+  private _buildFavoritesPageEl(): HTMLElement {
+    const favorites = this._session?.getFavoriteProducts() ?? [];
+
+    if (favorites.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'gengage-chat-favorites-empty';
+
+      const icon = document.createElement('div');
+      icon.className = 'gengage-chat-favorites-empty-icon';
+      icon.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+      empty.appendChild(icon);
+
+      const text = document.createElement('p');
+      text.textContent = this._i18n.emptyFavoritesMessage;
+      empty.appendChild(text);
+
+      return empty;
+    }
+
+    // Convert favorites to product records and render as ProductGrid UISpec
+    const elements: import('../common/types.js').UISpec['elements'] = {};
+    const childKeys: string[] = [];
+
+    for (let i = 0; i < favorites.length; i++) {
+      const fav = favorites[i]!;
+      const key = `card_${i}`;
+      childKeys.push(key);
+      elements[key] = {
+        type: 'ProductCard',
+        props: {
+          product: {
+            sku: fav.sku,
+            name: fav.name,
+            imageUrl: fav.imageUrl,
+            price: fav.price,
+          } as Record<string, unknown>,
+        },
+      };
+    }
+
+    elements['grid'] = { type: 'ProductGrid', children: childKeys };
+
+    const spec: import('../common/types.js').UISpec = { root: 'grid', elements };
+    return this._renderUISpec(spec, this._buildRenderContext());
   }
 
   /**

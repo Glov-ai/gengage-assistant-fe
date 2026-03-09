@@ -81,4 +81,6 @@ export const CHAT_I18N_EN: ChatI18n = {
   reviewFilterNegative: 'Negative',
   decreaseLabel: 'Decrease',
   increaseLabel: 'Increase',
+  favoritesPageTitle: 'My Favorites',
+  emptyFavoritesMessage: 'No favorites yet. Heart a product to save it here.',
 };
