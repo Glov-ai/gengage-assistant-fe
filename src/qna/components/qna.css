@@ -7,6 +7,12 @@
   --_gengage-border-color: var(--gengage-border-color, #e5e7eb);
 }
 
+.gengage-qna-uispec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .gengage-qna-uispec > * {
   animation: gengage-qna-enter 0.15s cubic-bezier(0.2, 0.72, 0.2, 1) both;
 }

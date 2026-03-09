@@ -49,7 +49,7 @@ describe('ProductCard', () => {
     });
 
     expect(card.querySelector('.gengage-simrel-card-name')?.textContent).toBe('Test Product');
-    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299 TL');
+    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299,00 TL');
     expect(card.querySelector('img')?.src).toBe('https://cdn.example.com/img.jpg');
   });
 
@@ -174,7 +174,7 @@ describe('ProductCard', () => {
 
     const original = card.querySelector('.gengage-simrel-card-price-original');
     expect(original).toBeTruthy();
-    expect(original!.textContent).toBe('999 TL');
+    expect(original!.textContent).toBe('999,00 TL');
   });
 
   it('renders rating stars clamped to 0-5', () => {
