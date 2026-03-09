@@ -2,7 +2,7 @@
  * Tests for a11y attributes on ChatDrawer and ComparisonTable components.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { ChatDrawer } from '../src/chat/components/ChatDrawer.js';
 import { CHAT_I18N_TR } from '../src/chat/locales/index.js';
 import { renderComparisonTable } from '../src/chat/components/ComparisonTable.js';
