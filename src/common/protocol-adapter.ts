@@ -1675,6 +1675,28 @@ export interface NormalizedProduct {
   extras?: Record<string, unknown>;
 }
 
+/** V1 product keys consumed by productToNormalized — hoisted to avoid per-call Set allocation. */
+const KNOWN_V1_PRODUCT_KEYS: ReadonlySet<string> = new Set([
+  'sku',
+  'name',
+  'brand',
+  'images',
+  'price',
+  'price_discounted',
+  'price_currency',
+  'discount_reason',
+  'url',
+  'rating',
+  'review_count',
+  'cart_code',
+  'in_stock',
+  'category_ids',
+  'category_names',
+  'variants',
+  'facet_hits',
+  'promotions',
+]);
+
 export function productToNormalized(p: V1Product): NormalizedProduct {
   const hasDiscount = p.price_discounted != null && p.price_discounted > 0;
   const price = hasDiscount ? p.price_discounted : p.price;
@@ -1711,31 +1733,11 @@ export function productToNormalized(p: V1Product): NormalizedProduct {
   if (p.promotions && p.promotions.length > 0) result.promotions = p.promotions;
 
   // Collect any extra backend fields not consumed above.
-  const knownV1Keys: ReadonlySet<string> = new Set([
-    'sku',
-    'name',
-    'brand',
-    'images',
-    'price',
-    'price_discounted',
-    'price_currency',
-    'discount_reason',
-    'url',
-    'rating',
-    'review_count',
-    'cart_code',
-    'in_stock',
-    'category_ids',
-    'category_names',
-    'variants',
-    'facet_hits',
-    'promotions',
-  ]);
   const raw = p as unknown as Record<string, unknown>;
   const extras: Record<string, unknown> = {};
   let hasExtras = false;
   for (const key of Object.keys(raw)) {
-    if (!knownV1Keys.has(key)) {
+    if (!KNOWN_V1_PRODUCT_KEYS.has(key)) {
       extras[key] = raw[key];
       hasExtras = true;
     }
