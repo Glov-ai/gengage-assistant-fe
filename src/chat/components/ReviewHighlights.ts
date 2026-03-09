@@ -1,8 +1,9 @@
 /**
- * ReviewHighlights — renders review summary cards with filter tabs and sentiment tag pills.
+ * ReviewHighlights — renders review summary cards with filter tabs and tag pills.
  *
- * Production parity: filter tabs (All/Positive/Negative), sentiment pill summary,
- * and the existing per-review cards with tone coloring.
+ * Tag pills are clickable filters: clicking a pill shows only reviews with that tag.
+ * Sentiment tabs (All/Positive/Negative) work independently alongside tag filtering.
+ * By default the first tag pill is selected, showing its reviews.
  *
  * All text is set via textContent — no innerHTML, no XSS surface.
  */
@@ -49,7 +50,26 @@ export function renderReviewHighlights(
     else counts.neutral++;
   }
 
-  // Filter tabs
+  // Build unique tag list (ordered by first occurrence)
+  const tagCounts = new Map<string, { count: number; sentiment: string }>();
+  for (const item of items) {
+    if (typeof item.review_tag === 'string' && item.review_tag.length > 0) {
+      const existing = tagCounts.get(item.review_tag);
+      if (existing) {
+        existing.count++;
+      } else {
+        tagCounts.set(item.review_tag, { count: 1, sentiment: item.review_class ?? 'neutral' });
+      }
+    }
+  }
+
+  const firstTag = tagCounts.size > 0 ? tagCounts.keys().next().value as string : null;
+
+  // State
+  let activeSentiment = 'all';
+  let activeTag: string | null = firstTag;
+
+  // --- Sentiment filter tabs ---
   const tabBar = document.createElement('div');
   tabBar.className = 'gengage-chat-review-tabs';
 
@@ -57,18 +77,25 @@ export function renderReviewHighlights(
   const positiveLabel = options?.reviewFilterPositive ?? 'Positive';
   const negativeLabel = options?.reviewFilterNegative ?? 'Negative';
 
-  const filters: Array<{ label: string; filter: string }> = [{ label: `${allLabel} (${counts.all})`, filter: 'all' }];
-  if (counts.positive > 0) filters.push({ label: `${positiveLabel} (${counts.positive})`, filter: 'positive' });
-  if (counts.negative > 0) filters.push({ label: `${negativeLabel} (${counts.negative})`, filter: 'negative' });
+  const sentimentFilters: Array<{ label: string; filter: string }> = [
+    { label: `${allLabel} (${counts.all})`, filter: 'all' },
+  ];
+  if (counts.positive > 0) sentimentFilters.push({ label: `${positiveLabel} (${counts.positive})`, filter: 'positive' });
+  if (counts.negative > 0) sentimentFilters.push({ label: `${negativeLabel} (${counts.negative})`, filter: 'negative' });
 
-  let activeFilter = 'all';
-
+  // --- Review items container ---
   const itemsContainer = document.createElement('div');
   itemsContainer.className = 'gengage-chat-review-items';
 
   function renderItems(): void {
     while (itemsContainer.firstChild) itemsContainer.removeChild(itemsContainer.firstChild);
-    const filtered = activeFilter === 'all' ? items : items.filter((i) => i.review_class === activeFilter);
+
+    const filtered = items.filter((i) => {
+      const sentimentOk = activeSentiment === 'all' || i.review_class === activeSentiment;
+      const tagOk = activeTag === null || i.review_tag === activeTag;
+      return sentimentOk && tagOk;
+    });
+
     for (const review of filtered) {
       const item = document.createElement('article');
       item.className = 'gengage-chat-review-item';
@@ -102,15 +129,15 @@ export function renderReviewHighlights(
     }
   }
 
-  for (const f of filters) {
+  for (const f of sentimentFilters) {
     const tab = document.createElement('button');
     tab.className = 'gengage-chat-review-tab';
     tab.type = 'button';
     tab.textContent = f.label;
-    if (f.filter === activeFilter) tab.classList.add('gengage-chat-review-tab--active');
+    if (f.filter === activeSentiment) tab.classList.add('gengage-chat-review-tab--active');
 
     tab.addEventListener('click', () => {
-      activeFilter = f.filter;
+      activeSentiment = f.filter;
       for (const t of tabBar.querySelectorAll('.gengage-chat-review-tab')) {
         t.classList.toggle('gengage-chat-review-tab--active', t === tab);
       }
@@ -121,30 +148,22 @@ export function renderReviewHighlights(
 
   container.appendChild(tabBar);
 
-  // Sentiment tag pills (summary of unique tags with counts)
-  const tagCounts = new Map<string, { count: number; sentiment: string }>();
-  for (const item of items) {
-    if (typeof item.review_tag === 'string' && item.review_tag.length > 0) {
-      const existing = tagCounts.get(item.review_tag);
-      if (existing) {
-        existing.count++;
-      } else {
-        tagCounts.set(item.review_tag, { count: 1, sentiment: item.review_class ?? 'neutral' });
-      }
-    }
-  }
-
+  // --- Tag pills (clickable filters) ---
   if (tagCounts.size > 0) {
     const pillsRow = document.createElement('div');
     pillsRow.className = 'gengage-chat-review-pills';
+
     for (const [tag, data] of tagCounts) {
-      const pill = document.createElement('span');
+      const pill = document.createElement('button');
+      pill.type = 'button';
       pill.className = 'gengage-chat-review-pill';
       pill.dataset['tone'] = data.sentiment;
+      if (tag === activeTag) pill.classList.add('gengage-chat-review-pill--active');
 
       const icon = document.createElement('span');
       icon.className = 'gengage-chat-review-pill-icon';
-      icon.textContent = data.sentiment === 'positive' ? '\u2713' : data.sentiment === 'negative' ? '\u2715' : '\u25CF';
+      icon.textContent =
+        data.sentiment === 'positive' ? '\u2713' : data.sentiment === 'negative' ? '\u2715' : '\u25CF';
       pill.appendChild(icon);
 
       const tagText = document.createElement('span');
@@ -158,6 +177,16 @@ export function renderReviewHighlights(
         pill.appendChild(badge);
       }
 
+      pill.addEventListener('click', () => {
+        // Toggle: clicking active tag deselects (shows all)
+        activeTag = activeTag === tag ? null : tag;
+        for (const p of pillsRow.querySelectorAll('.gengage-chat-review-pill')) {
+          const isActive = activeTag !== null && (p as HTMLElement).querySelector('span:nth-child(2)')?.textContent === activeTag;
+          p.classList.toggle('gengage-chat-review-pill--active', isActive);
+        }
+        renderItems();
+      });
+
       pillsRow.appendChild(pill);
     }
     container.appendChild(pillsRow);
@@ -168,3 +197,4 @@ export function renderReviewHighlights(
 
   return container;
 }
+

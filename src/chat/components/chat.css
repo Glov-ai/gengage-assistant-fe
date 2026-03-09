@@ -1547,8 +1547,27 @@
   border-radius: 8px;
   background: #fff;
   font-size: 12px;
+  font-family: inherit;
   color: #334155;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gengage-chat-review-pill:hover {
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-chat-review-pill--active {
+  background: var(--_gengage-surface-muted);
+  border-color: #64748b;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.gengage-chat-review-pill--active .gengage-chat-review-pill-count {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .gengage-chat-review-pill[data-tone='positive'] {
