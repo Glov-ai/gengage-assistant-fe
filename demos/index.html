@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Dev — Demo Launcher</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-hover: #334155;
+        --border: #334155;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+
+      .header {
+        padding: 40px 24px 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 20px 24px 60px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-decoration: none;
+        color: var(--text);
+        transition: background 0.15s, border-color 0.15s, transform 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .card:hover {
+        background: var(--surface-hover);
+        border-color: var(--brand);
+        transform: translateY(-2px);
+      }
+
+      .card-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-swatch {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .card-title {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .card-subtitle {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .card-skus {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .sku-chip {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--muted);
+      }
+
+      .card-nav {
+        color: var(--muted);
+        font-size: 12px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .card-nav span {
+        background: rgba(255, 255, 255, 0.04);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .section-label {
+        max-width: 960px;
+        margin: 20px auto 0;
+        padding: 0 24px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Gengage Demo Launcher</h1>
+      <p>Pick an account demo to start the dev server with a real SKU</p>
+    </div>
+
+    <div class="section-label">Merchant Demos</div>
+    <div class="grid" id="merchant-grid"></div>
+
+    <div class="section-label">Framework / Integration Demos</div>
+    <div class="grid" id="framework-grid"></div>
+
+    <div class="footer">npm run dev</div>
+
+    <script type="module">
+      const merchants = [
+        {
+          id: 'koctascomtr',
+          name: 'Koctas',
+          color: '#ec6e00',
+          nav: ['Banyo', 'Mutfak', 'Bahce', 'Hirdavat', 'Elektrik'],
+          skus: ['1000465056', '5002998547', '1000511087'],
+        },
+        {
+          id: 'arcelikcomtr',
+          name: 'Arcelik',
+          color: '#d93131',
+          nav: ['Beyaz Esya', 'Televizyon', 'Kucuk Ev Aletleri'],
+          skus: ['3890 PREMIUM', '9624 EI'],
+        },
+        {
+          id: 'n11com',
+          name: 'n11',
+          color: '#ff44ef',
+          nav: ['Elektronik', 'Moda', 'Ev & Yasam', 'Kozmetik'],
+          skus: ['605132817', '234567890'],
+        },
+        {
+          id: 'hepsiburadacom',
+          name: 'Hepsiburada',
+          color: '#ff6000',
+          nav: ['Elektronik', 'Moda', 'Ev', 'Spor', 'Kozmetik'],
+          skus: ['HBCV00001ABCDE', 'BD123456'],
+        },
+        {
+          id: 'yatasbeddingcomtr',
+          name: 'Yatas Bedding',
+          color: '#4097ca',
+          nav: ['Urunler', 'Kampanyalar', 'Yeni Gelenler', 'Markalar'],
+          skus: ['1066800', '1058300'],
+        },
+        {
+          id: 'penticomtr',
+          name: 'Penti',
+          color: '#E91E63',
+          nav: ['Kadin', 'Erkek', 'Cocuk', 'Lisansli', 'Indirim'],
+          skus: ['PLNADGST22IY-BG40', 'PLTPVDMZ21SK-BK3'],
+        },
+      ];
+
+      const frameworks = [
+        { id: 'vanilla-script', name: 'Vanilla Script', color: '#64748b', desc: 'IIFE script tags, no bundler' },
+        { id: 'vanilla-esm', name: 'Vanilla ESM', color: '#64748b', desc: 'ES module import, Vite-served' },
+        { id: 'react', name: 'React', color: '#61dafb', desc: 'React CDN + IIFE bundles' },
+        { id: 'nextjs', name: 'Next.js', color: '#000000', desc: 'Next.js integration guide' },
+        { id: 'native', name: 'Native Mobile', color: '#a855f7', desc: 'Mobile WebView overlay' },
+        { id: 'gtm-custom', name: 'GTM Custom', color: '#4285f4', desc: 'Google Tag Manager embed' },
+      ];
+
+      function renderMerchantCard(m) {
+        const firstSku = m.skus[0];
+        const href = `${m.id}/?sku=${firstSku}`;
+        return `
+          <a class="card" href="${href}" style="--brand: ${m.color}">
+            <div class="card-top">
+              <div class="card-swatch" style="background: ${m.color}"></div>
+              <div>
+                <div class="card-title">${m.name}</div>
+                <div class="card-subtitle">${m.id}</div>
+              </div>
+            </div>
+            <div class="card-skus">
+              ${m.skus.map((s) => `<span class="sku-chip">${s}</span>`).join('')}
+            </div>
+            <div class="card-nav">
+              ${m.nav.map((n) => `<span>${n}</span>`).join('')}
+            </div>
+          </a>`;
+      }
+
+      function renderFrameworkCard(f) {
+        const href = `${f.id}/`;
+        return `
+          <a class="card" href="${href}" style="--brand: ${f.color}">
+            <div class="card-top">
+              <div class="card-swatch" style="background: ${f.color}"></div>
+              <div>
+                <div class="card-title">${f.name}</div>
+                <div class="card-subtitle">${f.desc}</div>
+              </div>
+            </div>
+          </a>`;
+      }
+
+      document.getElementById('merchant-grid').innerHTML = merchants.map(renderMerchantCard).join('');
+      document.getElementById('framework-grid').innerHTML = frameworks.map(renderFrameworkCard).join('');
+    </script>
+  </body>
+</html>

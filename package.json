@@ -78,6 +78,7 @@
     "build": "tsc && vite build && tsx scripts/build-iife.ts",
     "build:lib": "tsc && vite build",
     "build:iife": "tsx scripts/build-iife.ts",
+    "build:demos": "vite build --config vite.config.demos.ts",
     "dev": "tsx scripts/dev.ts",
     "kill": "tsx scripts/kill.ts",
     "typecheck": "tsc --noEmit",

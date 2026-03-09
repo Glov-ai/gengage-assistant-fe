@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
-    <title>Gengage Dev — yatasbeddingcomtr</title>
+    <title>Gengage Dev — penticomtr</title>
     <style>
       :root {
-        --brand-primary: #4097ca;
-        --brand-secondary: #17a8ff;
-        --brand-bg: #f0f0f0;
+        --brand-primary: #e91e63;
+        --brand-secondary: #f06292;
+        --brand-bg: #f8f8f8;
         --brand-surface: #ffffff;
-        --brand-text: #222222;
+        --brand-text: #1a1a2e;
         --brand-muted: #6b7280;
-        --brand-border: #d2d2d2;
+        --brand-border: #e5e5e5;
         --brand-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
       }
 
@@ -93,7 +93,8 @@
         gap: 10px;
         font-weight: 700;
         color: var(--brand-primary);
-        font-size: 18px;
+        font-size: 22px;
+        letter-spacing: 0.04em;
       }
 
       .host-topbar__dot {
@@ -252,6 +253,12 @@
         text-decoration: line-through;
       }
 
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
       .cta-row {
         display: flex;
         gap: 10px;
@@ -285,6 +292,28 @@
         font-size: 13px;
         display: grid;
         gap: 6px;
+      }
+
+      .size-selector {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .size-pill {
+        border: 1px solid var(--brand-border);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--brand-text);
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .size-pill:first-child {
+        border-color: var(--brand-primary);
+        color: var(--brand-primary);
       }
 
       /* ── Content card ── */
@@ -375,10 +404,10 @@
   <body>
     <!-- Dev header -->
     <div class="dev-header">
-      <p class="dev-header__title">Gengage Dev — yatasbeddingcomtr</p>
+      <p class="dev-header__title">Gengage Dev — penticomtr</p>
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
-        <span class="dev-header__item"><strong>account:</strong> <span>yatasbeddingcomtr</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>penticomtr</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -388,18 +417,18 @@
       <section class="host-topbar">
         <div class="host-topbar__brand">
           <span class="host-topbar__dot"></span>
-          <span>Yataş Bedding</span>
+          <span>Penti</span>
         </div>
         <nav class="host-nav" aria-label="Main navigation">
-          <span>Ürünler</span>
-          <span>Kampanyalar</span>
-          <span>Yeni Gelenler</span>
-          <span>Markalar</span>
-          <span>Destek</span>
+          <span>Kadın</span>
+          <span>Erkek</span>
+          <span>Çocuk</span>
+          <span>Lisanslı</span>
+          <span>İndirim</span>
         </nav>
       </section>
 
-      <p class="host-breadcrumb">Anasayfa / Kategori / Alt Kategori / <strong id="breadcrumb-sku">—</strong></p>
+      <p class="host-breadcrumb">Ana Sayfa / Kadın / İç Giyim / Sütyen / <strong id="breadcrumb-sku">—</strong></p>
 
       <!-- Product hero -->
       <section class="pdp-layout">
@@ -419,28 +448,39 @@
         </article>
 
         <article class="summary-card">
-          <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <div class="badge-chip">%25 İndirim</div>
+          <h1 class="summary-title">#İzbırakmaz Invisible Bej Balensiz Dikişsiz Bralet</h1>
           <div class="summary-meta">
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
-            <span>0.0 / 5 (0 değerlendirme)</span>
+            <span>4.9 / 5 (5 değerlendirme)</span>
+          </div>
+
+          <div style="margin-bottom: 4px">
+            <div style="font-size: 13px; font-weight: 600; color: var(--brand-text); margin-bottom: 6px">Beden</div>
+            <div class="size-selector">
+              <span class="size-pill">S/M</span>
+              <span class="size-pill">M/L</span>
+              <span class="size-pill">L/XL</span>
+            </div>
           </div>
 
           <div class="price-wrap">
-            <div class="price-main">XXX TL</div>
-            <div class="price-old">XXX TL</div>
+            <div class="price-old">₺1.499,99</div>
+            <div class="price-main">₺1.124,99</div>
+            <div class="price-discount">%25</div>
           </div>
 
           <div class="cta-row">
             <button class="btn btn--primary" type="button">Sepete Ekle</button>
-            <button class="btn btn--ghost" type="button">Favorilere Ekle</button>
+            <button class="btn btn--ghost" type="button">Favorilerime Ekle</button>
           </div>
 
           <ul class="feature-list">
-            <li>Lorem ipsum dolor sit amet</li>
-            <li>Consectetur adipiscing elit</li>
-            <li>Sed do eiusmod tempor incididunt</li>
+            <li>Dikişsiz, balensiz yapı</li>
+            <li>Çıkarılabilir kap, ayarlanabilir askı</li>
+            <li>İz bırakmaz teknoloji</li>
+            <li>30 gün içinde iade ve değişim</li>
           </ul>
         </article>
       </section>
@@ -449,35 +489,28 @@
       <section class="content-card">
         <div class="tabs">
           <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
-          <span class="tab-pill">Teknik Özellikler</span>
-          <span class="tab-pill">Kargo ve İade</span>
+          <span class="tab-pill">Ürün Özellikleri</span>
+          <span class="tab-pill">Değerlendirmeler</span>
         </div>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Bu alan yer tutucu içerik olarak kullanılmaktadır. Widget verileri bu sayfadaki içerikten
-          bağımsız olarak backend tarafından sağlanır.
+          Bu ürün iz bırakmayan teknolojiyle üretilmiştir. Balensiz yapısıyla gün boyunca konfor ve rahatlık sağlayan,
+          varlığını hissettirmeyen, dikişsiz yapıya sahip, hareket özgürlüğü vadeden Yok Gibi Bralet.
+          Widget verileri bu sayfadaki içerikten bağımsız olarak backend tarafından sağlanır.
         </p>
       </section>
 
       <!-- QNA widget mount point -->
-      <div id="yatas-qna-section" class="qna-section"></div>
+      <div id="penti-qna-section" class="qna-section"></div>
 
       <!-- SimRel widget mount point -->
       <section class="simrel-card">
         <h2 class="section-title">Benzer Ürünler</h2>
-        <div id="yatas-similar-products" class="simrel-mount"></div>
+        <div id="penti-similar-products" class="simrel-mount"></div>
       </section>
     </main>
 
-    <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import {
-        renderYatasSimRelCard,
-        renderYatasChatProductCard,
-        renderYatasCardElement,
-      } from './yatas-cards.ts';
-      import yatasCardsCss from './yatas-cards.css?inline';
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
@@ -488,54 +521,51 @@
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
 
+      const sockAvatarUrl = new URL('./penti-sock-avatar.svg', import.meta.url).href;
+
       const controller = await initOverlayWidgets({
-        accountId: 'yatasbeddingcomtr',
+        accountId: 'penticomtr',
         middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
-          primaryColor: '#4097ca',
+          primaryColor: '#E91E63',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#222222',
-          borderRadius: '6px',
+          foregroundColor: '#1a1a2e',
+          borderRadius: '8px',
           fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--color-client-primary': '#4097c8',
-          '--color-client-saturated': '#075b8b',
-          '--root-background': '#F6F6F6',
-          '--root-background-mobile': '#F6F6F6',
-          '--client-message-bubble': '#4097c8',
-          '--client-card': '#e5e5e5',
-          '--client-background': '#515151',
-          '--client-foreground': '#e9ecf2',
-          '--client-border': '#cccccc',
-          '--client-text': '#222',
-          '--client-primary-color': '#4097ca',
-          '--root-wrapper-background-color': '#f0f0f0',
-          '--root-wrapper-border-color': '#d2d2d2',
+          '--color-client-primary': '#E91E63',
+          '--color-client-saturated': '#AD1457',
+          '--root-background': '#f8f8f8',
+          '--root-background-mobile': '#f8f8f8',
+          '--client-message-bubble': '#FCE4EC',
+          '--client-card': '#ffffff',
+          '--client-background': '#1a1a2e',
+          '--client-foreground': '#f8f8f8',
+          '--client-border': '#e5e5e5',
+          '--client-text': '#1a1a2e',
+          '--client-primary-color': '#E91E63',
+          '--root-wrapper-background-color': '#f8f8f8',
+          '--root-wrapper-border-color': '#e5e5e5',
+          '--gengage-chat-launcher-size': '80px',
         },
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: "Yataş'a Sor",
-          launcherImageUrl:
-            'https://storage.googleapis.com/gengage-resources-fr/launcher-image/glov-yatasbeddingcomtr-launcher.svg',
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
+          headerTitle: "Penti'ye Sor",
+          launcherImageUrl: sockAvatarUrl,
+          headerAvatarUrl: sockAvatarUrl,
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
-            poweredBy: 'Yataş Bedding AI Asistan',
-          },
-          renderer: {
-            registry: {
-              ProductCard: renderYatasChatProductCard,
-            },
+            poweredBy: 'Penti AI Asistan',
           },
         },
         qna: {
-          mountTarget: '#yatas-qna-section',
+          mountTarget: '#penti-qna-section',
           hideButtonRowCta: true,
           inputPlaceholder: true,
           i18n: {
@@ -543,17 +573,17 @@
           },
         },
         simrel: {
-          mountTarget: '#yatas-similar-products',
+          mountTarget: '#penti-similar-products',
           discountType: 'badge',
-          renderCardElement: renderYatasCardElement,
-          renderer: {
-            registry: {
-              ProductCard: renderYatasSimRelCard,
-            },
-          },
+        },
+        kvkk: {
+          message:
+            'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
+          linkUrl: 'https://www.penti.com/tr/kisisel-verilerin-korunmasi',
+          linkText: 'KVKK Aydınlatma Metni',
         },
         onAddToCart: (p) => {
-          console.log('[yatas] add-to-cart', p);
+          console.log('[penti] add-to-cart', p);
           alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
         },
         onProductNavigate: (url, prodSku, sid) => {
@@ -563,17 +593,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      // Inject Yataş card CSS into chat Shadow DOM (Shadow DOM isolates styles)
-      requestAnimationFrame(() => {
-        for (const el of document.querySelectorAll('*')) {
-          if (el.shadowRoot) {
-            const style = document.createElement('style');
-            style.textContent = yatasCardsCss;
-            el.shadowRoot.appendChild(style);
-          }
-        }
-      });
     </script>
   </body>
 </html>
