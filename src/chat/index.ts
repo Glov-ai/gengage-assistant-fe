@@ -196,7 +196,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         onClick: () => this.open(),
         ariaLabel: this._i18n.openButton,
       };
-      if (config.launcherSvg !== undefined) launcherOpts.svgMarkup = config.launcherSvg;
+      if (config.launcherImageUrl !== undefined) launcherOpts.imageUrl = config.launcherImageUrl;
+      else if (config.launcherSvg !== undefined) launcherOpts.svgMarkup = config.launcherSvg;
       if (config.hideMobileLauncher !== undefined) launcherOpts.hideMobile = config.hideMobileLauncher;
       if (config.mobileBreakpoint !== undefined) launcherOpts.mobileBreakpoint = config.mobileBreakpoint;
       if (config.launcherTooltip !== undefined) launcherOpts.tooltip = config.launcherTooltip;

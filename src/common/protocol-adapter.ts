@@ -1671,6 +1671,8 @@ export interface NormalizedProduct {
   variants?: Array<Record<string, unknown>>;
   discountReason?: string;
   promotions?: string[];
+  /** Pass-through bag for backend fields not consumed by the SDK. */
+  extras?: Record<string, unknown>;
 }
 
 export function productToNormalized(p: V1Product): NormalizedProduct {
@@ -1707,6 +1709,38 @@ export function productToNormalized(p: V1Product): NormalizedProduct {
   if (p.variants && p.variants.length > 0) result.variants = p.variants;
   if (p.discount_reason !== undefined) result.discountReason = p.discount_reason;
   if (p.promotions && p.promotions.length > 0) result.promotions = p.promotions;
+
+  // Collect any extra backend fields not consumed above.
+  const knownV1Keys: ReadonlySet<string> = new Set([
+    'sku',
+    'name',
+    'brand',
+    'images',
+    'price',
+    'price_discounted',
+    'price_currency',
+    'discount_reason',
+    'url',
+    'rating',
+    'review_count',
+    'cart_code',
+    'in_stock',
+    'category_ids',
+    'category_names',
+    'variants',
+    'facet_hits',
+    'promotions',
+  ]);
+  const raw = p as unknown as Record<string, unknown>;
+  const extras: Record<string, unknown> = {};
+  let hasExtras = false;
+  for (const key of Object.keys(raw)) {
+    if (!knownV1Keys.has(key)) {
+      extras[key] = raw[key];
+      hasExtras = true;
+    }
+  }
+  if (hasExtras) result.extras = extras;
 
   return result;
 }

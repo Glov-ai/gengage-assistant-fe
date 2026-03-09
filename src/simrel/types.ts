@@ -46,6 +46,14 @@ export interface SimRelWidgetConfig extends BaseWidgetConfig {
    */
   renderCard?: (product: SimilarProduct, index: number) => string;
 
+  /**
+   * Override the default product card with a full DOM element.
+   * Unlike `renderCard` (HTML string), this returns an HTMLElement,
+   * allowing interactive elements (event listeners, state, etc.).
+   * Takes precedence over `renderCard` when both are provided.
+   */
+  renderCardElement?: (product: SimilarProduct, index: number) => HTMLElement | null;
+
   /** Show the first slot as a "special" card (e.g. a promo or bundle). */
   useSpecialCard?: boolean;
   renderSpecialCard?: (product: SimilarProduct) => string | null;
@@ -75,6 +83,8 @@ export interface SimilarProduct {
   reviewCount?: number;
   cartCode?: string;
   inStock?: boolean;
+  /** Pass-through bag for backend fields not consumed by the SDK. */
+  extras?: Record<string, unknown>;
 }
 
 export interface SimRelI18n {
@@ -96,6 +106,7 @@ export interface SimRelUISpecRenderContext {
   onAction?: (action: ActionPayload) => void;
   discountType?: 'strike-through' | 'badge';
   renderCard?: (product: SimilarProduct, index: number) => string;
+  renderCardElement?: (product: SimilarProduct, index: number) => HTMLElement | null;
   i18n: SimRelI18n;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig;
 }
