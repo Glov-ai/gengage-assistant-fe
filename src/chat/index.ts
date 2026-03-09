@@ -243,6 +243,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         config.onFavoritesClick?.();
         this._openFavoritesPanel();
       },
+      getMobileState: () => this._openState ?? 'full',
+      getMobileViewport: () => this._isMobileViewport,
+      onMobileSnap: (state) => {
+        if (state === 'close') {
+          this.close();
+        } else {
+          this._openState = state;
+          this._applyOpenStateClasses();
+        }
+      },
       onThumbnailClick: (threadId) => this._rollbackToThread(threadId),
       onLinkClick: (url) => {
         this._saveSessionAndOpenURL(url);
@@ -1997,6 +2007,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.setPanelContent(prev.el);
       const canBack = this._localPanelHistory.length > 0 || (this._panel?.threads.length ?? 0) > 1;
       this._drawer?.updatePanelTopBar(canBack, false, prev.title);
+      return;
+    }
+    // On mobile, when there is no local history left, back = hide the side panel
+    // (content is preserved so it can be reopened via the header button)
+    if (this._isMobileViewport) {
+      this._drawer?.hideMobilePanel();
       return;
     }
     this._panel?.navigateBack();

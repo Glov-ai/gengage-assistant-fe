@@ -168,6 +168,7 @@ export interface ChatI18n {
   stillWorkingMessage: string;
   cartAriaLabel: string;
   favoritesAriaLabel: string;
+  showPanelAriaLabel: string;
   addToFavoritesLabel: string;
   customerReviewsTitle: string;
   togglePanelAriaLabel: string;

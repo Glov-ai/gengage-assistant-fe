@@ -65,6 +65,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   stillWorkingMessage: 'Still working on your request...',
   cartAriaLabel: 'My cart',
   favoritesAriaLabel: 'My favorites',
+  showPanelAriaLabel: 'Show Results',
   addToFavoritesLabel: 'Add to favorites',
   customerReviewsTitle: 'Customer Reviews',
   togglePanelAriaLabel: 'Toggle panel',

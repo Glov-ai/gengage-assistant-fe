@@ -42,6 +42,16 @@ export interface ChatDrawerOptions {
   onPanelBack?: (() => void) | undefined;
   /** Callback fired when the panel forward button is clicked. */
   onPanelForward?: (() => void) | undefined;
+  /**
+   * Fired when the user drags the mobile handle and releases.
+   * 'half' | 'full' → switch to that snap position.
+   * 'close'          → close the drawer.
+   */
+  onMobileSnap?: ((state: 'half' | 'full' | 'close') => void) | undefined;
+  /** Returns the current mobile sheet state so the drag handler knows which snap to target. */
+  getMobileState?: (() => 'half' | 'full') | undefined;
+  /** Returns true when the chat is displayed as a mobile bottom-sheet. Used to keep the side-panel back button always enabled. */
+  getMobileViewport?: (() => boolean) | undefined;
   /** Callback fired when a product thumbnail is clicked (for thread rollback). */
   onThumbnailClick?: ((threadId: string) => void) | undefined;
   /** Callback fired when a link in bot HTML is clicked. */
@@ -93,8 +103,11 @@ export class ChatDrawer {
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
   private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly _options: ChatDrawerOptions;
+  private _reopenPanelBtn: HTMLButtonElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
+    this._options = options;
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
     this.onSend = options.onSend;
     if (options.onPanelToggle !== undefined) {
@@ -121,6 +134,92 @@ export class ChatDrawer {
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-label', this.i18n.headerTitle ?? 'Chat');
     this.root.setAttribute('aria-modal', 'true');
+
+    // Mobile drag handle — pill indicator at the very top of the sheet
+    {
+      const handleEl = document.createElement('div');
+      handleEl.className = 'gengage-chat-drawer-handle';
+      handleEl.setAttribute('aria-hidden', 'true');
+      this.root.appendChild(handleEl);
+
+      const SNAP_THRESHOLD = 72; // px to trigger a snap to the next position
+      let dragStartY = 0;
+      let dragDelta = 0;
+      let dragging = false;
+
+      const onHandleTouchStart = (e: TouchEvent) => {
+        if (window.innerWidth > 768) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragStartY = t.clientY;
+        dragDelta = 0;
+        dragging = true;
+        this.root.style.transition = 'none';
+      };
+
+      const onHandleTouchMove = (e: TouchEvent) => {
+        if (!dragging) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragDelta = t.clientY - dragStartY;
+        // Clamp: don't allow pulling upward past the current top
+        const currentState = options.getMobileState?.() ?? 'full';
+        const clampedDelta = currentState === 'full'
+          ? Math.max(0, dragDelta)   // full → only drag down
+          : dragDelta;               // half → allow both directions
+        e.preventDefault(); // prevent body scroll
+        this.root.style.transform = `translateY(${clampedDelta}px)`;
+      };
+
+      const onHandleTouchEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        const currentState = options.getMobileState?.() ?? 'full';
+
+        let nextState: 'half' | 'full' | 'close';
+        if (dragDelta > SNAP_THRESHOLD) {
+          nextState = currentState === 'full' ? 'half' : 'close';
+        } else if (dragDelta < -SNAP_THRESHOLD && currentState === 'half') {
+          nextState = 'full';
+        } else {
+          nextState = currentState; // snap back
+        }
+
+        // Re-enable transition before state change so CSS animates smoothly
+        this.root.style.transition = '';
+        if (nextState === 'close') {
+          // Animate drawer off-screen before calling close
+          this.root.style.transform = 'translateY(100%)';
+          setTimeout(() => {
+            this.root.style.transform = '';
+            options.onMobileSnap?.('close');
+          }, 280);
+        } else {
+          this.root.style.transform = '';
+          options.onMobileSnap?.(nextState);
+        }
+        dragDelta = 0;
+      };
+
+      const onHandleTouchCancel = () => {
+        if (!dragging) return;
+        dragging = false;
+        dragDelta = 0;
+        this.root.style.transition = '';
+        this.root.style.transform = '';
+      };
+
+      handleEl.addEventListener('touchstart', onHandleTouchStart, { passive: true });
+      handleEl.addEventListener('touchmove', onHandleTouchMove, { passive: false });
+      handleEl.addEventListener('touchend', onHandleTouchEnd, { passive: true });
+      handleEl.addEventListener('touchcancel', onHandleTouchCancel, { passive: true });
+      this._cleanups.push(() => {
+        handleEl.removeEventListener('touchstart', onHandleTouchStart);
+        handleEl.removeEventListener('touchmove', onHandleTouchMove);
+        handleEl.removeEventListener('touchend', onHandleTouchEnd);
+        handleEl.removeEventListener('touchcancel', onHandleTouchCancel);
+      });
+    }
 
     // Header — branded dark bar
     const header = document.createElement('div');
@@ -168,6 +267,18 @@ export class ChatDrawer {
 
     const headerRight = document.createElement('div');
     headerRight.className = 'gengage-chat-header-right';
+
+    // Reopen-panel button — shown on mobile when the side panel is hidden but has content
+    {
+      const reopenBtn = document.createElement('button');
+      reopenBtn.type = 'button';
+      reopenBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel';
+      reopenBtn.setAttribute('aria-label', this.i18n.showPanelAriaLabel);
+      reopenBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
+      reopenBtn.addEventListener('click', () => this._showMobilePanelFromBtn());
+      headerRight.appendChild(reopenBtn);
+      this._reopenPanelBtn = reopenBtn;
+    }
 
     // Cart button — always visible; navigates to headerCartUrl or fires onCartClick
     {
@@ -219,67 +330,6 @@ export class ChatDrawer {
     headerRight.appendChild(closeBtn);
     header.appendChild(headerRight);
 
-    // Swipe-to-dismiss on mobile: drag header down to close the drawer
-    {
-      let swipeStartY: number | null = null;
-      let swipeDeltaY = 0;
-      const DISMISS_THRESHOLD = 80;
-
-      const onHeaderTouchStart = (e: TouchEvent) => {
-        // Only on mobile-sized viewports
-        if (window.innerWidth > 768) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        swipeStartY = t.clientY;
-        swipeDeltaY = 0;
-        // Disable transition during drag for immediate visual feedback
-        this.root.style.transition = 'none';
-      };
-
-      const onHeaderTouchMove = (e: TouchEvent) => {
-        if (swipeStartY === null) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        swipeDeltaY = Math.max(0, t.clientY - swipeStartY); // Only allow downward drag
-        this.root.style.transform = `translateY(${swipeDeltaY}px)`;
-        this.root.style.opacity = String(1 - swipeDeltaY / 300);
-      };
-
-      const onHeaderTouchEnd = () => {
-        if (swipeStartY === null) return;
-        swipeStartY = null;
-        // Re-enable transition
-        this.root.style.transition = '';
-        if (swipeDeltaY >= DISMISS_THRESHOLD) {
-          // Dismiss — let the CSS transition handle the animation
-          options.onClose();
-        }
-        // Reset transform
-        this.root.style.transform = '';
-        this.root.style.opacity = '';
-        swipeDeltaY = 0;
-      };
-
-      const onHeaderTouchCancel = () => {
-        if (swipeStartY === null) return;
-        swipeStartY = null;
-        this.root.style.transition = '';
-        this.root.style.transform = '';
-        this.root.style.opacity = '';
-        swipeDeltaY = 0;
-      };
-
-      header.addEventListener('touchstart', onHeaderTouchStart, { passive: true });
-      header.addEventListener('touchmove', onHeaderTouchMove, { passive: true });
-      header.addEventListener('touchend', onHeaderTouchEnd, { passive: true });
-      header.addEventListener('touchcancel', onHeaderTouchCancel, { passive: true });
-      this._cleanups.push(() => {
-        header.removeEventListener('touchstart', onHeaderTouchStart);
-        header.removeEventListener('touchmove', onHeaderTouchMove);
-        header.removeEventListener('touchend', onHeaderTouchEnd);
-        header.removeEventListener('touchcancel', onHeaderTouchCancel);
-      });
-    }
 
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
@@ -976,6 +1026,8 @@ export class ChatDrawer {
     if (this._panelCollapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
     }
+    // New content always reopens the panel — hide the reopen button
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
 
   /** Append content to the panel without replacing existing content. */
@@ -1085,7 +1137,9 @@ export class ChatDrawer {
 
   /** Update the panel top bar navigation state. */
   updatePanelTopBar(canBack: boolean, canForward: boolean, title: string): void {
-    this._panelTopBar.update(canBack, canForward, title);
+    // On mobile the back button always closes the side-panel overlay, so keep it active
+    const isMobile = this._options.getMobileViewport?.() ?? false;
+    this._panelTopBar.update(isMobile ? true : canBack, canForward, title);
   }
 
   getPanelTopBarTitle(): string {
@@ -1117,6 +1171,25 @@ export class ChatDrawer {
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
+  }
+
+  /**
+   * On mobile: hide the side panel overlay without clearing its content.
+   * Shows the reopen button in the header so the user can slide the panel back in.
+   */
+  hideMobilePanel(): void {
+    if (!this._panelVisible) return;
+    this._panelVisible = false;
+    this._panelEl.classList.remove('gengage-chat-panel--visible');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'flex';
+  }
+
+  private _showMobilePanelFromBtn(): void {
+    if (this._panelVisible) return;
+    this._panelVisible = true;
+    this._panelEl.classList.add('gengage-chat-panel--visible');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
 
   /** Expand panel without locking — user can still toggle via divider. */

@@ -194,11 +194,42 @@
   max-height: -webkit-fill-available;
   max-height: 100dvh;
   border-radius: 16px 16px 0 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: none; /* handle bar replaces the top border */
   box-shadow:
     0 -4px 16px rgba(0, 0, 0, 0.1),
     0 12px 40px rgba(15, 23, 42, 0.18);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Ensure the handle area has the correct drawer background */
+  background: var(--gengage-chat-header-bg, #1d2939);
+}
+
+/* Drag handle pill — visible only on mobile */
+.gengage-chat-drawer-handle {
+  display: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  /* Same background as the header bar */
+  background: var(--gengage-chat-header-bg, #1d2939);
+  border-radius: 16px 16px 0 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer-handle::before {
+  content: '';
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
 }
 
 /* Subtle backdrop behind mobile half-sheet to separate from PDP */
@@ -222,7 +253,10 @@
   height: 100dvh;
   max-height: 100dvh;
   border-radius: 0;
-  border-top: none;
+}
+
+.gengage-chat-root--mobile.gengage-chat-root--mobile-full .gengage-chat-drawer-handle {
+  border-radius: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-input-area {
@@ -360,6 +394,11 @@
   position: relative;
 }
 
+/* Reopen-panel button: hidden by default, shown on mobile via JS when panel is hidden */
+.gengage-chat-header-btn--reopen-panel {
+  display: none;
+}
+
 .gengage-chat-header-fav-badge {
   position: absolute;
   top: -4px;
@@ -408,6 +447,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  position: relative; /* needed for mobile side-panel absolute positioning */
 }
 
 /* Panel (left) — hidden by default */
@@ -2421,79 +2461,49 @@
     border-radius: 0;
   }
 
-  .gengage-chat-drawer--with-panel .gengage-chat-body {
+  /* Panel becomes a full-screen side overlay (slides in from the right) */
+  .gengage-chat-panel {
+    display: flex !important; /* always in DOM for CSS transition */
     flex-direction: column;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* off-screen to the right when not visible */
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    /* content gets breathing room; topbar overrides via its own negative margin below */
+    padding: 0 12px 16px !important;
   }
 
-  .gengage-chat-drawer--with-panel .gengage-chat-panel--visible {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    max-height: 25dvh;
-    border-right: none;
-    border-bottom: 1px solid var(--_gengage-border-color);
-    padding: 0 12px 12px;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
+  .gengage-chat-panel--visible {
+    transform: translateX(0) !important;
+    pointer-events: auto;
   }
 
+  /* Divider is not needed for overlay panel on mobile */
+  .gengage-chat-panel-divider,
   .gengage-chat-drawer--with-panel .gengage-chat-panel-divider {
-    width: 100%;
-    height: 20px;
-    background: transparent;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    display: none !important;
   }
 
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 44px;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: transparent;
-    font-size: 0;
-    line-height: 0;
-    padding: 0;
+  /* Drawer layout stays unaffected by panel on mobile */
+  .gengage-chat-drawer--with-panel .gengage-chat-body {
+    flex-direction: row;
   }
 
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle::before {
-    content: '';
-    display: block;
-    width: 52px;
-    height: 5px;
-    margin: 0 auto;
-    border-radius: 999px;
-    background: #94a3b8;
-    box-shadow: 0 1px 0 rgba(100, 116, 139, 0.35);
-    transition: background 0.15s ease;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:hover,
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:active {
-    background: transparent;
-    color: transparent;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:hover::before,
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:active::before {
-    background: #64748b;
-  }
-
-  .gengage-chat-panel--collapsed ~ .gengage-chat-panel-divider {
-    width: 100%;
-    background: transparent;
-  }
-
-  .gengage-chat-panel--collapsed ~ .gengage-chat-panel-divider .gengage-chat-panel-divider-toggle {
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
+  /* Conversation always takes full width on mobile */
   .gengage-chat-drawer--with-panel .gengage-chat-conversation {
     width: 100%;
     flex: 1;

@@ -65,6 +65,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   stillWorkingMessage: 'İsteğiniz üzerinde hâlâ çalışılıyor...',
   cartAriaLabel: 'Sepetim',
   favoritesAriaLabel: 'Favorilerim',
+  showPanelAriaLabel: 'Sonuçları Göster',
   addToFavoritesLabel: 'Favorilere ekle',
   customerReviewsTitle: 'Müşteri Yorumları',
   togglePanelAriaLabel: 'Paneli aç/kapat',
