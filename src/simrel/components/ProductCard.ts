@@ -13,6 +13,7 @@ export interface ProductCardOptions {
   onClick: (product: NormalizedProduct) => void;
   onAddToCart: (params: { sku: string; quantity: number; cartCode: string }) => void;
   renderCard?: (product: NormalizedProduct, index: number) => string;
+  renderCardElement?: (product: NormalizedProduct, index: number) => HTMLElement | null;
   i18n?: SimRelI18n;
   pricing?: PriceFormatConfig;
 }
@@ -21,6 +22,12 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   const { product, index, discountType, onClick, onAddToCart, renderCard } = options;
   const i18n = options.i18n;
   const pricing = options.pricing;
+
+  // Custom card element renderer (returns full HTMLElement, takes precedence)
+  if (options.renderCardElement) {
+    const el = options.renderCardElement(product, index);
+    if (el) return el;
+  }
 
   // Custom card renderer (XSS warning: raw HTML injection)
   if (renderCard) {

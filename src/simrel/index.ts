@@ -344,6 +344,12 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     };
     if (this.config.discountType !== undefined) context.discountType = this.config.discountType;
     if (renderCard !== undefined) context.renderCard = renderCard;
+    if (this.config.renderCardElement !== undefined) {
+      context.renderCardElement = this.config.renderCardElement as (
+        product: SimilarProduct,
+        index: number,
+      ) => HTMLElement | null;
+    }
     if (this.config.pricing !== undefined) context.pricing = this.config.pricing;
     return context;
   }

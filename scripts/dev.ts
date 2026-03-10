@@ -17,7 +17,7 @@
  */
 
 import { createServer, type Plugin } from 'vite';
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '..');
@@ -76,11 +76,19 @@ function parseArgs(argv: string[]): DevOptions {
     failUsage(`Conflicting demo values: positional "${positionalDemo}" vs --client="${namedDemo}".`);
   }
 
+  const portRaw = args.find((a) => a.startsWith('--port='))?.slice('--port='.length);
+  if (portRaw !== undefined && portRaw.trim() === '') {
+    failUsage('Invalid --port value: cannot be empty.');
+  }
+  const port = parseInt(portRaw ?? '3000', 10);
+  if (!Number.isFinite(port) || Number.isNaN(port) || port <= 0) {
+    failUsage(`Invalid --port value: "${portRaw ?? ''}".`);
+  }
+
   const demo = positionalDemo ?? namedDemo;
 
   if (!demo) {
-    printUsage();
-    process.exit(1);
+    return { demo: '', sku: undefined, port, backendUrl: '' };
   }
 
   // Legacy positional SKU support:
@@ -98,15 +106,6 @@ function parseArgs(argv: string[]): DevOptions {
   }
   if (flagSku && positionalSku) {
     failUsage('Provide SKU either as positional arg or --sku=..., not both.');
-  }
-
-  const portRaw = args.find((a) => a.startsWith('--port='))?.slice('--port='.length);
-  if (portRaw !== undefined && portRaw.trim() === '') {
-    failUsage('Invalid --port value: cannot be empty.');
-  }
-  const port = parseInt(portRaw ?? '3000', 10);
-  if (!Number.isFinite(port) || Number.isNaN(port) || port <= 0) {
-    failUsage(`Invalid --port value: "${portRaw ?? ''}".`);
   }
 
   const backendUrl = args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? '';
@@ -141,10 +140,9 @@ function gengageDevPlugin(opts: DevOptions): Plugin {
         }
         if (url === '/' || url === '/index.html' || url.startsWith('/?')) {
           const html = readFileSync(htmlPath, 'utf-8');
-          // Vite caches transformed html-proxy modules by URL. Version by
-          // HTML mtime so demo config edits are reflected without restart.
-          const htmlVersion = existsSync(htmlPath) ? Math.trunc(statSync(htmlPath).mtimeMs) : Date.now();
-          const transformUrl = `/__gengage_dev__/${opts.demo}/index.html?v=${htmlVersion}`;
+          // Use the real filesystem path (relative to Vite root) so Vite's
+          // html-proxy module resolver can find inline <script> modules.
+          const transformUrl = `/demos/${opts.demo}/index.html`;
           server
             .transformIndexHtml(transformUrl, html)
             .then((transformed) => {
@@ -170,11 +168,91 @@ function gengageDevPlugin(opts: DevOptions): Plugin {
 }
 
 // ---------------------------------------------------------------------------
+// Vite plugin: launcher page — serves demos/index.html, redirects ?demo= picks
+// ---------------------------------------------------------------------------
+
+function gengageLauncherPlugin(port: number): Plugin {
+  const launcherPath = resolve(ROOT, 'demos', 'index.html');
+
+  return {
+    name: 'gengage-launcher',
+    enforce: 'pre',
+
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url ?? '/';
+        const parsed = new URL(url, `http://localhost:${port}`);
+
+        // Serve a demo when accessed via /<demoName>/ or /<demoName>/?sku=...
+        const pathMatch = parsed.pathname.match(/^\/([a-zA-Z0-9_-]+)\/?$/);
+        const demoName = pathMatch?.[1];
+        if (demoName) {
+          const demoDir = resolve(ROOT, 'demos', demoName);
+          const htmlPath = resolve(demoDir, 'index.html');
+          if (existsSync(htmlPath)) {
+            const html = readFileSync(htmlPath, 'utf-8');
+            const transformUrl = `/demos/${demoName}/index.html`;
+            server
+              .transformIndexHtml(transformUrl, html)
+              .then((transformed) => {
+                res.setHeader('Content-Type', 'text/html');
+                res.end(transformed);
+              })
+              .catch(next);
+            return;
+          }
+        }
+
+        // Serve launcher page for bare / requests
+        if (url === '/' || url === '/index.html') {
+          const html = readFileSync(launcherPath, 'utf-8');
+          server
+            .transformIndexHtml('/demos/index.html', html)
+            .then((transformed) => {
+              res.setHeader('Content-Type', 'text/html');
+              res.end(transformed);
+            })
+            .catch(next);
+          return;
+        }
+
+        next();
+      });
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 async function main() {
   const opts = parseArgs(process.argv);
+
+  // Launcher mode: no demo specified → serve the demo launcher page
+  if (!opts.demo) {
+    console.log('\n── Gengage Dev Server ──────────────────────────────');
+    console.log('  Mode:     Demo Launcher');
+    console.log(`  URL:      http://localhost:${opts.port}`);
+    console.log('────────────────────────────────────────────────────\n');
+
+    const server = await createServer({
+      root: ROOT,
+      cacheDir: resolve(ROOT, 'node_modules/.vite', `demo-launcher-${opts.port}`),
+      server: { port: opts.port },
+      plugins: [gengageLauncherPlugin(opts.port)],
+      resolve: {
+        alias: { '@gengage/assistant-fe': resolve(ROOT, 'src/index.ts') },
+      },
+      optimizeDeps: {
+        entries: ['demos/**/*.html', 'src/**/*.ts'],
+        include: ['zod'],
+      },
+    });
+    await server.listen();
+    server.printUrls();
+    return;
+  }
 
   // Verify demo exists
   const demoDir = resolve(ROOT, 'demos', opts.demo);

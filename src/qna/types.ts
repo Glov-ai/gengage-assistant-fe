@@ -8,6 +8,10 @@ export interface QNAWidgetConfig extends BaseWidgetConfig {
   /** CTA label for the "open chat" pill/button (default: 'Ask something else'). */
   ctaText?: string;
 
+  /** Hide the CTA button inside the quick-question button row.
+   *  Useful when a TextInput is already visible and the CTA would be redundant. */
+  hideButtonRowCta?: boolean;
+
   /** Placeholder text cycling inside the free-text input.
    *  Set to `true` to use fetched action titles as rotating placeholders. */
   inputPlaceholder?: string | string[] | true;

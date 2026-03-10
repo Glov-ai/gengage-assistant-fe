@@ -20,6 +20,13 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Custom launcher button SVG markup. */
   launcherSvg?: string;
 
+  /**
+   * Launcher image URL — renders the launcher as a full-size image button
+   * (no circular background, no padding). The image fills the entire button.
+   * Takes precedence over launcherSvg when set.
+   */
+  launcherImageUrl?: string;
+
   /** Tooltip text shown on launcher hover. */
   launcherTooltip?: string;
 

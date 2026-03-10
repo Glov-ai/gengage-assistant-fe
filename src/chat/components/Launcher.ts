@@ -1,6 +1,8 @@
 export interface LauncherOptions {
   onClick: () => void;
   svgMarkup?: string;
+  /** Full-size image URL — renders launcher as an image button (no circular bg). */
+  imageUrl?: string;
   ariaLabel?: string;
   hideMobile?: boolean;
   mobileBreakpoint?: number;
@@ -47,10 +49,20 @@ export function createLauncher(options: LauncherOptions): LauncherElements {
 
   // The FAB button
   const button = document.createElement('button');
-  button.className = 'gengage-chat-launcher';
   button.type = 'button';
   button.setAttribute('aria-label', options.ariaLabel ?? 'Open chat');
-  button.innerHTML = options.svgMarkup ?? DEFAULT_SVG;
+
+  if (options.imageUrl) {
+    button.className = 'gengage-chat-launcher gengage-chat-launcher--image-mode';
+    const img = document.createElement('img');
+    img.src = options.imageUrl;
+    img.alt = '';
+    img.draggable = false;
+    button.appendChild(img);
+  } else {
+    button.className = 'gengage-chat-launcher';
+    button.innerHTML = options.svgMarkup ?? DEFAULT_SVG;
+  }
 
   if (options.tooltip !== undefined) {
     const tooltipEl = document.createElement('span');
