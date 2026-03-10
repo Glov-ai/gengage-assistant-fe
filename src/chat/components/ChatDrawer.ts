@@ -1,5 +1,5 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
-import { sanitizeHtml, isSafeImageUrl, safeSetAttribute } from '../../common/safe-html.js';
+import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
 import { createKvkkBanner } from './KvkkBanner.js';
@@ -281,25 +281,16 @@ export class ChatDrawer {
       this._reopenPanelBtn = reopenBtn;
     }
 
-    // Cart button — always visible; navigates to headerCartUrl or fires onCartClick
+    // Cart button — always a <button> so the onCartClick callback is always invoked
+    // (handles session persistence before navigation when headerCartUrl is set).
     {
-      let cartEl: HTMLElement;
-      if (options.headerCartUrl) {
-        const a = document.createElement('a');
-        safeSetAttribute(a, 'href', options.headerCartUrl);
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        cartEl = a;
-      } else {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.addEventListener('click', () => options.onCartClick?.());
-        cartEl = btn;
-      }
-      cartEl.className = 'gengage-chat-header-btn';
-      cartEl.setAttribute('aria-label', this.i18n.cartAriaLabel);
-      cartEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
-      headerRight.appendChild(cartEl);
+      const cartBtn = document.createElement('button');
+      cartBtn.type = 'button';
+      cartBtn.className = 'gengage-chat-header-btn';
+      cartBtn.setAttribute('aria-label', this.i18n.cartAriaLabel);
+      cartBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+      cartBtn.addEventListener('click', () => options.onCartClick?.());
+      headerRight.appendChild(cartBtn);
     }
 
     const closeBtn = document.createElement('button');

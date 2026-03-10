@@ -399,11 +399,12 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     });
 
     // Clicking anywhere on the card toggles comparison selection — no product detail navigation.
+    // Do NOT manually flip checkbox.checked here: onToggleComparisonSku triggers
+    // _refreshComparisonUI which syncs checkbox state from the canonical Set.
     wrapper.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).closest('.gengage-chat-comparison-checkbox')) return;
       e.stopPropagation();
       ctx.onToggleComparisonSku?.(sku);
-      checkbox.checked = !checkbox.checked;
     });
 
     wrapper.appendChild(checkbox);

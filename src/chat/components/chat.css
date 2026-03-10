@@ -1095,23 +1095,21 @@
 }
 
 /* On mobile, keep single-line appearance and meet WCAG 2.5.5 touch targets */
-@media (max-width: 767px) {
-  .gengage-chat-input-pill {
-    height: 52px;
-    padding: 3px 8px;
-  }
+.gengage-chat-root--mobile .gengage-chat-input-pill {
+  height: 52px;
+  padding: 3px 8px;
+}
 
-  .gengage-chat-input {
-    min-height: 44px;
-    max-height: 44px;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-  }
+.gengage-chat-root--mobile .gengage-chat-input {
+  min-height: 44px;
+  max-height: 44px;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+}
 
-  .gengage-chat-input::placeholder {
-    font-size: 15px;
-  }
+.gengage-chat-root--mobile .gengage-chat-input::placeholder {
+  font-size: 15px;
 }
 
 .gengage-chat-input::placeholder {
@@ -1831,7 +1829,7 @@
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
   z-index: -1;
 }
 
@@ -2576,21 +2574,19 @@
   height: 180px;
 }
 
-@media (max-width: 480px) {
-  .gengage-chat-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    max-height: 100%;
-    border-radius: 0;
-  }
+.gengage-chat-root--mobile .gengage-chat-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: 100%;
+  border-radius: 0;
+}
 
-  .gengage-chat-bubble {
-    max-width: 100%;
-  }
+.gengage-chat-root--mobile .gengage-chat-bubble {
+  max-width: 100%;
 }
 
 /* KVKK disclaimer banner */

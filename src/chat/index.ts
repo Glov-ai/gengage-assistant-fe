@@ -442,6 +442,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._panel = null;
     this._session?.close();
     this._session = null;
+    this._localPanelHistory = [];
+    this._currentPanelSource = null;
     if (window.gengage) {
       delete window.gengage.chat;
     }
