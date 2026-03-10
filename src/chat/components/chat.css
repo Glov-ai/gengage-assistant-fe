@@ -868,10 +868,10 @@
   gap: 6px;
   margin: 4px 0 8px;
   padding: 6px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--gengage-primary-color, #3b82f6);
   border-radius: 16px;
-  background: #fff;
-  color: var(--_gengage-text-secondary);
+  background: var(--gengage-background-color, #fff);
+  color: var(--gengage-primary-color, #3b82f6);
   font-size: 13px;
   cursor: pointer;
   transition:
@@ -880,7 +880,7 @@
 }
 .gengage-chat-stop-btn:hover {
   background: var(--_gengage-surface-secondary);
-  border-color: #9ca3af;
+  border-color: var(--gengage-primary-color, #3b82f6);
 }
 .gengage-chat-stop-btn:focus-visible {
   outline: 2px solid var(--gengage-chat-primary, #f27a1a);
@@ -3820,13 +3820,18 @@
   font-size: 11px;
   font-weight: 600;
   margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
 }
 
 .gengage-chat-product-card-stock.is-in-stock {
-  color: var(--_gengage-success-color);
+  background: #ecfdf5;
+  color: #065f46;
 }
 
 .gengage-chat-product-card-stock.is-out-of-stock {
+  background: #fef2f2;
   color: #dc2626;
 }
 

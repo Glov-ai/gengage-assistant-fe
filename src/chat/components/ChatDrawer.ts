@@ -7,6 +7,10 @@ import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
 
+/** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
+const DEFAULT_ACTION_ICON =
+  '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 /** SVG icon map for suggested action chips/pills. Keys match backend icon names. */
 const SUGGESTED_ACTION_ICONS: Record<string, string> = {
   search:
@@ -18,7 +22,7 @@ const SUGGESTED_ACTION_ICONS: Record<string, string> = {
     '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><rect x="1" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
 };
 
-export { SUGGESTED_ACTION_ICONS };
+export { SUGGESTED_ACTION_ICONS, DEFAULT_ACTION_ICON };
 
 export interface ChatDrawerOptions {
   i18n: ChatI18n;
@@ -288,10 +292,12 @@ export class ChatDrawer {
     this._dividerEl.className = 'gengage-chat-panel-divider gengage-chat-panel-divider--hidden';
     this._dividerEl.setAttribute('role', 'separator');
     this._dividerEl.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
+    this._dividerEl.setAttribute('title', this.i18n.togglePanelAriaLabel);
     const chevron = document.createElement('button');
     chevron.className = 'gengage-chat-panel-divider-toggle';
     chevron.type = 'button';
     chevron.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
+    chevron.setAttribute('title', this.i18n.togglePanelAriaLabel);
     chevron.textContent = '\u00BB'; // » (collapse right)
     chevron.addEventListener('click', () => {
       if (this._ignoreNextDividerClick) {
@@ -376,6 +382,7 @@ export class ChatDrawer {
     this.messagesEl.className = 'gengage-chat-messages';
     this.messagesEl.setAttribute('role', 'log');
     this.messagesEl.setAttribute('aria-live', 'polite');
+    this.messagesEl.setAttribute('aria-atomic', 'false');
     this.messagesEl.setAttribute('aria-label', this.i18n.chatMessagesAriaLabel);
 
     // Track user scroll position to avoid auto-scrolling when reading history
@@ -646,6 +653,7 @@ export class ChatDrawer {
   addMessage(message: ChatMessage): void {
     const bubble = document.createElement('div');
     bubble.className = `gengage-chat-bubble gengage-chat-bubble--${message.role}`;
+    bubble.setAttribute('role', 'listitem');
     bubble.dataset['messageId'] = message.id;
     if (message.threadId) {
       bubble.dataset['threadId'] = message.threadId;
@@ -865,13 +873,11 @@ export class ChatDrawer {
       btn.type = 'button';
 
       if (pill.icon) {
-        const svgHtml = SUGGESTED_ACTION_ICONS[pill.icon];
-        if (svgHtml) {
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'gengage-chat-pill-icon';
-          iconSpan.innerHTML = svgHtml;
-          btn.appendChild(iconSpan);
-        }
+        const svgHtml = SUGGESTED_ACTION_ICONS[pill.icon] ?? DEFAULT_ACTION_ICON;
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'gengage-chat-pill-icon';
+        iconSpan.innerHTML = svgHtml;
+        btn.appendChild(iconSpan);
       }
 
       if (pill.image && isSafeImageUrl(pill.image)) {
@@ -1359,15 +1365,13 @@ export class ChatDrawer {
       btn.className = 'gengage-chat-input-chip';
       btn.type = 'button';
 
-      // Icon (SVG from icon map)
+      // Icon (SVG from icon map, falls back to generic arrow for unknown names)
       if (chip.icon) {
-        const svgHtml = SUGGESTED_ACTION_ICONS[chip.icon];
-        if (svgHtml) {
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'gengage-chat-input-chip-icon';
-          iconSpan.innerHTML = svgHtml;
-          btn.appendChild(iconSpan);
-        }
+        const svgHtml = SUGGESTED_ACTION_ICONS[chip.icon] ?? DEFAULT_ACTION_ICON;
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'gengage-chat-input-chip-icon';
+        iconSpan.innerHTML = svgHtml;
+        btn.appendChild(iconSpan);
       }
 
       const label = document.createElement('span');

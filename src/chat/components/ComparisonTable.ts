@@ -306,6 +306,24 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     }
   }
 
+  // Focus trap: keep Tab cycling within the comparison dialog
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const focusables = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+
   return container;
 }
 
