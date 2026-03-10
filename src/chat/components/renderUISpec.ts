@@ -966,6 +966,10 @@ function renderProductGrid(
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
       }
+      // Hide compare button during streaming — revealed on stream end with fade-in
+      if (ctx.isStreaming) {
+        compareBtn.classList.add('gengage-chat-comparison-toggle-btn--hidden');
+      }
       compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Compare';
       compareBtn.addEventListener('click', () => {
         // Toggle is handled by the parent — dispatched via onToggleComparisonSku with empty string

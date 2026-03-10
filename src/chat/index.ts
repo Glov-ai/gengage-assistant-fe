@@ -124,6 +124,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _lastSku: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
+  /** SKUs of products the user has viewed across panel product grids. */
+  private _viewedProductSkus = new Set<string>();
   private _thumbnailEntries: ThumbnailEntry[] = [];
   private _choicePrompterEl: HTMLElement | null = null;
   private _openState: 'full' | 'half' = 'full';
@@ -537,6 +539,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Reset comparison state
     this._comparisonSelectMode = false;
     this._comparisonSelectedSkus = [];
+    this._viewedProductSkus.clear();
     // Reset thread cursors
     this._currentThreadId = null;
     this._lastThreadId = null;
@@ -1126,6 +1129,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           );
 
           const renderContext = this._buildRenderContext();
+          renderContext.isStreaming = true;
 
           // GA dataLayer: track component-specific events
           if (componentType === 'ComparisonTable') {
@@ -1242,6 +1246,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               if (sku && imageUrl) {
                 this._thumbnailEntries.push({ sku, imageUrl, threadId: botMsg.threadId });
               }
+              if (sku) {
+                this._viewedProductSkus.add(sku);
+              }
             }
             this._drawer?.setThumbnails(this._thumbnailEntries);
           }
@@ -1265,12 +1272,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
-          // Show ChoicePrompter when ProductGrid in panel and comparison mode is not active
+          // Show ChoicePrompter when ProductGrid in panel, comparison mode is not active,
+          // the user has viewed 2+ products, and hasn't dismissed for this thread
           if (
             componentType === 'ProductGrid' &&
             panelHint === 'panel' &&
+            this._viewedProductSkus.size >= 2 &&
             !this._comparisonSelectMode &&
-            !isChoicePrompterDismissed()
+            !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
             this._choicePrompterEl?.remove();
             this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
@@ -1278,6 +1287,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               heading: this._i18n.choicePrompterHeading,
               suggestion: this._i18n.choicePrompterSuggestion,
               ctaLabel: this._i18n.choicePrompterCta,
+              threadId: this._currentThreadId ?? '',
               dismissAriaLabel: this._i18n.dismissAriaLabel,
               onCtaClick: () => {
                 this._comparisonSelectMode = true;
@@ -1294,7 +1304,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const mountSelector = shouldMountInConversation ? '.gengage-chat-conversation' : '.gengage-chat-panel';
             const mountEl = this._shadow?.querySelector(mountSelector);
             if (mountEl) {
-              mountEl.appendChild(this._choicePrompterEl);
+              // Insert before first child so prompter appears above grid content
+              mountEl.insertBefore(this._choicePrompterEl, mountEl.firstChild);
             } else {
               this._choicePrompterEl = null;
             }
@@ -1634,6 +1645,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             botMsg.status = 'done';
             ga.trackMessageReceived();
           }
+
+          // Reveal the comparison toggle button (hidden during streaming) with fade-in
+          const hiddenCompareBtn = this._shadow?.querySelector('.gengage-chat-comparison-toggle-btn--hidden');
+          if (hiddenCompareBtn) {
+            hiddenCompareBtn.classList.remove('gengage-chat-comparison-toggle-btn--hidden');
+            hiddenCompareBtn.classList.add('gengage-chat-comparison-toggle-btn--reveal');
+          }
+
           this.emit('message', botMsg);
 
           // Snapshot current panel content for this message's history

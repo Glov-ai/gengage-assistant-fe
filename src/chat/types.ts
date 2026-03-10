@@ -252,6 +252,8 @@ export interface ChatUISpecRenderContext {
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;
   topPicksLoadingSku?: string | null | undefined;
+  /** When true the stream is still in progress — defer compare CTA until stream ends. */
+  isStreaming?: boolean | undefined;
 }
 
 export interface ProductSortState {

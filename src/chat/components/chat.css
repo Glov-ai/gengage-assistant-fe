@@ -3540,8 +3540,9 @@
 }
 
 .gengage-chat-comparison-toggle-btn--active {
-  background: var(--gengage-primary-color, #3b82f6);
-  color: #fff;
+  background: transparent;
+  border: 1px solid var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #3b82f6);
 }
 
 .gengage-chat-comparison-toggle-btn--active:hover {
@@ -3566,6 +3567,32 @@
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Hidden state for comparison toggle during streaming — revealed after stream end */
+.gengage-chat-comparison-toggle-btn--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes gengage-comparison-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gengage-chat-comparison-toggle-btn--reveal {
+  animation: gengage-comparison-fade-in 0.5s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gengage-chat-comparison-toggle-btn--reveal {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* Floating comparison button — sticky at bottom of product grid */
@@ -3979,8 +4006,8 @@
 
 .gengage-chat-choice-prompter-dismiss {
   position: absolute;
-  top: 4px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
   padding: 2px 6px;
   border: none;
   background: none;
@@ -4485,16 +4512,32 @@
 @media (max-width: 768px) {
   .gengage-chat-choice-prompter {
     position: sticky;
-    left: 12px;
-    right: 12px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
     width: auto;
     max-width: none;
-    bottom: calc(
-      var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px +
-        env(safe-area-inset-bottom, 0px)
-    );
-    max-height: 40vh;
-    overflow-y: auto;
+    border-radius: 0 0 10px 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .gengage-chat-choice-prompter .gengage-chat-choice-prompter-heading {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .gengage-chat-choice-prompter .gengage-chat-choice-prompter-suggestion {
+    display: none;
+  }
+
+  .gengage-chat-choice-prompter .gengage-chat-choice-prompter-cta {
+    width: auto;
+    flex-shrink: 0;
   }
 
   .gengage-chat-product-sort-btn,
