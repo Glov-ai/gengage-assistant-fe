@@ -9,6 +9,7 @@
   --_gengage-text-primary: var(--gengage-text-primary, #1f2937);
   --_gengage-text-secondary: var(--gengage-text-secondary, #6b7280);
   --_gengage-surface-muted: var(--gengage-surface-muted, #f8fafc);
+  --_gengage-surface-secondary: var(--gengage-surface-secondary, #f3f4f6);
   --_gengage-rating-color: var(--gengage-rating-color, #d97706);
 }
 
