@@ -268,9 +268,7 @@ describe('PanelManager rebuild function', () => {
     // Access internal via type assertion to verify cleanup
     (pm as unknown as { _snapshotRebuilders: Map<string, unknown> })._snapshotRebuilders.set('x', () => null);
     pm.destroy();
-    expect(
-      (pm as unknown as { _snapshotRebuilders: Map<string, unknown> })._snapshotRebuilders.size,
-    ).toBe(0);
+    expect((pm as unknown as { _snapshotRebuilders: Map<string, unknown> })._snapshotRebuilders.size).toBe(0);
   });
 });
 
