@@ -66,8 +66,8 @@
 }
 
 .gengage-simrel-card:hover {
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .gengage-simrel-card-image {
@@ -79,6 +79,7 @@
 .gengage-simrel-card-image img {
   width: 100%;
   height: 120px;
+  aspect-ratio: 1;
   object-fit: contain;
   display: block;
   padding: 8px;
@@ -194,6 +195,11 @@
   background: var(--_gengage-surface-muted);
 }
 
+.gengage-simrel-atc {
+  border: 1px solid var(--_gengage-border-color, #e5e7eb);
+  border-radius: 8px;
+}
+
 .gengage-simrel-card .gengage-simrel-atc {
   display: flex;
   width: 100%;
@@ -262,6 +268,13 @@
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+.gengage-simrel-card--out-of-stock {
+  opacity: 0.55;
+}
+.gengage-simrel-card--out-of-stock .gengage-simrel-card-image img {
+  filter: grayscale(40%);
 }
 
 .gengage-simrel-quick-actions {

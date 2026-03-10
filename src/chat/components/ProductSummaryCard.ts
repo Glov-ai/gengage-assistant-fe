@@ -55,7 +55,9 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
     nameEl.className = 'gengage-chat-product-summary__name';
     // Only prepend brand if name doesn't already start with it
     const needsBrand = brand && !name.toLowerCase().startsWith(brand.toLowerCase());
-    nameEl.textContent = needsBrand ? `${brand} ${name}` : name;
+    const fullName = needsBrand ? `${brand} ${name}` : name;
+    nameEl.textContent = fullName;
+    nameEl.title = fullName;
     content.appendChild(nameEl);
   }
 

@@ -46,6 +46,9 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   const card = document.createElement('article');
   // Intentional class coupling: reuse chat product-card classes so SimRel and chat stay visually identical.
   card.className = 'gengage-simrel-card gengage-chat-product-card';
+  if (product.inStock === false) {
+    card.classList.add('gengage-simrel-card--out-of-stock');
+  }
   card.setAttribute('role', 'listitem');
   card.dataset['sku'] = product.sku;
 

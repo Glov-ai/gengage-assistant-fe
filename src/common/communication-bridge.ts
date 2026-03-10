@@ -51,8 +51,8 @@ export class CommunicationBridge {
     this._allowedOrigins = options.allowedOrigins ?? ['*'];
     this._onMessage = options.onMessage;
 
-    if (this._allowedOrigins.includes('*') && import.meta.env?.DEV) {
-      console.warn('[gengage] Wildcard origin "*" disables postMessage security. Set allowedOrigins in production.');
+    if (this._allowedOrigins.includes('*') && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+      console.info('[gengage] postMessage bridge using wildcard origin. Set allowedOrigins for production security.');
     }
 
     this._messageListener = (event: MessageEvent) => this._handlePostMessage(event);

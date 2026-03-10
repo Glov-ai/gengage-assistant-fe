@@ -45,7 +45,7 @@ import { typewriteHtml } from './components/typewriter.js';
 import { linkProductMentions } from './components/productMentionLinker.js';
 import { isInputAreaAction } from './components/actionClassifier.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
-import { createChoicePrompter, isChoicePrompterDismissed } from './components/ChoicePrompter.js';
+import { createChoicePrompter, isChoicePrompterDismissed, isChoicePrompterGloballyDismissed } from './components/ChoicePrompter.js';
 import type {
   ChatWidgetConfig,
   ChatMessage,
@@ -1377,6 +1377,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             panelHint === 'panel' &&
             this._viewedProductSkus.size >= 2 &&
             !this._comparisonSelectMode &&
+            !isChoicePrompterGloballyDismissed() &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
             this._choicePrompterEl?.remove();
@@ -1396,12 +1397,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 this._choicePrompterEl = null;
               },
             });
-            // Always mount in the conversation pane — the prompter is a chat-level
-            // nudge and should not overlay panel (product details) content.
-            const mountEl = this._shadow?.querySelector('.gengage-chat-conversation');
+            // Mount in the panel float anchor — the prompter floats at the
+            // bottom-right of the details pane (panel), not the conversation pane.
+            const mountEl = this._shadow?.querySelector('.gengage-chat-panel-float');
             if (mountEl) {
-              // Insert before first child so prompter appears above grid content
-              mountEl.insertBefore(this._choicePrompterEl, mountEl.firstChild);
+              mountEl.appendChild(this._choicePrompterEl);
 
               // Dismiss ChoicePrompter when the mobile keyboard opens (viewport shrinks)
               if (this._isMobileViewport && window.visualViewport) {

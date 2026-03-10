@@ -49,12 +49,21 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed(options.threadId);
+    try { sessionStorage.setItem('gengage_choice_prompter_dismissed_global', '1'); } catch { /* */ }
     card.remove();
     options.onDismiss?.();
   });
   card.appendChild(dismiss);
 
   return card;
+}
+
+export function isChoicePrompterGloballyDismissed(): boolean {
+  try {
+    return sessionStorage.getItem('gengage_choice_prompter_dismissed_global') === '1';
+  } catch {
+    return false;
+  }
 }
 
 export function isChoicePrompterDismissed(threadId: string): boolean {

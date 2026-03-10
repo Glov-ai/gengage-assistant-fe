@@ -209,9 +209,12 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       }
 
       const cfgPlaceholders = this.config.inputPlaceholder;
+      const filteredActions = result.actions
+        .filter((a) => a.type === 'user_message' || a.title.includes('?'))
+        .map((a) => a.title);
       const effectivePlaceholders =
         result.actions.length > 0 && cfgPlaceholders === true
-          ? result.actions.map((a) => a.title)
+          ? (filteredActions.length > 0 ? filteredActions : this._i18n.defaultInputPlaceholder)
           : cfgPlaceholders === true
             ? this._i18n.defaultInputPlaceholder
             : (cfgPlaceholders ?? this._i18n.defaultInputPlaceholder);
