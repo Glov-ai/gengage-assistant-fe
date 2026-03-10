@@ -33,6 +33,8 @@ export interface ChatDrawerOptions {
   onRollback?: (messageId: string) => void;
   headerTitle?: string | undefined;
   headerAvatarUrl?: string | undefined;
+  /** Launcher image URL — used as avatar fallback when headerAvatarUrl is not set. */
+  launcherImageUrl?: string | undefined;
   headerBadge?: string | undefined;
   /** URL for the cart icon link in the header (e.g. "/sepetim"). */
   headerCartUrl?: string | undefined;
@@ -129,10 +131,11 @@ export class ChatDrawer {
     const headerLeft = document.createElement('div');
     headerLeft.className = 'gengage-chat-header-left';
 
-    if (options.headerAvatarUrl) {
+    const avatarUrl = options.headerAvatarUrl ?? options.launcherImageUrl;
+    if (avatarUrl) {
       const avatar = document.createElement('img');
       avatar.className = 'gengage-chat-header-avatar';
-      avatar.src = options.headerAvatarUrl;
+      avatar.src = avatarUrl;
       avatar.alt = options.headerTitle ?? 'Assistant';
       headerLeft.appendChild(avatar);
     }

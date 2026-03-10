@@ -233,6 +233,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onPanelForward: () => this._panel?.navigateForward(),
       headerTitle: config.headerTitle,
       headerAvatarUrl: config.headerAvatarUrl,
+      launcherImageUrl: config.launcherImageUrl,
       headerBadge: config.headerBadge,
       headerCartUrl: config.headerCartUrl,
       headerFavoritesToggle: config.headerFavoritesToggle,

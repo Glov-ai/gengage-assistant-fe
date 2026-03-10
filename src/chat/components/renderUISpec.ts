@@ -243,6 +243,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const nameEl = document.createElement('div');
     nameEl.className = 'gengage-chat-product-card-name';
     nameEl.textContent = name;
+    nameEl.title = name;
     body.appendChild(nameEl);
   }
 
@@ -317,6 +318,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
     body.appendChild(promoBadges);
@@ -616,6 +618,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-details-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
     content.appendChild(promoBadges);

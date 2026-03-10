@@ -38,6 +38,7 @@
   --_gengage-surface-muted: var(--gengage-surface-muted, #f8fafc);
   --_gengage-surface-dark: var(--gengage-surface-dark, #1e293b);
   --_gengage-rating-color: var(--gengage-rating-color, #d97706);
+  --_gengage-error: var(--gengage-error, #dc2626);
 
   /* Quantity stepper geometry tokens */
   --_gengage-qty-btn-size: var(--gengage-qty-btn-size, 28px);
@@ -376,6 +377,8 @@
 .gengage-chat-close {
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 8px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -991,7 +994,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   background: #fef2f2;
-  color: #991b1b;
+  color: var(--gengage-error, #991b1b);
   font-size: 13px;
   text-align: center;
   border: 1px solid #fecaca;
@@ -1090,6 +1093,7 @@
 .gengage-chat-input::placeholder {
   font-size: 14px;
   color: #6b7280;
+  line-height: normal;
 }
 
 .gengage-chat-send {
@@ -3283,8 +3287,10 @@
 }
 
 .gengage-chat-grouping-card-img {
-  width: 20px;
-  height: 20px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
@@ -3803,8 +3809,8 @@
 /* ── Product card enrichment: discount badge ── */
 .gengage-chat-product-card-discount-badge {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 8px;
+  left: 8px;
   padding: 3px 8px;
   border-radius: 4px;
   background: var(--_gengage-discount-color);
@@ -3909,6 +3915,8 @@
   background: var(--gengage-chat-promo-bg, #e8f5e9);
   color: var(--gengage-chat-promo-text, #2e7d32);
   white-space: nowrap;
+  min-height: 20px;
+  box-sizing: border-box;
 }
 
 /* ── ThumbnailsColumn ── */
@@ -4464,6 +4472,32 @@
   border-radius: 10px;
   font-size: 16px;
   font-weight: 700;
+}
+
+/* ── Share button SVG sizing ── */
+.gengage-chat-product-details-share svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Review / grounding link styling ── */
+.gengage-chat-review-link,
+.gengage-chat-grounding-link {
+  text-decoration: underline;
+  color: var(--gengage-primary-color, #3b82f6);
+}
+
+/* ── Promotion badge mobile clamp ── */
+@media (max-width: 768px) {
+  .gengage-chat-product-card-promo-badge,
+  .gengage-chat-product-details-promo-badge {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+  }
 }
 
 /* ---------------------------------------------------------------------------

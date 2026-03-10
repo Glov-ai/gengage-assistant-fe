@@ -88,6 +88,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   const nameEl = document.createElement('div');
   nameEl.className = 'gengage-simrel-card-name gengage-chat-product-card-name';
   nameEl.textContent = product.name;
+  nameEl.title = product.name;
   info.appendChild(nameEl);
 
   // Rating
