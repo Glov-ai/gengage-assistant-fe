@@ -663,6 +663,16 @@
   width: 0;
 }
 
+/* In --with-panel mode, collapsed panel must override the visible sizing above */
+.gengage-chat-drawer--with-panel .gengage-chat-panel.gengage-chat-panel--collapsed {
+  flex: 0 0 0px;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* When panel is collapsed, shrink drawer to just the conversation width */
 .gengage-chat-drawer--with-panel:has(.gengage-chat-panel--collapsed) {
   width: var(--_gengage-chat-conversation-width);
