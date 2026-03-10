@@ -45,8 +45,11 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Show a favorites (heart) toggle button in the header. */
   headerFavoritesToggle?: boolean;
 
-  /** Callback fired when the favorites header button is clicked. */
+  /** Callback fired when the favorites header button is clicked (before internal favorites panel opens). */
   onFavoritesClick?: () => void;
+
+  /** Callback fired when the cart icon button in the header is clicked (when headerCartUrl is not set). */
+  onCartClick?: () => void;
 
   /** Hide the launcher on mobile viewports. */
   hideMobileLauncher?: boolean;
@@ -172,6 +175,7 @@ export interface ChatI18n {
   stillWorkingMessage: string;
   cartAriaLabel: string;
   favoritesAriaLabel: string;
+  showPanelAriaLabel: string;
   addToFavoritesLabel: string;
   customerReviewsTitle: string;
   togglePanelAriaLabel: string;
@@ -188,6 +192,8 @@ export interface ChatI18n {
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
+  favoritesPageTitle: string;
+  emptyFavoritesMessage: string;
 }
 
 export interface ChatUISpecRenderContext {
@@ -249,6 +255,8 @@ export interface ChatUISpecRenderContext {
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;
   topPicksLoadingSku?: string | null | undefined;
+  /** True when the widget is displayed in mobile viewport. Replaces hardcoded 768px check. */
+  isMobile?: boolean | undefined;
 }
 
 export interface ProductSortState {

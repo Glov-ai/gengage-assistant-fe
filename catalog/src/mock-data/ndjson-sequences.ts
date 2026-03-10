@@ -112,5 +112,21 @@ export const SIMREL_PRODUCTS_STREAM = ndjsonLines([
   },
 ]);
 
+/** Silent acknowledgment — no visible output, just closes the stream */
+export const CHAT_SILENT_STREAM = ndjsonLines([{ type: 'chatStreamEnd', payload: {} }]);
+
+/** More products stream — different products + endOfList flag */
+export const CHAT_MORE_PRODUCTS_STREAM = ndjsonLines([
+  { type: 'loading', payload: { text: 'Daha fazla urun yukleniyor...' } },
+  {
+    type: 'productList',
+    payload: {
+      products: [productAsRecord(p[4]!), productAsRecord(p[3]!), productAsRecord(p[2]!), productAsRecord(p[1]!)],
+      endOfList: true,
+    },
+  },
+  { type: 'chatStreamEnd', payload: {} },
+]);
+
 /** Analytics endpoint — just 200 OK */
 export const ANALYTICS_OK = '{}';

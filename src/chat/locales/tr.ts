@@ -65,6 +65,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   stillWorkingMessage: 'İsteğiniz üzerinde hâlâ çalışılıyor...',
   cartAriaLabel: 'Sepetim',
   favoritesAriaLabel: 'Favorilerim',
+  showPanelAriaLabel: 'Sonuçları Göster',
   addToFavoritesLabel: 'Favorilere ekle',
   customerReviewsTitle: 'Müşteri Yorumları',
   togglePanelAriaLabel: 'Paneli aç/kapat',
@@ -81,4 +82,6 @@ export const CHAT_I18N_TR: ChatI18n = {
   reviewFilterNegative: 'Olumsuz',
   decreaseLabel: 'Azalt',
   increaseLabel: 'Artır',
+  favoritesPageTitle: 'Favorilerim',
+  emptyFavoritesMessage: 'Henüz favori ürün yok. Bir ürünü kalp ikonuna tıklayarak favorilere ekleyebilirsin.',
 };

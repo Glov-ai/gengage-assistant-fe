@@ -7,12 +7,14 @@
  * Extracted from chat/index.ts to improve cohesion and reduce file size.
  */
 
-import type { GengageIndexedDB } from '../common/indexed-db.js';
+import type { GengageIndexedDB, FavoriteData } from '../common/indexed-db.js';
 import type { CommunicationBridge } from '../common/communication-bridge.js';
 import { isSafeUrl } from '../common/safe-html.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
+
+export type { FavoriteData };
 
 export interface PersistSessionParams {
   userId: string;
@@ -33,6 +35,8 @@ export class SessionPersistence {
   private _db: GengageIndexedDB | null;
   /** Favorited product SKUs (loaded from IDB). */
   readonly favoritedSkus: Set<string> = new Set();
+  /** Full favorite data cache (loaded from IDB alongside favoritedSkus). */
+  private _favoritesCache: Map<string, FavoriteData> = new Map();
   /** Async mutex: serializes persist() calls to prevent interleaved IDB writes. */
   private _persistLock: Promise<void> = Promise.resolve();
 
@@ -183,23 +187,33 @@ export class SessionPersistence {
     if (!this._db) return;
     try {
       const favs = await this._db.loadFavorites(userId, appId);
-      for (const f of favs) this.favoritedSkus.add(f.sku);
+      for (const f of favs) {
+        this.favoritedSkus.add(f.sku);
+        this._favoritesCache.set(f.sku, f);
+      }
     } catch {
       // Non-fatal — continue without favorites
     }
+  }
+
+  /** Returns favorited products ordered newest-first. */
+  getFavoriteProducts(): FavoriteData[] {
+    return [...this._favoritesCache.values()].sort((a, b) => {
+      return (b.savedAt ?? '').localeCompare(a.savedAt ?? '');
+    });
   }
 
   /**
    * Toggle a product's favorited state in IDB and in-memory set.
    */
   async toggleFavorite(userId: string, appId: string, sku: string, product: Record<string, unknown>): Promise<void> {
-    if (!this._db) return;
+    // Always update in-memory state first — IDB is optional (persistence only)
     if (this.favoritedSkus.has(sku)) {
       this.favoritedSkus.delete(sku);
-      await this._db.removeFavorite(userId, appId, sku);
+      this._favoritesCache.delete(sku);
+      if (this._db) await this._db.removeFavorite(userId, appId, sku);
     } else {
-      this.favoritedSkus.add(sku);
-      await this._db.saveFavorite({
+      const data: FavoriteData = {
         userId,
         appId,
         sku,
@@ -207,7 +221,10 @@ export class SessionPersistence {
         imageUrl: product['imageUrl'] as string | undefined,
         price: product['price'] as string | undefined,
         savedAt: new Date().toISOString(),
-      });
+      };
+      this.favoritedSkus.add(sku);
+      this._favoritesCache.set(sku, data);
+      if (this._db) await this._db.saveFavorite(data);
     }
   }
 

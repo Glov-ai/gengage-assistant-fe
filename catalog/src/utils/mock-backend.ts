@@ -6,6 +6,8 @@
 import {
   CHAT_GREETING_STREAM,
   CHAT_SEARCH_STREAM,
+  CHAT_SILENT_STREAM,
+  CHAT_MORE_PRODUCTS_STREAM,
   QNA_ACTIONS_STREAM,
   ANALYTICS_OK,
 } from '../mock-data/ndjson-sequences.js';
@@ -67,6 +69,27 @@ function interceptedFetch(input: RequestInfo | URL, init?: RequestInit): Promise
 
   // Chat process_action
   if (url.includes('/chat/process_action') || url.includes('/chat/message')) {
+    // Parse action type from request body
+    let actionType: string | undefined;
+    try {
+      const parsed = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : {};
+      actionType =
+        (parsed['actionType'] as string | undefined) ??
+        (parsed['action_type'] as string | undefined) ??
+        (parsed['type'] as string | undefined);
+    } catch {
+      /* ignore parse errors */
+    }
+
+    // like / addToCart: silent acknowledgment — no panel or chat update
+    if (actionType === 'like' || actionType === 'addToCart') {
+      return Promise.resolve(mockResponse(CHAT_SILENT_STREAM));
+    }
+    // moreProduct: append additional products
+    if (actionType === 'moreProduct') {
+      return Promise.resolve(mockResponse(CHAT_MORE_PRODUCTS_STREAM));
+    }
+
     requestCount++;
     // First request gets greeting, subsequent get search results
     const body = requestCount <= 1 ? CHAT_GREETING_STREAM : CHAT_SEARCH_STREAM;

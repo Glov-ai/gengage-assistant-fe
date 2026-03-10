@@ -213,11 +213,42 @@
   max-height: -webkit-fill-available;
   max-height: 100dvh;
   border-radius: 16px 16px 0 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: none; /* handle bar replaces the top border */
   box-shadow:
     0 -4px 16px rgba(0, 0, 0, 0.1),
     0 12px 40px rgba(15, 23, 42, 0.18);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Ensure the handle area has the correct drawer background */
+  background: var(--gengage-chat-header-bg, #1d2939);
+}
+
+/* Drag handle pill — visible only on mobile */
+.gengage-chat-drawer-handle {
+  display: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  /* Same background as the header bar */
+  background: var(--gengage-chat-header-bg, #1d2939);
+  border-radius: 16px 16px 0 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer-handle::before {
+  content: '';
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
 }
 
 /* Subtle backdrop behind mobile half-sheet to separate from PDP */
@@ -241,7 +272,10 @@
   height: 100dvh;
   max-height: 100dvh;
   border-radius: 0;
-  border-top: none;
+}
+
+.gengage-chat-root--mobile.gengage-chat-root--mobile-full .gengage-chat-drawer-handle {
+  border-radius: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-input-area {
@@ -373,6 +407,33 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* Favorites button with badge */
+.gengage-chat-header-btn--fav {
+  position: relative;
+}
+
+/* Reopen-panel button: hidden by default, shown on mobile via JS when panel is hidden */
+.gengage-chat-header-btn--reopen-panel {
+  display: none;
+}
+
+.gengage-chat-header-fav-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--_gengage-danger-color, #ef4444);
+  color: var(--_gengage-on-danger, #fff);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  padding: 0 3px;
+  pointer-events: none;
+}
+
 .gengage-chat-close {
   width: 32px;
   height: 32px;
@@ -404,6 +465,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  position: relative; /* needed for mobile side-panel absolute positioning */
 }
 
 /* Panel (left) — hidden by default */
@@ -478,14 +540,14 @@
   color: #334155;
 }
 
-/* Collapsed panel */
-.gengage-chat-panel--collapsed {
-  flex: 0 0 0px !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  padding: 0 !important;
-  border-right: none !important;
+/* Collapsed panel — compound selector for specificity over .gengage-chat-panel--visible */
+.gengage-chat-panel.gengage-chat-panel--collapsed {
+  flex: 0 0 0px;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  padding: 0;
+  border-right: none;
   overflow: hidden;
 }
 
@@ -599,6 +661,16 @@
 
 .gengage-chat-drawer--with-panel .gengage-chat-messages::-webkit-scrollbar {
   width: 0;
+}
+
+/* In --with-panel mode, collapsed panel must override the visible sizing above */
+.gengage-chat-drawer--with-panel .gengage-chat-panel.gengage-chat-panel--collapsed {
+  flex: 0 0 0px;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /* When panel is collapsed, shrink drawer to just the conversation width */
@@ -1051,23 +1123,21 @@
 }
 
 /* On mobile, keep single-line appearance and meet WCAG 2.5.5 touch targets */
-@media (max-width: 767px) {
-  .gengage-chat-input-pill {
-    height: 52px;
-    padding: 3px 8px;
-  }
+.gengage-chat-root--mobile .gengage-chat-input-pill {
+  height: 52px;
+  padding: 3px 8px;
+}
 
-  .gengage-chat-input {
-    min-height: 44px;
-    max-height: 44px;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-  }
+.gengage-chat-root--mobile .gengage-chat-input {
+  min-height: 44px;
+  max-height: 44px;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+}
 
-  .gengage-chat-input::placeholder {
-    font-size: 15px;
-  }
+.gengage-chat-root--mobile .gengage-chat-input::placeholder {
+  font-size: 15px;
 }
 
 .gengage-chat-input::placeholder {
@@ -1566,8 +1636,29 @@
   border-radius: 8px;
   background: #fff;
   font-size: 12px;
+  font-family: inherit;
   color: #334155;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.gengage-chat-review-pill:hover {
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-chat-review-pill--active {
+  background: var(--_gengage-surface-muted);
+  border-color: var(--_gengage-text-secondary, #64748b);
+  color: var(--_gengage-text-primary, #0f172a);
+  font-weight: 600;
+}
+
+.gengage-chat-review-pill--active .gengage-chat-review-pill-count {
+  background: var(--_gengage-border-color, #e2e8f0);
+  color: var(--_gengage-text-primary, #0f172a);
 }
 
 .gengage-chat-review-pill[data-tone='positive'] {
@@ -1605,6 +1696,122 @@
   display: grid;
   gap: 10px;
 }
+
+/* -- Favorites Page -------------------------------------------------------- */
+
+.gengage-chat-favorites-page {
+  padding: 12px;
+}
+
+.gengage-chat-favorites-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--_gengage-text-secondary);
+}
+
+.gengage-chat-favorites-empty-icon {
+  opacity: 0.25;
+  color: var(--_gengage-danger-color, #ef4444);
+}
+
+.gengage-chat-favorites-empty p {
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.gengage-chat-favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gengage-chat-favorites-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: 12px;
+  background: var(--_gengage-surface-color, #fff);
+  position: relative;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.gengage-chat-favorites-card--removing {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.gengage-chat-favorites-card__image {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-chat-favorites-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gengage-chat-favorites-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gengage-chat-favorites-card__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--_gengage-text-primary, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gengage-chat-favorites-card__price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--_gengage-primary-color, #1d4ed8);
+}
+
+.gengage-chat-favorites-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--_gengage-danger-color, #ef4444);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.gengage-chat-favorites-remove:hover {
+  opacity: 1;
+  background: var(--_gengage-danger-light, #fee2e2);
+}
+
+/* -- Divider --------------------------------------------------------------- */
 
 .gengage-chat-divider {
   border: none;
@@ -1651,7 +1858,7 @@
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
   z-index: -1;
 }
 
@@ -2236,214 +2443,179 @@
   display: block;
 }
 
-@media (max-width: 768px) {
-  .gengage-chat-root {
-    --_gengage-qty-btn-size: 44px;
-    --_gengage-qty-btn-size-compact: 44px;
-  }
-
-  .gengage-chat-header-btn,
-  .gengage-chat-close {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
-  .gengage-chat-attach-btn,
-  .gengage-chat-mic-btn,
-  .gengage-chat-send {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-  }
-
-  .gengage-chat-attach-btn svg,
-  .gengage-chat-mic-btn svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .gengage-chat-panel-divider {
-    display: flex;
-    width: 100%;
-    height: 20px;
-    align-items: center;
-    justify-content: center;
-    cursor: ns-resize;
-    background: transparent;
-    touch-action: pan-y;
-    position: relative;
-    overflow: visible;
-  }
-
-  .gengage-chat-panel-divider--hidden {
-    display: none;
-  }
-
-  .gengage-chat-drawer--with-panel {
-    left: 0;
-    right: 0;
-    width: 100%;
-    border-radius: 0;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-body {
-    flex-direction: column;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel--visible {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    max-height: 25dvh;
-    border-right: none;
-    border-bottom: 1px solid var(--_gengage-border-color);
-    padding: 0 12px 12px;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider {
-    width: 100%;
-    height: 20px;
-    background: transparent;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 44px;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: transparent;
-    font-size: 0;
-    line-height: 0;
-    padding: 0;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle::before {
-    content: '';
-    display: block;
-    width: 52px;
-    height: 5px;
-    margin: 0 auto;
-    border-radius: 999px;
-    background: #94a3b8;
-    box-shadow: 0 1px 0 rgba(100, 116, 139, 0.35);
-    transition: background 0.15s ease;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:hover,
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:active {
-    background: transparent;
-    color: transparent;
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:hover::before,
-  .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:active::before {
-    background: #64748b;
-  }
-
-  .gengage-chat-panel--collapsed ~ .gengage-chat-panel-divider {
-    width: 100%;
-    background: transparent;
-  }
-
-  .gengage-chat-panel--collapsed ~ .gengage-chat-panel-divider .gengage-chat-panel-divider-toggle {
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .gengage-chat-drawer--with-panel .gengage-chat-conversation {
-    width: 100%;
-    flex: 1;
-    border-left: none;
-  }
-
-  .gengage-qty-stepper--compact .gengage-qty-value {
-    min-width: 24px;
-    font-size: 13px;
-  }
-
-  .gengage-qty-stepper--compact .gengage-qty-submit {
-    min-height: 44px;
-    padding: 0 12px;
-    font-size: 13px;
-  }
-
-  .gengage-chat-product-details-atc-stepper .gengage-qty-submit {
-    min-height: 44px;
-    padding: 0 16px;
-  }
-
-  .gengage-chat-product-details-share {
-    width: 44px;
-    height: 44px;
-  }
-
-  .gengage-chat-panel .gengage-chat-product-card {
-    grid-template-columns: 84px 1fr;
-  }
-
-  .gengage-chat-panel .gengage-chat-product-card-cta {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  .gengage-chat-product-details-panel {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .gengage-chat-product-details-media {
-    min-height: 140px;
-  }
-
-  .gengage-chat-product-details-title {
-    font-size: 15px;
-  }
-
-  .gengage-chat-product-details-current-price {
-    font-size: 20px;
-  }
-
-  /* Mobile product grid: fixed-width cards with snap scrolling */
-  .gengage-chat-product-grid {
-    scroll-snap-type: x mandatory;
-  }
-
-  .gengage-chat-product-card {
-    width: 280px;
-    min-width: 280px;
-    scroll-snap-align: center;
-  }
-
-  .gengage-chat-product-card-img {
-    height: 180px;
-  }
+/* Mobile layout — driven by JS .gengage-chat-root--mobile class so the breakpoint
+   is configurable via config.mobileBreakpoint (default 768px). */
+.gengage-chat-root--mobile {
+  --_gengage-qty-btn-size: 44px;
+  --_gengage-qty-btn-size-compact: 44px;
 }
 
-@media (max-width: 480px) {
-  .gengage-chat-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    max-height: 100%;
-    border-radius: 0;
-  }
+.gengage-chat-root--mobile .gengage-chat-header-btn,
+.gengage-chat-root--mobile .gengage-chat-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
 
-  .gengage-chat-bubble {
-    max-width: 100%;
-  }
+.gengage-chat-root--mobile .gengage-chat-attach-btn,
+.gengage-chat-root--mobile .gengage-chat-mic-btn,
+.gengage-chat-root--mobile .gengage-chat-send {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-attach-btn svg,
+.gengage-chat-root--mobile .gengage-chat-mic-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel-divider {
+  display: flex;
+  width: 100%;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  background: transparent;
+  touch-action: pan-y;
+  position: relative;
+  overflow: visible;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel-divider--hidden {
+  display: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer--with-panel {
+  left: 0;
+  right: 0;
+  width: 100%;
+  border-radius: 0;
+}
+
+/* Panel becomes a full-screen side overlay (slides in from the right) */
+.gengage-chat-root--mobile .gengage-chat-panel {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  max-height: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: var(--gengage-chat-panel-bg, #fff);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  padding: 0 12px 16px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel--visible {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Divider is not needed for overlay panel on mobile */
+.gengage-chat-root--mobile .gengage-chat-panel-divider,
+.gengage-chat-root--mobile .gengage-chat-drawer--with-panel .gengage-chat-panel-divider {
+  display: none;
+}
+
+/* Drawer layout stays unaffected by panel on mobile */
+.gengage-chat-root--mobile .gengage-chat-drawer--with-panel .gengage-chat-body {
+  flex-direction: row;
+}
+
+/* Conversation always takes full width on mobile */
+.gengage-chat-root--mobile .gengage-chat-drawer--with-panel .gengage-chat-conversation {
+  width: 100%;
+  flex: 1;
+  border-left: none;
+}
+
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-value {
+  min-width: 24px;
+  font-size: 13px;
+}
+
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-submit {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-share {
+  width: 44px;
+  height: 44px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card {
+  grid-template-columns: 84px 1fr;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-cta {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-panel {
+  padding: 12px;
+  gap: 12px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-media {
+  min-height: 140px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-title {
+  font-size: 15px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-current-price {
+  font-size: 20px;
+}
+
+/* Mobile product grid: fixed-width cards with snap scrolling */
+.gengage-chat-root--mobile .gengage-chat-product-grid {
+  scroll-snap-type: x mandatory;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-card {
+  width: 280px;
+  min-width: 280px;
+  scroll-snap-align: center;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-card-img {
+  height: 180px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: 100%;
+  border-radius: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-bubble {
+  max-width: 100%;
 }
 
 /* KVKK disclaimer banner */
@@ -3119,44 +3291,42 @@
 }
 
 /* Mobile: horizontal scroll for AI Top Picks */
-@media (max-width: 768px) {
-  .gengage-chat-ai-top-picks-cards {
-    flex-direction: row;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    gap: 10px;
-    padding-bottom: 4px;
-  }
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-cards {
+  flex-direction: row;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 10px;
+  padding-bottom: 4px;
+}
 
-  .gengage-chat-ai-toppick-card--winner,
-  .gengage-chat-ai-toppick-card--compact {
-    min-width: 280px;
-    max-width: 280px;
-    flex-shrink: 0;
-    scroll-snap-align: start;
-  }
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner,
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
 
-  .gengage-chat-ai-toppick-card--compact {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
+  flex-direction: column;
+  align-items: stretch;
+}
 
-  .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img {
-    width: 100%;
-    height: 100px;
-    border-radius: 8px 8px 0 0;
-  }
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img {
+  width: 100%;
+  height: 100px;
+  border-radius: 8px 8px 0 0;
+}
 
-  .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
-    width: calc(100% - 20px);
-    margin: 6px 10px 10px;
-    align-self: stretch;
-  }
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
+  width: calc(100% - 20px);
+  margin: 6px 10px 10px;
+  align-self: stretch;
+}
 
-  .gengage-chat-rollback-btn {
-    left: -24px;
-  }
+.gengage-chat-root--mobile .gengage-chat-rollback-btn {
+  left: -24px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -3683,7 +3853,14 @@
   display: flex;
   gap: 6px;
   padding: 4px 12px 2px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gengage-chat-input-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .gengage-chat-input-chip {
@@ -3879,11 +4056,23 @@
   object-fit: cover;
 }
 
+/* ── Panel floating overlay: sticky zero-height anchor at the bottom of the scroll area.
+   Children (e.g. ChoicePrompter) use position:absolute and stay fixed to the visible area. ── */
+.gengage-chat-panel-float {
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* ── ChoicePrompter ── */
 .gengage-chat-choice-prompter {
   position: absolute;
   bottom: 12px;
   right: 12px;
+  pointer-events: auto;
   width: 200px;
   padding: 12px 14px;
   background: #fff;
@@ -4444,80 +4633,78 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 768px) {
-  .gengage-chat-choice-prompter {
-    position: sticky;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: calc(
-      var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px +
-        env(safe-area-inset-bottom, 0px)
-    );
-    max-height: 40vh;
-    overflow-y: auto;
-  }
+/* Mobile touch targets — WCAG 2.5.5 (44px minimum) */
+.gengage-chat-root--mobile .gengage-chat-choice-prompter {
+  position: sticky;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-width: none;
+  bottom: calc(
+    var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px + env(safe-area-inset-bottom, 0px)
+  );
+  max-height: 40vh;
+  overflow-y: auto;
+}
 
-  .gengage-chat-product-sort-btn,
-  .gengage-chat-comparison-toggle-btn {
-    min-height: 40px;
-  }
+.gengage-chat-root--mobile .gengage-chat-product-sort-btn,
+.gengage-chat-root--mobile .gengage-chat-comparison-toggle-btn {
+  min-height: 40px;
+}
 
-  .gengage-chat-input-chip {
-    min-height: 40px;
-    padding: 8px 12px;
-  }
+.gengage-chat-root--mobile .gengage-chat-input-chip {
+  min-height: 40px;
+  padding: 8px 12px;
+}
 
-  .gengage-chat-choice-prompter-dismiss {
-    width: 32px;
-    height: 32px;
-  }
+.gengage-chat-root--mobile .gengage-chat-choice-prompter-dismiss {
+  width: 32px;
+  height: 32px;
+}
 
-  .gengage-chat-panel-divider-toggle {
-    min-height: 44px;
-  }
+.gengage-chat-root--mobile .gengage-chat-panel-divider-toggle {
+  min-height: 44px;
+}
 
-  .gengage-chat-product-details-atc-stepper .gengage-qty-btn {
-    width: 44px;
-    height: 44px;
-  }
+.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-btn {
+  width: 44px;
+  height: 44px;
+}
 
-  .gengage-chat-product-details-atc-stepper .gengage-qty-submit,
-  .gengage-qty-stepper--compact .gengage-qty-submit {
-    min-height: 44px;
-  }
+.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-submit,
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
+  min-height: 44px;
+}
 
-  .gengage-qty-stepper--compact .gengage-qty-submit {
-    min-width: 44px;
-    padding: 0 10px;
-  }
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
+  min-width: 44px;
+  padding: 0 10px;
+}
 
-  .gengage-qty-stepper--compact .gengage-qty-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 14px;
-  }
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 14px;
+}
 
-  .gengage-qty-stepper--compact .gengage-qty-value {
-    min-width: 24px;
-    font-size: 13px;
-  }
+.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-value {
+  min-width: 24px;
+  font-size: 13px;
+}
 
-  .gengage-chat-product-card-cta,
-  .gengage-chat-choice-prompter-cta,
-  .gengage-chat-product-grid-view-more {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.gengage-chat-root--mobile .gengage-chat-product-card-cta,
+.gengage-chat-root--mobile .gengage-chat-choice-prompter-cta,
+.gengage-chat-root--mobile .gengage-chat-product-grid-view-more {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .gengage-chat-panel-topbar-back,
-  .gengage-chat-panel-topbar-forward,
-  .gengage-chat-favorite-btn,
-  .gengage-chat-product-details-share {
-    width: 44px;
-    height: 44px;
-  }
+.gengage-chat-root--mobile .gengage-chat-panel-topbar-back,
+.gengage-chat-root--mobile .gengage-chat-panel-topbar-forward,
+.gengage-chat-root--mobile .gengage-chat-favorite-btn,
+.gengage-chat-root--mobile .gengage-chat-product-details-share {
+  width: 44px;
+  height: 44px;
 }
