@@ -4,6 +4,9 @@
   "description": "Source-available frontend widgets for Gengage AI Assistant — chat, Q&A, and similar-products. Backend is SaaS (gengage.ai).",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "files": [
     "dist/",
     "README.md",
