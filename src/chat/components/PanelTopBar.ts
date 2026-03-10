@@ -57,4 +57,8 @@ export class PanelTopBar {
   getElement(): HTMLElement {
     return this._el;
   }
+
+  getTitle(): string {
+    return this._titleEl.textContent ?? '';
+  }
 }

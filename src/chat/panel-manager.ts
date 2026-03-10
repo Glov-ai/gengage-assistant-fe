@@ -27,6 +27,8 @@ export interface PanelManagerDeps {
 export class PanelManager {
   /** Panel content snapshots keyed by bot message ID for history navigation. */
   readonly snapshots = new Map<string, HTMLElement>();
+  /** Rebuild functions keyed by message ID — produce fresh DOM with live event listeners. */
+  private readonly _snapshotRebuilders = new Map<string, () => HTMLElement>();
   /** Component type for each panel snapshot (for topbar title restoration). */
   readonly snapshotTypes = new Map<string, string>();
   /** Currently active (highlighted) message ID in the chat pane. */
@@ -41,11 +43,11 @@ export class PanelManager {
   constructor(private readonly deps: PanelManagerDeps) {}
 
   /**
-   * Deep-clone the current panel content (excluding topbar/thumbnails) and store
-   * it keyed by message ID. Called when a stream completes so panel content can
-   * be restored later without duplicating the topbar.
+   * Snapshot the current panel state for a message. Stores a rebuild function
+   * (preferred — produces fresh DOM with live event listeners) alongside a
+   * static DOM clone as fallback.
    */
-  snapshotForMessage(messageId: string): void {
+  snapshotForMessage(messageId: string, rebuild?: (() => HTMLElement) | undefined): void {
     const drawer = this.deps.drawer();
     if (!drawer?.hasPanelContent()) return;
     // Never snapshot loading skeleton — it must not be persisted or restored
@@ -54,6 +56,7 @@ export class PanelManager {
     if (!contentEl) return;
     const clone = contentEl.cloneNode(true) as HTMLElement;
     this.snapshots.set(messageId, clone);
+    if (rebuild) this._snapshotRebuilders.set(messageId, rebuild);
     // Store the component type so topbar can be restored with the right title
     if (this.currentType) {
       this.snapshotTypes.set(messageId, this.currentType);
@@ -79,8 +82,10 @@ export class PanelManager {
    * Returns true if the snapshot was found and restored.
    */
   restoreForMessage(messageId: string): boolean {
+    // Prefer rebuild function (live event listeners) over static DOM clone
+    const rebuild = this._snapshotRebuilders.get(messageId);
     const snapshot = this.snapshots.get(messageId);
-    if (!snapshot) return false;
+    if (!rebuild && !snapshot) return false;
 
     const shadow = this.deps.shadow();
     const drawer = this.deps.drawer();
@@ -96,8 +101,9 @@ export class PanelManager {
     current?.classList.add('gengage-chat-bubble--active');
     this.activePanelMessageId = messageId;
 
-    // Restore panel content from snapshot clone
-    drawer?.setPanelContent(snapshot.cloneNode(true) as HTMLElement);
+    // Restore panel content — prefer rebuild for live interactions, fallback to clone
+    const el = rebuild ? rebuild() : (snapshot!.cloneNode(true) as HTMLElement);
+    drawer?.setPanelContent(el);
 
     // Restore component type and topbar
     const snapshotType = this.snapshotTypes.get(messageId);
@@ -244,6 +250,7 @@ export class PanelManager {
 
   destroy(): void {
     this.snapshots.clear();
+    this._snapshotRebuilders.clear();
     this.snapshotTypes.clear();
     this.activePanelMessageId = null;
     this.currentType = null;

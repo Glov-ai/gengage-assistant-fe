@@ -65,6 +65,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   stillWorkingMessage: 'Still working on your request...',
   cartAriaLabel: 'My cart',
   favoritesAriaLabel: 'My favorites',
+  showPanelAriaLabel: 'Show Results',
   addToFavoritesLabel: 'Add to favorites',
   customerReviewsTitle: 'Customer Reviews',
   togglePanelAriaLabel: 'Toggle panel',
@@ -84,4 +85,6 @@ export const CHAT_I18N_EN: ChatI18n = {
   tryAgainButton: 'Try again',
   askSomethingElseButton: 'Ask something else',
   accountInactiveMessage: 'This account is currently inactive. Please try again later.',
+  favoritesPageTitle: 'My Favorites',
+  emptyFavoritesMessage: 'No favorites yet. Heart a product to save it here.',
 };

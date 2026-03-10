@@ -1,5 +1,5 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
-import { sanitizeHtml, isSafeImageUrl, safeSetAttribute } from '../../common/safe-html.js';
+import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
 import { createKvkkBanner } from './KvkkBanner.js';
@@ -27,6 +27,8 @@ export { SUGGESTED_ACTION_ICONS, DEFAULT_ACTION_ICON };
 export interface ChatDrawerOptions {
   i18n: ChatI18n;
   onSend: (text: string, attachment?: File) => void;
+  /** Callback fired when the cart icon button in the header is clicked. */
+  onCartClick?: (() => void) | undefined;
   onClose: () => void;
   onAttachment?: (file: File) => void;
   onPanelToggle?: () => void;
@@ -37,14 +39,25 @@ export interface ChatDrawerOptions {
   launcherImageUrl?: string | undefined;
   headerBadge?: string | undefined;
   /** URL for the cart icon link in the header (e.g. "/sepetim"). */
+  /** @deprecated Use onCartClick instead. If set, the cart button will navigate to this URL. */
   headerCartUrl?: string | undefined;
-  /** Show a favorites (heart) toggle button in the header. */
+  /** @deprecated Favorites button is always shown. */
   headerFavoritesToggle?: boolean | undefined;
   onFavoritesClick?: (() => void) | undefined;
   /** Callback fired when the panel back button is clicked. */
   onPanelBack?: (() => void) | undefined;
   /** Callback fired when the panel forward button is clicked. */
   onPanelForward?: (() => void) | undefined;
+  /**
+   * Fired when the user drags the mobile handle and releases.
+   * 'half' | 'full' → switch to that snap position.
+   * 'close'          → close the drawer.
+   */
+  onMobileSnap?: ((state: 'half' | 'full' | 'close') => void) | undefined;
+  /** Returns the current mobile sheet state so the drag handler knows which snap to target. */
+  getMobileState?: (() => 'half' | 'full') | undefined;
+  /** Returns true when the chat is displayed as a mobile bottom-sheet. Used to keep the side-panel back button always enabled. */
+  getMobileViewport?: (() => boolean) | undefined;
   /** Callback fired when a product thumbnail is clicked (for thread rollback). */
   onThumbnailClick?: ((threadId: string) => void) | undefined;
   /** Callback fired when a link in bot HTML is clicked. */
@@ -85,6 +98,8 @@ export class ChatDrawer {
   private _scrollLockedUntil = 0;
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
+  private _panelFloatingEl: HTMLElement;
+  private _favBadgeEl: HTMLElement | null = null;
   private _thinkingSteps: string[] = [];
   private _firstBotMessageIds: Set<string> = new Set();
   private _voiceInput: VoiceInput | null = null;
@@ -97,8 +112,11 @@ export class ChatDrawer {
   private _previouslyFocusedElement: HTMLElement | null = null;
   private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
   private _conversationEl: HTMLElement | null = null;
+  private readonly _options: ChatDrawerOptions;
+  private _reopenPanelBtn: HTMLButtonElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
+    this._options = options;
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
     this.onSend = options.onSend;
     if (options.onPanelToggle !== undefined) {
@@ -133,6 +151,93 @@ export class ChatDrawer {
     descEl.textContent = this.i18n.headerTitle ?? 'AI shopping assistant';
     this.root.appendChild(descEl);
     this.root.setAttribute('aria-describedby', descId);
+
+    // Mobile drag handle — pill indicator at the very top of the sheet
+    {
+      const handleEl = document.createElement('div');
+      handleEl.className = 'gengage-chat-drawer-handle';
+      handleEl.setAttribute('aria-hidden', 'true');
+      this.root.appendChild(handleEl);
+
+      const SNAP_THRESHOLD = 72; // px to trigger a snap to the next position
+      let dragStartY = 0;
+      let dragDelta = 0;
+      let dragging = false;
+
+      const onHandleTouchStart = (e: TouchEvent) => {
+        if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragStartY = t.clientY;
+        dragDelta = 0;
+        dragging = true;
+        this.root.style.transition = 'none';
+      };
+
+      const onHandleTouchMove = (e: TouchEvent) => {
+        if (!dragging) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragDelta = t.clientY - dragStartY;
+        // Clamp: don't allow pulling upward past the current top
+        const currentState = options.getMobileState?.() ?? 'full';
+        const clampedDelta =
+          currentState === 'full'
+            ? Math.max(0, dragDelta) // full → only drag down
+            : dragDelta; // half → allow both directions
+        e.preventDefault(); // prevent body scroll
+        this.root.style.transform = `translateY(${clampedDelta}px)`;
+      };
+
+      const onHandleTouchEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        const currentState = options.getMobileState?.() ?? 'full';
+
+        let nextState: 'half' | 'full' | 'close';
+        if (dragDelta > SNAP_THRESHOLD) {
+          nextState = currentState === 'full' ? 'half' : 'close';
+        } else if (dragDelta < -SNAP_THRESHOLD && currentState === 'half') {
+          nextState = 'full';
+        } else {
+          nextState = currentState; // snap back
+        }
+
+        // Re-enable transition before state change so CSS animates smoothly
+        this.root.style.transition = '';
+        if (nextState === 'close') {
+          // Animate drawer off-screen before calling close
+          this.root.style.transform = 'translateY(100%)';
+          setTimeout(() => {
+            this.root.style.transform = '';
+            options.onMobileSnap?.('close');
+          }, 280);
+        } else {
+          this.root.style.transform = '';
+          options.onMobileSnap?.(nextState);
+        }
+        dragDelta = 0;
+      };
+
+      const onHandleTouchCancel = () => {
+        if (!dragging) return;
+        dragging = false;
+        dragDelta = 0;
+        this.root.style.transition = '';
+        this.root.style.transform = '';
+      };
+
+      handleEl.addEventListener('touchstart', onHandleTouchStart, { passive: true });
+      handleEl.addEventListener('touchmove', onHandleTouchMove, { passive: false });
+      handleEl.addEventListener('touchend', onHandleTouchEnd, { passive: true });
+      handleEl.addEventListener('touchcancel', onHandleTouchCancel, { passive: true });
+      this._cleanups.push(() => {
+        handleEl.removeEventListener('touchstart', onHandleTouchStart);
+        handleEl.removeEventListener('touchmove', onHandleTouchMove);
+        handleEl.removeEventListener('touchend', onHandleTouchEnd);
+        handleEl.removeEventListener('touchcancel', onHandleTouchCancel);
+      });
+    }
 
     // Header — branded dark bar
     const header = document.createElement('div');
@@ -182,32 +287,28 @@ export class ChatDrawer {
     const headerRight = document.createElement('div');
     headerRight.className = 'gengage-chat-header-right';
 
-    // Cart link (optional — production shows cart icon → /sepetim)
-    if (options.headerCartUrl) {
-      const cartLink = document.createElement('a');
-      cartLink.className = 'gengage-chat-header-btn';
-      safeSetAttribute(cartLink, 'href', options.headerCartUrl);
-      cartLink.target = '_blank';
-      cartLink.rel = 'noopener noreferrer';
-      cartLink.setAttribute('aria-label', this.i18n.cartAriaLabel);
-      cartLink.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
-      headerRight.appendChild(cartLink);
+    // Reopen-panel button — shown on mobile when the side panel is hidden but has content
+    {
+      const reopenBtn = document.createElement('button');
+      reopenBtn.type = 'button';
+      reopenBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel';
+      reopenBtn.setAttribute('aria-label', this.i18n.showPanelAriaLabel);
+      reopenBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
+      reopenBtn.addEventListener('click', () => this._showMobilePanelFromBtn());
+      headerRight.appendChild(reopenBtn);
+      this._reopenPanelBtn = reopenBtn;
     }
 
-    // Favorites heart toggle (optional)
-    if (options.headerFavoritesToggle) {
-      const favBtn = document.createElement('button');
-      favBtn.className = 'gengage-chat-header-btn';
-      favBtn.type = 'button';
-      favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
-      favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-      favBtn.setAttribute('aria-pressed', 'false');
-      favBtn.addEventListener('click', () => {
-        const pressed = favBtn.getAttribute('aria-pressed') === 'true';
-        favBtn.setAttribute('aria-pressed', String(!pressed));
-        options.onFavoritesClick?.();
-      });
-      headerRight.appendChild(favBtn);
+    // Cart button — always a <button> so the onCartClick callback is always invoked
+    // (handles session persistence before navigation when headerCartUrl is set).
+    {
+      const cartBtn = document.createElement('button');
+      cartBtn.type = 'button';
+      cartBtn.className = 'gengage-chat-header-btn';
+      cartBtn.setAttribute('aria-label', this.i18n.cartAriaLabel);
+      cartBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+      cartBtn.addEventListener('click', () => options.onCartClick?.());
+      headerRight.appendChild(cartBtn);
     }
 
     // New Chat button (optional — reset conversation)
@@ -228,70 +329,28 @@ export class ChatDrawer {
     closeBtn.setAttribute('aria-label', this.i18n.closeButton);
     closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     closeBtn.addEventListener('click', options.onClose);
+
+    // Favorites button — always visible, placed just before the close button
+    {
+      const favBtn = document.createElement('button');
+      favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav';
+      favBtn.type = 'button';
+      favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
+      favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
+      const badge = document.createElement('span');
+      badge.className = 'gengage-chat-header-fav-badge';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.style.display = 'none';
+      favBtn.appendChild(badge);
+      this._favBadgeEl = badge;
+
+      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
+      headerRight.appendChild(favBtn);
+    }
+
     headerRight.appendChild(closeBtn);
     header.appendChild(headerRight);
-
-    // Swipe-to-dismiss on mobile: drag header down to close the drawer
-    {
-      let swipeStartY: number | null = null;
-      let swipeDeltaY = 0;
-      const DISMISS_THRESHOLD = 80;
-
-      const onHeaderTouchStart = (e: TouchEvent) => {
-        // Only on mobile-sized viewports
-        if (window.innerWidth > 768) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        swipeStartY = t.clientY;
-        swipeDeltaY = 0;
-        // Disable transition during drag for immediate visual feedback
-        this.root.style.transition = 'none';
-      };
-
-      const onHeaderTouchMove = (e: TouchEvent) => {
-        if (swipeStartY === null) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        swipeDeltaY = Math.max(0, t.clientY - swipeStartY); // Only allow downward drag
-        this.root.style.transform = `translateY(${swipeDeltaY}px)`;
-        this.root.style.opacity = String(1 - swipeDeltaY / 300);
-      };
-
-      const onHeaderTouchEnd = () => {
-        if (swipeStartY === null) return;
-        swipeStartY = null;
-        // Re-enable transition
-        this.root.style.transition = '';
-        if (swipeDeltaY >= DISMISS_THRESHOLD) {
-          // Dismiss — let the CSS transition handle the animation
-          options.onClose();
-        }
-        // Reset transform
-        this.root.style.transform = '';
-        this.root.style.opacity = '';
-        swipeDeltaY = 0;
-      };
-
-      const onHeaderTouchCancel = () => {
-        if (swipeStartY === null) return;
-        swipeStartY = null;
-        this.root.style.transition = '';
-        this.root.style.transform = '';
-        this.root.style.opacity = '';
-        swipeDeltaY = 0;
-      };
-
-      header.addEventListener('touchstart', onHeaderTouchStart, { passive: true });
-      header.addEventListener('touchmove', onHeaderTouchMove, { passive: true });
-      header.addEventListener('touchend', onHeaderTouchEnd, { passive: true });
-      header.addEventListener('touchcancel', onHeaderTouchCancel, { passive: true });
-      this._cleanups.push(() => {
-        header.removeEventListener('touchstart', onHeaderTouchStart);
-        header.removeEventListener('touchmove', onHeaderTouchMove);
-        header.removeEventListener('touchend', onHeaderTouchEnd);
-        header.removeEventListener('touchcancel', onHeaderTouchCancel);
-      });
-    }
 
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
@@ -341,14 +400,14 @@ export class ChatDrawer {
     let touchStartY: number | null = null;
     const swipeThreshold = 24;
     const onDividerTouchStart = (event: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const touch = event.changedTouches?.[0];
       if (!touch) return;
       touchStartX = touch.clientX;
       touchStartY = touch.clientY;
     };
     const onDividerTouchEnd = (event: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       if (touchStartX === null || touchStartY === null) return;
       const touch = event.changedTouches?.[0];
       if (!touch) return;
@@ -439,6 +498,12 @@ export class ChatDrawer {
     });
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
 
+    // Floating overlay: sticky zero-height anchor so absolutely-positioned overlays
+    // (e.g. ChoicePrompter) stay fixed to the panel's visible area regardless of scroll.
+    this._panelFloatingEl = document.createElement('div');
+    this._panelFloatingEl.className = 'gengage-chat-panel-float';
+    this._panelEl.appendChild(this._panelFloatingEl);
+
     // Suggestion pills row (between messages and input)
     this._pillsEl = document.createElement('div');
     this._pillsEl.className = 'gengage-chat-pills';
@@ -505,7 +570,7 @@ export class ChatDrawer {
     // Enter submits; Shift+Enter inserts newline on desktop only
     this.inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const isMobile = window.innerWidth < 768;
+        const isMobile = this._options.getMobileViewport?.() ?? window.innerWidth <= 768;
         if (isMobile || !e.shiftKey) {
           e.preventDefault();
           this._submit();
@@ -1004,6 +1069,7 @@ export class ChatDrawer {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
+    this._panelEl.appendChild(this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1017,11 +1083,13 @@ export class ChatDrawer {
       this._panelEl.classList.remove('gengage-chat-panel--transitioning');
       this._updateScrollAffordance();
     });
+    // New content always reopens the panel — hide the reopen button
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
 
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
-    this._panelEl.appendChild(el);
+    this._panelEl.insertBefore(el, this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1037,13 +1105,19 @@ export class ChatDrawer {
       const child = children[i] as HTMLElement;
       if (
         child.classList.contains('gengage-chat-panel-topbar') ||
-        child.classList.contains('gengage-chat-thumbnails-column')
+        child.classList.contains('gengage-chat-thumbnails-column') ||
+        child.classList.contains('gengage-chat-panel-float')
       ) {
         continue;
       }
       return child;
     }
     return null;
+  }
+
+  /** Whether the panel is currently visible (may be empty). */
+  isPanelVisible(): boolean {
+    return this._panelVisible;
   }
 
   /** Whether the panel is currently visible and has rendered content (beyond topbar + thumbnails column). */
@@ -1111,6 +1185,7 @@ export class ChatDrawer {
     }
 
     this._panelEl.appendChild(skeleton);
+    this._panelEl.appendChild(this._panelFloatingEl);
     if (!this._panelVisible) {
       this._panelVisible = true;
       this._panelEl.classList.add('gengage-chat-panel--visible');
@@ -1120,7 +1195,24 @@ export class ChatDrawer {
 
   /** Update the panel top bar navigation state. */
   updatePanelTopBar(canBack: boolean, canForward: boolean, title: string): void {
-    this._panelTopBar.update(canBack, canForward, title);
+    // On mobile the back button always closes the side-panel overlay, so keep it active
+    const isMobile = this._options.getMobileViewport?.() ?? false;
+    this._panelTopBar.update(isMobile ? true : canBack, canForward, title);
+  }
+
+  getPanelTopBarTitle(): string {
+    return this._panelTopBar.getTitle();
+  }
+
+  /** Update the favorites badge count. Pass 0 to hide the badge. */
+  updateFavoritesBadge(count: number): void {
+    if (!this._favBadgeEl) return;
+    if (count > 0) {
+      this._favBadgeEl.textContent = count > 99 ? '99+' : String(count);
+      this._favBadgeEl.style.display = '';
+    } else {
+      this._favBadgeEl.style.display = 'none';
+    }
   }
 
   /**
@@ -1132,10 +1224,30 @@ export class ChatDrawer {
   clearPanel(): void {
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelFloatingEl);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
+  }
+
+  /**
+   * On mobile: hide the side panel overlay without clearing its content.
+   * Shows the reopen button in the header so the user can slide the panel back in.
+   */
+  hideMobilePanel(): void {
+    if (!this._panelVisible) return;
+    this._panelVisible = false;
+    this._panelEl.classList.remove('gengage-chat-panel--visible');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'flex';
+  }
+
+  private _showMobilePanelFromBtn(): void {
+    if (this._panelVisible) return;
+    this._panelVisible = true;
+    this._panelEl.classList.add('gengage-chat-panel--visible');
+    if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
 
   /** Expand panel without locking — user can still toggle via divider. */
