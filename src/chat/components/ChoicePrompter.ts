@@ -38,7 +38,11 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try { sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1'); } catch { /* */ }
+    try {
+      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
+    } catch {
+      /* */
+    }
     card.remove();
     options.onCtaClick();
   });
@@ -51,7 +55,11 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try { sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1'); } catch { /* */ }
+    try {
+      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
+    } catch {
+      /* */
+    }
     card.remove();
     options.onDismiss?.();
   });

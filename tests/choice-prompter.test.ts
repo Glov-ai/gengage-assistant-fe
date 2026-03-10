@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createChoicePrompter, isChoicePrompterDismissed } from '../src/chat/components/ChoicePrompter.js';
+import {
+  createChoicePrompter,
+  isChoicePrompterDismissed,
+  isChoicePrompterGloballyDismissed,
+} from '../src/chat/components/ChoicePrompter.js';
 
 const THREAD_A = 'thread-aaa';
 const THREAD_B = 'thread-bbb';
@@ -109,7 +113,7 @@ describe('ChoicePrompter product view gating', () => {
    * We simulate the gating logic here (viewedProductSkus lives in GengageChat class).
    */
   function shouldShowPrompter(viewedCount: number, comparisonActive: boolean, threadId = THREAD_A): boolean {
-    return viewedCount >= 2 && !comparisonActive && !isChoicePrompterDismissed(threadId);
+    return viewedCount >= 2 && !comparisonActive && !isChoicePrompterGloballyDismissed() && !isChoicePrompterDismissed(threadId);
   }
 
   it('does NOT show on first product view', () => {
@@ -144,6 +148,51 @@ describe('ChoicePrompter product view gating', () => {
 
   it('does NOT show on zero views', () => {
     expect(shouldShowPrompter(0, false)).toBe(false);
+  });
+});
+
+describe('isChoicePrompterGloballyDismissed', () => {
+  it('returns false when not dismissed', () => {
+    expect(isChoicePrompterGloballyDismissed()).toBe(false);
+  });
+
+  it('returns true after CTA click', () => {
+    const el = createChoicePrompter({
+      heading: 'Test',
+      suggestion: 'Test',
+      ctaLabel: 'Go',
+      threadId: THREAD_A,
+      onCtaClick: vi.fn(),
+    });
+    el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-cta')!.click();
+    expect(isChoicePrompterGloballyDismissed()).toBe(true);
+  });
+
+  it('returns true after dismiss click', () => {
+    const el = createChoicePrompter({
+      heading: 'Test',
+      suggestion: 'Test',
+      ctaLabel: 'Go',
+      threadId: THREAD_A,
+      onCtaClick: vi.fn(),
+    });
+    el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-dismiss')!.click();
+    expect(isChoicePrompterGloballyDismissed()).toBe(true);
+  });
+
+  it('persists across threads — dismissing in thread A blocks thread B', () => {
+    const el = createChoicePrompter({
+      heading: 'Test',
+      suggestion: 'Test',
+      ctaLabel: 'Go',
+      threadId: THREAD_A,
+      onCtaClick: vi.fn(),
+    });
+    el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-cta')!.click();
+
+    // Global dismiss prevents showing in any thread
+    expect(isChoicePrompterGloballyDismissed()).toBe(true);
+    expect(isChoicePrompterDismissed(THREAD_B)).toBe(false); // per-thread is still false
   });
 });
 

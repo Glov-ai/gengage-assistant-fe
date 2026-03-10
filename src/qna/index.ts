@@ -209,15 +209,18 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       }
 
       const cfgPlaceholders = this.config.inputPlaceholder;
-      const filteredActions = result.actions
-        .filter((a) => a.type === 'user_message' || a.title.includes('?'))
-        .map((a) => a.title);
-      const effectivePlaceholders =
-        result.actions.length > 0 && cfgPlaceholders === true
-          ? (filteredActions.length > 0 ? filteredActions : this._i18n.defaultInputPlaceholder)
-          : cfgPlaceholders === true
-            ? this._i18n.defaultInputPlaceholder
-            : (cfgPlaceholders ?? this._i18n.defaultInputPlaceholder);
+      let effectivePlaceholders: string | string[];
+      if (cfgPlaceholders !== true) {
+        effectivePlaceholders = cfgPlaceholders ?? this._i18n.defaultInputPlaceholder;
+      } else if (result.actions.length > 0) {
+        // Only use question-like actions as rotating placeholders
+        const filtered = result.actions
+          .filter((a) => a.type === 'user_message' || a.title.includes('?'))
+          .map((a) => a.title);
+        effectivePlaceholders = filtered.length > 0 ? filtered : this._i18n.defaultInputPlaceholder;
+      } else {
+        effectivePlaceholders = this._i18n.defaultInputPlaceholder;
+      }
 
       const renderContext: QNAUISpecRenderContext = {
         onAction: this._actionHandler,

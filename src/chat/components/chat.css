@@ -1545,7 +1545,7 @@
 }
 .gengage-chat-product-summary__price-original {
   text-decoration: line-through;
-  color: #6b7280;
+  color: var(--_gengage-text-secondary);
   font-weight: 400;
   font-size: 11px;
 }

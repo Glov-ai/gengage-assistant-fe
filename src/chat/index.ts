@@ -45,7 +45,11 @@ import { typewriteHtml } from './components/typewriter.js';
 import { linkProductMentions } from './components/productMentionLinker.js';
 import { isInputAreaAction } from './components/actionClassifier.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
-import { createChoicePrompter, isChoicePrompterDismissed, isChoicePrompterGloballyDismissed } from './components/ChoicePrompter.js';
+import {
+  createChoicePrompter,
+  isChoicePrompterDismissed,
+  isChoicePrompterGloballyDismissed,
+} from './components/ChoicePrompter.js';
 import type {
   ChatWidgetConfig,
   ChatMessage,
