@@ -148,7 +148,7 @@ export class ChatDrawer {
       let dragging = false;
 
       const onHandleTouchStart = (e: TouchEvent) => {
-        if (window.innerWidth > 768) return;
+        if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
         const t = e.changedTouches?.[0];
         if (!t) return;
         dragStartY = t.clientY;
@@ -372,14 +372,14 @@ export class ChatDrawer {
     let touchStartY: number | null = null;
     const swipeThreshold = 24;
     const onDividerTouchStart = (event: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const touch = event.changedTouches?.[0];
       if (!touch) return;
       touchStartX = touch.clientX;
       touchStartY = touch.clientY;
     };
     const onDividerTouchEnd = (event: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       if (touchStartX === null || touchStartY === null) return;
       const touch = event.changedTouches?.[0];
       if (!touch) return;
@@ -539,7 +539,7 @@ export class ChatDrawer {
     // Enter submits; Shift+Enter inserts newline on desktop only
     this.inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const isMobile = window.innerWidth < 768;
+        const isMobile = this._options.getMobileViewport?.() ?? window.innerWidth <= 768;
         if (isMobile || !e.shiftKey) {
           e.preventDefault();
           this._submit();

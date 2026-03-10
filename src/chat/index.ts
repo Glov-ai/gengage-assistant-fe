@@ -161,9 +161,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _threadsWithFirstBot: Set<string> = new Set();
   /** Panel state manager (snapshots, topbar, navigation). */
   private _panel: PanelManager | null = null;
-  /** Client-side panel navigation stack for local drilldowns (e.g. card → detail). Max 10 entries. */
-  private _localPanelHistory: Array<{ el: HTMLElement; title: string }> = [];
+  /** Client-side panel navigation stack for local drilldowns (e.g. card → detail). Max 10 entries.
+   *  Stores rebuild info (UISpec or kind) instead of DOM clones so back navigation
+   *  produces fresh elements with live event listeners. */
+  private _localPanelHistory: Array<{
+    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' };
+    title: string;
+  }> = [];
   private static readonly _MAX_PANEL_HISTORY = 10;
+  /** Tracks how the current panel content was produced, for history/error-recovery rebuild. */
+  private _currentPanelSource:
+    | { kind: 'spec'; spec: import('../common/types.js').UISpec }
+    | { kind: 'favorites' }
+    | null = null;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
@@ -545,6 +555,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._drawer?.clearMessages();
     // Clear panel
     this._drawer?.clearPanel();
+    this._currentPanelSource = null;
     this._panel!.snapshots.clear();
     this._panel!.threads = [];
     // Clear thumbnails
@@ -892,22 +903,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Preserve panel during the request — don't clear or show loading skeleton
     // until the backend explicitly signals new panel content (panelLoading event).
-    // The snapshot is deferred: only cloned when panelLoading arrives, so the
-    // happy path (backend sends new content) pays no cloning cost.
-    let prePanelSnapshot: HTMLElement | null = null;
-    const snapshotPanelIfNeeded = (): void => {
-      if (prePanelSnapshot || options?.preservePanel) return;
-      const contentEl = this._drawer?.getPanelContentElement();
-      if (contentEl) prePanelSnapshot = contentEl.cloneNode(true) as HTMLElement;
+    // Captures the panel source (UISpec/kind) so it can be re-rendered with fresh
+    // event listeners if the backend fails to deliver new panel content.
+    let prePanelSource = this._currentPanelSource;
+    let prePanelSourceCaptured = false;
+    const capturePanelSourceIfNeeded = (): void => {
+      if (prePanelSourceCaptured || options?.preservePanel) return;
+      prePanelSource = this._currentPanelSource;
+      prePanelSourceCaptured = true;
     };
     const restoreOrClearPanel = (): void => {
       if (!this._drawer?.isPanelLoading()) return;
-      if (prePanelSnapshot) {
-        this._drawer.setPanelContent(prePanelSnapshot);
+      if (prePanelSource) {
+        const ctx = this._buildRenderContext();
+        const el =
+          prePanelSource.kind === 'favorites'
+            ? this._buildFavoritesPageEl()
+            : this._renderUISpec(prePanelSource.spec, ctx);
+        this._drawer.setPanelContent(el);
+        this._currentPanelSource = prePanelSource;
       } else {
         this._drawer.clearPanel();
+        this._currentPanelSource = null;
       }
-      prePanelSnapshot = null;
+      prePanelSource = null;
     };
 
     // Show typing indicator
@@ -1177,6 +1196,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._comparisonSelectMode = false;
               this._comparisonSelectedSkus = [];
               this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
+              this._currentPanelSource = { kind: 'spec', spec: panelSpec };
               this._panel.currentType = componentType;
             }
 
@@ -1432,7 +1452,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               panelLoadingSeen = true;
               panelContentReceived = false;
               // Snapshot current panel before replacing with skeleton
-              snapshotPanelIfNeeded();
+              capturePanelSourceIfNeeded();
               const pendingType =
                 typeof event.meta.panelPendingType === 'string' ? event.meta.panelPendingType : undefined;
               if (this._panel) this._panel.currentType = null;
@@ -1478,7 +1498,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (event.meta.analyzeAnimation) {
               panelLoadingSeen = true;
               panelContentReceived = false;
-              snapshotPanelIfNeeded();
+              capturePanelSourceIfNeeded();
               if (this._panel) this._panel.currentType = null;
               this._drawer?.showPanelLoading();
               // Default to product details title during analyze
@@ -1619,8 +1639,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
           this.emit('message', botMsg);
 
-          // Snapshot current panel content for this message's history
-          this._panel?.snapshotForMessage(botMsg.id);
+          // Snapshot current panel content for this message's history.
+          // Pass a rebuild function so restored panels have live event listeners.
+          const panelSource = this._currentPanelSource;
+          this._panel?.snapshotForMessage(
+            botMsg.id,
+            panelSource
+              ? () => {
+                  const ctx = this._buildRenderContext();
+                  return panelSource.kind === 'favorites'
+                    ? this._buildFavoritesPageEl()
+                    : this._renderUISpec(panelSource.spec, ctx);
+                }
+              : undefined,
+          );
           // Make the bot message bubble clickable to restore its panel state
           this._panel?.attachClickHandler(botMsg.id);
 
@@ -1733,6 +1765,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const restored = targetBot ? this._panel?.restoreForMessage(targetBot.id) : false;
     if (!restored) {
       this._drawer?.clearPanel();
+      this._currentPanelSource = null;
     }
     // Always update topbar navigation state for the new thread position
     const panelType = this._panel!.currentType ?? '';
@@ -2005,7 +2038,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _navigatePanelBack(): void {
     const prev = this._localPanelHistory.pop();
     if (prev) {
-      this._drawer?.setPanelContent(prev.el);
+      const ctx = this._buildRenderContext();
+      const el =
+        prev.source.kind === 'favorites' ? this._buildFavoritesPageEl() : this._renderUISpec(prev.source.spec, ctx);
+      this._drawer?.setPanelContent(el);
+      this._currentPanelSource = prev.source;
       const canBack = this._localPanelHistory.length > 0 || (this._panel?.threads.length ?? 0) > 1;
       this._drawer?.updatePanelTopBar(canBack, false, prev.title);
       return;
@@ -2198,11 +2235,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         );
       },
       onProductSelect: (product) => {
-        // Save current panel content to local history so back button can restore it
-        const currentContent = this._drawer?.getPanelContentElement();
-        if (currentContent) {
+        // Save current panel source to local history so back button can re-render it
+        if (this._currentPanelSource) {
           const currentTitle = this._drawer?.getPanelTopBarTitle() ?? '';
-          this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+          this._localPanelHistory.push({ source: this._currentPanelSource, title: currentTitle });
           if (this._localPanelHistory.length > GengageChat._MAX_PANEL_HISTORY) this._localPanelHistory.shift();
         }
         const detailSpec: import('../common/types.js').UISpec = {
@@ -2215,6 +2251,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           },
         };
         this._drawer?.setPanelContent(this._renderUISpec(detailSpec, ctx));
+        this._currentPanelSource = { kind: 'spec', spec: detailSpec };
         this._drawer?.updatePanelTopBar(true, false, this._i18n.panelTitleProductDetails);
       },
       i18n: this._i18n,
@@ -2243,6 +2280,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           { preservePanel: true },
         );
       },
+      isMobile: this._isMobileViewport,
     };
     return ctx;
   }
@@ -2258,15 +2296,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _openFavoritesPanel(): void {
     if (!this._drawer) return;
 
-    // Save current panel state to local history (if panel already has content)
-    const currentContent = this._drawer.getPanelContentElement();
-    if (currentContent) {
+    // Save current panel source to local history so back button can re-render it
+    if (this._currentPanelSource) {
       const currentTitle = this._drawer.getPanelTopBarTitle() ?? '';
-      this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+      this._localPanelHistory.push({ source: this._currentPanelSource, title: currentTitle });
       if (this._localPanelHistory.length > GengageChat._MAX_PANEL_HISTORY) this._localPanelHistory.shift();
     }
 
     this._drawer.setPanelContent(this._buildFavoritesPageEl());
+    this._currentPanelSource = { kind: 'favorites' };
     this._drawer.updatePanelTopBar(true, false, this._i18n.favoritesPageTitle);
   }
 

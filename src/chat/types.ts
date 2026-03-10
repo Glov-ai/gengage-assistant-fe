@@ -248,6 +248,8 @@ export interface ChatUISpecRenderContext {
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;
   topPicksLoadingSku?: string | null | undefined;
+  /** True when the widget is displayed in mobile viewport. Replaces hardcoded 768px check. */
+  isMobile?: boolean | undefined;
 }
 
 export interface ProductSortState {

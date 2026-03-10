@@ -38,6 +38,7 @@ export type ChatUISpecRegistry = UISpecDomRegistry<UISpecRenderContext>;
 
 export type { PriceFormatConfig };
 
+/** @deprecated Use context.isMobile instead. Kept as fallback for custom renderers. */
 function isMobileViewport(): boolean {
   return window.innerWidth < 768;
 }
@@ -1013,7 +1014,7 @@ function renderProductGrid(
   }
 
   // Mobile variant: horizontal scroll
-  if (isMobileViewport()) {
+  if (ctx?.isMobile ?? isMobileViewport()) {
     grid.classList.add('gengage-chat-product-grid--mobile');
   }
 
@@ -1089,7 +1090,7 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
   const el = renderComparisonTable(options);
 
   // Mobile variant
-  if (isMobileViewport()) {
+  if (ctx.isMobile ?? isMobileViewport()) {
     el.classList.add('gengage-chat-comparison--mobile');
   }
 
