@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  clampRating,
-  clampDiscount,
-  renderStarRating,
-  createStarRatingElement,
-} from '../src/common/product-utils.js';
+import { clampRating, clampDiscount, renderStarRating, createStarRatingElement } from '../src/common/product-utils.js';
 
 // ---------------------------------------------------------------------------
 // clampRating

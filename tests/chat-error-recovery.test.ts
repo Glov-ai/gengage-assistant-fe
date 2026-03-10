@@ -146,9 +146,7 @@ describe('i18n keys for error recovery', () => {
   });
 
   it('has accountInactiveMessage in EN locale', () => {
-    expect(CHAT_I18N_EN.accountInactiveMessage).toBe(
-      'This account is currently inactive. Please try again later.',
-    );
+    expect(CHAT_I18N_EN.accountInactiveMessage).toBe('This account is currently inactive. Please try again later.');
   });
 
   it('has tryAgainButton in TR locale', () => {
@@ -160,8 +158,6 @@ describe('i18n keys for error recovery', () => {
   });
 
   it('has accountInactiveMessage in TR locale', () => {
-    expect(CHAT_I18N_TR.accountInactiveMessage).toBe(
-      'Bu hesap şu an aktif değil. Lütfen daha sonra tekrar deneyin.',
-    );
+    expect(CHAT_I18N_TR.accountInactiveMessage).toBe('Bu hesap şu an aktif değil. Lütfen daha sonra tekrar deneyin.');
   });
 });

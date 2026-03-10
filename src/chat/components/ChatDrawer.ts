@@ -871,10 +871,7 @@ export class ChatDrawer {
   }
 
   /** Show error with recovery action pills ("Try again" + "Ask something else"). */
-  showErrorWithRecovery(
-    message: string,
-    actions: { onRetry: () => void; onNewQuestion: () => void },
-  ): void {
+  showErrorWithRecovery(message: string, actions: { onRetry: () => void; onNewQuestion: () => void }): void {
     this.showError(message);
     this.setPills([
       { label: this.i18n.tryAgainButton, onAction: actions.onRetry },
@@ -1172,10 +1169,7 @@ export class ChatDrawer {
   private _updateScrollAffordance(): void {
     const panel = this._panelEl;
     const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 10;
-    panel.classList.toggle(
-      'gengage-chat-panel--has-scroll',
-      !atBottom && panel.scrollHeight > panel.clientHeight,
-    );
+    panel.classList.toggle('gengage-chat-panel--has-scroll', !atBottom && panel.scrollHeight > panel.clientHeight);
   }
 
   /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */

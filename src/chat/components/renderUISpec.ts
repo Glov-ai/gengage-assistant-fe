@@ -665,7 +665,8 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     for (const variant of variants) {
       const variantValue = variant['value'] as string | undefined;
-      const variantName = variantValue ?? (variant['name'] as string | undefined) ?? (variant['variant_name'] as string | undefined);
+      const variantName =
+        variantValue ?? (variant['name'] as string | undefined) ?? (variant['variant_name'] as string | undefined);
       const variantSku = variant['sku'] as string | undefined;
       if (!variantName && !variantSku) continue;
 
