@@ -247,7 +247,7 @@ describe('ProductGrid', () => {
     expect(grid.querySelectorAll('.gengage-simrel-card').length).toBe(2);
   });
 
-  it('shows empty state when products array is empty', () => {
+  it('hides grid when products array is empty', () => {
     const grid = renderProductGrid({
       products: [],
       onClick: vi.fn(),
@@ -255,9 +255,8 @@ describe('ProductGrid', () => {
       i18n: defaultI18n,
     });
 
-    const empty = grid.querySelector('.gengage-simrel-empty');
-    expect(empty).toBeTruthy();
-    expect(empty!.textContent).toBe('No similar products found.');
+    expect(grid.style.display).toBe('none');
+    expect(grid.dataset['empty']).toBe('true');
   });
 
   it('applies custom column count via CSS variable', () => {
@@ -426,7 +425,7 @@ describe('GroupTabs', () => {
     expect(panel.getAttribute('aria-labelledby')).toBe(tab.id);
   });
 
-  it('shows empty state when groups array is empty', () => {
+  it('hides container when groups array is empty', () => {
     const result = renderGroupTabs({
       groups: [],
       onClick: vi.fn(),
@@ -435,9 +434,8 @@ describe('GroupTabs', () => {
     });
 
     expect(result.querySelector('[role="tablist"]')).toBeNull();
-    const empty = result.querySelector('.gengage-simrel-empty');
-    expect(empty).toBeTruthy();
-    expect(empty!.textContent).toBe('No similar products found.');
+    expect(result.style.display).toBe('none');
+    expect(result.dataset['empty']).toBe('true');
   });
 
   it('lazy-renders grid content only for active tab', () => {

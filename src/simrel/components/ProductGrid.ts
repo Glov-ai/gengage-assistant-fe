@@ -41,10 +41,8 @@ export function renderProductGrid(options: ProductGridOptions): HTMLElement {
   }
 
   if (options.products.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'gengage-simrel-empty';
-    empty.textContent = options.i18n?.emptyStateMessage ?? 'No similar products found.';
-    grid.appendChild(empty);
+    grid.style.display = 'none';
+    grid.dataset['empty'] = 'true';
   }
 
   return grid;
