@@ -2395,18 +2395,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       favoritedSkus: this._session?.favoritedSkus ?? new Set(),
       onFavoriteToggle: (sku, product) => {
-        ga.trackLikeProduct(sku);
+        const wasLiked = this._session?.favoritedSkus.has(sku) ?? false;
         void this._toggleFavorite(sku, product);
-        // Send like action to backend — preservePanel keeps current products visible
-        const productName = (product['name'] as string | undefined) ?? sku;
-        this._sendAction(
-          {
-            title: productName,
-            type: 'like',
-            payload: { sku },
-          },
-          { preservePanel: true },
-        );
+        // Only send like action to backend when adding, not when removing
+        if (!wasLiked) {
+          ga.trackLikeProduct(sku);
+          const productName = (product['name'] as string | undefined) ?? sku;
+          this._sendAction(
+            {
+              title: productName,
+              type: 'like',
+              payload: { sku },
+            },
+            { preservePanel: true },
+          );
+        }
       },
       isMobile: this._isMobileViewport,
     };
