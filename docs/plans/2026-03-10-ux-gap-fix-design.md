@@ -204,12 +204,12 @@ Add `title="Bu paneli göster"`. 1 line.
 Document: `docs/backend-requirements.md`
 
 ### Section 1: Broken Chat (P0)
-- hepsiburadacom, penticomtr: every query → "Bu ürün bilgisi şu an kullanılamıyor"
+- hepsiburadacom, penticom: every query → "Bu ürün bilgisi şu an kullanılamıyor"
 - Test: `npm run dev -- hepsiburadacom --sku=5002998547`
 - Expected: general queries work without PDP product data
 
 ### Section 2: Empty SimRel (P0)
-- n11com, hepsiburadacom, arcelikcomtr, penticomtr: `/simrel` returns empty
+- n11com, hepsiburadacom, arcelikcomtr, penticom: `/simrel` returns empty
 - Only koctascomtr and yatasbeddingcomtr have working similar products
 
 ### Section 3: Missing PDP Context (P1)
@@ -217,7 +217,7 @@ Document: `docs/backend-requirements.md`
 - Test: `npm run dev -- arcelikcomtr --sku=1000465056`
 
 ### Section 4: Missing QNA Questions (P1)
-- hepsiburadacom, arcelikcomtr, penticomtr: no contextual questions returned
+- hepsiburadacom, arcelikcomtr, penticom: no contextual questions returned
 - Expected: 3-5 product-specific questions per SKU
 
 ### Section 5: Zero-Value Data (P2)

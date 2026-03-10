@@ -6,7 +6,7 @@
 
 ## 1. Broken Chat (P0)
 
-**Merchants:** hepsiburadacom, penticomtr
+**Merchants:** hepsiburadacom, penticom
 **Issue:** Every query returns "Bu ürün bilgisi şu an kullanılamıyor" — chat is non-functional.
 **Test:** `npm run dev -- hepsiburadacom --sku=5002998547` → open chat → ask any question
 **Expected:** General queries (recommendations, comparisons, shipping) should work without PDP product data dependency.
@@ -14,7 +14,7 @@
 
 ## 2. Empty SimRel Responses (P0)
 
-**Merchants:** n11com, hepsiburadacom, arcelikcomtr, penticomtr
+**Merchants:** n11com, hepsiburadacom, arcelikcomtr, penticom
 **Issue:** `/chat/simrel` returns empty payload — no similar products rendered. The SimRel widget shows nothing.
 **Working merchants:** koctascomtr, yatasbeddingcomtr return valid product arrays.
 **Test:** `npm run dev -- n11com --sku=5002998547` → check SimRel widget area
@@ -30,7 +30,7 @@
 
 ## 4. Missing QNA Questions (P1)
 
-**Merchants:** hepsiburadacom, arcelikcomtr, penticomtr
+**Merchants:** hepsiburadacom, arcelikcomtr, penticom
 **Issue:** No contextual questions returned for QNA widget — the question pills area is empty.
 **Working merchants:** koctascomtr, yatasbeddingcomtr, n11com return questions.
 **Expected:** 3-5 product-specific questions per SKU.

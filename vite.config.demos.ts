@@ -7,7 +7,7 @@
  * Output: dist-demos/
  *   index.html                  ← launcher
  *   koctascomtr/index.html      ← Koçtaş demo
- *   penticomtr/index.html       ← Penti demo
+ *   penticom/index.html       ← Penti demo
  *   ...
  */
 

@@ -13,7 +13,7 @@
 | hepsiburadacom | done | done | 10 |
 | arcelikcomtr | done | done | 15 |
 | yatasbeddingcomtr | done | done | 5 |
-| penticomtr | done | done | 19 |
+| penticom | done | done | 19 |
 | **cross-merchant** | — | — | **21** |
 
 **Total issues:** 102 (includes 21 cross-merchant "all" issues)
@@ -353,30 +353,30 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 ## Penticomtr Issues
 
 ## GAP-029: [COMPONENT] Variant buttons show "size"/"color" instead of actual values
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** Open drawer, view product detail in panel
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Variant buttons show actual size values (S/M, M/L, L/XL) and color names
 - **Actual:** Buttons display generic "size" and "color" labels — useless for shopping
 - **Severity:** P0
 - **Source:** Claude
 
 ## GAP-030: [VISUAL] Price shows "1,50 TL" / "1,12 TL" instead of real price
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** View product detail in panel
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Price matches the PDP price (₺1.499,99 / ₺1.124,99)
 - **Actual:** Panel shows "1,50 TL" / "1,12 TL" — comma placement wrong, missing thousands
 - **Severity:** P0
 - **Source:** Claude
 
 ## GAP-031: [COMPONENT] Product link in bot response uses href="#"
-- **Merchant:** penticomtr, n11com, hepsiburadacom, arcelikcomtr
+- **Merchant:** penticom, n11com, hepsiburadacom, arcelikcomtr
 - **Viewport:** both
 - **Step:** Bot responds with inline product mention link
-- **Screenshot:** .claude/tmp/penticomtr-desktop-03-response.png
+- **Screenshot:** .claude/tmp/penticom-desktop-03-response.png
 - **Expected:** Link navigates to product page or triggers drilldown
 - **Actual:** Link uses href="#" — clicking scrolls to top of page
 - **Severity:** P1
@@ -386,27 +386,27 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** Open chat drawer for the first time
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** "Kararsız mı kaldın?" only after viewing 2+ products
 - **Actual:** Appears immediately on every merchant's first drawer open
 - **Severity:** P1
 - **Source:** Claude
 
 ## GAP-033: [VISUAL] Panel product rating shows "(0)" when reviews exist on PDP
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** View panel product detail — PDP shows "4.9/5 (5 değerlendirme)"
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Rating count matches PDP: "★ 4.9 (5)"
 - **Actual:** Panel shows "★ 4.9 (0)" — review count dropped to zero
 - **Severity:** P1
 - **Source:** Claude
 
 ## GAP-034: [COMPONENT] "Benzer Ürünler" section empty for Penti product
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** Scroll panel to "Benzer Ürünler" heading
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Similar products grid populated, or heading hidden if empty
 - **Actual:** "Benzer Ürünler" heading shown with no products below — dead-end UI
 - **Severity:** P2
@@ -416,7 +416,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** Open drawer on mobile
-- **Screenshot:** .claude/tmp/penticomtr-mobile-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-mobile-02-drawer-open.png
 - **Expected:** Suggestion chips fully visible above ChoicePrompter
 - **Actual:** ChoicePrompter banner covers bottom suggestion chips, only 2 of 3 visible
 - **Severity:** P1
@@ -426,37 +426,37 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** Open drawer on mobile — panel shows at top, chat at bottom
-- **Screenshot:** .claude/tmp/penticomtr-mobile-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-mobile-02-drawer-open.png
 - **Expected:** Chat content starts below header with clean boundary
 - **Actual:** First bullet item text abruptly cut: "hareket özgürlüğünüzü kısıtlamaz." — no visible top of this bullet
 - **Severity:** P1
 - **Source:** Claude
 
 ## GAP-037: [VISUAL] SimRel shows "Benzer ürün bulunamadı." for Penti on page
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** mobile
 - **Step:** Scroll to SimRel widget on mobile PDP
-- **Screenshot:** .claude/tmp/penticomtr-mobile-05-qna-simrel.png
+- **Screenshot:** .claude/tmp/penticom-mobile-05-qna-simrel.png
 - **Expected:** SimRel hidden if no products, or shows related products
 - **Actual:** "Benzer ürün bulunamadı." text with empty card container — looks broken
 - **Severity:** P2
 - **Source:** Claude
 
 ## GAP-038: [VISUAL] QNA input shows previous session query on mobile
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** mobile
 - **Step:** Scroll to QNA section on mobile after chatting
-- **Screenshot:** .claude/tmp/penticomtr-mobile-05-qna-simrel.png
+- **Screenshot:** .claude/tmp/penticom-mobile-05-qna-simrel.png
 - **Expected:** QNA input empty or shows placeholder
 - **Actual:** Shows "Konforlu mu?" from previous chat interaction — confusing cross-widget state leak
 - **Severity:** P2
 - **Source:** Claude
 
 ## GAP-039: [VISUAL] "Bu ürünle ilgili soru sor" button dashed border style
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** mobile
 - **Step:** View QNA section on mobile
-- **Screenshot:** .claude/tmp/penticomtr-mobile-05-qna-simrel.png
+- **Screenshot:** .claude/tmp/penticom-mobile-05-qna-simrel.png
 - **Expected:** Solid, clear CTA button
 - **Actual:** Pink dashed border around "Bu ürünle ilgili soru sor" looks like a draft/placeholder
 - **Severity:** P2
@@ -577,7 +577,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-051: [VISUAL] Suggestion chip icons — different merchants show inconsistent icon styles
-- **Merchant:** hepsiburadacom, penticomtr, n11com
+- **Merchant:** hepsiburadacom, penticom, n11com
 - **Viewport:** both
 - **Step:** View suggestion chips below chat response
 - **Screenshot:** .claude/tmp/hepsiburadacom-desktop-03-response.png
@@ -654,7 +654,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** Try to tap panel toggle "»" button
-- **Screenshot:** .claude/tmp/penticomtr-mobile-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-mobile-02-drawer-open.png
 - **Expected:** Touch target at least 44x44px per WCAG
 - **Actual:** Toggle is a thin vertical strip — very small touch target
 - **Severity:** P1
@@ -684,17 +684,17 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** View QNA callout on mobile page
-- **Screenshot:** .claude/tmp/penticomtr-mobile-05-qna-simrel.png
+- **Screenshot:** .claude/tmp/penticom-mobile-05-qna-simrel.png
 - **Expected:** Professional icon or no emoji
 - **Actual:** Wave emoji "👋" in "Bu ürünü birlikte inceleyelim" — unprofessional for some brands
 - **Severity:** P3
 - **Source:** Claude
 
 ## GAP-062: [COMPONENT] Penti AI Top Picks cards — "EN UYGUN FIYATLI" / "EN İYİ ALTERNATİF" labels
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** Click suggestion card, panel shows search results, chat shows AI Top Picks
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** Labels and card layout clean
 - **Actual:** Cards work well visually — but "Detayları Gör" button is red/pink which clashes with Penti's brand
 - **Severity:** P2
@@ -704,17 +704,17 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** desktop
 - **Step:** View panel product detail — "İncele" / stepper / "Paylaş" row
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Comfortable spacing between action buttons
 - **Actual:** İncele, quantity stepper, Sepete Ekle, and Paylaş all crammed into one row
 - **Severity:** P2
 - **Source:** Claude
 
 ## GAP-064: [VISUAL] Penti search results panel — "Önerilen" tab active style
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** Click suggestion card, panel shows search results with sort tabs
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** Active tab clearly distinguishable
 - **Actual:** "Önerilen" tab has green background on white — works, but "Fiyat ↑", "Fiyat ↓", "Karşılaştır" lack hover states
 - **Severity:** P3
@@ -731,10 +731,10 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-066: [UX] No "back to product" after clicking suggestion card
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** Click "Push Up Bralet" card → panel shows search results
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** "Back" button enabled to return to original product
 - **Actual:** Panel shows search results — need to click "←" Back but it may not return to original product detail
 - **Severity:** P2
@@ -744,7 +744,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** Screen reader on suggestion chips
-- **Screenshot:** .claude/tmp/penticomtr-desktop-04-cards.png
+- **Screenshot:** .claude/tmp/penticom-desktop-04-cards.png
 - **Expected:** Icon has descriptive alt text or is decorative (aria-hidden)
 - **Actual:** Icons have img elements but likely no meaningful alt text
 - **Severity:** P2
@@ -791,10 +791,10 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-072: [VISUAL] Penti — "Buna benzer ürünler buldum" QNA button is wider than others
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** mobile
 - **Step:** View QNA pills section
-- **Screenshot:** .claude/tmp/penticomtr-mobile-05-qna-simrel.png
+- **Screenshot:** .claude/tmp/penticom-mobile-05-qna-simrel.png
 - **Expected:** All QNA buttons similar width or nicely wrapped
 - **Actual:** "Buna benzer ürünler buldum" is full-width while others are inline — inconsistent layout
 - **Severity:** P3
@@ -841,30 +841,30 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-077: [COMPONENT] Penti search result cards — discount badges overlap images
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** Click suggestion card, panel shows search results
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** Discount badge positioned cleanly
 - **Actual:** "%60", "%40", "%25" badges overlap product image corners — some are tiny and hard to read
 - **Severity:** P2
 - **Source:** Claude
 
 ## GAP-078: [UX] "Hızlı Teslimat" and "%25 İndirim" badges on search cards not interactive
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** View badges on search result cards
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** Badges are informational only — cursor should not suggest clickability
 - **Actual:** Badges look like pills/tags — user might try to filter by them but they're not interactive
 - **Severity:** P3
 - **Source:** Claude
 
 ## GAP-079: [VISUAL] Penti — "İncele" button color clashes with brand
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** View search result cards
-- **Screenshot:** .claude/tmp/penticomtr-desktop-05-panel-pushup.png
+- **Screenshot:** .claude/tmp/penticom-desktop-05-panel-pushup.png
 - **Expected:** Green or Penti pink/red for CTA
 - **Actual:** "İncele" uses green, "Sepete Ekle" uses brand pink — two competing CTAs
 - **Severity:** P3
@@ -910,10 +910,10 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-084: [VISUAL] All merchants — user message bubble uses brand color but text contrast may fail
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** Send a message — user bubble appears
-- **Screenshot:** .claude/tmp/penticomtr-desktop-03-response.png
+- **Screenshot:** .claude/tmp/penticom-desktop-03-response.png
 - **Expected:** White text on brand color meets WCAG AA contrast
 - **Actual:** Pink bubble with white text for Penti — may fail contrast on lighter pink variants
 - **Severity:** P2
@@ -923,7 +923,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** desktop
 - **Step:** View panel product detail — "Paylaş" button at bottom
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Clear share mechanism (clipboard copy, share sheet)
 - **Actual:** Small "Paylaş" button with share icon — no tooltip explaining what it does
 - **Severity:** P3
@@ -950,10 +950,10 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Source:** Claude
 
 ## GAP-088: [VISUAL] "Stokta" badge color varies across merchants
-- **Merchant:** penticomtr, n11com, arcelikcomtr
+- **Merchant:** penticom, n11com, arcelikcomtr
 - **Viewport:** both
 - **Step:** View stock status on panel product detail
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png, .claude/tmp/arcelikcomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png, .claude/tmp/arcelikcomtr-desktop-02-drawer-open.png
 - **Expected:** Consistent green "Stokta" across merchants
 - **Actual:** Green on all — but "Tükendi" on Arcelik is red, while other merchants don't show out-of-stock
 - **Severity:** P3
@@ -983,7 +983,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** Try to tap "Resim ekle" camera icon next to input
-- **Screenshot:** .claude/tmp/penticomtr-mobile-04-response.png
+- **Screenshot:** .claude/tmp/penticom-mobile-04-response.png
 - **Expected:** Camera button at least 44x44px
 - **Actual:** Small camera icon crammed to the left of input — easy to miss, hard to tap
 - **Severity:** P2
@@ -993,17 +993,17 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** Send a message, wait for response
-- **Screenshot:** .claude/tmp/penticomtr-desktop-03-response.png
+- **Screenshot:** .claude/tmp/penticom-desktop-03-response.png
 - **Expected:** Visible "typing..." or dots animation while bot generates
 - **Actual:** "..." dots appear briefly but disappear — no sustained typing indicator during generation
 - **Severity:** P2
 - **Source:** Claude
 
 ## GAP-093: [VISUAL] Penti panel — "İncele" link styled as green button vs brand pink
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** desktop
 - **Step:** View panel product detail bottom actions
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** "İncele" uses brand color or neutral style
 - **Actual:** Green "İncele" button next to pink "Sepete Ekle" — two competing primary colors
 - **Severity:** P2
@@ -1033,7 +1033,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** View send button with empty input field
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Send button disabled/grayed when input is empty
 - **Actual:** Send button appears active even with empty input — clicking sends nothing
 - **Severity:** P2
@@ -1063,17 +1063,17 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** View chat header
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-open.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-open.png
 - **Expected:** Attribution readable
 - **Actual:** "Powered by Gengage" is tiny text — readable but barely visible on some themes
 - **Severity:** P3
 - **Source:** Claude
 
 ## GAP-100: [COMPONENT] Penti error state — "Bu ürün bilgisi şu an kullanılamıyor" with invalid SKU
-- **Merchant:** penticomtr
+- **Merchant:** penticom
 - **Viewport:** both
 - **Step:** Load with wrong SKU (e.g., Koctas SKU on Penti account)
-- **Screenshot:** .claude/tmp/penticomtr-desktop-02-drawer-error.png
+- **Screenshot:** .claude/tmp/penticom-desktop-02-drawer-error.png
 - **Expected:** Clear error with retry option or suggestion to try another product
 - **Actual:** Plain text error message in chat — no retry button, no helpful next steps
 - **Severity:** P1
@@ -1083,7 +1083,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** both
 - **Step:** After multiple exchanges, user wants to start fresh
-- **Screenshot:** .claude/tmp/penticomtr-desktop-04-cards.png
+- **Screenshot:** .claude/tmp/penticom-desktop-04-cards.png
 - **Expected:** "New conversation" or "Clear" option accessible
 - **Actual:** No visible way to reset conversation — only closing and reopening drawer
 - **Severity:** P2
@@ -1093,7 +1093,7 @@ All 102 issues were verified via code inspection across 9 parallel analysis agen
 - **Merchant:** all
 - **Viewport:** mobile
 - **Step:** Tap input field on mobile — keyboard appears
-- **Screenshot:** .claude/tmp/penticomtr-mobile-04-response.png
+- **Screenshot:** .claude/tmp/penticom-mobile-04-response.png
 - **Expected:** Content scrolls up smoothly, ChoicePrompter dismissed or moved
 - **Actual:** ChoicePrompter can overlap keyboard area on smaller screens
 - **Severity:** P1
