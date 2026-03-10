@@ -415,6 +415,74 @@ describe('renderUISpec', () => {
       });
     });
 
+    it('prefers value field over name for variant button labels (GAP-029)', () => {
+      const onAction = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductDetailsPanel',
+            props: {
+              product: {
+                sku: 'V-VAL',
+                name: 'Variant Value Product',
+                price: '100',
+                url: '/product/v-val',
+                variants: [
+                  { name: 'color', value: 'Red', sku: 'SKU-RED', price: 100 },
+                  { name: 'size', value: 'XL', sku: 'SKU-XL', price: 120 },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onAction }));
+      const buttons = result.querySelectorAll('.gengage-chat-product-variant-btn');
+      expect(buttons).toHaveLength(2);
+
+      // Should show "Red" (value), not "color" (name)
+      expect(buttons[0]!.textContent).toBe('Red');
+      expect(buttons[0]!.textContent).not.toBe('color');
+
+      // Should show "XL" (value), not "size" (name)
+      expect(buttons[1]!.textContent).toContain('XL');
+      expect(buttons[1]!.textContent).not.toContain('size');
+
+      // Action title should also use value
+      (buttons[0] as HTMLElement).click();
+      expect(onAction).toHaveBeenCalledWith({
+        title: 'Red',
+        type: 'launchVariant',
+        payload: { sku: 'SKU-RED' },
+      });
+    });
+
+    it('falls back to name when value is absent', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductDetailsPanel',
+            props: {
+              product: {
+                sku: 'V-FB',
+                name: 'Fallback Product',
+                price: '50',
+                url: '/product/v-fb',
+                variants: [{ name: 'Large', sku: 'V-FB-L', price: 50 }],
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+      const btn = result.querySelector('.gengage-chat-product-variant-btn');
+      expect(btn!.textContent).toBe('Large');
+    });
+
     it('uses custom variantsLabel from i18n', () => {
       const spec: UISpec = {
         root: 'root',

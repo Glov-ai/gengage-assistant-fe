@@ -166,6 +166,7 @@ const ActionPayloadSchema = z.object({
 
 const ProductVariantSchema = z.object({
   name: z.string().optional(),
+  value: z.string().optional(),
   variant_name: z.string().optional(),
   sku: z.string().optional(),
   price: z.union([z.number(), z.string()]).optional(),
