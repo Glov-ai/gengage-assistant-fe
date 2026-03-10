@@ -249,6 +249,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       voiceLang: config.locale
         ? `${config.locale.split('-')[0] ?? 'tr'}-${(config.locale.split('-')[1] ?? config.locale.split('-')[0] ?? 'TR').toUpperCase()}`
         : undefined,
+      onNewChat: () => {
+        this._abortControllers.forEach((c) => c.abort());
+        this._abortControllers.clear();
+        this._activeTypewriter?.cancel();
+        this._activeTypewriter = null;
+        this._activeTtsHandle?.stop();
+        this._activeTtsHandle = null;
+        this._messages = [];
+        this._drawer?.clearMessages();
+        this._currentThreadId = uuidv7();
+        this._lastThreadId = this._currentThreadId;
+        this._choicePrompterEl?.remove();
+        this._choicePrompterEl = null;
+        this._viewedProductSkus.clear();
+        this._drawer?.clearPanel();
+        this._consecutiveErrorCount = 0;
+        this._lastErrorMessage = '';
+        this._thumbnailEntries = [];
+        this._drawer?.setThumbnails([]);
+        this._panel!.snapshots.clear();
+        this._panel!.threads = [];
+        // Re-show welcome if configured
+        this._showWelcomeIfNeeded();
+      },
     });
 
     // Extended mode manager for host PDP maximize/minimize
@@ -375,6 +399,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     dispatch('gengage:chat:open', { state: this._openState });
     ga.trackShow('chat');
     this.config.onOpen?.();
+
+    // Show welcome message on first open with empty history
+    this._showWelcomeIfNeeded();
 
     // Auto-launch PDP context on first open when SKU is available
     if (!this._pdpLaunched && this.config.pageContext?.sku) {
@@ -674,6 +701,28 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.focusInput();
     }
     this._extendedModeManager?.setChatShown(true);
+  }
+
+  /** Show welcome message and starter pills on first open with empty history. */
+  private _showWelcomeIfNeeded(): void {
+    if (this._messages.length !== 0 || !this.config.welcomeMessage) return;
+    const welcomeMsg: ChatMessage = {
+      id: uuidv7(),
+      role: 'assistant',
+      content: this.config.welcomeMessage,
+      timestamp: Date.now(),
+      status: 'done',
+    };
+    this._messages.push(welcomeMsg);
+    this._drawer?.addMessage(welcomeMsg);
+    if (this.config.welcomeActions?.length) {
+      this._drawer?.setPills(
+        this.config.welcomeActions.map((label) => ({
+          label,
+          onAction: () => this._sendMessage(label),
+        })),
+      );
+    }
   }
 
   private _hideDrawer(): void {

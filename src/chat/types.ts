@@ -81,6 +81,15 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   };
 
   // -------------------------------------------------------------------------
+  // Welcome message
+  // -------------------------------------------------------------------------
+
+  /** Welcome message shown on first drawer open with empty history. */
+  welcomeMessage?: string;
+  /** Starter action pills shown with welcome message. */
+  welcomeActions?: string[];
+
+  // -------------------------------------------------------------------------
   // Demo / feature flags
   // -------------------------------------------------------------------------
 

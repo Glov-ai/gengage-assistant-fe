@@ -2845,7 +2845,12 @@
   .gengage-chat-panel-shimmer,
   .gengage-chat-overlay,
   .gengage-chat-product-details-skeleton-price,
-  .gengage-chat-still-working {
+  .gengage-chat-still-working,
+  .gengage-skeleton-card,
+  .gengage-skeleton-line,
+  .gengage-skeleton-img,
+  .gengage-skeleton-text,
+  .gengage-skeleton-price {
     animation: none !important;
     transition: none !important;
     transform: none !important;
@@ -4639,5 +4644,102 @@
   .gengage-chat-product-details-share {
     width: 44px;
     height: 44px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Shared loading skeleton (src/common/skeleton.ts)
+ * ---------------------------------------------------------------------------*/
+.gengage-skeleton {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.gengage-skeleton--message {
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.gengage-skeleton-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gengage-skeleton-img {
+  height: 120px;
+  border-radius: 8px;
+}
+
+.gengage-skeleton-text {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.gengage-skeleton-price {
+  height: 14px;
+  width: 60%;
+  border-radius: 4px;
+}
+
+.gengage-skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gengage-skeleton-card,
+  .gengage-skeleton-line,
+  .gengage-skeleton-img,
+  .gengage-skeleton-text,
+  .gengage-skeleton-price {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: gengage-shimmer 1.5s infinite;
+  }
+
+  @keyframes gengage-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gengage-skeleton-card,
+  .gengage-skeleton-line,
+  .gengage-skeleton-img,
+  .gengage-skeleton-text,
+  .gengage-skeleton-price {
+    background: #f0f0f0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Panel scroll affordance (bottom fade gradient)
+ * ---------------------------------------------------------------------------*/
+.gengage-chat-panel--has-scroll::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 40px;
+  background: linear-gradient(transparent, var(--gengage-chat-panel-bg, #f5f5f5));
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Panel content crossfade transition
+ * ---------------------------------------------------------------------------*/
+@media (prefers-reduced-motion: no-preference) {
+  .gengage-chat-panel--transitioning {
+    opacity: 0;
+    transition: opacity 150ms ease;
   }
 }

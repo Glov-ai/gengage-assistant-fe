@@ -53,6 +53,8 @@ export interface ChatDrawerOptions {
   voiceEnabled?: boolean | undefined;
   /** BCP 47 language for speech recognition. Default: 'tr-TR'. */
   voiceLang?: string | undefined;
+  /** Callback fired when the "New Chat" button is clicked. */
+  onNewChat?: (() => void) | undefined;
 }
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
@@ -200,6 +202,18 @@ export class ChatDrawer {
       headerRight.appendChild(favBtn);
     }
 
+    // New Chat button (optional — reset conversation)
+    if (options.onNewChat) {
+      const newChatBtn = document.createElement('button');
+      newChatBtn.className = 'gengage-chat-header-btn gengage-chat-new-chat';
+      newChatBtn.type = 'button';
+      newChatBtn.setAttribute('aria-label', this.i18n.newChatButton);
+      newChatBtn.title = this.i18n.newChatButton;
+      newChatBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+      newChatBtn.addEventListener('click', () => options.onNewChat?.());
+      headerRight.appendChild(newChatBtn);
+    }
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'gengage-chat-close';
     closeBtn.type = 'button';
@@ -287,6 +301,11 @@ export class ChatDrawer {
       forwardAriaLabel: this.i18n.forwardAriaLabel,
     });
     this._panelEl.appendChild(this._panelTopBar.getElement());
+
+    // Panel scroll affordance — bottom fade gradient when content is scrollable
+    const onPanelScroll = () => this._updateScrollAffordance();
+    this._panelEl.addEventListener('scroll', onPanelScroll, { passive: true });
+    this._cleanups.push(() => this._panelEl.removeEventListener('scroll', onPanelScroll));
 
     body.appendChild(this._panelEl);
 
@@ -708,6 +727,7 @@ export class ChatDrawer {
       rollbackBtn.className = 'gengage-chat-rollback-btn';
       rollbackBtn.type = 'button';
       rollbackBtn.setAttribute('aria-label', this.i18n.rollbackAriaLabel);
+      rollbackBtn.title = this.i18n.rollbackAriaLabel;
       rollbackBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
       rollbackBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -970,6 +990,8 @@ export class ChatDrawer {
 
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
+    // Brief crossfade transition when swapping panel content
+    this._panelEl.classList.add('gengage-chat-panel--transitioning');
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
@@ -982,6 +1004,10 @@ export class ChatDrawer {
     if (this._panelCollapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
     }
+    requestAnimationFrame(() => {
+      this._panelEl.classList.remove('gengage-chat-panel--transitioning');
+      this._updateScrollAffordance();
+    });
   }
 
   /** Append content to the panel without replacing existing content. */
@@ -1128,6 +1154,16 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+  }
+
+  /** Update scroll affordance (bottom fade gradient) on the panel. */
+  private _updateScrollAffordance(): void {
+    const panel = this._panelEl;
+    const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 10;
+    panel.classList.toggle(
+      'gengage-chat-panel--has-scroll',
+      !atBottom && panel.scrollHeight > panel.clientHeight,
+    );
   }
 
   /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */
