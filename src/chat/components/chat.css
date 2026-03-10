@@ -10,6 +10,19 @@
   cursor: pointer;
 }
 
+/* Screen reader only — visually hidden, accessible to assistive tech */
+.gengage-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .gengage-chat-root {
   position: fixed;
   z-index: var(--gengage-z-index, 2147483647);
@@ -1117,6 +1130,7 @@
 
 .gengage-chat-send:disabled {
   background: #d1d5db;
+  opacity: 0.4;
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -4471,6 +4485,7 @@
   }
 
   .gengage-chat-panel-divider-toggle {
+    min-width: 44px;
     min-height: 44px;
   }
 

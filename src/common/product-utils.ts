@@ -53,6 +53,8 @@ export function createStarRatingElement(rating: number): HTMLSpanElement {
 
   const container = document.createElement('span');
   container.className = 'gengage-star-rating';
+  container.setAttribute('role', 'img');
+  container.setAttribute('aria-label', `${clamped.toFixed(1)} out of 5 stars`);
 
   if (full > 0) {
     container.appendChild(document.createTextNode('\u2605'.repeat(full)));

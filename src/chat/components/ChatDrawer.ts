@@ -117,6 +117,14 @@ export class ChatDrawer {
     this.root.setAttribute('aria-label', this.i18n.headerTitle ?? 'Chat');
     this.root.setAttribute('aria-modal', 'true');
 
+    const descId = 'gengage-chat-dialog-desc';
+    const descEl = document.createElement('span');
+    descEl.id = descId;
+    descEl.className = 'gengage-sr-only';
+    descEl.textContent = this.i18n.headerTitle ?? 'AI shopping assistant';
+    this.root.appendChild(descEl);
+    this.root.setAttribute('aria-describedby', descId);
+
     // Header — branded dark bar
     const header = document.createElement('div');
     header.className = 'gengage-chat-header';
@@ -455,6 +463,7 @@ export class ChatDrawer {
         this.inputEl.style.height = 'auto';
         this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
       });
+      this._updateSendEnabled();
     });
 
     // Enter submits; Shift+Enter inserts newline on desktop only
@@ -527,6 +536,7 @@ export class ChatDrawer {
     this.sendBtn = document.createElement('button');
     this.sendBtn.className = 'gengage-chat-send';
     this.sendBtn.type = 'button';
+    this.sendBtn.disabled = true;
     this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
     this.sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
     this.sendBtn.addEventListener('click', () => this._submit());
@@ -914,6 +924,7 @@ export class ChatDrawer {
       thumb.src = URL.createObjectURL(file);
     }
     this._previewStrip.classList.remove('gengage-chat-attachment-preview--hidden');
+    this._updateSendEnabled();
   }
 
   /** Remove the staged attachment and hide preview. */
@@ -925,6 +936,7 @@ export class ChatDrawer {
     }
     this._pendingAttachment = null;
     this._previewStrip.classList.add('gengage-chat-attachment-preview--hidden');
+    this._updateSendEnabled();
   }
 
   /** Get the currently staged attachment file, or null. */
@@ -1195,6 +1207,11 @@ export class ChatDrawer {
     container.appendChild(list);
   }
 
+  private _updateSendEnabled(): void {
+    const hasContent = this.inputEl.value.trim().length > 0 || this._pendingAttachment !== null;
+    this.sendBtn.disabled = !hasContent;
+  }
+
   private _submit(): void {
     const text = this.inputEl.value.trim();
     const attachment = this._pendingAttachment;
@@ -1203,6 +1220,7 @@ export class ChatDrawer {
     this.inputEl.value = '';
     this.inputEl.style.height = 'auto'; // Reset textarea height after submit
     this.clearAttachment();
+    this._updateSendEnabled();
   }
 
   private _toggleVoice(): void {
