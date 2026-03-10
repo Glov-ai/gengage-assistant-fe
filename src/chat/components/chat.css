@@ -550,10 +550,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
-  min-width: 28px;
+  width: 28px;
   height: 48px;
-  min-height: 36px;
   border: 1px solid var(--_gengage-border-color);
   border-radius: 6px;
   background: #fff;
@@ -1038,10 +1036,6 @@
   animation: gengage-fade-in 0.3s ease;
 }
 
-/* Hide still-working when typing indicator is already visible */
-.gengage-chat-typing:not(:empty) ~ .gengage-chat-still-working {
-  display: none;
-}
 @keyframes gengage-fade-in {
   from {
     opacity: 0;
@@ -4159,14 +4153,6 @@
 .gengage-chat-product-card-stock.is-out-of-stock {
   background: #fef2f2;
   color: #dc2626;
-}
-
-.gengage-chat-product-card--out-of-stock {
-  opacity: 0.55;
-}
-
-.gengage-chat-product-card--out-of-stock .gengage-chat-product-card-img {
-  filter: grayscale(40%);
 }
 
 /* ── Find Similar hover pill (floats on product images) ── */

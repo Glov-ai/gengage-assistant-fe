@@ -37,6 +37,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
+    try { sessionStorage.setItem('gengage_choice_prompter_dismissed_global', '1'); } catch { /* */ }
     card.remove();
     options.onCtaClick();
   });
