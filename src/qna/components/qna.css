@@ -75,7 +75,7 @@
   align-items: center;
   min-height: 40px;
   padding: 8px 14px;
-  border: 1px dashed color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 65%, #cbd5e1 35%);
+  border: 1px solid color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 65%, #cbd5e1 35%);
   border-radius: var(--gengage-qna-pill-radius, 999px);
   background: transparent;
   color: var(--gengage-primary-color, #3b82f6);
@@ -104,7 +104,7 @@
   display: flex;
   gap: 8px;
   padding: 6px 0 2px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .gengage-qna-input {
@@ -139,10 +139,11 @@
 }
 
 .gengage-qna-send {
-  min-width: 60px;
+  min-width: 44px;
+  min-height: 44px;
   height: 48px;
   padding: 0 16px;
-  border: 1px dashed color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 65%, #cbd5e1 35%);
+  border: 1px solid var(--gengage-qna-primary, var(--gengage-primary-color, #3b82f6));
   border-radius: var(--gengage-qna-pill-radius, 999px);
   background: transparent;
   color: var(--gengage-primary-color, #3b82f6);

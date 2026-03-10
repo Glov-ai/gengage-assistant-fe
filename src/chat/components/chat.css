@@ -373,7 +373,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.65);
   text-decoration: none;
   transition: color 0.15s;
 }
@@ -503,6 +503,25 @@
   border-right: 1px solid var(--_gengage-border-color);
   overflow-y: auto;
   padding: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.gengage-chat-panel--visible::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gengage-chat-panel--visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gengage-chat-panel--visible::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.gengage-chat-panel--visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* Divider between panel and conversation */
@@ -531,7 +550,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
+  width: 28px;
   height: 48px;
   border: 1px solid var(--_gengage-border-color);
   border-radius: 6px;
@@ -852,7 +871,7 @@
 
 /* First bot message in thread — subtle accent */
 .gengage-chat-bubble--first {
-  border-left: 3px solid var(--gengage-accent-primary, #3b82f6);
+  border-left: 3px solid var(--gengage-primary-color, #3b82f6);
   padding-left: 12px;
 }
 
@@ -954,12 +973,14 @@
   align-items: center;
   gap: 6px;
   margin: 4px 0 8px;
-  padding: 6px 14px;
+  padding: 6px 16px;
   border: 1px solid var(--gengage-primary-color, #3b82f6);
   border-radius: 16px;
   background: var(--gengage-background-color, #fff);
   color: var(--gengage-primary-color, #3b82f6);
-  font-size: 13px;
+  font-size: 12px;
+  max-width: 200px;
+  align-self: center;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -1014,6 +1035,7 @@
   margin-top: 6px;
   animation: gengage-fade-in 0.3s ease;
 }
+
 @keyframes gengage-fade-in {
   from {
     opacity: 0;
@@ -1199,7 +1221,7 @@
     background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.2s ease,
     transform 0.15s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .gengage-chat-send:hover {
@@ -1219,8 +1241,8 @@
 }
 
 .gengage-chat-send:disabled {
-  background: #d1d5db;
-  opacity: 0.4;
+  background: #e5e7eb;
+  opacity: 0.5;
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -1311,7 +1333,7 @@
 
 .gengage-chat-product-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .gengage-chat-product-card-img {
@@ -1390,9 +1412,10 @@
 
 .gengage-chat-product-card-original-price {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--_gengage-text-secondary);
   font-weight: 400;
-  font-size: 12px;
+  font-size: inherit;
+  margin-right: 6px;
 }
 
 /* Async pricing skeleton */
@@ -1500,6 +1523,7 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gengage-chat-product-summary__rating {
@@ -1521,7 +1545,7 @@
 }
 .gengage-chat-product-summary__price-original {
   text-decoration: line-through;
-  color: #6b7280;
+  color: var(--_gengage-text-secondary);
   font-weight: 400;
   font-size: 11px;
 }
@@ -2992,6 +3016,16 @@
   display: none;
 }
 
+.gengage-chat-root--mobile .gengage-chat-pills-scroll {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-pill {
+  white-space: normal;
+  max-width: 100%;
+}
+
 .gengage-chat-pill {
   flex: 0 0 auto;
   padding: 8px 16px;
@@ -3715,7 +3749,7 @@
   font-weight: 600;
   color: var(--gengage-text-muted, #64748b);
   margin-bottom: 6px;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 
@@ -3762,10 +3796,10 @@
 .gengage-chat-product-sort-btn {
   flex: 1;
   padding: 6px 10px;
-  border: none;
+  border: 1px solid var(--_gengage-border-color);
   border-radius: 6px;
   background: transparent;
-  color: var(--gengage-text-muted, #64748b);
+  color: var(--_gengage-text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -4260,7 +4294,7 @@
   border: 1px solid var(--_gengage-border-color);
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  z-index: 5;
   animation: gengage-choice-prompter-in 0.2s ease;
 }
 
@@ -4313,7 +4347,12 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  padding: 2px 6px;
+  padding: 4px 8px;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: none;
   color: #6b7280;
@@ -4859,14 +4898,11 @@
 
 /* Mobile touch targets — WCAG 2.5.5 (44px minimum) */
 .gengage-chat-root--mobile .gengage-chat-choice-prompter {
-  position: sticky;
   left: 12px;
   right: 12px;
   width: auto;
   max-width: none;
-  bottom: calc(
-    var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px + env(safe-area-inset-bottom, 0px)
-  );
+  bottom: 12px;
   max-height: 40vh;
   overflow-y: auto;
 }
