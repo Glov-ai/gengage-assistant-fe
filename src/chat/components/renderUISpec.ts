@@ -249,7 +249,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
   const rating = product['rating'];
   const reviewCount = product['reviewCount'];
-  if (typeof rating === 'number' && Number.isFinite(rating)) {
+  if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-card-rating';
     ratingRow.appendChild(createStarRatingElement(rating));
@@ -276,13 +276,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     // Replace skeleton with actual price after delay
     setTimeout(() => {
       if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price) {
+      if (price && parseFloat(price) > 0) {
         skeleton.replaceWith(document.createTextNode(formatPrice(price, ctx.pricing)));
       } else {
         skeleton.remove();
       }
     }, 300);
-  } else if (price) {
+  } else if (price && parseFloat(price) > 0) {
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-card-price';
     if (originalPrice && originalPrice !== price) {
@@ -315,12 +315,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-card-promos';
     for (const promo of promotions) {
+      if (!promo || /%(0(\.0+)?)\s/.test(promo)) continue; // skip zero-value badges
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-promo-badge';
       badge.textContent = promo;
       promoBadges.appendChild(badge);
     }
-    body.appendChild(promoBadges);
+    if (promoBadges.childElementCount > 0) body.appendChild(promoBadges);
   }
 
   card.appendChild(body);
@@ -568,7 +569,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
   const rating = product['rating'];
   const reviewCount = product['reviewCount'];
-  if (typeof rating === 'number' && Number.isFinite(rating)) {
+  if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-details-rating';
     ratingRow.textContent = `\u2605 ${clampRating(rating).toFixed(1)}`;
@@ -595,7 +596,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     // Replace skeleton with actual price after delay
     setTimeout(() => {
       if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price) {
+      if (price && parseFloat(price) > 0) {
         const currentPrice = document.createElement('span');
         currentPrice.className = 'gengage-chat-product-details-current-price';
         currentPrice.textContent = formatPrice(price, ctx.pricing);
@@ -604,7 +605,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
         skeleton.remove();
       }
     }, 300);
-  } else if (price) {
+  } else if (price && parseFloat(price) > 0) {
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-details-price';
     if (originalPrice && originalPrice !== price) {
@@ -637,12 +638,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-details-promos';
     for (const promo of promotions) {
+      if (!promo || /%(0(\.0+)?)\s/.test(promo)) continue; // skip zero-value badges
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-details-promo-badge';
       badge.textContent = promo;
       promoBadges.appendChild(badge);
     }
-    content.appendChild(promoBadges);
+    if (promoBadges.childElementCount > 0) content.appendChild(promoBadges);
   }
 
   // Variant selector

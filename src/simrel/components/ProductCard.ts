@@ -118,7 +118,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     }
   }
 
-  if (product.price) {
+  if (product.price && parseFloat(product.price) > 0) {
     const current = document.createElement('span');
     current.className = 'gengage-simrel-card-price-current gengage-chat-product-card-price-current';
     current.textContent = formatPrice(product.price, pricing);
