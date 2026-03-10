@@ -77,10 +77,14 @@ describe('setInputAreaChips with icons', () => {
     expect(chipIcon).toBeNull();
   });
 
-  it('does not render icon span for unknown icon name', () => {
+  it('renders default fallback icon for unknown icon name', () => {
     drawer.setInputAreaChips([{ label: 'Custom', onAction: () => {}, icon: 'nonexistent' }]);
     const chipIcon = container.querySelector('.gengage-chat-input-chip-icon');
-    expect(chipIcon).toBeNull();
+    expect(chipIcon).not.toBeNull();
+    const svg = chipIcon!.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg!.classList.contains('gengage-chat-icon')).toBe(true);
+    expect(svg!.querySelector('path')).not.toBeNull();
   });
 });
 
@@ -117,5 +121,15 @@ describe('setPills with icons', () => {
     const pillImg = container.querySelector('.gengage-chat-pill-img');
     expect(pillIcon).not.toBeNull();
     expect(pillImg).not.toBeNull();
+  });
+
+  it('renders default fallback icon for unknown pill icon name', () => {
+    drawer.setPills([{ label: 'Custom Action', onAction: () => {}, icon: 'unknown_icon' }]);
+    const pillIcon = container.querySelector('.gengage-chat-pill-icon');
+    expect(pillIcon).not.toBeNull();
+    const svg = pillIcon!.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg!.classList.contains('gengage-chat-icon')).toBe(true);
+    expect(svg!.querySelector('path')).not.toBeNull();
   });
 });

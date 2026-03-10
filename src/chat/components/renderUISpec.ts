@@ -319,6 +319,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
     if (promoBadges.childElementCount > 0) body.appendChild(promoBadges);
@@ -642,6 +643,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-details-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
     if (promoBadges.childElementCount > 0) content.appendChild(promoBadges);
@@ -992,6 +994,10 @@ function renderProductGrid(
       compareBtn.type = 'button';
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
+      }
+      // Hide compare button during streaming — revealed on stream end with fade-in
+      if (ctx.isStreaming) {
+        compareBtn.classList.add('gengage-chat-comparison-toggle-btn--hidden');
       }
       compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Compare';
       compareBtn.addEventListener('click', () => {

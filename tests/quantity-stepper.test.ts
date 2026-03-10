@@ -76,7 +76,7 @@ describe('createQuantityStepper', () => {
     expect(valueEl.textContent).toBe('2');
   });
 
-  it('renders compact mode with cart icon', () => {
+  it('renders compact mode with cart SVG icon', () => {
     const onSubmit = vi.fn();
     const stepper = createQuantityStepper({ onSubmit, compact: true });
 

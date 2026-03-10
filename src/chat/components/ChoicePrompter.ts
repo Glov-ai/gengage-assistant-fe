@@ -11,6 +11,7 @@ export interface ChoicePrompterOptions {
   heading: string;
   suggestion: string;
   ctaLabel: string;
+  threadId: string;
   onCtaClick: () => void;
   onDismiss?: () => void;
   dismissAriaLabel?: string;
@@ -35,7 +36,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   cta.className = 'gengage-chat-choice-prompter-cta';
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
-    markDismissed();
+    markDismissed(options.threadId);
     card.remove();
     options.onCtaClick();
   });
@@ -47,7 +48,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.textContent = '\u00D7'; // × close
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
-    markDismissed();
+    markDismissed(options.threadId);
     card.remove();
     options.onDismiss?.();
   });
@@ -56,17 +57,25 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   return card;
 }
 
-export function isChoicePrompterDismissed(): boolean {
+export function isChoicePrompterDismissed(threadId: string): boolean {
   try {
-    return sessionStorage.getItem(SESSION_STORAGE_KEY) === '1';
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return false;
+    const dismissed: string[] = JSON.parse(raw);
+    return dismissed.includes(threadId);
   } catch {
     return false;
   }
 }
 
-function markDismissed(): void {
+function markDismissed(threadId: string): void {
   try {
-    sessionStorage.setItem(SESSION_STORAGE_KEY, '1');
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const dismissed: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    if (!dismissed.includes(threadId)) {
+      dismissed.push(threadId);
+    }
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(dismissed));
   } catch {
     // sessionStorage unavailable — silently ignore
   }

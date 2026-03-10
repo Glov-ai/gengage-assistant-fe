@@ -14,7 +14,7 @@ export interface PriceFormatConfig {
   thousandsSeparator?: string;
   /** Decimal point character. Default: ',' (Turkish) */
   decimalSeparator?: string;
-  /** Whether to show decimal part for whole numbers. Default: false */
+  /** Whether to show decimal part for whole numbers. Default: true */
   alwaysShowDecimals?: boolean;
 }
 
@@ -23,7 +23,7 @@ const TURKISH_DEFAULTS: Required<PriceFormatConfig> = {
   currencyPosition: 'suffix',
   thousandsSeparator: '.',
   decimalSeparator: ',',
-  alwaysShowDecimals: false,
+  alwaysShowDecimals: true,
 };
 
 /**

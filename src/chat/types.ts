@@ -81,6 +81,15 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   };
 
   // -------------------------------------------------------------------------
+  // Welcome message
+  // -------------------------------------------------------------------------
+
+  /** Welcome message shown on first drawer open with empty history. */
+  welcomeMessage?: string;
+  /** Starter action pills shown with welcome message. */
+  welcomeActions?: string[];
+
+  // -------------------------------------------------------------------------
   // Demo / feature flags
   // -------------------------------------------------------------------------
 
@@ -188,6 +197,9 @@ export interface ChatI18n {
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
+  tryAgainButton: string;
+  askSomethingElseButton: string;
+  accountInactiveMessage: string;
 }
 
 export interface ChatUISpecRenderContext {
@@ -249,6 +261,8 @@ export interface ChatUISpecRenderContext {
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;
   topPicksLoadingSku?: string | null | undefined;
+  /** When true the stream is still in progress — defer compare CTA until stream ends. */
+  isStreaming?: boolean | undefined;
 }
 
 export interface ProductSortState {
