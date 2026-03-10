@@ -123,8 +123,8 @@
 }
 
 .gengage-chat-launcher svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 /* Image-mode launcher — full-size image, no circular bg */
@@ -558,7 +558,7 @@
   min-width: var(--_gengage-chat-panel-min-width);
   max-width: var(--_gengage-chat-panel-max-width);
   border-right: none;
-  background: #fff;
+  background: var(--gengage-chat-panel-bg, var(--_gengage-surface, #fff));
   padding: 0 16px 16px;
   overflow-y: auto;
   margin: 0;
@@ -1815,6 +1815,39 @@
   font-size: 13px;
 }
 
+/* Selected card highlight state */
+.gengage-chat-product-card--selected {
+  border-color: var(--gengage-primary-color, #3b82f6);
+  background: color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 8%, transparent);
+  box-shadow: 0 0 0 1px var(--gengage-primary-color, #3b82f6);
+}
+
+/* Panel content layout — prevent empty space below grid */
+.gengage-chat-panel--visible {
+  min-height: 0;
+}
+
+.gengage-chat-panel--visible > * {
+  flex-shrink: 0;
+}
+
+/* "Load more" button in product grids */
+.gengage-chat-load-more-btn {
+  display: block;
+  margin: 12px auto;
+  padding: 8px 24px;
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gengage-primary-color, #3b82f6);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.gengage-chat-load-more-btn:hover {
+  background: var(--_gengage-surface-muted, #f8fafc);
+}
+
 .gengage-chat-product-details-panel {
   display: flex;
   flex-direction: column;
@@ -2441,6 +2474,67 @@
   .gengage-chat-product-card-img {
     height: 180px;
   }
+
+  /* GAP-012: Hide native scrollbar on mobile */
+  .gengage-chat-messages {
+    scrollbar-width: none;
+  }
+
+  .gengage-chat-messages::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* GAP-013: Improve mobile chat padding */
+  .gengage-chat-messages {
+    padding: 12px 16px;
+  }
+
+  /* GAP-011: Fix drawer header white sliver on mobile */
+  .gengage-chat-drawer {
+    border-top: none;
+  }
+
+  .gengage-chat-header {
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* GAP-036: Fix chat content cut off at panel boundary */
+  .gengage-chat-conversation {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
+  /* GAP-047: Improve mobile drawer product image visibility */
+  .gengage-chat-product-details-img {
+    min-height: 120px;
+    object-fit: contain;
+  }
+
+  /* GAP-057: Improve panel separator visibility on mobile */
+  .gengage-chat-panel-divider-toggle {
+    background: var(--_gengage-surface-muted, #f1f5f9);
+    min-height: 24px;
+  }
+
+  /* GAP-063: Fix panel action buttons crowding */
+  .gengage-chat-product-details-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* GAP-065: Fix badge overlap on mobile */
+  .gengage-chat-product-card-promos,
+  .gengage-chat-product-details-promos {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* GAP-086: Fix placeholder text too long on mobile */
+  .gengage-chat-input::placeholder {
+    font-size: 13px;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -3402,6 +3496,20 @@
   border-color: var(--gengage-primary-color, #3b82f6);
 }
 
+.gengage-chat-product-gallery-thumb-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--_gengage-surface-muted, #f1f5f9);
+  color: var(--_gengage-text-secondary, #64748b);
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
 /* Variant Selector */
 .gengage-chat-product-variants {
   margin-top: 12px;
@@ -3716,6 +3824,9 @@
     background 0.12s,
     border-color 0.12s;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .gengage-chat-input-chip:hover {
@@ -4323,6 +4434,23 @@
   padding: 4px 8px;
   font-size: 13px;
   border-radius: 0 14px 14px 0;
+}
+
+/* Panel qty-stepper borders — clean border grouping */
+.gengage-chat-panel .gengage-qty-stepper {
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gengage-chat-panel .gengage-qty-stepper button,
+.gengage-chat-panel .gengage-qty-stepper .gengage-qty-value {
+  border: none;
+  border-right: 1px solid var(--_gengage-border-color);
+}
+
+.gengage-chat-panel .gengage-qty-stepper .gengage-qty-submit {
+  border-right: none;
 }
 
 /* Details panel ATC stepper */

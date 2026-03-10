@@ -32,6 +32,7 @@
   gap: 12px;
   overflow-x: auto;
   padding: 8px 0 12px;
+  padding-bottom: 72px; /* GAP-010: space for FAB overlay */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
@@ -403,6 +404,16 @@
     flex-basis: auto;
     border-left: 1px solid var(--_gengage-border-color);
     border-top: none;
+  }
+
+  /* GAP-009: Fix SimRel card borders on mobile */
+  .gengage-simrel-card {
+    border: 1px solid var(--_gengage-border-color);
+  }
+
+  /* GAP-027: Fix price text clipping on mobile */
+  .gengage-simrel-card-price-current {
+    font-size: 14px;
   }
 }
 
