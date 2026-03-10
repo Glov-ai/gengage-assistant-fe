@@ -6,6 +6,7 @@
  */
 
 const SESSION_STORAGE_KEY = 'gengage_choice_prompter_dismissed';
+const GLOBAL_DISMISS_KEY = 'gengage_choice_prompter_dismissed_global';
 
 export interface ChoicePrompterOptions {
   heading: string;
@@ -37,7 +38,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try { sessionStorage.setItem('gengage_choice_prompter_dismissed_global', '1'); } catch { /* */ }
+    try { sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1'); } catch { /* */ }
     card.remove();
     options.onCtaClick();
   });
@@ -50,7 +51,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try { sessionStorage.setItem('gengage_choice_prompter_dismissed_global', '1'); } catch { /* */ }
+    try { sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1'); } catch { /* */ }
     card.remove();
     options.onDismiss?.();
   });
@@ -61,7 +62,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
 
 export function isChoicePrompterGloballyDismissed(): boolean {
   try {
-    return sessionStorage.getItem('gengage_choice_prompter_dismissed_global') === '1';
+    return sessionStorage.getItem(GLOBAL_DISMISS_KEY) === '1';
   } catch {
     return false;
   }

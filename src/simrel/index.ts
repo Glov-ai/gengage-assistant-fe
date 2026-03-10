@@ -309,16 +309,14 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         this._contentEl.innerHTML = '';
         const errorEl = document.createElement('div');
         errorEl.className = 'gengage-simrel-error';
-        errorEl.style.cssText = 'text-align:center;padding:24px 16px;color:#6b7280;font-size:13px;line-height:1.5;';
         const msgEl = document.createElement('span');
         msgEl.textContent = this.config.locale?.startsWith('tr')
           ? 'Benzer \u00FCr\u00FCnler y\u00FCklenemedi.'
           : 'Could not load similar products.';
         errorEl.appendChild(msgEl);
         const retryBtn = document.createElement('button');
+        retryBtn.className = 'gengage-simrel-retry';
         retryBtn.textContent = this.config.locale?.startsWith('tr') ? 'Tekrar dene' : 'Try again';
-        retryBtn.style.cssText =
-          'display:inline-block;margin-top:8px;border:1px solid #d1d5db;background:#fff;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:13px;color:#374151;transition:background 0.15s;';
         retryBtn.addEventListener('click', () => {
           void this._fetchAndRender(this.config.sku);
         });

@@ -315,6 +315,31 @@
   color: var(--_gengage-text-secondary);
 }
 
+.gengage-simrel-error {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--_gengage-text-secondary, #6b7280);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gengage-simrel-retry {
+  display: inline-block;
+  margin-top: 8px;
+  border: 1px solid var(--_gengage-border-color, #d1d5db);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--_gengage-text-primary, #374151);
+  transition: background 0.15s;
+}
+
+.gengage-simrel-retry:hover {
+  background: var(--_gengage-surface-secondary, #f3f4f6);
+}
+
 /* Group tabs */
 .gengage-simrel-tabs {
   display: flex;
