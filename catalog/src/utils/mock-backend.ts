@@ -77,7 +77,9 @@ function interceptedFetch(input: RequestInfo | URL, init?: RequestInit): Promise
         (parsed['actionType'] as string | undefined) ??
         (parsed['action_type'] as string | undefined) ??
         (parsed['type'] as string | undefined);
-    } catch { /* ignore parse errors */ }
+    } catch {
+      /* ignore parse errors */
+    }
 
     // like / addToCart: silent acknowledgment — no panel or chat update
     if (actionType === 'like' || actionType === 'addToCart') {

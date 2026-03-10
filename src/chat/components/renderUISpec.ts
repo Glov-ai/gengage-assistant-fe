@@ -336,7 +336,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     cta.type = 'button';
     cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
     cta.addEventListener('click', (e) => {
-      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) { e.stopPropagation(); return; }
+      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
+        e.stopPropagation();
+        return;
+      }
       ctx.onAction(action);
     });
     card.appendChild(cta);
@@ -348,7 +351,11 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');
     cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
     cta.addEventListener('click', (e) => {
-      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) { e.preventDefault(); e.stopPropagation(); return; }
+      if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (ctx.onProductClick && sku) {
         e.preventDefault();
         ctx.onProductClick({ sku, url });

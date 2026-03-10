@@ -161,8 +161,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _threadsWithFirstBot: Set<string> = new Set();
   /** Panel state manager (snapshots, topbar, navigation). */
   private _panel: PanelManager | null = null;
-  /** Client-side panel navigation stack for local drilldowns (e.g. card → detail). */
+  /** Client-side panel navigation stack for local drilldowns (e.g. card → detail). Max 10 entries. */
   private _localPanelHistory: Array<{ el: HTMLElement; title: string }> = [];
+  private static readonly _MAX_PANEL_HISTORY = 10;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
@@ -2202,6 +2203,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         if (currentContent) {
           const currentTitle = this._drawer?.getPanelTopBarTitle() ?? '';
           this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+          if (this._localPanelHistory.length > GengageChat._MAX_PANEL_HISTORY) this._localPanelHistory.shift();
         }
         const detailSpec: import('../common/types.js').UISpec = {
           root: 'root',
@@ -2261,6 +2263,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (currentContent) {
       const currentTitle = this._drawer.getPanelTopBarTitle() ?? '';
       this._localPanelHistory.push({ el: currentContent.cloneNode(true) as HTMLElement, title: currentTitle });
+      if (this._localPanelHistory.length > GengageChat._MAX_PANEL_HISTORY) this._localPanelHistory.shift();
     }
 
     this._drawer.setPanelContent(this._buildFavoritesPageEl());
@@ -2290,8 +2293,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const elements: import('../common/types.js').UISpec['elements'] = {};
     const childKeys: string[] = [];
 
-    for (let i = 0; i < favorites.length; i++) {
-      const fav = favorites[i]!;
+    for (const [i, fav] of favorites.entries()) {
       const key = `card_${i}`;
       childKeys.push(key);
       elements[key] = {

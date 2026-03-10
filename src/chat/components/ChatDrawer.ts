@@ -164,9 +164,10 @@ export class ChatDrawer {
         dragDelta = t.clientY - dragStartY;
         // Clamp: don't allow pulling upward past the current top
         const currentState = options.getMobileState?.() ?? 'full';
-        const clampedDelta = currentState === 'full'
-          ? Math.max(0, dragDelta)   // full → only drag down
-          : dragDelta;               // half → allow both directions
+        const clampedDelta =
+          currentState === 'full'
+            ? Math.max(0, dragDelta) // full → only drag down
+            : dragDelta; // half → allow both directions
         e.preventDefault(); // prevent body scroll
         this.root.style.transform = `translateY(${clampedDelta}px)`;
       };
@@ -329,7 +330,6 @@ export class ChatDrawer {
 
     headerRight.appendChild(closeBtn);
     header.appendChild(headerRight);
-
 
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
@@ -1048,7 +1048,8 @@ export class ChatDrawer {
       const child = children[i] as HTMLElement;
       if (
         child.classList.contains('gengage-chat-panel-topbar') ||
-        child.classList.contains('gengage-chat-thumbnails-column')
+        child.classList.contains('gengage-chat-thumbnails-column') ||
+        child.classList.contains('gengage-chat-panel-float')
       ) {
         continue;
       }

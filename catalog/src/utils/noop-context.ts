@@ -144,6 +144,8 @@ export function createNoopSimrelContext(): SimRelUISpecRenderContext {
       addToCartButton: 'Add to Cart',
       ctaLabel: 'View',
       outOfStockLabel: 'Out of Stock',
+      decreaseLabel: 'Decrease quantity',
+      increaseLabel: 'Increase quantity',
       priceSuffix: ' TL',
     },
     pricing: {

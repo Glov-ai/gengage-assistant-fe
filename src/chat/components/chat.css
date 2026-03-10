@@ -406,8 +406,8 @@
   min-width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: #ef4444;
-  color: #fff;
+  background: var(--_gengage-danger-color, #ef4444);
+  color: var(--_gengage-on-danger, #fff);
   font-size: 9px;
   font-weight: 700;
   line-height: 16px;
@@ -1613,7 +1613,9 @@
   color: #334155;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .gengage-chat-review-pill:hover {
@@ -1622,14 +1624,14 @@
 
 .gengage-chat-review-pill--active {
   background: var(--_gengage-surface-muted);
-  border-color: #64748b;
-  color: #0f172a;
+  border-color: var(--_gengage-text-secondary, #64748b);
+  color: var(--_gengage-text-primary, #0f172a);
   font-weight: 600;
 }
 
 .gengage-chat-review-pill--active .gengage-chat-review-pill-count {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--_gengage-border-color, #e2e8f0);
+  color: var(--_gengage-text-primary, #0f172a);
 }
 
 .gengage-chat-review-pill[data-tone='positive'] {
@@ -1687,7 +1689,7 @@
 
 .gengage-chat-favorites-empty-icon {
   opacity: 0.25;
-  color: #ef4444;
+  color: var(--_gengage-danger-color, #ef4444);
 }
 
 .gengage-chat-favorites-empty p {
@@ -1709,9 +1711,11 @@
   padding: 10px 12px;
   border: 1px solid var(--_gengage-border-color);
   border-radius: 12px;
-  background: #fff;
+  background: var(--_gengage-surface-color, #fff);
   position: relative;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 .gengage-chat-favorites-card--removing {
@@ -1764,18 +1768,20 @@
   border-radius: 50%;
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--_gengage-danger-color, #ef4444);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   opacity: 0.7;
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
 }
 
 .gengage-chat-favorites-remove:hover {
   opacity: 1;
-  background: #fee2e2;
+  background: var(--_gengage-danger-light, #fee2e2);
 }
 
 /* -- Divider --------------------------------------------------------------- */
@@ -2472,11 +2478,10 @@
     min-width: 0 !important;
     max-width: none !important;
     max-height: none !important;
-    padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    background: #fff;
+    background: var(--gengage-chat-panel-bg, #fff);
     overflow-y: auto;
     overflow-x: hidden;
     /* off-screen to the right when not visible */

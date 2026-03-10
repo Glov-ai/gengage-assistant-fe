@@ -272,10 +272,11 @@ describe('SessionPersistence', () => {
       expect(db.removeFavorite).toHaveBeenCalledWith('u1', 'a1', 'SKU1');
     });
 
-    it('is a no-op when db is null', async () => {
+    it('updates in-memory state even when db is null', async () => {
       sp.db = null;
       await sp.toggleFavorite('u1', 'a1', 'SKU1', {});
-      expect(sp.favoritedSkus.has('SKU1')).toBe(false);
+      // In-memory set is always updated — IDB is optional persistence
+      expect(sp.favoritedSkus.has('SKU1')).toBe(true);
     });
   });
 

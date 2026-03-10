@@ -63,7 +63,7 @@ export function renderReviewHighlights(
     }
   }
 
-  const firstTag = tagCounts.size > 0 ? tagCounts.keys().next().value as string : null;
+  const firstTag = tagCounts.size > 0 ? (tagCounts.keys().next().value as string) : null;
 
   // State
   let activeSentiment = 'all';
@@ -80,8 +80,10 @@ export function renderReviewHighlights(
   const sentimentFilters: Array<{ label: string; filter: string }> = [
     { label: `${allLabel} (${counts.all})`, filter: 'all' },
   ];
-  if (counts.positive > 0) sentimentFilters.push({ label: `${positiveLabel} (${counts.positive})`, filter: 'positive' });
-  if (counts.negative > 0) sentimentFilters.push({ label: `${negativeLabel} (${counts.negative})`, filter: 'negative' });
+  if (counts.positive > 0)
+    sentimentFilters.push({ label: `${positiveLabel} (${counts.positive})`, filter: 'positive' });
+  if (counts.negative > 0)
+    sentimentFilters.push({ label: `${negativeLabel} (${counts.negative})`, filter: 'negative' });
 
   // --- Review items container ---
   const itemsContainer = document.createElement('div');
@@ -158,12 +160,12 @@ export function renderReviewHighlights(
       pill.type = 'button';
       pill.className = 'gengage-chat-review-pill';
       pill.dataset['tone'] = data.sentiment;
+      pill.dataset['tag'] = tag;
       if (tag === activeTag) pill.classList.add('gengage-chat-review-pill--active');
 
       const icon = document.createElement('span');
       icon.className = 'gengage-chat-review-pill-icon';
-      icon.textContent =
-        data.sentiment === 'positive' ? '\u2713' : data.sentiment === 'negative' ? '\u2715' : '\u25CF';
+      icon.textContent = data.sentiment === 'positive' ? '\u2713' : data.sentiment === 'negative' ? '\u2715' : '\u25CF';
       pill.appendChild(icon);
 
       const tagText = document.createElement('span');
@@ -181,7 +183,7 @@ export function renderReviewHighlights(
         // Toggle: clicking active tag deselects (shows all)
         activeTag = activeTag === tag ? null : tag;
         for (const p of pillsRow.querySelectorAll('.gengage-chat-review-pill')) {
-          const isActive = activeTag !== null && (p as HTMLElement).querySelector('span:nth-child(2)')?.textContent === activeTag;
+          const isActive = activeTag !== null && (p as HTMLElement).dataset['tag'] === activeTag;
           p.classList.toggle('gengage-chat-review-pill--active', isActive);
         }
         renderItems();
@@ -197,4 +199,3 @@ export function renderReviewHighlights(
 
   return container;
 }
-
