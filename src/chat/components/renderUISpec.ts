@@ -246,12 +246,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const nameEl = document.createElement('div');
     nameEl.className = 'gengage-chat-product-card-name';
     nameEl.textContent = name;
+    nameEl.title = name;
     body.appendChild(nameEl);
   }
 
   const rating = product['rating'];
   const reviewCount = product['reviewCount'];
-  if (typeof rating === 'number' && Number.isFinite(rating)) {
+  if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-card-rating';
     ratingRow.appendChild(createStarRatingElement(rating));
@@ -278,13 +279,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     // Replace skeleton with actual price after delay
     setTimeout(() => {
       if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price) {
+      if (price && parseFloat(price) > 0) {
         skeleton.replaceWith(document.createTextNode(formatPrice(price, ctx.pricing)));
       } else {
         skeleton.remove();
       }
     }, 300);
-  } else if (price) {
+  } else if (price && parseFloat(price) > 0) {
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-card-price';
     if (originalPrice && originalPrice !== price) {
@@ -317,12 +318,14 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-card-promos';
     for (const promo of promotions.slice(0, 3)) {
+      if (!promo || /%(0(\.0+)?)\s/.test(promo)) continue; // skip zero-value badges
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
-    body.appendChild(promoBadges);
+    if (promoBadges.childElementCount > 0) body.appendChild(promoBadges);
   }
 
   card.appendChild(body);
@@ -449,11 +452,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const thumbStrip = document.createElement('div');
     thumbStrip.className = 'gengage-chat-product-gallery-thumbs';
 
+    const MAX_VISIBLE_THUMBNAILS = 6;
+    const safeImages = images.filter((u): u is string => !!u && isSafeUrl(u));
     let activeThumb: HTMLElement | null = null;
     let activeThumbIdx = 0;
-    for (let i = 0; i < images.length; i++) {
-      const imgUrl = images[i];
-      if (!imgUrl || !isSafeUrl(imgUrl)) continue;
+    for (let i = 0; i < safeImages.length; i++) {
+      const imgUrl = safeImages[i]!;
+      if (i >= MAX_VISIBLE_THUMBNAILS) break;
       const thumb = document.createElement('img');
       thumb.className = 'gengage-chat-product-gallery-thumb';
       if (i === 0) {
@@ -475,6 +480,14 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       thumbStrip.appendChild(thumb);
     }
 
+    // "+N more" indicator when thumbnails exceed limit
+    if (safeImages.length > MAX_VISIBLE_THUMBNAILS) {
+      const more = document.createElement('span');
+      more.className = 'gengage-chat-product-gallery-thumb-more';
+      more.textContent = `+${safeImages.length - MAX_VISIBLE_THUMBNAILS}`;
+      thumbStrip.appendChild(more);
+    }
+
     // Touch swipe gesture for gallery navigation
     let touchStartX = 0;
     const SWIPE_THRESHOLD = 50;
@@ -492,14 +505,26 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const diff = touchStartX - touchEndX;
       if (Math.abs(diff) < SWIPE_THRESHOLD) return;
 
-      const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
       const nextIdx =
         diff > 0
-          ? Math.min(activeThumbIdx + 1, thumbEls.length - 1) // swipe left → next
+          ? Math.min(activeThumbIdx + 1, safeImages.length - 1) // swipe left → next
           : Math.max(activeThumbIdx - 1, 0); // swipe right → prev
 
-      if (nextIdx !== activeThumbIdx && thumbEls[nextIdx]) {
-        (thumbEls[nextIdx] as HTMLElement).click();
+      if (nextIdx !== activeThumbIdx) {
+        const nextUrl = safeImages[nextIdx];
+        if (nextUrl) {
+          safeSetAttribute(mainImg, 'src', nextUrl);
+          // Update active thumb highlight if within visible range
+          const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
+          if (activeThumb) activeThumb.classList.remove('gengage-chat-product-gallery-thumb--active');
+          if (nextIdx < MAX_VISIBLE_THUMBNAILS && thumbEls[nextIdx]) {
+            (thumbEls[nextIdx] as HTMLElement).classList.add('gengage-chat-product-gallery-thumb--active');
+            activeThumb = thumbEls[nextIdx] as HTMLElement;
+          } else {
+            activeThumb = null;
+          }
+          activeThumbIdx = nextIdx;
+        }
       }
     });
 
@@ -562,12 +587,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const title = document.createElement('h3');
     title.className = 'gengage-chat-product-details-title';
     title.textContent = name;
+    title.title = name;
     content.appendChild(title);
   }
 
   const rating = product['rating'];
   const reviewCount = product['reviewCount'];
-  if (typeof rating === 'number' && Number.isFinite(rating)) {
+  if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-details-rating';
     ratingRow.textContent = `\u2605 ${clampRating(rating).toFixed(1)}`;
@@ -594,7 +620,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     // Replace skeleton with actual price after delay
     setTimeout(() => {
       if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price) {
+      if (price && parseFloat(price) > 0) {
         const currentPrice = document.createElement('span');
         currentPrice.className = 'gengage-chat-product-details-current-price';
         currentPrice.textContent = formatPrice(price, ctx.pricing);
@@ -603,7 +629,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
         skeleton.remove();
       }
     }, 300);
-  } else if (price) {
+  } else if (price && parseFloat(price) > 0) {
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-details-price';
     if (originalPrice && originalPrice !== price) {
@@ -636,12 +662,14 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const promoBadges = document.createElement('div');
     promoBadges.className = 'gengage-chat-product-details-promos';
     for (const promo of promotions.slice(0, 3)) {
+      if (!promo || /%(0(\.0+)?)\s/.test(promo)) continue; // skip zero-value badges
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-details-promo-badge';
       badge.textContent = promo;
+      badge.title = promo;
       promoBadges.appendChild(badge);
     }
-    content.appendChild(promoBadges);
+    if (promoBadges.childElementCount > 0) content.appendChild(promoBadges);
   }
 
   // Variant selector
@@ -659,7 +687,9 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     variantList.className = 'gengage-chat-product-variants-list';
 
     for (const variant of variants) {
-      const variantName = (variant['name'] as string | undefined) ?? (variant['variant_name'] as string | undefined);
+      const variantValue = variant['value'] as string | undefined;
+      const variantName =
+        variantValue ?? (variant['name'] as string | undefined) ?? (variant['variant_name'] as string | undefined);
       const variantSku = variant['sku'] as string | undefined;
       if (!variantName && !variantSku) continue;
 
@@ -988,6 +1018,10 @@ function renderProductGrid(
       compareBtn.type = 'button';
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
+      }
+      // Hide compare button during streaming — revealed on stream end with fade-in
+      if (ctx.isStreaming) {
+        compareBtn.classList.add('gengage-chat-comparison-toggle-btn--hidden');
       }
       compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Compare';
       compareBtn.addEventListener('click', () => {

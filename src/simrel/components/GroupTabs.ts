@@ -21,10 +21,8 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
   container.className = 'gengage-simrel-groups';
 
   if (options.groups.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'gengage-simrel-empty';
-    empty.textContent = options.i18n?.emptyStateMessage ?? 'No similar products found.';
-    container.appendChild(empty);
+    container.style.display = 'none';
+    container.dataset['empty'] = 'true';
     return container;
   }
 

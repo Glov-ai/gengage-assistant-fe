@@ -3,8 +3,8 @@ import { formatPrice } from '../src/common/price-formatter.js';
 
 describe('formatPrice', () => {
   describe('Turkish defaults', () => {
-    it('formats whole number with dot thousands separator', () => {
-      expect(formatPrice('17990')).toBe('17.990 TL');
+    it('formats whole number with dot thousands separator and decimals', () => {
+      expect(formatPrice('17990')).toBe('17.990,00 TL');
     });
 
     it('formats number with decimal part using comma', () => {
@@ -12,11 +12,11 @@ describe('formatPrice', () => {
     });
 
     it('formats small number without separator', () => {
-      expect(formatPrice('999')).toBe('999 TL');
+      expect(formatPrice('999')).toBe('999,00 TL');
     });
 
     it('formats zero', () => {
-      expect(formatPrice('0')).toBe('0 TL');
+      expect(formatPrice('0')).toBe('0,00 TL');
     });
 
     it('formats number with two decimals', () => {
@@ -24,7 +24,7 @@ describe('formatPrice', () => {
     });
 
     it('formats large number with multiple separators', () => {
-      expect(formatPrice('1234567')).toBe('1.234.567 TL');
+      expect(formatPrice('1234567')).toBe('1.234.567,00 TL');
     });
 
     it('pads single decimal to two places', () => {
@@ -41,19 +41,23 @@ describe('formatPrice', () => {
     };
 
     it('formats with prefix currency symbol', () => {
-      expect(formatPrice('17990', gbpConfig)).toBe('£17,990');
+      expect(formatPrice('17990', gbpConfig)).toBe('£17,990.00');
     });
 
     it('formats with prefix and decimals', () => {
       expect(formatPrice('17990.5', gbpConfig)).toBe('£17,990.50');
     });
 
-    it('always shows decimals when configured', () => {
-      expect(formatPrice('100', { alwaysShowDecimals: true })).toBe('100,00 TL');
+    it('always shows decimals by default', () => {
+      expect(formatPrice('100')).toBe('100,00 TL');
+    });
+
+    it('hides decimals for whole numbers when alwaysShowDecimals is false', () => {
+      expect(formatPrice('100', { alwaysShowDecimals: false })).toBe('100 TL');
     });
 
     it('formats without currency symbol', () => {
-      expect(formatPrice('1000', { currencySymbol: '' })).toBe('1.000');
+      expect(formatPrice('1000', { currencySymbol: '' })).toBe('1.000,00');
     });
   });
 
@@ -64,7 +68,7 @@ describe('formatPrice', () => {
 
     it('formats empty string as zero', () => {
       // Number('') === 0, which is valid
-      expect(formatPrice('')).toBe('0 TL');
+      expect(formatPrice('')).toBe('0,00 TL');
     });
 
     it('returns NaN as-is', () => {

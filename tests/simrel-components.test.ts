@@ -27,6 +27,8 @@ const defaultI18n: SimRelI18n = {
   addToCartButton: 'Add to Cart',
   ctaLabel: 'View',
   outOfStockLabel: 'Out of Stock',
+  decreaseLabel: 'Decrease',
+  increaseLabel: 'Increase',
   priceSuffix: ' TL',
 };
 
@@ -47,7 +49,7 @@ describe('ProductCard', () => {
     });
 
     expect(card.querySelector('.gengage-simrel-card-name')?.textContent).toBe('Test Product');
-    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299 TL');
+    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299,00 TL');
     expect(card.querySelector('img')?.src).toBe('https://cdn.example.com/img.jpg');
   });
 
@@ -172,7 +174,7 @@ describe('ProductCard', () => {
 
     const original = card.querySelector('.gengage-simrel-card-price-original');
     expect(original).toBeTruthy();
-    expect(original!.textContent).toBe('999 TL');
+    expect(original!.textContent).toBe('999,00 TL');
   });
 
   it('renders rating stars clamped to 0-5', () => {
@@ -247,7 +249,7 @@ describe('ProductGrid', () => {
     expect(grid.querySelectorAll('.gengage-simrel-card').length).toBe(2);
   });
 
-  it('shows empty state when products array is empty', () => {
+  it('hides grid when products array is empty', () => {
     const grid = renderProductGrid({
       products: [],
       onClick: vi.fn(),
@@ -255,9 +257,8 @@ describe('ProductGrid', () => {
       i18n: defaultI18n,
     });
 
-    const empty = grid.querySelector('.gengage-simrel-empty');
-    expect(empty).toBeTruthy();
-    expect(empty!.textContent).toBe('No similar products found.');
+    expect(grid.style.display).toBe('none');
+    expect(grid.dataset['empty']).toBe('true');
   });
 
   it('applies custom column count via CSS variable', () => {
@@ -426,7 +427,7 @@ describe('GroupTabs', () => {
     expect(panel.getAttribute('aria-labelledby')).toBe(tab.id);
   });
 
-  it('shows empty state when groups array is empty', () => {
+  it('hides container when groups array is empty', () => {
     const result = renderGroupTabs({
       groups: [],
       onClick: vi.fn(),
@@ -435,9 +436,8 @@ describe('GroupTabs', () => {
     });
 
     expect(result.querySelector('[role="tablist"]')).toBeNull();
-    const empty = result.querySelector('.gengage-simrel-empty');
-    expect(empty).toBeTruthy();
-    expect(empty!.textContent).toBe('No similar products found.');
+    expect(result.style.display).toBe('none');
+    expect(result.dataset['empty']).toBe('true');
   });
 
   it('lazy-renders grid content only for active tab', () => {

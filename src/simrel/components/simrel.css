@@ -32,6 +32,7 @@
   gap: 12px;
   overflow-x: auto;
   padding: 8px 0 12px;
+  padding-bottom: 72px; /* GAP-010: space for FAB overlay */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
@@ -304,10 +305,16 @@
 /* Group tabs */
 .gengage-simrel-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   border-bottom: 2px solid var(--_gengage-border-color);
   margin-bottom: 16px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.gengage-simrel-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .gengage-simrel-tab {
@@ -315,7 +322,8 @@
   padding: 10px 14px;
   border: none;
   background: transparent;
-  color: var(--_gengage-text-secondary);
+  color: var(--_gengage-text-primary, #374151);
+  opacity: 0.7;
   font-size: inherit;
   font-family: inherit;
   cursor: pointer;
@@ -324,7 +332,8 @@
   margin-bottom: -2px;
   transition:
     color 0.2s,
-    border-color 0.2s;
+    border-color 0.2s,
+    opacity 0.2s;
 }
 
 .gengage-simrel-tab:hover {
@@ -335,6 +344,7 @@
   color: var(--gengage-primary-color, #3b82f6);
   border-bottom-color: var(--gengage-primary-color, #3b82f6);
   font-weight: 600;
+  opacity: 1;
 }
 
 .gengage-simrel-loading {
@@ -394,6 +404,16 @@
     flex-basis: auto;
     border-left: 1px solid var(--_gengage-border-color);
     border-top: none;
+  }
+
+  /* GAP-009: Fix SimRel card borders on mobile */
+  .gengage-simrel-card {
+    border: 1px solid var(--_gengage-border-color);
+  }
+
+  /* GAP-027: Fix price text clipping on mobile */
+  .gengage-simrel-card-price-current {
+    font-size: 14px;
   }
 }
 

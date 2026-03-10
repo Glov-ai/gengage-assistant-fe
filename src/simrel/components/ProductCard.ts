@@ -88,6 +88,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   const nameEl = document.createElement('div');
   nameEl.className = 'gengage-simrel-card-name gengage-chat-product-card-name';
   nameEl.textContent = product.name;
+  nameEl.title = product.name;
   info.appendChild(nameEl);
 
   // Rating
@@ -117,7 +118,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     }
   }
 
-  if (product.price) {
+  if (product.price && parseFloat(product.price) > 0) {
     const current = document.createElement('span');
     current.className = 'gengage-simrel-card-price-current gengage-chat-product-card-price-current';
     current.textContent = formatPrice(product.price, pricing);
@@ -150,6 +151,8 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     const stepper = createQuantityStepper({
       compact: true,
       label: i18n?.addToCartButton ?? 'Add to Cart',
+      decreaseLabel: i18n?.decreaseLabel,
+      increaseLabel: i18n?.increaseLabel,
       onSubmit: (quantity) => {
         onAddToCart({ sku: product.sku, quantity, cartCode });
       },

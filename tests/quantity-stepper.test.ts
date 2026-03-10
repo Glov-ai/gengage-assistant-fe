@@ -76,13 +76,13 @@ describe('createQuantityStepper', () => {
     expect(valueEl.textContent).toBe('2');
   });
 
-  it('renders compact mode with cart icon', () => {
+  it('renders compact mode with cart SVG icon', () => {
     const onSubmit = vi.fn();
     const stepper = createQuantityStepper({ onSubmit, compact: true });
 
     expect(stepper.classList.contains('gengage-qty-stepper--compact')).toBe(true);
     const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
-    expect(submitBtn.textContent).toBe('\uD83D\uDED2');
+    expect(submitBtn.querySelector('svg')).toBeTruthy();
   });
 
   it('renders full mode with label text', () => {

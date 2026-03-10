@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clampRating, clampDiscount, renderStarRating } from '../src/common/product-utils.js';
+import { clampRating, clampDiscount, renderStarRating, createStarRatingElement } from '../src/common/product-utils.js';
 
 // ---------------------------------------------------------------------------
 // clampRating
@@ -113,5 +113,36 @@ describe('renderStarRating', () => {
 
   it('clamps negative rating', () => {
     expect(renderStarRating(-3)).toBe('☆☆☆☆☆');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createStarRatingElement — a11y attributes
+// ---------------------------------------------------------------------------
+
+describe('createStarRatingElement', () => {
+  it('returns a span with role="img"', () => {
+    const el = createStarRatingElement(3.5);
+    expect(el.getAttribute('role')).toBe('img');
+  });
+
+  it('has aria-label with clamped rating out of 5', () => {
+    const el = createStarRatingElement(3.5);
+    expect(el.getAttribute('aria-label')).toBe('3.5 out of 5 stars');
+  });
+
+  it('formats zero rating as "0.0 out of 5 stars"', () => {
+    const el = createStarRatingElement(0);
+    expect(el.getAttribute('aria-label')).toBe('0.0 out of 5 stars');
+  });
+
+  it('clamps and formats above-5 rating in aria-label', () => {
+    const el = createStarRatingElement(10);
+    expect(el.getAttribute('aria-label')).toBe('5.0 out of 5 stars');
+  });
+
+  it('formats fractional rating with one decimal', () => {
+    const el = createStarRatingElement(4.3);
+    expect(el.getAttribute('aria-label')).toBe('4.3 out of 5 stars');
   });
 });

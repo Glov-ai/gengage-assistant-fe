@@ -213,9 +213,9 @@ describe('renderAITopPicks', () => {
     const dom = renderAITopPicks(el, ctx);
 
     const price = dom.querySelector('.gengage-chat-ai-toppick-price');
-    expect(price?.textContent).toContain('17.990 TL');
+    expect(price?.textContent).toContain('17.990,00 TL');
 
     const orig = dom.querySelector('.gengage-chat-ai-toppick-original-price');
-    expect(orig?.textContent).toBe('19.990 TL');
+    expect(orig?.textContent).toBe('19.990,00 TL');
   });
 });

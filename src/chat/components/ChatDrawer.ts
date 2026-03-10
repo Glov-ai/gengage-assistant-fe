@@ -7,6 +7,10 @@ import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
 
+/** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
+const DEFAULT_ACTION_ICON =
+  '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 /** SVG icon map for suggested action chips/pills. Keys match backend icon names. */
 const SUGGESTED_ACTION_ICONS: Record<string, string> = {
   search:
@@ -18,7 +22,7 @@ const SUGGESTED_ACTION_ICONS: Record<string, string> = {
     '<svg viewBox="0 0 16 16" class="gengage-chat-icon"><rect x="1" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="3" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
 };
 
-export { SUGGESTED_ACTION_ICONS };
+export { SUGGESTED_ACTION_ICONS, DEFAULT_ACTION_ICON };
 
 export interface ChatDrawerOptions {
   i18n: ChatI18n;
@@ -31,6 +35,8 @@ export interface ChatDrawerOptions {
   onRollback?: (messageId: string) => void;
   headerTitle?: string | undefined;
   headerAvatarUrl?: string | undefined;
+  /** Launcher image URL — used as avatar fallback when headerAvatarUrl is not set. */
+  launcherImageUrl?: string | undefined;
   headerBadge?: string | undefined;
   /** URL for the cart icon link in the header (e.g. "/sepetim"). */
   /** @deprecated Use onCartClick instead. If set, the cart button will navigate to this URL. */
@@ -60,6 +66,8 @@ export interface ChatDrawerOptions {
   voiceEnabled?: boolean | undefined;
   /** BCP 47 language for speech recognition. Default: 'tr-TR'. */
   voiceLang?: string | undefined;
+  /** Callback fired when the "New Chat" button is clicked. */
+  onNewChat?: (() => void) | undefined;
 }
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
@@ -103,6 +111,7 @@ export class ChatDrawer {
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
   private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
+  private _conversationEl: HTMLElement | null = null;
   private readonly _options: ChatDrawerOptions;
   private _reopenPanelBtn: HTMLButtonElement | null = null;
 
@@ -134,6 +143,14 @@ export class ChatDrawer {
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-label', this.i18n.headerTitle ?? 'Chat');
     this.root.setAttribute('aria-modal', 'true');
+
+    const descId = 'gengage-chat-dialog-desc';
+    const descEl = document.createElement('span');
+    descEl.id = descId;
+    descEl.className = 'gengage-sr-only';
+    descEl.textContent = this.i18n.headerTitle ?? 'AI shopping assistant';
+    this.root.appendChild(descEl);
+    this.root.setAttribute('aria-describedby', descId);
 
     // Mobile drag handle — pill indicator at the very top of the sheet
     {
@@ -229,10 +246,11 @@ export class ChatDrawer {
     const headerLeft = document.createElement('div');
     headerLeft.className = 'gengage-chat-header-left';
 
-    if (options.headerAvatarUrl) {
+    const avatarUrl = options.headerAvatarUrl ?? options.launcherImageUrl;
+    if (avatarUrl) {
       const avatar = document.createElement('img');
       avatar.className = 'gengage-chat-header-avatar';
-      avatar.src = options.headerAvatarUrl;
+      avatar.src = avatarUrl;
       avatar.alt = options.headerTitle ?? 'Assistant';
       headerLeft.appendChild(avatar);
     }
@@ -293,6 +311,18 @@ export class ChatDrawer {
       headerRight.appendChild(cartBtn);
     }
 
+    // New Chat button (optional — reset conversation)
+    if (options.onNewChat) {
+      const newChatBtn = document.createElement('button');
+      newChatBtn.className = 'gengage-chat-header-btn gengage-chat-new-chat';
+      newChatBtn.type = 'button';
+      newChatBtn.setAttribute('aria-label', this.i18n.newChatButton);
+      newChatBtn.title = this.i18n.newChatButton;
+      newChatBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+      newChatBtn.addEventListener('click', () => options.onNewChat?.());
+      headerRight.appendChild(newChatBtn);
+    }
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'gengage-chat-close';
     closeBtn.type = 'button';
@@ -306,6 +336,7 @@ export class ChatDrawer {
       favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav';
       favBtn.type = 'button';
       favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
+      favBtn.setAttribute('aria-pressed', 'false');
       favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 
       const badge = document.createElement('span');
@@ -315,7 +346,11 @@ export class ChatDrawer {
       favBtn.appendChild(badge);
       this._favBadgeEl = badge;
 
-      favBtn.addEventListener('click', () => options.onFavoritesClick?.());
+      favBtn.addEventListener('click', () => {
+        const pressed = favBtn.getAttribute('aria-pressed') === 'true';
+        favBtn.setAttribute('aria-pressed', String(!pressed));
+        options.onFavoritesClick?.();
+      });
       headerRight.appendChild(favBtn);
     }
 
@@ -339,6 +374,11 @@ export class ChatDrawer {
     });
     this._panelEl.appendChild(this._panelTopBar.getElement());
 
+    // Panel scroll affordance — bottom fade gradient when content is scrollable
+    const onPanelScroll = () => this._updateScrollAffordance();
+    this._panelEl.addEventListener('scroll', onPanelScroll, { passive: true });
+    this._cleanups.push(() => this._panelEl.removeEventListener('scroll', onPanelScroll));
+
     body.appendChild(this._panelEl);
 
     // Divider between panel and conversation
@@ -346,10 +386,12 @@ export class ChatDrawer {
     this._dividerEl.className = 'gengage-chat-panel-divider gengage-chat-panel-divider--hidden';
     this._dividerEl.setAttribute('role', 'separator');
     this._dividerEl.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
+    this._dividerEl.setAttribute('title', this.i18n.togglePanelAriaLabel);
     const chevron = document.createElement('button');
     chevron.className = 'gengage-chat-panel-divider-toggle';
     chevron.type = 'button';
     chevron.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
+    chevron.setAttribute('title', this.i18n.togglePanelAriaLabel);
     chevron.textContent = '\u00BB'; // » (collapse right)
     chevron.addEventListener('click', () => {
       if (this._ignoreNextDividerClick) {
@@ -401,6 +443,7 @@ export class ChatDrawer {
     // Conversation wrapper — header lives inside so it only spans chat width
     const conversation = document.createElement('div');
     conversation.className = 'gengage-chat-conversation';
+    this._conversationEl = conversation;
     conversation.appendChild(header);
 
     // Offline status bar (hidden by default, shown when navigator.onLine === false)
@@ -433,6 +476,7 @@ export class ChatDrawer {
     this.messagesEl.className = 'gengage-chat-messages';
     this.messagesEl.setAttribute('role', 'log');
     this.messagesEl.setAttribute('aria-live', 'polite');
+    this.messagesEl.setAttribute('aria-atomic', 'false');
     this.messagesEl.setAttribute('aria-label', this.i18n.chatMessagesAriaLabel);
 
     // Track user scroll position to avoid auto-scrolling when reading history
@@ -525,6 +569,7 @@ export class ChatDrawer {
         this.inputEl.style.height = 'auto';
         this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
       });
+      this._updateSendEnabled();
     });
 
     // Enter submits; Shift+Enter inserts newline on desktop only
@@ -597,6 +642,7 @@ export class ChatDrawer {
     this.sendBtn = document.createElement('button');
     this.sendBtn.className = 'gengage-chat-send';
     this.sendBtn.type = 'button';
+    this.sendBtn.disabled = true;
     this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
     this.sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
     this.sendBtn.addEventListener('click', () => this._submit());
@@ -684,6 +730,10 @@ export class ChatDrawer {
     body.appendChild(conversation);
     this.root.appendChild(body);
 
+    // Horizontal swipe to toggle panel on mobile (GAP-101)
+    this._setupHorizontalSwipe(conversation);
+    this._setupHorizontalSwipe(this._panelEl);
+
     // Footer
     const footer = document.createElement('div');
     footer.className = 'gengage-chat-footer';
@@ -705,6 +755,7 @@ export class ChatDrawer {
   addMessage(message: ChatMessage): void {
     const bubble = document.createElement('div');
     bubble.className = `gengage-chat-bubble gengage-chat-bubble--${message.role}`;
+    bubble.setAttribute('role', 'listitem');
     bubble.dataset['messageId'] = message.id;
     if (message.threadId) {
       bubble.dataset['threadId'] = message.threadId;
@@ -756,6 +807,7 @@ export class ChatDrawer {
       rollbackBtn.className = 'gengage-chat-rollback-btn';
       rollbackBtn.type = 'button';
       rollbackBtn.setAttribute('aria-label', this.i18n.rollbackAriaLabel);
+      rollbackBtn.title = this.i18n.rollbackAriaLabel;
       rollbackBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
       rollbackBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -868,6 +920,7 @@ export class ChatDrawer {
   showError(message?: string, onRetry?: () => void): void {
     const errEl = document.createElement('div');
     errEl.className = 'gengage-chat-error';
+    errEl.setAttribute('role', 'alert');
     const textEl = document.createElement('span');
     textEl.textContent = message ?? this.i18n.errorMessage;
     errEl.appendChild(textEl);
@@ -885,6 +938,15 @@ export class ChatDrawer {
 
     this.messagesEl.appendChild(errEl);
     this._scrollToBottom(true);
+  }
+
+  /** Show error with recovery action pills ("Try again" + "Ask something else"). */
+  showErrorWithRecovery(message: string, actions: { onRetry: () => void; onNewQuestion: () => void }): void {
+    this.showError(message);
+    this.setPills([
+      { label: this.i18n.tryAgainButton, onAction: actions.onRetry },
+      { label: this.i18n.askSomethingElseButton, onAction: actions.onNewQuestion },
+    ]);
   }
 
   clearMessages(): void {
@@ -911,13 +973,11 @@ export class ChatDrawer {
       btn.type = 'button';
 
       if (pill.icon) {
-        const svgHtml = SUGGESTED_ACTION_ICONS[pill.icon];
-        if (svgHtml) {
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'gengage-chat-pill-icon';
-          iconSpan.innerHTML = svgHtml;
-          btn.appendChild(iconSpan);
-        }
+        const svgHtml = SUGGESTED_ACTION_ICONS[pill.icon] ?? DEFAULT_ACTION_ICON;
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'gengage-chat-pill-icon';
+        iconSpan.innerHTML = svgHtml;
+        btn.appendChild(iconSpan);
       }
 
       if (pill.image && isSafeImageUrl(pill.image)) {
@@ -936,8 +996,11 @@ export class ChatDrawer {
       if (pill.description) {
         const desc = document.createElement('span');
         desc.className = 'gengage-chat-pill-desc';
+        const descId = `pill-desc-${Math.random().toString(36).slice(2, 9)}`;
+        desc.id = descId;
         desc.textContent = pill.description;
         btn.appendChild(desc);
+        btn.setAttribute('aria-describedby', descId);
       }
 
       btn.addEventListener('click', () => pill.onAction());
@@ -984,6 +1047,7 @@ export class ChatDrawer {
       thumb.src = URL.createObjectURL(file);
     }
     this._previewStrip.classList.remove('gengage-chat-attachment-preview--hidden');
+    this._updateSendEnabled();
   }
 
   /** Remove the staged attachment and hide preview. */
@@ -995,6 +1059,7 @@ export class ChatDrawer {
     }
     this._pendingAttachment = null;
     this._previewStrip.classList.add('gengage-chat-attachment-preview--hidden');
+    this._updateSendEnabled();
   }
 
   /** Get the currently staged attachment file, or null. */
@@ -1004,6 +1069,8 @@ export class ChatDrawer {
 
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
+    // Brief crossfade transition when swapping panel content
+    this._panelEl.classList.add('gengage-chat-panel--transitioning');
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
@@ -1017,6 +1084,10 @@ export class ChatDrawer {
     if (this._panelCollapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
     }
+    requestAnimationFrame(() => {
+      this._panelEl.classList.remove('gengage-chat-panel--transitioning');
+      this._updateScrollAffordance();
+    });
     // New content always reopens the panel — hide the reopen button
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
@@ -1211,6 +1282,47 @@ export class ChatDrawer {
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
   }
 
+  /** Update scroll affordance (bottom fade gradient) on the panel. */
+  private _updateScrollAffordance(): void {
+    const panel = this._panelEl;
+    const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 10;
+    panel.classList.toggle('gengage-chat-panel--has-scroll', !atBottom && panel.scrollHeight > panel.clientHeight);
+  }
+
+  /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */
+  private _setupHorizontalSwipe(el: HTMLElement): void {
+    let startX = 0;
+    let startY = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      const t = e.touches[0];
+      if (!t) return;
+      startX = t.clientX;
+      startY = t.clientY;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (window.innerWidth > 768) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      // Only trigger if horizontal movement > 50px and dominant direction
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 2) {
+        this.togglePanel();
+        this._onPanelToggle?.();
+      }
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    this._cleanups.push(() => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    });
+  }
+
   /** Toggle panel between collapsed and expanded. */
   togglePanel(): void {
     this.setPanelCollapsed(!this._panelCollapsed);
@@ -1312,6 +1424,11 @@ export class ChatDrawer {
     container.appendChild(list);
   }
 
+  private _updateSendEnabled(): void {
+    const hasContent = this.inputEl.value.trim().length > 0 || this._pendingAttachment !== null;
+    this.sendBtn.disabled = !hasContent;
+  }
+
   private _submit(): void {
     const text = this.inputEl.value.trim();
     const attachment = this._pendingAttachment;
@@ -1320,6 +1437,7 @@ export class ChatDrawer {
     this.inputEl.value = '';
     this.inputEl.style.height = 'auto'; // Reset textarea height after submit
     this.clearAttachment();
+    this._updateSendEnabled();
   }
 
   private _toggleVoice(): void {
@@ -1415,15 +1533,13 @@ export class ChatDrawer {
       btn.className = 'gengage-chat-input-chip';
       btn.type = 'button';
 
-      // Icon (SVG from icon map)
+      // Icon (SVG from icon map, falls back to generic arrow for unknown names)
       if (chip.icon) {
-        const svgHtml = SUGGESTED_ACTION_ICONS[chip.icon];
-        if (svgHtml) {
-          const iconSpan = document.createElement('span');
-          iconSpan.className = 'gengage-chat-input-chip-icon';
-          iconSpan.innerHTML = svgHtml;
-          btn.appendChild(iconSpan);
-        }
+        const svgHtml = SUGGESTED_ACTION_ICONS[chip.icon] ?? DEFAULT_ACTION_ICON;
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'gengage-chat-input-chip-icon';
+        iconSpan.innerHTML = svgHtml;
+        btn.appendChild(iconSpan);
       }
 
       const label = document.createElement('span');

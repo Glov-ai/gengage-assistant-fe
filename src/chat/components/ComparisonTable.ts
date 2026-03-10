@@ -107,6 +107,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
 
   const container = document.createElement('div');
   container.className = 'gengage-chat-comparison';
+  container.setAttribute('role', 'dialog');
+  container.setAttribute('aria-label', i18n?.comparisonHeading ?? 'Comparison Results');
 
   // Heading
   const heading = document.createElement('h3');
@@ -303,6 +305,24 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       container.appendChild(btnRow);
     }
   }
+
+  // Focus trap: keep Tab cycling within the comparison dialog
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const focusables = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusables.length === 0) return;
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
 
   return container;
 }

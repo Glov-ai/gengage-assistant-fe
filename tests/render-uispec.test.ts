@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import type { UISpec, ActionPayload } from '../src/common/types.js';
+import type { UISpec } from '../src/common/types.js';
 import { renderUISpec } from '../src/chat/components/renderUISpec.js';
 import type { UISpecRenderContext } from '../src/chat/components/renderUISpec.js';
 
@@ -415,6 +415,74 @@ describe('renderUISpec', () => {
       });
     });
 
+    it('prefers value field over name for variant button labels (GAP-029)', () => {
+      const onAction = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductDetailsPanel',
+            props: {
+              product: {
+                sku: 'V-VAL',
+                name: 'Variant Value Product',
+                price: '100',
+                url: '/product/v-val',
+                variants: [
+                  { name: 'color', value: 'Red', sku: 'SKU-RED', price: 100 },
+                  { name: 'size', value: 'XL', sku: 'SKU-XL', price: 120 },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onAction }));
+      const buttons = result.querySelectorAll('.gengage-chat-product-variant-btn');
+      expect(buttons).toHaveLength(2);
+
+      // Should show "Red" (value), not "color" (name)
+      expect(buttons[0]!.textContent).toBe('Red');
+      expect(buttons[0]!.textContent).not.toBe('color');
+
+      // Should show "XL" (value), not "size" (name)
+      expect(buttons[1]!.textContent).toContain('XL');
+      expect(buttons[1]!.textContent).not.toContain('size');
+
+      // Action title should also use value
+      (buttons[0] as HTMLElement).click();
+      expect(onAction).toHaveBeenCalledWith({
+        title: 'Red',
+        type: 'launchVariant',
+        payload: { sku: 'SKU-RED' },
+      });
+    });
+
+    it('falls back to name when value is absent', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductDetailsPanel',
+            props: {
+              product: {
+                sku: 'V-FB',
+                name: 'Fallback Product',
+                price: '50',
+                url: '/product/v-fb',
+                variants: [{ name: 'Large', sku: 'V-FB-L', price: 50 }],
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+      const btn = result.querySelector('.gengage-chat-product-variant-btn');
+      expect(btn!.textContent).toBe('Large');
+    });
+
     it('uses custom variantsLabel from i18n', () => {
       const spec: UISpec = {
         root: 'root',
@@ -438,27 +506,8 @@ describe('renderUISpec', () => {
         makeContext({
           i18n: {
             productCtaLabel: 'View',
-            aiTopPicksTitle: '',
-            roleWinner: '',
-            roleBestValue: '',
-            roleBestAlternative: '',
-            viewDetails: '',
-            groundingReviewCta: '',
             variantsLabel: 'Variants',
-            sortRelated: '',
-            sortPriceAsc: '',
-            sortPriceDesc: '',
-            compareSelected: '',
-            panelTitleProductDetails: '',
-            panelTitleSimilarProducts: '',
-            panelTitleComparisonResults: '',
-            panelTitleCategories: '',
-            inStockLabel: '',
-            outOfStockLabel: '',
-            findSimilarLabel: '',
-            viewMoreLabel: '',
-            similarProductsLabel: '',
-          },
+          } as UISpecRenderContext['i18n'],
         }),
       );
       const label = result.querySelector('.gengage-chat-product-variants-label');
@@ -627,27 +676,12 @@ describe('renderUISpec', () => {
         makeContext({
           i18n: {
             productCtaLabel: 'View',
-            aiTopPicksTitle: '',
-            roleWinner: '',
-            roleBestValue: '',
-            roleBestAlternative: '',
-            viewDetails: '',
-            groundingReviewCta: '',
-            variantsLabel: '',
-            sortRelated: '',
-            sortPriceAsc: '',
-            sortPriceDesc: '',
-            compareSelected: '',
-            panelTitleProductDetails: '',
-            panelTitleSimilarProducts: '',
-            panelTitleComparisonResults: '',
-            panelTitleCategories: '',
             inStockLabel: 'In Stock',
             outOfStockLabel: 'Out of Stock',
             findSimilarLabel: 'Find Similar',
             viewMoreLabel: 'Show More',
             similarProductsLabel: 'Similar Products',
-          },
+          } as UISpecRenderContext['i18n'],
         }),
       );
 

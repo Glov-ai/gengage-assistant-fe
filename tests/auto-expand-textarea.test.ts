@@ -117,6 +117,7 @@ describe('Auto-Expanding Textarea', () => {
     });
     const textarea = container.querySelector('.gengage-chat-input') as HTMLTextAreaElement;
     textarea.value = 'test message';
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.style.height = '80px';
     const sendBtn = container.querySelector('.gengage-chat-send') as HTMLElement;
     sendBtn.click();
