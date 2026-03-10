@@ -243,6 +243,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const nameEl = document.createElement('div');
     nameEl.className = 'gengage-chat-product-card-name';
     nameEl.textContent = name;
+    nameEl.title = name;
     body.appendChild(nameEl);
   }
 
@@ -426,11 +427,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const thumbStrip = document.createElement('div');
     thumbStrip.className = 'gengage-chat-product-gallery-thumbs';
 
+    const MAX_VISIBLE_THUMBNAILS = 6;
+    const safeImages = images.filter((u): u is string => !!u && isSafeUrl(u));
     let activeThumb: HTMLElement | null = null;
     let activeThumbIdx = 0;
-    for (let i = 0; i < images.length; i++) {
-      const imgUrl = images[i];
-      if (!imgUrl || !isSafeUrl(imgUrl)) continue;
+    for (let i = 0; i < safeImages.length; i++) {
+      const imgUrl = safeImages[i]!;
+      if (i >= MAX_VISIBLE_THUMBNAILS) break;
       const thumb = document.createElement('img');
       thumb.className = 'gengage-chat-product-gallery-thumb';
       if (i === 0) {
@@ -452,6 +455,14 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       thumbStrip.appendChild(thumb);
     }
 
+    // "+N more" indicator when thumbnails exceed limit
+    if (safeImages.length > MAX_VISIBLE_THUMBNAILS) {
+      const more = document.createElement('span');
+      more.className = 'gengage-chat-product-gallery-thumb-more';
+      more.textContent = `+${safeImages.length - MAX_VISIBLE_THUMBNAILS}`;
+      thumbStrip.appendChild(more);
+    }
+
     // Touch swipe gesture for gallery navigation
     let touchStartX = 0;
     const SWIPE_THRESHOLD = 50;
@@ -469,14 +480,26 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       const diff = touchStartX - touchEndX;
       if (Math.abs(diff) < SWIPE_THRESHOLD) return;
 
-      const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
       const nextIdx =
         diff > 0
-          ? Math.min(activeThumbIdx + 1, thumbEls.length - 1) // swipe left → next
+          ? Math.min(activeThumbIdx + 1, safeImages.length - 1) // swipe left → next
           : Math.max(activeThumbIdx - 1, 0); // swipe right → prev
 
-      if (nextIdx !== activeThumbIdx && thumbEls[nextIdx]) {
-        (thumbEls[nextIdx] as HTMLElement).click();
+      if (nextIdx !== activeThumbIdx) {
+        const nextUrl = safeImages[nextIdx];
+        if (nextUrl) {
+          safeSetAttribute(mainImg, 'src', nextUrl);
+          // Update active thumb highlight if within visible range
+          const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
+          if (activeThumb) activeThumb.classList.remove('gengage-chat-product-gallery-thumb--active');
+          if (nextIdx < MAX_VISIBLE_THUMBNAILS && thumbEls[nextIdx]) {
+            (thumbEls[nextIdx] as HTMLElement).classList.add('gengage-chat-product-gallery-thumb--active');
+            activeThumb = thumbEls[nextIdx] as HTMLElement;
+          } else {
+            activeThumb = null;
+          }
+          activeThumbIdx = nextIdx;
+        }
       }
     });
 
@@ -539,6 +562,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const title = document.createElement('h3');
     title.className = 'gengage-chat-product-details-title';
     title.textContent = name;
+    title.title = name;
     content.appendChild(title);
   }
 
