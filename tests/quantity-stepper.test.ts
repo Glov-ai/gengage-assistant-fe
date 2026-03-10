@@ -82,7 +82,7 @@ describe('createQuantityStepper', () => {
 
     expect(stepper.classList.contains('gengage-qty-stepper--compact')).toBe(true);
     const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
-    expect(submitBtn.textContent).toBe('\uD83D\uDED2');
+    expect(submitBtn.querySelector('svg')).toBeTruthy();
   });
 
   it('renders full mode with label text', () => {

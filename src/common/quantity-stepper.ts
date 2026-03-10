@@ -10,7 +10,7 @@ export interface QuantityStepperOptions {
   decreaseSymbol?: string | undefined;
   /** Symbol for increase button (default: '+'). */
   increaseSymbol?: string | undefined;
-  /** Icon/text for compact mode submit button (default: shopping cart emoji). */
+  /** Icon HTML for compact mode submit button (default: cart SVG icon). */
   submitIcon?: string | undefined;
   onSubmit: (quantity: number) => void;
 }
@@ -56,7 +56,9 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
   submitBtn.type = 'button';
 
   if (compact) {
-    submitBtn.textContent = options.submitIcon ?? '\uD83D\uDED2'; // shopping cart emoji
+    const defaultCartSvg =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
+    submitBtn.innerHTML = options.submitIcon ?? defaultCartSvg;
     submitBtn.title = options.label ?? 'Add to Cart';
   } else {
     submitBtn.textContent = options.label ?? 'Add to Cart';
@@ -89,12 +91,12 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
     e.stopPropagation();
     options.onSubmit(quantity);
     // Brief visual feedback: show checkmark then revert
-    const original = submitBtn.textContent;
+    const original = submitBtn.innerHTML;
     submitBtn.textContent = '\u2713'; // checkmark
     submitBtn.classList.add('gengage-qty-submit--success');
     submitBtn.disabled = true;
     setTimeout(() => {
-      submitBtn.textContent = original;
+      submitBtn.innerHTML = original;
       submitBtn.classList.remove('gengage-qty-submit--success');
       submitBtn.disabled = false;
     }, 1200);
