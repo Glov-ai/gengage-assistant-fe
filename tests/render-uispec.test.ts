@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import type { UISpec, ActionPayload } from '../src/common/types.js';
+import type { UISpec } from '../src/common/types.js';
 import { renderUISpec } from '../src/chat/components/renderUISpec.js';
 import type { UISpecRenderContext } from '../src/chat/components/renderUISpec.js';
 
@@ -506,27 +506,8 @@ describe('renderUISpec', () => {
         makeContext({
           i18n: {
             productCtaLabel: 'View',
-            aiTopPicksTitle: '',
-            roleWinner: '',
-            roleBestValue: '',
-            roleBestAlternative: '',
-            viewDetails: '',
-            groundingReviewCta: '',
             variantsLabel: 'Variants',
-            sortRelated: '',
-            sortPriceAsc: '',
-            sortPriceDesc: '',
-            compareSelected: '',
-            panelTitleProductDetails: '',
-            panelTitleSimilarProducts: '',
-            panelTitleComparisonResults: '',
-            panelTitleCategories: '',
-            inStockLabel: '',
-            outOfStockLabel: '',
-            findSimilarLabel: '',
-            viewMoreLabel: '',
-            similarProductsLabel: '',
-          },
+          } as UISpecRenderContext['i18n'],
         }),
       );
       const label = result.querySelector('.gengage-chat-product-variants-label');
@@ -695,27 +676,12 @@ describe('renderUISpec', () => {
         makeContext({
           i18n: {
             productCtaLabel: 'View',
-            aiTopPicksTitle: '',
-            roleWinner: '',
-            roleBestValue: '',
-            roleBestAlternative: '',
-            viewDetails: '',
-            groundingReviewCta: '',
-            variantsLabel: '',
-            sortRelated: '',
-            sortPriceAsc: '',
-            sortPriceDesc: '',
-            compareSelected: '',
-            panelTitleProductDetails: '',
-            panelTitleSimilarProducts: '',
-            panelTitleComparisonResults: '',
-            panelTitleCategories: '',
             inStockLabel: 'In Stock',
             outOfStockLabel: 'Out of Stock',
             findSimilarLabel: 'Find Similar',
             viewMoreLabel: 'Show More',
             similarProductsLabel: 'Similar Products',
-          },
+          } as UISpecRenderContext['i18n'],
         }),
       );
 
