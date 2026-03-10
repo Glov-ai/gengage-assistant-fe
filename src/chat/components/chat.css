@@ -4053,9 +4053,6 @@
     background 0.12s,
     border-color 0.12s;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
 }
 
 .gengage-chat-input-chip:hover {
