@@ -126,6 +126,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _comparisonSelectedSkus: string[] = [];
   private _thumbnailEntries: ThumbnailEntry[] = [];
   private _choicePrompterEl: HTMLElement | null = null;
+  private _productGridViewCount = 0;
   private _openState: 'full' | 'half' = 'full';
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
@@ -1255,10 +1256,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
-          // Show ChoicePrompter when ProductGrid in panel and comparison mode is not active
+          // Track how many ProductGrid renders the user has seen in the panel
+          if (componentType === 'ProductGrid' && panelHint === 'panel') {
+            this._productGridViewCount++;
+          }
+
+          // Show ChoicePrompter after 2+ product grid views (not on first render)
           if (
             componentType === 'ProductGrid' &&
             panelHint === 'panel' &&
+            this._productGridViewCount >= 2 &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed()
           ) {
@@ -1285,6 +1292,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const mountEl = this._shadow?.querySelector(mountSelector);
             if (mountEl) {
               mountEl.appendChild(this._choicePrompterEl);
+
+              // Dismiss ChoicePrompter when the mobile keyboard opens (viewport shrinks)
+              if (this._isMobileViewport && window.visualViewport) {
+                const prompterRef = this._choicePrompterEl;
+                const dismissOnKeyboard = (): void => {
+                  const heightRatio = window.visualViewport!.height / window.innerHeight;
+                  if (heightRatio < 0.75) {
+                    prompterRef.remove();
+                    if (this._choicePrompterEl === prompterRef) {
+                      this._choicePrompterEl = null;
+                    }
+                    window.visualViewport!.removeEventListener('resize', dismissOnKeyboard);
+                  }
+                };
+                window.visualViewport.addEventListener('resize', dismissOnKeyboard);
+              }
             } else {
               this._choicePrompterEl = null;
             }

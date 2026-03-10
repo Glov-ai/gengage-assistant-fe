@@ -4446,17 +4446,13 @@
 
 @media (max-width: 768px) {
   .gengage-chat-choice-prompter {
-    position: sticky;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: calc(
-      var(--_gengage-chat-launcher-bottom) + var(--_gengage-chat-launcher-size) + 12px +
-        env(safe-area-inset-bottom, 0px)
-    );
-    max-height: 40vh;
-    overflow-y: auto;
+    position: fixed;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 360px;
+    z-index: 10;
   }
 
   .gengage-chat-product-sort-btn,

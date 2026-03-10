@@ -95,6 +95,42 @@ describe('createChoicePrompter', () => {
   });
 });
 
+describe('ChoicePrompter product grid view gating', () => {
+  /**
+   * The widget only shows the ChoicePrompter after 2+ ProductGrid renders.
+   * We simulate the gating logic here (counter lives in GengageChat class).
+   */
+  function shouldShowPrompter(gridViewCount: number, comparisonActive: boolean): boolean {
+    return gridViewCount >= 2 && !comparisonActive && !isChoicePrompterDismissed();
+  }
+
+  it('does NOT show on first ProductGrid render', () => {
+    expect(shouldShowPrompter(1, false)).toBe(false);
+  });
+
+  it('shows on second ProductGrid render', () => {
+    expect(shouldShowPrompter(2, false)).toBe(true);
+  });
+
+  it('shows on third and subsequent ProductGrid renders', () => {
+    expect(shouldShowPrompter(3, false)).toBe(true);
+    expect(shouldShowPrompter(10, false)).toBe(true);
+  });
+
+  it('does NOT show when comparison mode is active', () => {
+    expect(shouldShowPrompter(2, true)).toBe(false);
+  });
+
+  it('does NOT show when already dismissed', () => {
+    sessionStorage.setItem('gengage_choice_prompter_dismissed', '1');
+    expect(shouldShowPrompter(2, false)).toBe(false);
+  });
+
+  it('does NOT show on zero views', () => {
+    expect(shouldShowPrompter(0, false)).toBe(false);
+  });
+});
+
 describe('isChoicePrompterDismissed', () => {
   it('returns false when not dismissed', () => {
     expect(isChoicePrompterDismissed()).toBe(false);
