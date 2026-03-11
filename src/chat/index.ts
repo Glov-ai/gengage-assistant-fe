@@ -2292,6 +2292,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         btn.addEventListener('click', () => {
           if (this._comparisonSelectedSkus.length < 2) return;
           ga.trackCompareSelected(this._comparisonSelectedSkus);
+          // On mobile: hide the side panel first so the user sees the chat stream starting
+          if (this._isMobileViewport) this._drawer?.hideMobilePanel();
           this._sendAction({
             title: label,
             type: 'getComparisonTable',

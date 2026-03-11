@@ -152,91 +152,14 @@ export class ChatDrawer {
     this.root.appendChild(descEl);
     this.root.setAttribute('aria-describedby', descId);
 
-    // Mobile drag handle — pill indicator at the very top of the sheet
+    // Mobile drag handle — visual pill indicator (events attached to the full header below)
+    let _handleEl: HTMLDivElement | null = null;
     {
       const handleEl = document.createElement('div');
       handleEl.className = 'gengage-chat-drawer-handle';
       handleEl.setAttribute('aria-hidden', 'true');
-      this.root.appendChild(handleEl);
-
-      const SNAP_THRESHOLD = 72; // px to trigger a snap to the next position
-      let dragStartY = 0;
-      let dragDelta = 0;
-      let dragging = false;
-
-      const onHandleTouchStart = (e: TouchEvent) => {
-        if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        dragStartY = t.clientY;
-        dragDelta = 0;
-        dragging = true;
-        this.root.style.transition = 'none';
-      };
-
-      const onHandleTouchMove = (e: TouchEvent) => {
-        if (!dragging) return;
-        const t = e.changedTouches?.[0];
-        if (!t) return;
-        dragDelta = t.clientY - dragStartY;
-        // Clamp: don't allow pulling upward past the current top
-        const currentState = options.getMobileState?.() ?? 'full';
-        const clampedDelta =
-          currentState === 'full'
-            ? Math.max(0, dragDelta) // full → only drag down
-            : dragDelta; // half → allow both directions
-        e.preventDefault(); // prevent body scroll
-        this.root.style.transform = `translateY(${clampedDelta}px)`;
-      };
-
-      const onHandleTouchEnd = () => {
-        if (!dragging) return;
-        dragging = false;
-        const currentState = options.getMobileState?.() ?? 'full';
-
-        let nextState: 'half' | 'full' | 'close';
-        if (dragDelta > SNAP_THRESHOLD) {
-          nextState = currentState === 'full' ? 'half' : 'close';
-        } else if (dragDelta < -SNAP_THRESHOLD && currentState === 'half') {
-          nextState = 'full';
-        } else {
-          nextState = currentState; // snap back
-        }
-
-        // Re-enable transition before state change so CSS animates smoothly
-        this.root.style.transition = '';
-        if (nextState === 'close') {
-          // Animate drawer off-screen before calling close
-          this.root.style.transform = 'translateY(100%)';
-          setTimeout(() => {
-            this.root.style.transform = '';
-            options.onMobileSnap?.('close');
-          }, 280);
-        } else {
-          this.root.style.transform = '';
-          options.onMobileSnap?.(nextState);
-        }
-        dragDelta = 0;
-      };
-
-      const onHandleTouchCancel = () => {
-        if (!dragging) return;
-        dragging = false;
-        dragDelta = 0;
-        this.root.style.transition = '';
-        this.root.style.transform = '';
-      };
-
-      handleEl.addEventListener('touchstart', onHandleTouchStart, { passive: true });
-      handleEl.addEventListener('touchmove', onHandleTouchMove, { passive: false });
-      handleEl.addEventListener('touchend', onHandleTouchEnd, { passive: true });
-      handleEl.addEventListener('touchcancel', onHandleTouchCancel, { passive: true });
-      this._cleanups.push(() => {
-        handleEl.removeEventListener('touchstart', onHandleTouchStart);
-        handleEl.removeEventListener('touchmove', onHandleTouchMove);
-        handleEl.removeEventListener('touchend', onHandleTouchEnd);
-        handleEl.removeEventListener('touchcancel', onHandleTouchCancel);
-      });
+      handleEl.style.pointerEvents = 'none'; // visual only; header receives the touch events
+      _handleEl = handleEl;
     }
 
     // Header — branded dark bar
@@ -355,7 +278,90 @@ export class ChatDrawer {
     }
 
     headerRight.appendChild(closeBtn);
+    // Insert handle at the very top of header (before headerLeft / headerRight)
+    if (_handleEl) header.insertBefore(_handleEl, header.firstChild);
     header.appendChild(headerRight);
+
+    // Attach drag-to-dismiss events to the full header so any header tap-drag works.
+    // Interactive children (buttons, links) are excluded so they keep normal tap behaviour.
+    {
+      const SNAP_THRESHOLD = 72;
+      let dragStartY = 0;
+      let dragDelta = 0;
+      let dragging = false;
+
+      const onDragStart = (e: TouchEvent) => {
+        if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
+        // Don't start drag if the touch landed on an interactive element
+        const target = e.target as HTMLElement;
+        if (target.closest('button, a, input, [role="button"]')) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragStartY = t.clientY;
+        dragDelta = 0;
+        dragging = true;
+        this.root.style.transition = 'none';
+      };
+
+      const onDragMove = (e: TouchEvent) => {
+        if (!dragging) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        dragDelta = t.clientY - dragStartY;
+        const currentState = options.getMobileState?.() ?? 'full';
+        const clampedDelta =
+          currentState === 'full' ? Math.max(0, dragDelta) : dragDelta;
+        e.preventDefault();
+        this.root.style.transform = `translateY(${clampedDelta}px)`;
+      };
+
+      const onDragEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        const currentState = options.getMobileState?.() ?? 'full';
+
+        let nextState: 'half' | 'full' | 'close';
+        if (dragDelta > SNAP_THRESHOLD) {
+          nextState = currentState === 'full' ? 'half' : 'close';
+        } else if (dragDelta < -SNAP_THRESHOLD && currentState === 'half') {
+          nextState = 'full';
+        } else {
+          nextState = currentState;
+        }
+
+        this.root.style.transition = '';
+        if (nextState === 'close') {
+          this.root.style.transform = 'translateY(100%)';
+          setTimeout(() => {
+            this.root.style.transform = '';
+            options.onMobileSnap?.('close');
+          }, 280);
+        } else {
+          this.root.style.transform = '';
+          options.onMobileSnap?.(nextState);
+        }
+        dragDelta = 0;
+      };
+
+      const onDragCancel = () => {
+        if (!dragging) return;
+        dragging = false;
+        dragDelta = 0;
+        this.root.style.transition = '';
+        this.root.style.transform = '';
+      };
+
+      header.addEventListener('touchstart', onDragStart, { passive: true });
+      header.addEventListener('touchmove', onDragMove, { passive: false });
+      header.addEventListener('touchend', onDragEnd, { passive: true });
+      header.addEventListener('touchcancel', onDragCancel, { passive: true });
+      this._cleanups.push(() => {
+        header.removeEventListener('touchstart', onDragStart);
+        header.removeEventListener('touchmove', onDragMove);
+        header.removeEventListener('touchend', onDragEnd);
+        header.removeEventListener('touchcancel', onDragCancel);
+      });
+    }
 
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
@@ -1069,8 +1075,12 @@ export class ChatDrawer {
 
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
-    // Brief crossfade transition when swapping panel content
-    this._panelEl.classList.add('gengage-chat-panel--transitioning');
+    const wasVisible = this._panelVisible;
+    // Only apply opacity crossfade when swapping content in an already-visible panel.
+    // Applying it on first-show would hide the slide-in animation (opacity:0 masks the transform).
+    if (wasVisible) {
+      this._panelEl.classList.add('gengage-chat-panel--transitioning');
+    }
     this._panelEl.innerHTML = '';
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(el);
