@@ -39,6 +39,20 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Header badge text (e.g. "BETA"). */
   headerBadge?: string;
 
+  /**
+   * Header background color (CSS color value, e.g. "#1d2939" or "hsl(220 26% 14%)").
+   * Sets the `--gengage-chat-header-bg` CSS custom property.
+   * Can also be set via `theme['--gengage-chat-header-bg']`.
+   */
+  headerBg?: string;
+
+  /**
+   * Header foreground (text/icon) color.
+   * Sets the `--gengage-chat-header-foreground` CSS custom property.
+   * Can also be set via `theme['--gengage-chat-header-foreground']`.
+   */
+  headerForeground?: string;
+
   /** Header cart link URL (e.g. "/sepetim"). Shows a cart icon in the header. */
   headerCartUrl?: string;
 

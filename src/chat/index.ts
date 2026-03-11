@@ -206,6 +206,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     style.textContent = chatStyles;
     this._shadow.appendChild(style);
 
+    // Apply theme CSS custom properties on the shadow host so they cascade into the shadow tree.
+    // Priority: explicit config fields > theme object entries > CSS defaults.
+    const host = this.root as HTMLElement;
+    const applyVar = (cssVar: string, value: string | undefined): void => {
+      if (value && isSafeCSSColor(value)) host.style.setProperty(cssVar, value);
+    };
+    // Explicit header color shortcuts
+    applyVar('--gengage-chat-header-bg', config.headerBg);
+    applyVar('--gengage-chat-header-foreground', config.headerForeground);
+    // Arbitrary theme tokens (e.g. theme['--gengage-primary-color'])
+    if (config.theme) {
+      for (const [key, value] of Object.entries(config.theme)) {
+        if (key.startsWith('--') && typeof value === 'string') {
+          applyVar(key, value);
+        }
+      }
+    }
+
     // Create root container
     const rootEl = document.createElement('div');
     rootEl.className = 'gengage-chat-root';
