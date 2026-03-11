@@ -237,6 +237,7 @@
   }
 
   .gengage-qna-input {
+    flex: none; /* Prevent flex-grow from stretching input height in column direction */
     width: 100%;
     height: 52px;
     padding-left: 42px;
