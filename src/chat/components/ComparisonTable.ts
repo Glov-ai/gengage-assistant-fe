@@ -283,7 +283,11 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       tbody.appendChild(row);
     }
     table.appendChild(tbody);
-    container.appendChild(table);
+    // Wrap in a scrollable container so the table scrolls independently
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'gengage-chat-comparison-table-wrapper';
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
   }
 
   // View product buttons

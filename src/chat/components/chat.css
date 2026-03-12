@@ -241,19 +241,35 @@
   display: none;
 }
 
+/* Handle lives inside the header on mobile — visual pill only, pointer-events disabled via JS */
 .gengage-chat-root--mobile .gengage-chat-drawer-handle {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
-  flex-shrink: 0;
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header row is the actual drag target on mobile */
+.gengage-chat-root--mobile .gengage-chat-header {
   cursor: grab;
   touch-action: none;
-  /* Same background as the header bar */
-  background: var(--gengage-chat-header-bg, #1d2939);
-  border-radius: 16px 16px 0 0;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Buttons/links inside the header keep normal pointer behaviour */
+.gengage-chat-root--mobile .gengage-chat-header button,
+.gengage-chat-root--mobile .gengage-chat-header a {
+  cursor: pointer;
+  touch-action: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 .gengage-chat-root--mobile .gengage-chat-drawer-handle::before {
@@ -288,9 +304,6 @@
   border-radius: 0;
 }
 
-.gengage-chat-root--mobile.gengage-chat-root--mobile-full .gengage-chat-drawer-handle {
-  border-radius: 0;
-}
 
 .gengage-chat-root--mobile .gengage-chat-input-area {
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -428,6 +441,11 @@
 
 /* Reopen-panel button: hidden by default, shown on mobile via JS when panel is hidden */
 .gengage-chat-header-btn--reopen-panel {
+  display: none;
+}
+
+/* New-chat button: hide on mobile (reopen-panel button takes its role) */
+.gengage-chat-root--mobile .gengage-chat-new-chat {
   display: none;
 }
 
@@ -2352,12 +2370,15 @@
 
 /* Touch devices: always show ATC stepper since :hover doesn't fire */
 @media (hover: none), (pointer: coarse) {
+  /* Edge-to-edge strip at card bottom */
   .gengage-chat-product-card-atc {
     opacity: 1;
     position: relative;
     bottom: auto;
     right: auto;
-    margin-top: 4px;
+    margin: 0;
+    display: flex;
+    width: 100%;
   }
 }
 
@@ -2602,7 +2623,7 @@
   border-radius: 0;
   background: var(--gengage-chat-panel-bg, #fff);
   overflow-y: auto;
-  overflow-x: hidden;
+  /* overflow-x intentionally not set: inner elements (comparison table) must be able to scroll horizontally */
   transform: translateX(100%);
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
@@ -2660,6 +2681,23 @@
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-cta {
   grid-column: 1 / -1;
   width: 100%;
+}
+
+/* ATC strip: full-width, flush to card edges, no floating stepper appearance */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-atc {
+  grid-column: 1 / -1;
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  /* override the border coming from .gengage-chat-panel .gengage-qty-stepper */
+  border-width: 0;
+  border-top: 1px solid var(--_gengage-border-color, #e5e7eb);
+}
+
+/* Submit fills remaining width; override compact variant's rounded right corner */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-atc .gengage-qty-submit {
+  flex: 1;
+  border-radius: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-panel {
@@ -2733,6 +2771,14 @@
 
 .gengage-chat-root--mobile .gengage-chat-header {
   border-radius: 16px 16px 0 0;
+  /* Extra top padding to give the drag handle pill room at the very top */
+  padding-top: 22px;
+  padding-bottom: 8px;
+  min-height: 72px;
+}
+
+.gengage-chat-root--mobile.gengage-chat-root--mobile-full .gengage-chat-header {
+  border-radius: 0;
 }
 
 /* GAP-036: Fix chat content cut off at panel boundary */
@@ -3871,7 +3917,9 @@
 .gengage-chat-comparison-checkbox {
   position: absolute;
   top: 8px;
-  right: 8px;
+  /* Left side — avoids overlap with heart button (top-right) */
+  left: 8px;
+  right: auto;
   z-index: 4;
   width: 20px;
   height: 20px;
@@ -4533,21 +4581,35 @@
 }
 
 /* ===== Mobile comparison ===== */
-/* Horizontal scroll preserves the side-by-side table layout on narrow screens. */
+/* The table-wrapper scrolls horizontally; the outer container clips without scrolling. */
 .gengage-chat-comparison--mobile {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: clip; /* prevent the container from overflowing the page */
   position: relative;
 }
 
-/* Scroll hint — right-edge fade signals horizontal scrollability */
-.gengage-chat-comparison--mobile {
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-  mask-image: linear-gradient(to right, #000 85%, transparent);
+/* Scrollable wrapper around the table only */
+.gengage-chat-comparison--mobile .gengage-chat-comparison-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  /* Right-edge fade signals horizontal scrollability */
+  -webkit-mask-image: linear-gradient(to right, #000 88%, transparent);
+  mask-image: linear-gradient(to right, #000 88%, transparent);
 }
 
 .gengage-chat-comparison--mobile .gengage-chat-comparison-table {
   min-width: 480px;
+}
+
+/* Sticky first column: label column stays fixed while products scroll */
+.gengage-chat-comparison--mobile .gengage-chat-comparison-table th:first-child,
+.gengage-chat-comparison--mobile .gengage-chat-comparison-table .gengage-chat-comparison-label {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+  /* Shadow instead of border to avoid border-collapse artefacts */
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
 }
 
 /* ===== Key Differences ===== */
@@ -4717,7 +4779,7 @@
 .gengage-qty-stepper--compact .gengage-qty-submit {
   padding: 4px 8px;
   font-size: 13px;
-  border-radius: 0 14px 14px 0;
+  /* No border-radius — parent's overflow:hidden + border-radius handles corner clipping */
 }
 
 /* Panel qty-stepper borders — clean border grouping */
@@ -4755,7 +4817,7 @@
 .gengage-chat-product-details-atc-stepper .gengage-qty-submit {
   padding: 8px 18px;
   font-size: 14px;
-  border-radius: 0 10px 10px 0;
+  /* No border-radius — parent's overflow:hidden handles corner clipping */
 }
 
 /* ---- Share button ---- */
