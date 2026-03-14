@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Tech store building - transparent background -->
+
+  <!-- Store building -->
+  <rect x="12" y="42" width="96" height="50" rx="3" fill="#0B53A5"/>
+
+  <!-- Teknosa logo sign on building -->
+  <g transform="translate(16, 28) scale(0.155)">
+    <path fill="#F37221" d="M0,51.9C0,23.3,23.1,0,51.7,0h514.5v103.9c0,28.7-23.1,52-51.7,52H0V51.9z"/>
+    <path fill="#0B53A5" d="M351.3,77.9c0-23.6,20.7-42.8,46.3-42.8c25.6,0,46.3,19.2,46.3,42.8s-20.7,42.8-46.3,42.8C372,120.7,351.3,101.6,351.3,77.9"/>
+    <path fill="#0B53A5" d="M441.2,77.9c0-23.6,20.7-42.8,46.3-42.8s46.3,19.2,46.3,42.8s-20.7,42.8-46.3,42.8C462,120.7,441.2,101.6,441.2,77.9"/>
+    <path fill="#fff" d="M366.9,85.1v2.8c0,10.7,6.2,11.8,15.9,12.3c3.4,0.2,6.9,0.2,10.3,0.2c6.6,0,13.1-0.1,19.7-0.5c11.7-0.8,17.2-2.9,17.2-14.4c0-12.1-6.9-14.2-18.7-14.2c-3.4,0-6.8-0.1-10.2-0.1L390.9,71c-3.5-0.1-8.8,0.3-8.8-4.2c0-2.8,2.9-3.4,5.6-3.5c4-0.1,7.8-0.3,11.8-0.3c2.4,0,4.9,0,7.4,0.1c3.4,0.1,5.7,0.9,5.9,4.4H428c-0.1-2.9,0-6.2-1.7-8.9c-3.6-5.5-10.6-5.6-16.8-5.7l-10.8-0.1c-5.9,0-17.3,0.1-22.7,1.4c-8,1.9-9.4,6.7-9.4,13.6c0,8.8,3,12.9,13,13.5c8.4,0.5,16.9,0.5,25.4,0.5h2.5c3.4,0,7.1,0.4,7.1,4.1c0,4-3.4,3.9-6.8,4.1c-3.5,0.2-6.9,0.3-10.3,0.3c-2.4,0-4.9-0.1-7.3-0.1c-3.5-0.1-7.9-0.1-7.9-4.3c0-0.3,0-0.5-0.1-0.8H366.9L366.9,85.1z"/>
+    <path fill="#fff" d="M504.8,91.5l4.8,8.5h17L499,53.2h-20.8L449.9,100h17.2l5-8.5H504.8L504.8,91.5z M499.2,81.8h-21.7l10.9-18.5L499.2,81.8z"/>
+    <polygon fill="#fff" points="25.3,65.6 46.3,65.6 46.3,99.5 61.3,99.5 61.3,65.6 82.3,65.6 82.3,54.4 25.3,54.4"/>
+    <polygon fill="#fff" points="84.1,99.5 138.4,99.5 138.4,88.6 99.1,88.6 99.1,81.4 135.5,81.4 135.5,72.1 99.1,72.1 99.1,64.8 137.5,64.8 137.5,54.4 84.1,54.4"/>
+    <polygon fill="#fff" points="142.7,99.5 157.7,99.5 157.7,82.2 164.3,82.2 185.8,99.5 207,99.5 177.5,76.4 203.9,54.4 183.5,54.4 164.7,70.9 157.7,70.9 157.7,54.4 142.7,54.4"/>
+    <polygon fill="#fff" points="207.9,99.5 222.8,99.5 222.8,66.7 223,66.7 251.1,99.5 274.2,99.5 274.2,54.4 259.3,54.4 259.3,87.1 259.1,87.1 231,54.4 207.9,54.4"/>
+    <path fill="#fff" d="M278.6,83.6c0,13.2,8,16.3,21.5,16.3h24c13.5,0,21.5-3.1,21.5-16.3V70.2c0-13.2-8-16.3-21.5-16.3h-24c-13.5,0-21.5,3.1-21.5,16.3C278.6,70.2,278.6,83.6,278.6,83.6z M293.9,74.5c0-5.6,1.5-9,9.4-9h17.5c7.9,0,9.4,3.4,9.4,9v4.9c0,6.5-1.5,9-8.6,9h-19.1c-7.1,0-8.6-2.5-8.6-9L293.9,74.5L293.9,74.5z"/>
+  </g>
+
+  <!-- Large storefront window - shows TV/screens inside -->
+  <rect x="17" y="54" width="86" height="28" rx="2" fill="#e0ecf8" stroke="#083d7a" stroke-width="0.8"/>
+
+  <!-- Big TV display (main showpiece) -->
+  <rect x="22" y="57" width="30" height="20" rx="1.5" fill="#1a1a2e"/>
+  <rect x="24" y="59" width="26" height="15" rx="1" fill="#2d5aa0"/>
+  <!-- TV screen content - landscape -->
+  <rect x="24" y="59" width="26" height="10" rx="1" fill="#4a90d9"/>
+  <circle cx="37" cy="64" r="3" fill="#F37221" opacity="0.6"/>
+  <rect x="26" y="70" width="10" height="2" rx="0.5" fill="#fff" opacity="0.3"/>
+  <!-- TV stand -->
+  <rect x="33" y="77" width="8" height="2" rx="0.5" fill="#333"/>
+
+  <!-- Laptop display -->
+  <rect x="57" y="62" width="18" height="12" rx="1" fill="#1a1a2e"/>
+  <rect x="58.5" y="63.5" width="15" height="9" rx="0.5" fill="#3a7bc8"/>
+  <!-- Laptop keyboard base -->
+  <path d="M55,74 L77,74 L79,78 L53,78 Z" fill="#666"/>
+
+  <!-- Phone on stand -->
+  <rect x="82" y="60" width="8" height="14" rx="1.5" fill="#1a1a2e"/>
+  <rect x="83" y="62" width="6" height="10" rx="0.5" fill="#5b9bd5"/>
+  <!-- Phone notch -->
+  <rect x="84.5" y="61" width="3" height="0.8" rx="0.4" fill="#333"/>
+
+  <!-- Tablet -->
+  <rect x="93" y="60" width="7" height="10" rx="1" fill="#1a1a2e"/>
+  <rect x="94" y="61.5" width="5" height="7" rx="0.5" fill="#4a8ec4"/>
+
+  <!-- Smart speaker / IoT -->
+  <ellipse cx="47" cy="76" rx="4" ry="3" fill="#333"/>
+  <ellipse cx="47" cy="74" rx="3.5" ry="2" fill="#F37221" opacity="0.7"/>
+
+  <!-- Headphones on stand -->
+  <path d="M20,80 C20,74 26,74 26,80" fill="none" stroke="#333" stroke-width="1.5"/>
+  <rect x="18.5" y="79" width="3" height="3" rx="1" fill="#333"/>
+  <rect x="24.5" y="79" width="3" height="3" rx="1" fill="#333"/>
+
+  <!-- LED strip accent on window top -->
+  <line x1="18" y1="54.5" x2="102" y2="54.5" stroke="#F37221" stroke-width="1" opacity="0.8"/>
+
+  <!-- Glass entrance door -->
+  <rect x="44" y="83" width="14" height="9" rx="1" fill="#c8ddf0" stroke="#083d7a" stroke-width="0.6"/>
+  <rect x="46" y="85" width="4" height="6" rx="0.5" fill="#dce9f5"/>
+  <rect x="52" y="85" width="4" height="6" rx="0.5" fill="#dce9f5"/>
+  <!-- Door handle -->
+  <rect x="50" y="87" width="2" height="3" rx="0.5" fill="#F37221"/>
+
+  <!-- Side pillars -->
+  <rect x="12" y="42" width="4" height="50" fill="#083d7a"/>
+  <rect x="104" y="42" width="4" height="50" fill="#083d7a"/>
+
+  <!-- Neon glow effect at bottom -->
+  <rect x="12" y="90" width="96" height="2" rx="1" fill="#F37221" opacity="0.6"/>
+
+  <!-- Ground reflection -->
+  <rect x="20" y="94" width="80" height="4" rx="1" fill="#0B53A5" opacity="0.15"/>
+
+  <!-- WiFi/signal icon on roof -->
+  <g transform="translate(55, 18)">
+    <path d="M5,10 C5,10 0,5 5,0 C10,5 5,10 5,10Z" fill="#F37221" opacity="0.8"/>
+    <path d="M-2,8 Q5,-2 12,8" fill="none" stroke="#F37221" stroke-width="1" opacity="0.5"/>
+    <path d="M-5,11 Q5,-5 15,11" fill="none" stroke="#F37221" stroke-width="1" opacity="0.3"/>
+  </g>
+</svg>
