@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
-    <title>Gengage Dev — lcwcom</title>
+    <title>Gengage Dev — skecherscomtr</title>
     <style>
       :root {
-        --brand-primary: #b82020;
-        --brand-secondary: #e04040;
+        --brand-primary: #003478;
+        --brand-secondary: #00a0df;
         --brand-bg: #f5f5f5;
         --brand-surface: #ffffff;
-        --brand-text: #0c0b37;
+        --brand-text: #1a1a2e;
         --brand-muted: #666666;
         --brand-border: #e6e6e6;
-        --brand-font: 'Metropolis', Arial, sans-serif;
+        --brand-font: 'Helvetica Neue', Arial, sans-serif;
       }
 
       *,
@@ -375,10 +375,10 @@
   <body>
     <!-- Dev header -->
     <div class="dev-header">
-      <p class="dev-header__title">Gengage Dev — lcwcom</p>
+      <p class="dev-header__title">Gengage Dev — skecherscomtr</p>
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
-        <span class="dev-header__item"><strong>account:</strong> <span>lcwcom</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>skecherscomtr</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -388,15 +388,14 @@
       <section class="host-topbar">
         <div class="host-topbar__brand">
           <span class="host-topbar__dot"></span>
-          <span>LC Waikiki</span>
+          <span>Skechers</span>
         </div>
         <nav class="host-nav" aria-label="Main navigation">
-          <span>Kadın</span>
           <span>Erkek</span>
-          <span>Kız Çocuk</span>
-          <span>Erkek Çocuk</span>
-          <span>Bebek</span>
-          <span>Ev & Yaşam</span>
+          <span>Kadın</span>
+          <span>Çocuk</span>
+          <span>Spor</span>
+          <span>Yeni Gelenler</span>
         </nav>
       </section>
 
@@ -461,12 +460,12 @@
       </section>
 
       <!-- QNA widget mount point -->
-      <div id="lcw-qna-section" class="qna-section"></div>
+      <div id="skechers-qna-section" class="qna-section"></div>
 
       <!-- SimRel widget mount point -->
       <section class="simrel-card">
         <h2 class="section-title">Benzer Ürünler</h2>
-        <div id="lcw-similar-products" class="simrel-mount"></div>
+        <div id="skechers-similar-products" class="simrel-mount"></div>
       </section>
     </main>
 
@@ -483,54 +482,56 @@
       document.getElementById('summary-sku').textContent = skuDisplay;
 
       const controller = await initOverlayWidgets({
-        accountId: 'lcwcom',
+        accountId: 'skecherscomtr',
         middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
-          primaryColor: '#B82020',
+          primaryColor: '#003478',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#0C0B37',
+          foregroundColor: '#1a1a2e',
           borderRadius: '8px',
-          fontFamily: '"Metropolis", Arial, sans-serif',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--color-client-primary': 'hsl(0, 71%, 42%)',
-          '--color-client-saturated': 'hsl(355, 80%, 45%)',
-          '--color-client-lesssaturated': 'hsla(0, 71%, 50%, 0.8)',
+          '--color-client-primary': 'hsl(214, 100%, 23%)',
+          '--color-client-saturated': 'hsl(214, 100%, 28%)',
+          '--color-client-lesssaturated': 'hsla(214, 100%, 30%, 0.8)',
           '--root-background': '#f5f5f5',
-          '--root-background-mobile': 'linear-gradient(43deg, #fce5e5 -3%, #fff0f0 55%, #fce8e8 104%)',
-          '--client-message-bubble': '#e04040e5',
+          '--root-background-mobile': 'linear-gradient(43deg, #e8f0fe -3%, #dce8fa 55%, #ccdaf0 104%)',
+          '--client-message-bubble': '#3a6db5e5',
           '--client-card': '#fff',
-          '--client-background': '#4a4a4a',
+          '--client-background': '#1a1a2e',
           '--client-foreground': '#e9ecf2',
           '--client-border': '#ccc',
-          '--client-text': '#0C0B37',
+          '--client-text': '#1a1a2e',
           '--client-header': '#fff',
-          '--client-primary-color': '#B82020',
+          '--client-primary-color': '#003478',
           '--gengage-chat-launcher-size': '112px',
         },
         isDemoWebsite: true,
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: 'LC Waikiki Asistan',
+          headerTitle: 'Skechers Asistan',
+          launcherImageUrl: new URL('./skechers-avatar.svg', import.meta.url).href,
+          headerAvatarUrl: new URL('./skechers-avatar.svg', import.meta.url).href,
           i18n: {
-            inputPlaceholder: 'Ürün ara veya soru sor',
-            poweredBy: 'LC Waikiki AI Asistan',
+            inputPlaceholder: 'Ayakkabı ara veya soru sor',
+            poweredBy: 'Skechers AI Asistan',
           },
         },
         qna: {
-          mountTarget: '#lcw-qna-section',
+          mountTarget: '#skechers-qna-section',
           ctaText: 'Başka bir şey sor',
         },
         simrel: {
-          mountTarget: '#lcw-similar-products',
+          mountTarget: '#skechers-similar-products',
         },
         onAddToCart: (p) => {
-          console.log('[lcw] add-to-cart', p);
+          console.log('[skechers] add-to-cart', p);
           alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
         },
         onProductNavigate: (url, prodSku, sid) => {
@@ -541,12 +542,9 @@
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
 
-      // Demo: register add-to-cart callback hook via the generic addCallback API
       if (controller.chat) {
         controller.chat.addCallback('gengage-cart-add', (detail) => {
-          console.log('[lcw:callback] gengage-cart-add', detail);
-          // In production, this would call the site's actual cart API.
-          // Return true = success, false = failure (shows error in chat).
+          console.log('[skechers:callback] gengage-cart-add', detail);
           return true;
         });
       }

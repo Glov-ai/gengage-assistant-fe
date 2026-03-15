@@ -113,7 +113,12 @@ describe('ChoicePrompter product view gating', () => {
    * We simulate the gating logic here (viewedProductSkus lives in GengageChat class).
    */
   function shouldShowPrompter(viewedCount: number, comparisonActive: boolean, threadId = THREAD_A): boolean {
-    return viewedCount >= 2 && !comparisonActive && !isChoicePrompterGloballyDismissed() && !isChoicePrompterDismissed(threadId);
+    return (
+      viewedCount >= 2 &&
+      !comparisonActive &&
+      !isChoicePrompterGloballyDismissed() &&
+      !isChoicePrompterDismissed(threadId)
+    );
   }
 
   it('does NOT show on first product view', () => {

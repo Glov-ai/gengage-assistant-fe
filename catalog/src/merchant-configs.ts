@@ -379,6 +379,24 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       poweredBy: 'Teknosa AI Asistan',
     },
   },
+
+  skecherscomtr: {
+    accountId: 'skecherscomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#003478',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#1a1a2e',
+      borderRadius: '8px',
+      fontFamily: '"Helvetica Neue", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ayakkabı ara veya soru sor',
+      poweredBy: 'Skechers AI Asistan',
+    },
+  },
 };
 
 /** Returns the config for a known merchant, or undefined. */
