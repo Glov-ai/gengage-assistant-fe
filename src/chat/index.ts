@@ -401,11 +401,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Communication bridge for host ↔ widget messaging
-    this._bridge = new CommunicationBridge({
+    const bridgeOpts: import('../common/communication-bridge.js').CommunicationBridgeOptions = {
       namespace: 'chat',
-      ...(config.allowedOrigins !== undefined ? { allowedOrigins: config.allowedOrigins } : {}),
       onMessage: (msg) => this._handleBridgeMessage(msg),
-    });
+    };
+    if (config.allowedOrigins !== undefined) bridgeOpts.allowedOrigins = config.allowedOrigins;
+    this._bridge = new CommunicationBridge(bridgeOpts);
 
     // Track initial SKU for page-change detection
     this._lastSku = this.config.pageContext?.sku;
