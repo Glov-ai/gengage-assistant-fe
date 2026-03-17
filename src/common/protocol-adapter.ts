@@ -1276,8 +1276,7 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
 function adaptGetGroundingReview(event: V1GetGroundingReview): StreamEventUISpec | StreamEventMetadata {
   const action = requestDetailsToAction(
     event.payload.requestDetails,
-    firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ??
-      'Show product reviews',
+    firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ?? 'Show product reviews',
   );
   if (!action) {
     return {
