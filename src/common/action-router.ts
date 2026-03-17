@@ -39,6 +39,10 @@ export function routeStreamAction(
         handleUnknownAction(action, handlers, options, logger);
         return;
       }
+      if (!isSafeUrl(action.url)) {
+        logger.warn('[gengage] Blocked navigation to unsafe URL:', action.url);
+        return;
+      }
       const newTab = typeof action.newTab === 'boolean' ? action.newTab : undefined;
       if (handlers.navigate) {
         handlers.navigate({ url: action.url, ...(newTab !== undefined && { newTab }) });

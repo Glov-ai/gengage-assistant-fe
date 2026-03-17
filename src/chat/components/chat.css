@@ -991,7 +991,7 @@
   border-color: var(--gengage-primary-color, #3b82f6);
 }
 .gengage-chat-stop-btn:focus-visible {
-  outline: 2px solid var(--gengage-chat-primary, #f27a1a);
+  outline: 2px solid var(--gengage-primary-color, #3b82f6);
   outline-offset: 2px;
 }
 .gengage-chat-stop-icon {
@@ -1069,11 +1069,11 @@
 }
 
 .gengage-chat-thinking-step-marker--done {
-  color: var(--gengage-chat-success, #4caf50);
+  color: var(--_gengage-success-color);
 }
 
 .gengage-chat-thinking-step-marker--active {
-  color: var(--gengage-chat-primary, #1976d2);
+  color: var(--gengage-primary-color, #3b82f6);
   animation: gengage-thinking-pulse 1.5s ease-in-out infinite;
 }
 
