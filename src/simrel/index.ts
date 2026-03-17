@@ -255,6 +255,9 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         }
       }
 
+      // If aborted (new SKU fetch started), bail out — new invocation owns _contentEl
+      if (signal.aborted) return;
+
       // Flat grid (no groupings or groupings failed)
       if (this._contentEl) {
         const gridSpec = this._buildProductsSpec(products);

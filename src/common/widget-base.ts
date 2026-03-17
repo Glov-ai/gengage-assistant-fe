@@ -78,6 +78,7 @@ export abstract class BaseWidget<
       this.destroy();
       throw err;
     }
+    if (this._destroying) return;
     this.isInitialised = true;
     debugLog('lifecycle', `${this.constructor.name} ready`);
     this.emit('ready');
