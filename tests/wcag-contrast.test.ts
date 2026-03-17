@@ -26,7 +26,6 @@ const MERCHANT_THEMES: Array<{ name: string; primary: string; foreground: string
   { name: 'boynercomtr', primary: '#000000', foreground: '#ffffff' },
   { name: 'evideacom', primary: '#e84393', foreground: '#ffffff' },
   { name: 'aygazcomtr', primary: '#e30613', foreground: '#ffffff' },
-  { name: 'otokoccomtr', primary: '#003087', foreground: '#ffffff' },
   { name: 'divanpastanelericomtr', primary: '#8b1a2d', foreground: '#ffffff' },
   { name: 'screwfixcom', primary: '#f6a623', foreground: '#1a1a1a' },
 ];
@@ -135,7 +134,7 @@ describe('WCAG contrast ratio', () => {
     }
   });
 
-  it('all 12 merchants are covered', () => {
-    expect(MERCHANT_THEMES).toHaveLength(12);
+  it('all 11 merchants are covered', () => {
+    expect(MERCHANT_THEMES).toHaveLength(11);
   });
 });

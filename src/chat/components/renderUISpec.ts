@@ -886,9 +886,7 @@ function renderProductDetailTabs(
 
     const panel = document.createElement('div');
     panel.className = 'gengage-chat-product-detail-tab-panel';
-    if (!description) {
-      // Show specs by default if no description
-    } else {
+    if (description) {
       panel.style.display = 'none';
     }
 

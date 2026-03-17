@@ -194,24 +194,6 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
   },
 
-  otokoccomtr: {
-    accountId: 'otokoccomtr',
-    locale: 'tr',
-    theme: {
-      primaryColor: '#003087',
-      primaryForeground: '#ffffff',
-      backgroundColor: '#ffffff',
-      foregroundColor: '#333333',
-      borderRadius: '8px',
-      fontFamily: '"Roboto", Arial, sans-serif',
-      fontSize: '14px',
-    },
-    chatI18n: {
-      inputPlaceholder: 'Araç veya hizmet arayın',
-      poweredBy: 'Otokoç AI Asistan',
-    },
-  },
-
   divanpastanelericomtr: {
     accountId: 'divanpastanelericomtr',
     locale: 'tr',
