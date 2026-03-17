@@ -101,8 +101,10 @@ export function enrichActionPayload(
       const additions: Record<string, unknown> = {
         is_launcher: 0,
       };
-      if (action.title) additions['text'] = action.title;
-      if (action.title) additions['input'] = action.title;
+      if (action.title) {
+        additions['text'] = action.title;
+        additions['input'] = action.title;
+      }
       return { ...action, payload: merge(additions) };
     }
 
