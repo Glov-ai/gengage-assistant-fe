@@ -26,6 +26,7 @@ import {
   llmUsageEvent,
   meteringIncrementEvent,
   chatHistorySnapshotEvent,
+  basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
 import { validateImageFile } from './attachment-utils.js';
@@ -2375,6 +2376,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         dispatch('gengage:chat:add-to-cart', detail);
         this._bridge?.send('addToCart', params);
         void this._runEventCallbacks('gengage-cart-add', detail as unknown as Record<string, unknown>);
+        this.track(
+          basketAddEvent(this.analyticsContext(), {
+            attribution_source: 'chat',
+            attribution_action_id: crypto.randomUUID(),
+            cart_value: 0, // Host page should enrich via event listener
+            currency: 'TRY',
+            line_items: params.quantity,
+            sku: params.sku,
+          }),
+        );
         // Send addToCart action to backend — preservePanel keeps current products visible
         this._sendAction(
           {
