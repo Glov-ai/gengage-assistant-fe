@@ -9,7 +9,7 @@ import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UISpec
 import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { ActionRouterOptions } from '../common/action-router.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
-import type { BridgeMessage } from '../common/communication-bridge.js';
+import type { BridgeMessage, CommunicationBridgeOptions } from '../common/communication-bridge.js';
 import type { BackendRequestMeta } from './api.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
@@ -401,10 +401,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Communication bridge for host ↔ widget messaging
-    this._bridge = new CommunicationBridge({
+    const bridgeOpts: CommunicationBridgeOptions = {
       namespace: 'chat',
       onMessage: (msg) => this._handleBridgeMessage(msg),
-    });
+    };
+    if (config.allowedOrigins !== undefined) bridgeOpts.allowedOrigins = config.allowedOrigins;
+    this._bridge = new CommunicationBridge(bridgeOpts);
 
     // Track initial SKU for page-change detection
     this._lastSku = this.config.pageContext?.sku;
