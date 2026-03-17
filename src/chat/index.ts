@@ -1157,9 +1157,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               if (kvkkHtml) {
                 this._drawer?.showKvkkBanner(kvkkHtml, () => {
                   this._drawer?.hideKvkkBanner();
+                  markKvkkShown(acctId);
                 });
+              } else {
+                // No KVKK block found — mark as shown so we don't re-check
+                markKvkkShown(acctId);
               }
-              markKvkkShown(acctId);
             }
             displayText = stripKvkkBlock(displayText);
           }
