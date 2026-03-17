@@ -74,7 +74,6 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       await this._fetchAndRender(sku);
     }
 
-    this.isVisible = true;
     ga.trackInit('qna');
   }
 

@@ -589,7 +589,11 @@ export class ChatDrawer {
       if (file && file.type.startsWith('image/')) {
         e.preventDefault();
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }
@@ -605,7 +609,11 @@ export class ChatDrawer {
       const file = this._fileInput.files?.[0];
       if (file) {
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }
@@ -661,7 +669,11 @@ export class ChatDrawer {
       const file = e.dataTransfer?.files[0];
       if (file) {
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }

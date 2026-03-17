@@ -66,7 +66,6 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     this._lastSku = config.sku;
     await this._fetchAndRender(config.sku);
-    this.isVisible = true;
     ga.trackInit('simrel');
   }
 
