@@ -196,10 +196,7 @@ export function wireGADataLayer(): () => void {
   on<Record<string, never>>('gengage:chat:close', () => trackHide('chat'));
   on<Record<string, never>>('gengage:chat:ready', () => trackInit('chat'));
 
-  // Add to cart (from any widget)
-  on<{ sku: string; quantity: number }>('gengage:chat:add-to-cart', ({ sku, quantity }) => {
-    trackCartAdd(sku, quantity);
-  });
+  // Add to cart (from similar products widget — chat handles GA4 directly)
   on<{ sku: string; quantity: number; cartCode: string }>('gengage:similar:add-to-cart', ({ sku, quantity }) => {
     trackCartAdd(sku, quantity);
   });

@@ -2351,6 +2351,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
       },
       onAddToCart: (params) => {
+        ga.trackCartAdd(params.sku, params.quantity);
         const detail = {
           ...params,
           sessionId: this.config.session?.sessionId ?? null,
