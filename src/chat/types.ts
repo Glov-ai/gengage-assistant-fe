@@ -117,6 +117,17 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   onClose?: () => void;
   onReady?: () => void;
   onScriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
+
+  // -------------------------------------------------------------------------
+  // Security
+  // -------------------------------------------------------------------------
+
+  /**
+   * Allowed origins for the postMessage communication bridge.
+   * Defaults to `[location.origin]` (same-origin only).
+   * Pass `['*']` to allow any origin (not recommended for production).
+   */
+  allowedOrigins?: string[];
 }
 
 export interface ChatI18n {

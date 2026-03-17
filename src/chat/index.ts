@@ -403,6 +403,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Communication bridge for host ↔ widget messaging
     this._bridge = new CommunicationBridge({
       namespace: 'chat',
+      ...(config.allowedOrigins !== undefined ? { allowedOrigins: config.allowedOrigins } : {}),
       onMessage: (msg) => this._handleBridgeMessage(msg),
     });
 
