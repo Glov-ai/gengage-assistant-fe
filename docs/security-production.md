@@ -4,20 +4,12 @@ This guide covers security configuration for deploying the Gengage Assistant wid
 
 ## 1. postMessage Origin Restriction
 
-The communication bridge (`CommunicationBridge`) accepts host ↔ widget messages via `window.postMessage`. **By default, it accepts messages from any origin (`*`).**
+The communication bridge (`CommunicationBridge`) accepts host ↔ widget messages via `window.postMessage`. **By default, it only accepts messages from the same origin (`location.origin`).** This is secure for the standard deployment where the widget runs directly on the host page.
 
-### Problem
+### Cross-Origin Configuration
 
-An attacker on a different domain can send crafted messages to trigger widget actions:
-
-```js
-// Attacker's page in an unrelated iframe
-targetWindow.postMessage({ gengage: 'chat', type: 'openChat' }, '*');
-```
-
-### Fix: Set `allowedOrigins`
-
-Always configure `allowedOrigins` in production to restrict which origins can send messages:
+If your setup requires cross-origin iframe communication (e.g., a portal on a different
+domain needs to control the chat widget), explicitly list the allowed origins:
 
 ```js
 const chat = new GengageChat({
@@ -25,7 +17,7 @@ const chat = new GengageChat({
   middlewareUrl: 'https://chat.gengage.ai',
   allowedOrigins: [
     'https://www.yoursite.com',
-    'https://yoursite.com',
+    'https://portal.yoursite.com',
   ],
   // ...
 });
@@ -44,10 +36,14 @@ window.gengageConfig = {
 </script>
 ```
 
+> **Do not use `allowedOrigins: ['*']` in production.** Wildcard origins allow any
+> cross-origin iframe (ads, trackers) to trigger widget actions including backend API calls.
+
 ### How It Works
 
 - The bridge validates `event.origin` against the allowedOrigins array
-- Wildcard `*` disables origin checking entirely (dev-only)
+- Default is `[location.origin]` — same-origin only
+- Wildcard `*` disables origin checking entirely (not recommended for production)
 - Messages with non-matching origins are silently dropped
 - Shape validation (`{ gengage: string, type: string }`) provides a second layer of defense
 
@@ -173,7 +169,7 @@ chat.init();
 
 Before going live, verify:
 
-- [ ] `allowedOrigins` is set to your production domain(s) — not `['*']`
+- [ ] `allowedOrigins` is not set to `['*']` (same-origin default is secure; only set explicit origins if cross-origin iframes need access)
 - [ ] CSP headers allow the SDK source and API endpoints
 - [ ] No custom `renderCard` overrides use unsanitized user input
 - [ ] Backend middleware URL points to production (`chat.gengage.ai`), not dev
