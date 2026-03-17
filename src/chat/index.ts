@@ -1270,6 +1270,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._appendSimilarsToPanel(panelSpec, renderContext);
             } else if (panelAction === 'append') {
               this._drawer?.appendPanelContent(this._renderUISpec(panelSpec, renderContext));
+              if (this._comparisonSelectMode) {
+                this._refreshComparisonUI();
+              }
             } else {
               // Reset comparison state when new panel content replaces the grid
               this._comparisonSelectMode = false;
@@ -1874,6 +1877,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Rewind the conversation to the given thread. */
   private _rollbackToThread(threadId: string): void {
+    // Validate thread ID exists in known threads
+    if (this._panel && this._panel.threads.length > 0 && !this._panel.threads.includes(threadId)) {
+      // Check if any message has this threadId as fallback
+      if (!this._messages.some((m) => m.threadId === threadId)) {
+        return; // Invalid thread ID — silently ignore
+      }
+    }
     this._currentThreadId = threadId;
     this._extendedModeManager?.setHiddenByUser(false);
 
@@ -1904,6 +1914,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.clearPanel();
       this._currentPanelSource = null;
     }
+    if (restored && targetBot) {
+      // Update panel source so drilldown history captures the correct context.
+      // We can't reconstruct the exact spec, so clear it to prevent stale history pushes.
+      this._currentPanelSource = null;
+    }
     // Always update topbar navigation state for the new thread position
     const panelType = this._panel!.currentType ?? '';
     this._panel?.updateTopBar(panelType);
@@ -1912,23 +1927,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._drawer?.setPills([]);
 
     // Load context from IndexedDB for the target thread so the next request
-    // sends the correct historical context (not the latest one).
+    // sends the correct historical context, then prune future entries.
     if (this._session?.db && this.config.session?.sessionId) {
-      this._session?.db
-        .loadContext(this.config.session.sessionId, threadId)
-        .then((ctx) => {
+      const sid = this.config.session.sessionId;
+      void (async () => {
+        try {
+          const ctx = await this._session?.db?.loadContext(sid, threadId);
           if (ctx) this._lastBackendContext = ctx.context;
-        })
-        .catch(() => {
+          await this._session?.db?.deleteContextsAfterThread(sid, threadId);
+        } catch {
           /* non-fatal */
-        });
-    }
-
-    // Prune future context entries from IndexedDB
-    if (this._session?.db && this.config.session?.sessionId) {
-      this._session?.db.deleteContextsAfterThread(this.config.session.sessionId, threadId).catch(() => {
-        /* non-fatal */
-      });
+        }
+      })();
     }
   }
 
@@ -2035,6 +2045,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Restore thread cursors and creation timestamp
     this._currentThreadId = session.currentThreadId;
     this._lastThreadId = session.lastThreadId;
+    // Validate thread invariants — corrupted IDB data must not break navigation
+    if (this._currentThreadId && this._lastThreadId && this._currentThreadId > this._lastThreadId) {
+      this._currentThreadId = this._lastThreadId;
+    }
     this._chatCreatedAt = session.createdAt;
 
     // Restore panel threads and thumbnail entries
