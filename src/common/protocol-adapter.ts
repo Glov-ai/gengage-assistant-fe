@@ -1277,7 +1277,7 @@ function adaptGetGroundingReview(event: V1GetGroundingReview): StreamEventUISpec
   const action = requestDetailsToAction(
     event.payload.requestDetails,
     firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ??
-      'Urun yorumlarini goster',
+      'Show product reviews',
   );
   if (!action) {
     return {
