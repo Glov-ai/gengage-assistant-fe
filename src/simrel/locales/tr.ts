@@ -8,5 +8,7 @@ export const SIMREL_I18N_TR: SimRelI18n = {
   outOfStockLabel: 'Stokta Yok',
   decreaseLabel: 'Azalt',
   increaseLabel: 'Artır',
+  errorLoadingMessage: 'Benzer ürünler yüklenemedi.',
+  retryButtonText: 'Tekrar dene',
   priceSuffix: ' TL',
 };

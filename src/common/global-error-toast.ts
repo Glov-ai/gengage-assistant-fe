@@ -13,7 +13,7 @@ let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function getGlobalErrorMessage(locale?: string): string {
   if (typeof locale === 'string' && locale.toLowerCase().startsWith('tr')) {
-    return 'Baglanti sorunu olustu. Lutfen tekrar deneyin.';
+    return 'Bağlantı sorunu oluştu. Lütfen tekrar deneyin.';
   }
   return 'Connection issue. Please try again.';
 }

@@ -95,6 +95,10 @@ export interface SimRelI18n {
   outOfStockLabel: string;
   decreaseLabel: string;
   increaseLabel: string;
+  /** Inline error message shown when similar products fail to load. */
+  errorLoadingMessage: string;
+  /** Retry button label shown alongside the error message. */
+  retryButtonText: string;
   /**
    * @deprecated Prefer `pricing` config on the widget for locale-aware formatting.
    * Kept for backwards compatibility with existing custom integrations.

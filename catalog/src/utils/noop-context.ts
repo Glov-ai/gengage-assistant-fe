@@ -146,6 +146,8 @@ export function createNoopSimrelContext(): SimRelUISpecRenderContext {
       outOfStockLabel: 'Out of Stock',
       decreaseLabel: 'Decrease',
       increaseLabel: 'Increase',
+      errorLoadingMessage: 'Could not load similar products.',
+      retryButtonText: 'Try again',
       priceSuffix: ' TL',
     },
     pricing: {
