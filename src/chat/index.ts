@@ -64,6 +64,8 @@ import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
 import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
+import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
+import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
 import {
   containsKvkk,
   isKvkkShown,
@@ -183,6 +185,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     | null = null;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
+  /** Transcript focus, pin-to-bottom, and scroll request coordination. */
+  private readonly _presentation = new ChatPresentationState();
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
   private _eventCallbacks = new Map<string, Set<(detail: Record<string, unknown>) => boolean | Promise<boolean>>>();
   /** Last sent action+options for retry on error. */
@@ -306,8 +310,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.setThumbnails([]);
         this._panel!.snapshots.clear();
         this._panel!.threads = [];
+        this._presentation.reset();
+        this._drawer?.setPresentationFocus(null);
+        this._drawer?.setFormerMessagesButtonVisible(false);
         // Re-show welcome if configured
         this._showWelcomeIfNeeded();
+      },
+      presentation: {
+        onPinnedToBottomChange: (pinned) => {
+          this._presentation.pinnedToBottom = pinned;
+        },
+        onUserInteractingChange: (interacting) => {
+          this._presentation.userInteracting = interacting;
+        },
+        onFormerMessagesHint: () => {
+          if (this._presentation.focusedThreadId && this._hasMultipleThreadIds()) {
+            this._drawer?.setFormerMessagesButtonVisible(true);
+          }
+        },
+        shouldBlockSoftAutoScroll: () => this._presentation.shouldBlockStreamAutoScroll(),
+        onReleasePresentationFocus: () => this._releasePresentationFocus(),
       },
     });
 
@@ -394,11 +416,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this.addCleanup(() => window.visualViewport?.removeEventListener('resize', onViewportResize));
     }
 
-    // Inline variant starts visible
+    // Inline variant starts visible (onShow() is not invoked — mirror presentation state here)
     if (variant === 'inline') {
       this._drawerVisible = true;
       this.isVisible = true;
       this._applyOpenStateClasses();
+      this._presentation.setShown(true);
+      setTimeout(() => this._maybeAutoAnchorUnreadAssistant(), 60);
     }
 
     // Communication bridge for host ↔ widget messaging
@@ -476,6 +500,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
     this._drawer?.destroy();
+    invalidateChatScrollCache();
     this._drawer = null;
     this._bridge?.destroy();
     this._bridge = null;
@@ -619,6 +644,68 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._pdpPrimingInFlight = false;
     this._queuedUserMessages = [];
     this._productContextUnavailableSku = null;
+    this._presentation.reset();
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+  }
+
+  private _flushPresentationScroll(): void {
+    const req = this._presentation.scrollRequest;
+    if (!req || !this._drawer) return;
+    let handled = false;
+    if (req.type === 'thread' && req.threadId) {
+      handled = this._drawer.scrollThreadIntoView(req.threadId, req.behavior);
+      if (!handled) {
+        this._drawer.scrollToBottomPresentation(req.behavior);
+        handled = true;
+      }
+    } else if (req.type === 'bottom') {
+      this._drawer.scrollToBottomPresentation(req.behavior);
+      handled = true;
+    }
+    if (handled) {
+      this._presentation.consumeScrollRequest(req.id);
+    }
+  }
+
+  private _releasePresentationFocus(): void {
+    this._presentation.releaseFocusedThread();
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+  }
+
+  private _hasMultipleThreadIds(): boolean {
+    const ids = new Set<string>();
+    for (const m of this._messages) {
+      if (m.threadId) ids.add(m.threadId);
+    }
+    return ids.size > 1;
+  }
+
+  private _orderedThreadIds(): string[] {
+    const ordered: string[] = [];
+    const seen = new Set<string>();
+    for (const m of this._messages) {
+      if (m.threadId && !seen.has(m.threadId)) {
+        seen.add(m.threadId);
+        ordered.push(m.threadId);
+      }
+    }
+    return ordered;
+  }
+
+  private _maybeAutoAnchorUnreadAssistant(): void {
+    if (!this._drawer || !this._presentation.shown) return;
+    const threadIds = this._orderedThreadIds();
+    if (threadIds.length === 0) return;
+    const latestUnread = getLatestUnreadAssistantThreadId(threadIds, this._presentation);
+    if (!latestUnread) return;
+    const gid = `${latestUnread}:assistant`;
+    if (this._presentation.lastAutoAnchoredGroupId === gid) return;
+    if (this._presentation.userInteracting && !this._presentation.pinnedToBottom) return;
+    if (this._drawer.scrollThreadIntoView(latestUnread, 'smooth')) {
+      this._presentation.markGroupAutoAnchored(gid);
+    }
   }
 
   private _handleBridgeMessage(msg: BridgeMessage): void {
@@ -675,7 +762,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         break;
       }
       case 'scrollToBottom':
-        this._drawer?.scrollToBottomIfNeeded();
+        this._presentation.requestScrollToBottom('smooth');
+        setTimeout(() => this._flushPresentationScroll(), 40);
         break;
       case 'addToCardHandler': {
         // Host notifies widget of add-to-cart result
@@ -742,6 +830,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.focusInput();
     }
     this._extendedModeManager?.setChatShown(true);
+    this._presentation.setShown(true);
+    setTimeout(() => this._maybeAutoAnchorUnreadAssistant(), 60);
   }
 
   /** Show welcome message and starter pills on first open with empty history. */
@@ -785,6 +875,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._applyOpenStateClasses();
     this._extendedModeManager?.setChatShown(false);
+    this._presentation.setShown(false);
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
   }
 
   private _syncViewportState(): void {
@@ -1015,6 +1108,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (options?.silent) botMsg.silent = true;
     // Note: silent flag only skips the USER message above — bot response is always rendered
     this._messages.push(botMsg);
+
+    this._presentation.registerAssistantActivity(threadId);
+    this._presentation.requestThreadFocus(threadId, 'smooth');
+    this._drawer?.setPresentationFocus(threadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+    setTimeout(() => this._flushPresentationScroll(), 40);
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
@@ -1322,6 +1421,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 }
                 messagesContainer.appendChild(inline);
                 inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+                this._drawer?.refreshPresentationCollapsed();
               }
             }
           }
@@ -1335,6 +1435,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               }
               messagesContainer.appendChild(inline);
               inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._drawer?.refreshPresentationCollapsed();
             }
           }
 
@@ -1770,6 +1871,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             botMsg.status = 'done';
             ga.trackMessageReceived();
           }
+          this._presentation.finalizeAssistantGroup(threadId);
 
           // Reveal the comparison toggle button (hidden during streaming) with fade-in
           const hiddenCompareBtn = this._shadow?.querySelector('.gengage-chat-comparison-toggle-btn--hidden');
@@ -1887,6 +1989,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._currentThreadId = threadId;
     this._extendedModeManager?.setHiddenByUser(false);
+    this._presentation.setFocusedThreadId(threadId);
+    this._drawer?.setPresentationFocus(threadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
 
     // Toggle visibility of messages after the cutoff
     for (const msg of this._messages) {
@@ -2171,6 +2276,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
       }
     }
+
+    this._presentation.releaseFocusedThread();
+    this._drawer?.setPresentationFocus(null);
 
     // After lockout expires, scroll to last thread boundary instead of absolute bottom
     setTimeout(() => {
@@ -2595,6 +2703,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const inline = this._renderUISpec(inlineSpec, renderContext);
       if (chatMsg.threadId) inline.dataset['threadId'] = chatMsg.threadId;
       messagesContainer.appendChild(inline);
+      this._drawer?.refreshPresentationCollapsed();
       return;
     }
 
@@ -2603,6 +2712,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       inline.dataset['threadId'] = chatMsg.threadId;
     }
     messagesContainer.appendChild(inline);
+    this._drawer?.refreshPresentationCollapsed();
   }
 
   private _createMessage(role: 'user' | 'assistant', content: string): ChatMessage {
@@ -2672,3 +2782,6 @@ export {
 export type { UISpecRenderContext } from './components/renderUISpec.js';
 export { chatCatalog } from './catalog.js';
 export type { ChatCatalog, ChatComponentName } from './catalog.js';
+export { getChatScrollElement, invalidateChatScrollCache, CHAT_SCROLL_ELEMENT_ID } from './utils/get-chat-scroll-element.js';
+export { ChatPresentationState } from './chat-presentation-state.js';
+export type { GroupReadState, PresentationGroupMeta, ScrollRequest } from './chat-presentation-state.js';

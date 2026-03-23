@@ -747,6 +747,33 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
+/* Thread focus: collapse older turns until user expands history */
+.gengage-chat-bubble--presentation-collapsed {
+  display: none !important;
+}
+
+.gengage-chat-former-messages-btn {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--_gengage-border-color, #e5e7eb);
+  background: var(--gengage-background-color, #fff);
+  color: var(--_gengage-text-primary, #1f2937);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-former-messages-btn:hover {
+  background: var(--_gengage-surface-secondary, #f3f4f6);
+}
+
 .gengage-chat-bubble {
   max-width: 85%;
   padding: 12px 16px;

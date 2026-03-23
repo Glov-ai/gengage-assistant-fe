@@ -217,6 +217,8 @@ export interface ChatI18n {
   accountInactiveMessage: string;
   favoritesPageTitle: string;
   emptyFavoritesMessage: string;
+  /** Sticky control when transcript is focused on the latest thread — restores full history */
+  showFormerMessagesButton: string;
 }
 
 export interface ChatUISpecRenderContext {

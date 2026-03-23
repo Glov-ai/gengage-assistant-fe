@@ -87,4 +87,5 @@ export const CHAT_I18N_TR: ChatI18n = {
   accountInactiveMessage: 'Bu hesap şu an aktif değil. Lütfen daha sonra tekrar deneyin.',
   favoritesPageTitle: 'Favorilerim',
   emptyFavoritesMessage: 'Henüz favori ürün yok. Bir ürünü kalp ikonuna tıklayarak favorilere ekleyebilirsin.',
+  showFormerMessagesButton: '↑ Önceki mesajları göster',
 };
