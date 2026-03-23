@@ -60,20 +60,35 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
   const entries = (element.props?.['entries'] ?? []) as GroupingEntry[];
   if (entries.length === 0) return container;
 
+  const customTitle = element.props?.['sectionTitle'];
+  const sectionTitle =
+    typeof customTitle === 'string' && customTitle.trim().length > 0
+      ? customTitle.trim()
+      : ctx.i18n?.aiBrowseCategoriesTitle;
+  if (sectionTitle) {
+    const heading = document.createElement('h3');
+    heading.className = 'gengage-chat-grouping-section-title';
+    heading.textContent = sectionTitle;
+    container.appendChild(heading);
+  }
+
+  const scrollRow = document.createElement('div');
+  scrollRow.className = 'gengage-chat-grouping-cards-scroll';
+
   for (const entry of entries) {
     const card = document.createElement('div');
     card.className = 'gengage-chat-grouping-card';
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => ctx.onAction(normalizeGroupingAction(entry)));
 
-    // Image (20x20 on desktop, hidden on mobile via CSS)
+    // Image — intrinsic size; CSS sets panel vs chat dimensions
     if (entry.image && isSafeImageUrl(entry.image)) {
       const img = document.createElement('img');
       img.className = 'gengage-chat-grouping-card-img';
       img.src = entry.image;
       img.alt = entry.name;
-      img.width = 20;
-      img.height = 20;
+      img.width = 64;
+      img.height = 64;
       card.appendChild(img);
     }
 
@@ -107,8 +122,10 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
     arrow.textContent = '\u21B3';
     card.insertBefore(arrow, card.firstChild);
 
-    container.appendChild(card);
+    scrollRow.appendChild(card);
   }
+
+  container.appendChild(scrollRow);
 
   return container;
 }

@@ -2,6 +2,8 @@
  * Vertical strip of product thumbnails along the right edge of the panel (results) pane.
  *
  * Clicking a thumbnail dispatches a rollback to the thread where that product was shown.
+ *
+ * **Display:** The column is hidden via CSS (`chat.css`); wiring (`setThumbnails`) stays for a future toggle.
  */
 
 import { isSafeImageUrl } from '../../common/safe-html.js';

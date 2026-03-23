@@ -1211,6 +1211,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     let chunkIndex = 0;
     let panelLoadingSeen = false;
     let panelContentReceived = false;
+    /** Desktop: panel shows ProductGrid / Categories — AI picks can render above instead of in chat. */
+    let panelListEligibleForAiZone = false;
+    let aiAnalysisUiReceivedForPanel = false;
+    let streamDone = false;
+    /** AITopPicks / AIGroupingCards often arrive before product_list; flush when grid mounts. */
+    let pendingPanelAiSpec: UISpec | null = null;
+
+    const syncPanelAiAnalysisZone = (): void => {
+      if (!this._drawer) return;
+      if (this._isMobileViewport || !panelListEligibleForAiZone) {
+        this._drawer.setPanelAiZoneState('hidden');
+        return;
+      }
+      if (aiAnalysisUiReceivedForPanel) return;
+      if (!streamDone) {
+        this._drawer.setPanelAiZoneState('analyzing', { analyzingLabel: this._i18n.aiAnalysisAnalyzingLabel });
+      } else {
+        this._drawer.setPanelAiZoneState('hidden');
+      }
+    };
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -1348,10 +1368,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
 
           const panelSpec = panelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
-          const shouldRenderInline =
-            !botMsg.silent &&
-            (panelHint !== 'panel' || componentType === 'ProductCard') &&
-            componentType !== 'ActionButtons'; // ActionButtons render as bottom pills only
 
           if (panelHint === 'panel' && this._panel) {
             const isFirstPanelContentInStream = !panelContentReceived;
@@ -1396,6 +1412,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
             this._panel.updateTopBar(titleType, backendTitle);
             this._panel.updateExtendedMode(componentType);
+
+            // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
+            if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
+              panelListEligibleForAiZone = !this._isMobileViewport;
+              // Top Picks / groupings may have streamed before product_list — apply now that panel + zone exist
+              if (pendingPanelAiSpec) {
+                const flushCtx = this._buildRenderContext();
+                flushCtx.isStreaming = true;
+                const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+                aiAnalysisUiReceivedForPanel = true;
+                this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
+                pendingPanelAiSpec = null;
+              }
+            } else if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
+              panelListEligibleForAiZone = false;
+              pendingPanelAiSpec = null;
+              this._drawer?.setPanelAiZoneState('hidden');
+            }
           }
 
           // ProductDetailsPanel goes to the panel, but also render a compact
@@ -1425,6 +1459,29 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               }
             }
           }
+
+          const isAiAnalysisComponent = componentType === 'AITopPicks' || componentType === 'AIGroupingCards';
+          let routeAiAnalysisToPanel = false;
+          let deferAiPanelUntilGrid = false;
+          if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
+            if (panelListEligibleForAiZone) {
+              const aiEl = this._renderUISpec(spec, renderContext);
+              aiAnalysisUiReceivedForPanel = true;
+              this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
+              routeAiAnalysisToPanel = true;
+              pendingPanelAiSpec = null;
+            } else {
+              pendingPanelAiSpec = spec;
+              deferAiPanelUntilGrid = true;
+            }
+          }
+
+          const shouldRenderInline =
+            !botMsg.silent &&
+            (panelHint !== 'panel' || componentType === 'ProductCard') &&
+            componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
+            !routeAiAnalysisToPanel &&
+            !(deferAiPanelUntilGrid && isAiAnalysisComponent);
 
           if (shouldRenderInline) {
             const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
@@ -1598,6 +1655,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
+          syncPanelAiAnalysisZone();
           botMsg.uiSpec = spec;
         },
         onAction: (event: StreamEvent) => {
@@ -1752,6 +1810,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip error handling for aborted/superseded requests (including when no active request)
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          streamDone = true;
+          syncPanelAiAnalysisZone();
+          pendingPanelAiSpec = null;
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
@@ -1842,6 +1903,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          streamDone = true;
+          syncPanelAiAnalysisZone();
+          // product_list never arrived but AI Top Picks / groupings were deferred — show in chat
+          if (pendingPanelAiSpec) {
+            const flushCtx = this._buildRenderContext();
+            flushCtx.isStreaming = false;
+            const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
+            if (messagesContainer) {
+              const inline = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+              if (botMsg.threadId) inline.dataset['threadId'] = botMsg.threadId;
+              messagesContainer.appendChild(inline);
+              inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._drawer?.refreshPresentationCollapsed();
+            }
+            pendingPanelAiSpec = null;
+          }
           this._activeRequestThreadId = null;
           // Reset consecutive error counter on successful stream completion
           this._consecutiveErrorCount = 0;

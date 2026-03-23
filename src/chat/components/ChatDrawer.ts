@@ -114,6 +114,8 @@ export class ChatDrawer {
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
   private _panelFloatingEl: HTMLElement;
+  /** Slot between panel top bar and main scroll content (desktop AI picks / analyzing strip). */
+  private _panelAiZoneEl!: HTMLElement;
   private _favBadgeEl: HTMLElement | null = null;
   private _thinkingSteps: string[] = [];
   private _firstBotMessageIds: Set<string> = new Set();
@@ -604,6 +606,8 @@ export class ChatDrawer {
     this._panelFloatingEl = document.createElement('div');
     this._panelFloatingEl.className = 'gengage-chat-panel-float';
     this._panelEl.appendChild(this._panelFloatingEl);
+
+    this._resetPanelAiZoneElement();
 
     // Suggestion pills row (between messages and input)
     this._pillsEl = document.createElement('div');
@@ -1181,13 +1185,58 @@ export class ChatDrawer {
     return this._pendingAttachment;
   }
 
+  /**
+   * Desktop: area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
+   * so they are not duplicated in the chat column.
+   */
+  setPanelAiZoneState(
+    state: 'hidden' | 'analyzing' | 'results',
+    options?: { resultEl?: HTMLElement; analyzingLabel?: string },
+  ): void {
+    if (!this._panelAiZoneEl.isConnected) return;
+    if (state === 'hidden') {
+      this._panelAiZoneEl.innerHTML = '';
+      this._panelAiZoneEl.setAttribute('hidden', '');
+      return;
+    }
+    this._panelAiZoneEl.removeAttribute('hidden');
+    if (state === 'analyzing') {
+      this._panelAiZoneEl.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'gengage-chat-panel-ai-zone-inner';
+      const dots = document.createElement('div');
+      dots.className = 'gengage-chat-typing-dots';
+      for (let i = 0; i < 3; i++) {
+        dots.appendChild(document.createElement('span'));
+      }
+      const text = document.createElement('span');
+      text.className = 'gengage-chat-panel-ai-zone-text';
+      text.textContent = options?.analyzingLabel ?? this.i18n.aiAnalysisAnalyzingLabel;
+      wrap.appendChild(dots);
+      wrap.appendChild(text);
+      this._panelAiZoneEl.appendChild(wrap);
+    } else if (state === 'results' && options?.resultEl) {
+      this._panelAiZoneEl.innerHTML = '';
+      this._panelAiZoneEl.appendChild(options.resultEl);
+    }
+  }
+
+  private _resetPanelAiZoneElement(): void {
+    this._panelAiZoneEl = document.createElement('div');
+    this._panelAiZoneEl.className = 'gengage-chat-panel-ai-zone';
+    this._panelAiZoneEl.setAttribute('hidden', '');
+  }
+
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
     // Brief crossfade transition when swapping panel content
     this._panelEl.classList.add('gengage-chat-panel--transitioning');
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
     this._panelEl.appendChild(el);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
@@ -1208,7 +1257,9 @@ export class ChatDrawer {
 
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
-    this._panelEl.insertBefore(el, this._panelFloatingEl);
+    const thumb = this._thumbnailsColumn.getElement();
+    const ref = thumb.parentElement === this._panelEl ? thumb : this._panelFloatingEl;
+    this._panelEl.insertBefore(el, ref);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1224,6 +1275,7 @@ export class ChatDrawer {
       const child = children[i] as HTMLElement;
       if (
         child.classList.contains('gengage-chat-panel-topbar') ||
+        child.classList.contains('gengage-chat-panel-ai-zone') ||
         child.classList.contains('gengage-chat-thumbnails-column') ||
         child.classList.contains('gengage-chat-panel-float')
       ) {
@@ -1253,7 +1305,9 @@ export class ChatDrawer {
   showPanelLoading(contentType?: string): void {
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
     const skeleton = document.createElement('div');
     skeleton.className = 'gengage-chat-panel-skeleton';
 
@@ -1304,6 +1358,7 @@ export class ChatDrawer {
     }
 
     this._panelEl.appendChild(skeleton);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1342,7 +1397,10 @@ export class ChatDrawer {
    */
   clearPanel(): void {
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');

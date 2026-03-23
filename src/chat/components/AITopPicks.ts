@@ -1,11 +1,9 @@
 /**
  * AI Top Picks renderer.
  *
- * Renders rich AI-curated product suggestion cards with:
- * - Winner card (vertical, primary border, badge, large image)
- * - Compact cards (horizontal, smaller)
- * - Sentiment label chips (green/red/gray)
- * - Expert quality scores, review quotes
+ * DOM/layout parity with robot-engine-lean MainPane/AIAnalysisZone TopPicksResults:
+ * article: relative p-3, role badge absolute -top-2.5 left-3, image aspect-square mt-1 mb-2,
+ * title, rating, price, reason (line-clamp-3), CTA.
  */
 
 import type { UIElement, ActionPayload } from '../../common/types.js';
@@ -52,67 +50,92 @@ function getRoleLabel(role: string | undefined, i18n: ChatUISpecRenderContext['i
   return (i18n as Record<string, string>)[key] ?? role;
 }
 
-export function renderAITopPicks(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
-  const container = document.createElement('div');
-  container.className = 'gengage-chat-ai-top-picks';
-
-  const suggestions = (element.props?.['suggestions'] ?? []) as AITopPickItem[];
-  if (suggestions.length === 0) return container;
-
-  // Title
-  const title = document.createElement('h3');
-  title.className = 'gengage-chat-ai-top-picks-title';
-  title.textContent = ctx.i18n?.aiTopPicksTitle ?? 'Top Picks';
-  container.appendChild(title);
-
-  const cardsWrap = document.createElement('div');
-  cardsWrap.className = 'gengage-chat-ai-top-picks-cards';
-
-  for (let i = 0; i < suggestions.length; i++) {
-    const suggestion = suggestions[i]!;
-    const isWinner = suggestion.role === 'winner' || i === 0;
-    const card = isWinner ? renderTopPickCard(suggestion, ctx) : renderCompactCard(suggestion, ctx);
-    cardsWrap.appendChild(card);
-  }
-
-  container.appendChild(cardsWrap);
-  return container;
+function renderRatingRow(product: Record<string, unknown>): HTMLElement | null {
+  const raw = product['rating'];
+  const num = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw) : NaN;
+  if (Number.isNaN(num)) return null;
+  const row = document.createElement('div');
+  row.className = 'gengage-chat-ai-toppick-rating';
+  row.textContent = `\u2605 ${num.toFixed(1)}`;
+  return row;
 }
 
-function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): HTMLElement {
-  const card = document.createElement('div');
-  card.className = 'gengage-chat-ai-toppick-card gengage-chat-ai-toppick-card--winner';
+/** Image + optional discount — only inside media box (lean parity). */
+function appendTopPickMedia(product: Record<string, unknown>, alt: string, target: HTMLElement): void {
+  const media = document.createElement('div');
+  media.className = 'gengage-chat-ai-toppick-media';
 
-  // Badge
-  const badge = document.createElement('span');
-  badge.className = 'gengage-chat-ai-toppick-badge';
-  badge.textContent = getRoleLabel(item.role, ctx.i18n) ?? ctx.i18n?.roleWinner ?? 'TOP MATCH';
-  card.appendChild(badge);
-
-  const product = item.product;
-
-  // Discount badge
   const discountPercent = product['discountPercent'] as number | undefined;
   if (typeof discountPercent === 'number' && discountPercent > 0) {
     const discountBadge = document.createElement('span');
     discountBadge.className = 'gengage-chat-ai-toppick-discount-badge';
     discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
-    card.appendChild(discountBadge);
+    media.appendChild(discountBadge);
   }
 
-  // Image
   const imageUrl = product['imageUrl'] as string | undefined;
   if (imageUrl && isSafeImageUrl(imageUrl)) {
     const img = document.createElement('img');
     img.className = 'gengage-chat-ai-toppick-img';
     safeSetAttribute(img, 'src', imageUrl);
     img.loading = 'lazy';
-    img.alt = (product['name'] as string) || 'Product image';
+    img.alt = alt;
     addImageErrorHandler(img);
-    card.appendChild(img);
+    media.appendChild(img);
   }
 
-  // Body
+  target.appendChild(media);
+}
+
+function appendPriceRow(
+  product: Record<string, unknown>,
+  body: HTMLElement,
+  ctx: ChatUISpecRenderContext,
+): void {
+  const price = product['price'] as string | undefined;
+  const originalPrice = product['originalPrice'] as string | undefined;
+  if (!price) return;
+  const priceRow = document.createElement('div');
+  priceRow.className = 'gengage-chat-ai-toppick-price';
+  if (originalPrice && originalPrice !== price) {
+    const orig = document.createElement('span');
+    orig.className = 'gengage-chat-ai-toppick-original-price';
+    orig.textContent = formatPrice(originalPrice, ctx.pricing);
+    priceRow.appendChild(orig);
+    priceRow.appendChild(document.createTextNode(' '));
+  }
+  const current = document.createElement('span');
+  current.textContent = formatPrice(price, ctx.pricing);
+  priceRow.appendChild(current);
+  body.appendChild(priceRow);
+}
+
+/**
+ * Single card layout matching lean TopPicksResults (all picks use the same structure).
+ * `--winner` / `--compact` class names kept for tests (highlight vs secondary border).
+ */
+function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWinner: boolean): HTMLElement {
+  const card = document.createElement('div');
+  card.className = isWinner
+    ? 'gengage-chat-ai-toppick-card gengage-chat-ai-toppick-card--winner'
+    : 'gengage-chat-ai-toppick-card gengage-chat-ai-toppick-card--compact';
+
+  const product = item.product;
+  const alt = (product['name'] as string) || 'Product image';
+
+  /* Lean: span.absolute.-top-2.5.left-3 — no wrapper */
+  const roleLabel = isWinner
+    ? (getRoleLabel(item.role, ctx.i18n) ?? ctx.i18n?.roleWinner ?? 'TOP MATCH')
+    : getRoleLabel(item.role, ctx.i18n);
+  if (roleLabel) {
+    const badge = document.createElement('span');
+    badge.className = 'gengage-chat-ai-toppick-badge';
+    badge.textContent = roleLabel;
+    card.appendChild(badge);
+  }
+
+  appendTopPickMedia(product, alt, card);
+
   const body = document.createElement('div');
   body.className = 'gengage-chat-ai-toppick-body';
 
@@ -124,7 +147,12 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     body.appendChild(nameEl);
   }
 
-  // Reason text
+  const ratingRow = renderRatingRow(product);
+  if (ratingRow) body.appendChild(ratingRow);
+
+  /* Lean order: price before reason */
+  appendPriceRow(product, body, ctx);
+
   if (item.reason) {
     const reasonEl = document.createElement('div');
     reasonEl.className = 'gengage-chat-ai-toppick-reason';
@@ -132,19 +160,16 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     body.appendChild(reasonEl);
   }
 
-  // Sentiment chips
   if (item.labels && item.labels.length > 0) {
     body.appendChild(renderSentimentChips(item.labels));
   }
 
-  // Expert quality score — normalize to 0-10 scale
-  if (typeof item.expertQualityScore === 'number') {
+  if (isWinner && typeof item.expertQualityScore === 'number') {
     const score = document.createElement('div');
     score.className = 'gengage-chat-ai-toppick-score';
     let displayScore = item.expertQualityScore;
     let maxScale = 10;
     if (displayScore > 10) {
-      // Percentage-style score (e.g. 92) → normalize to x/10
       displayScore = Math.round(displayScore) / 10;
     } else if (displayScore <= 5) {
       maxScale = 5;
@@ -153,41 +178,19 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
     body.appendChild(score);
   }
 
-  // Review highlight quote
-  if (item.reviewHighlight) {
+  if (isWinner && item.reviewHighlight) {
     const review = document.createElement('blockquote');
     review.className = 'gengage-chat-ai-toppick-review';
     review.textContent = item.reviewHighlight;
     body.appendChild(review);
   }
 
-  // Price
-  const price = product['price'] as string | undefined;
-  const originalPrice = product['originalPrice'] as string | undefined;
-  if (price) {
-    const priceRow = document.createElement('div');
-    priceRow.className = 'gengage-chat-ai-toppick-price';
-    if (originalPrice && originalPrice !== price) {
-      const orig = document.createElement('span');
-      orig.className = 'gengage-chat-ai-toppick-original-price';
-      orig.textContent = formatPrice(originalPrice, ctx.pricing);
-      priceRow.appendChild(orig);
-      priceRow.appendChild(document.createTextNode(' '));
-    }
-    const current = document.createElement('span');
-    current.textContent = formatPrice(price, ctx.pricing);
-    priceRow.appendChild(current);
-    body.appendChild(priceRow);
-  }
-
   card.appendChild(body);
 
-  // CTA button
   if (item.action) {
     const sku = resolveActionSku(item);
     const url = (product['url'] as string) ?? '';
 
-    // Spinner overlay (hidden by default)
     const spinner = document.createElement('div');
     spinner.className = 'gengage-chat-ai-toppick-spinner';
     spinner.style.display = sku && ctx.topPicksLoadingSku === sku ? '' : 'none';
@@ -210,104 +213,29 @@ function renderTopPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): H
   return card;
 }
 
-function renderCompactCard(item: AITopPickItem, ctx: ChatUISpecRenderContext): HTMLElement {
-  const card = document.createElement('div');
-  card.className = 'gengage-chat-ai-toppick-card gengage-chat-ai-toppick-card--compact';
+export function renderAITopPicks(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
+  const container = document.createElement('div');
+  container.className = 'gengage-chat-ai-top-picks';
 
-  const product = item.product;
+  const suggestions = (element.props?.['suggestions'] ?? []) as AITopPickItem[];
+  if (suggestions.length === 0) return container;
 
-  // Discount badge
-  const discountPercent = product['discountPercent'] as number | undefined;
-  if (typeof discountPercent === 'number' && discountPercent > 0) {
-    const discountBadge = document.createElement('span');
-    discountBadge.className = 'gengage-chat-ai-toppick-discount-badge';
-    discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
-    card.appendChild(discountBadge);
+  const title = document.createElement('h3');
+  title.className = 'gengage-chat-ai-top-picks-title';
+  title.textContent = ctx.i18n?.aiTopPicksTitle ?? 'Top Picks';
+  container.appendChild(title);
+
+  const scrollRow = document.createElement('div');
+  scrollRow.className = 'gengage-chat-ai-top-picks-scroll';
+
+  for (let i = 0; i < suggestions.length; i++) {
+    const suggestion = suggestions[i]!;
+    const isWinner = suggestion.role === 'winner' || i === 0;
+    scrollRow.appendChild(renderPickCard(suggestion, ctx, isWinner));
   }
 
-  // Image
-  const imageUrl = product['imageUrl'] as string | undefined;
-  if (imageUrl && isSafeImageUrl(imageUrl)) {
-    const img = document.createElement('img');
-    img.className = 'gengage-chat-ai-toppick-img';
-    safeSetAttribute(img, 'src', imageUrl);
-    img.loading = 'lazy';
-    img.alt = (product['name'] as string) || 'Product image';
-    addImageErrorHandler(img);
-    card.appendChild(img);
-  }
-
-  // Body
-  const body = document.createElement('div');
-  body.className = 'gengage-chat-ai-toppick-body';
-
-  // Role label
-  const roleLabel = getRoleLabel(item.role, ctx.i18n);
-  if (roleLabel) {
-    const roleEl = document.createElement('div');
-    roleEl.className = 'gengage-chat-ai-toppick-role';
-    roleEl.textContent = roleLabel;
-    body.appendChild(roleEl);
-  }
-
-  const name = product['name'] as string | undefined;
-  if (name) {
-    const nameEl = document.createElement('div');
-    nameEl.className = 'gengage-chat-ai-toppick-name';
-    nameEl.textContent = name;
-    body.appendChild(nameEl);
-  }
-
-  // Reason text
-  if (item.reason) {
-    const reasonEl = document.createElement('div');
-    reasonEl.className = 'gengage-chat-ai-toppick-reason';
-    reasonEl.textContent = item.reason;
-    body.appendChild(reasonEl);
-  }
-
-  // Sentiment chips
-  if (item.labels && item.labels.length > 0) {
-    body.appendChild(renderSentimentChips(item.labels));
-  }
-
-  // Price
-  const price = product['price'] as string | undefined;
-  if (price) {
-    const priceEl = document.createElement('div');
-    priceEl.className = 'gengage-chat-ai-toppick-price';
-    priceEl.textContent = formatPrice(price, ctx.pricing);
-    body.appendChild(priceEl);
-  }
-
-  card.appendChild(body);
-
-  // CTA
-  if (item.action) {
-    const sku = resolveActionSku(item);
-    const url = (product['url'] as string) ?? '';
-
-    // Spinner overlay (hidden by default)
-    const spinner = document.createElement('div');
-    spinner.className = 'gengage-chat-ai-toppick-spinner';
-    spinner.style.display = sku && ctx.topPicksLoadingSku === sku ? '' : 'none';
-    card.appendChild(spinner);
-
-    const cta = document.createElement('button');
-    cta.className = 'gengage-chat-ai-toppick-cta';
-    cta.type = 'button';
-    cta.textContent = ctx.i18n?.viewDetails ?? 'View Details';
-    cta.addEventListener('click', () => {
-      if (item.action?.type === 'findSimilar' && sku && ctx.onProductClick) {
-        ctx.onProductClick({ sku, url });
-        return;
-      }
-      ctx.onAction(item.action!);
-    });
-    card.appendChild(cta);
-  }
-
-  return card;
+  container.appendChild(scrollRow);
+  return container;
 }
 
 function renderSentimentChips(labels: SentimentLabel[]): HTMLElement {

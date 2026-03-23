@@ -88,4 +88,6 @@ export const CHAT_I18N_EN: ChatI18n = {
   favoritesPageTitle: 'My Favorites',
   emptyFavoritesMessage: 'No favorites yet. Heart a product to save it here.',
   showFormerMessagesButton: '↑ Show earlier messages',
+  aiAnalysisAnalyzingLabel: 'Analyzing products...',
+  aiBrowseCategoriesTitle: 'Browse categories',
 };

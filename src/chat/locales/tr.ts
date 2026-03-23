@@ -88,4 +88,6 @@ export const CHAT_I18N_TR: ChatI18n = {
   favoritesPageTitle: 'Favorilerim',
   emptyFavoritesMessage: 'Henüz favori ürün yok. Bir ürünü kalp ikonuna tıklayarak favorilere ekleyebilirsin.',
   showFormerMessagesButton: '↑ Önceki mesajları göster',
+  aiAnalysisAnalyzingLabel: 'Ürünler analiz ediliyor...',
+  aiBrowseCategoriesTitle: 'Kategorilere Göz At',
 };
