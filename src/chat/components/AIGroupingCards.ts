@@ -4,6 +4,9 @@
  * Desktop: compact card with image, name, and labels.
  * Mobile: simple button list with arrow prefix (images hidden via CSS).
  *
+ * Note: The media-rail layout is similar to `AISuggestedSearchCards` but with different tokens;
+ * a shared primitive may be extracted later if the visual system stabilizes.
+ *
  * XSS safety: All text is set via textContent. Image URLs are validated
  * for safe protocols. No innerHTML.
  */

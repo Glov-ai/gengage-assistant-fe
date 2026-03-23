@@ -777,7 +777,8 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
         "chosen_attribute": "string",
         "short_name": "Premium Models",
         "detailed_user_message": "Looking for higher-end options?",
-        "why_different": "These models offer better performance...",
+        "why_different": "Optional long copy — not used for the compact card keyword line",
+        "display_keywords": ["Keyword one", "Keyword two"],
         "representative_product_sku": "SKU789",
         "group_skus": ["SKU789", "SKU101"],
         "sku": "SKU789",
@@ -787,6 +788,10 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
   }
 }
 ```
+
+**`display_keywords`**: Optional string array. When present, the client builds the tertiary browse line
+from these values (joined with ` • `), instead of using `why_different`. If omitted, the UI derives
+short fragments from `chosen_attribute` and `short_name` only — never full-sentence `why_different`.
 
 Suggestions follow a strict superiority filter — only upgrade/upsell direction, never lateral or cheaper alternatives.
 
