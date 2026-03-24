@@ -4950,7 +4950,7 @@
 .gengage-chat-comparison--mobile .gengage-chat-comparison-table .gengage-chat-comparison-label {
   position: sticky;
   left: 0;
-  background: #fff;
+  background: var(--gengage-background-color, #fff);
   z-index: 1;
   /* Shadow instead of border to avoid border-collapse artefacts */
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
