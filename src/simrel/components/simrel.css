@@ -259,10 +259,10 @@
 }
 
 .gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
-  width: 32px;
-  height: 36px;
+  width: 36px;
+  height: 40px;
   color: var(--_gengage-text-secondary);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {

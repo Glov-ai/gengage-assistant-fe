@@ -123,7 +123,7 @@ export function renderReviewHighlights(
       if (review.review_rating !== undefined && String(review.review_rating).length > 0) {
         const ratingEl = document.createElement('div');
         ratingEl.className = 'gengage-chat-review-rating';
-        ratingEl.textContent = String(review.review_rating);
+        ratingEl.textContent = '\u2605 ' + String(review.review_rating);
         item.appendChild(ratingEl);
       }
 

@@ -123,7 +123,7 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
                 review_tag: 'Aku',
               },
               {
-                review_class: 'neutral',
+                review_class: 'positive',
                 review_text: 'Fena degil ama bekledigimden hafif. Is goruyor.',
                 review_rating: '3',
                 review_tag: 'Genel',

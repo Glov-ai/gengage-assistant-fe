@@ -1490,6 +1490,14 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 6px 0 4px;
+  /* Even distribution when buttons wrap to a new line */
+  justify-content: flex-start;
+}
+
+/* When action buttons wrap, last orphan row fills available space */
+.gengage-chat-action-buttons::after {
+  content: '';
+  flex: 1 0 auto;
 }
 
 .gengage-chat-action-btn {
@@ -1618,8 +1626,8 @@
   text-decoration: line-through;
   color: var(--_gengage-text-secondary);
   font-weight: 400;
-  font-size: inherit;
-  margin-right: 6px;
+  font-size: 11px;
+  margin-right: 2px;
 }
 
 /* Async pricing skeleton */
@@ -1780,7 +1788,8 @@
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 8px 0 8px;
+  /* Right padding hints at horizontal scrollability (scroll affordance) */
+  padding: 8px 16px 8px 0;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
@@ -2222,14 +2231,15 @@
 
 .gengage-chat-panel .gengage-chat-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  /* min 200px prevents too-narrow cards at tablet widths (768px) */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   overflow-x: visible;
   gap: 12px;
   min-height: auto;
   padding: 4px 0;
 }
 
-/* ChoicePrompter sağ altta — grid son satırının üstüne binmesin */
+/* ChoicePrompter bottom right — do not overlap the last row of grid */
 .gengage-chat-panel:has(.gengage-chat-choice-prompter) .gengage-chat-product-grid {
   padding-bottom: 120px;
 }
@@ -2474,7 +2484,7 @@
 
 /* (Find Similar is now a hover pill on the image — see .gengage-chat-find-similar-pill) */
 
-/* Product detail tabs (Ürün Bilgileri / Teknik Özellikler) */
+/* Product detail tabs (Product Info / Tech Specs) */
 .gengage-chat-product-detail-tabs {
   margin-top: 4px;
   border-top: 1px solid var(--_gengage-border-color);
@@ -3472,7 +3482,7 @@
   align-items: stretch;
   gap: 12px; /* gap-3 */
   overflow: visible;
-  /* Üstte border-rozet için boşluk */
+  /* Top padding for the border badge */
   padding: 12px 0 12px;
   margin: 0;
   scrollbar-width: none;
@@ -3492,7 +3502,7 @@
   align-items: stretch;
 }
 
-/* Panel: görsel max yükseklik (dar sütun) — lean aspect-square korunur */
+/* Panel: visual max height (narrow column) — maintain lean aspect-square */
 .gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media,
 .gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media {
   max-height: 140px;
@@ -3548,7 +3558,7 @@
   margin-top: 4px;
 }
 
-/* İndirim: lean top-1 left-1, text-[9px] font-extrabold */
+/* Discount: lean top-1 left-1, text-[9px] font-extrabold */
 .gengage-chat-ai-toppick-media .gengage-chat-ai-toppick-discount-badge {
   position: absolute;
   top: 4px;
@@ -3565,9 +3575,9 @@
 }
 
 /*
- * AI Top Picks kartları — robot-engine-lean TopPicksResults ile aynı düzen:
+ * AI Top Picks cards — same layout as robot-engine-lean TopPicksResults:
  * relative p-3 rounded-xl border | badge absolute -top-2.5 left-3 |
- * görsel: aspect-square rounded-lg border-gray-100 mt-1 mb-2
+ * media: aspect-square rounded-lg border-gray-100 mt-1 mb-2
  */
 .gengage-chat-ai-toppick-card--winner,
 .gengage-chat-ai-toppick-card--compact {
@@ -3605,7 +3615,7 @@
   transform: translateY(-1px);
 }
 
-/* Rol rozeti: absolute -top-2.5 left-3 (translateY yok — overlap önlenir) */
+/* Role badge: absolute -top-2.5 left-3 (no translateY — prevent overlap) */
 .gengage-chat-ai-toppick-badge {
   position: absolute;
   top: -10px;
@@ -3660,7 +3670,7 @@
   box-sizing: border-box;
 }
 
-/* Body — padding kartta (p-3); lean’de ekstra sarmalayıcı yok */
+/* Body — padding inside card (p-3); no extra wrapper in lean mode */
 .gengage-chat-ai-toppick-body {
   display: flex;
   flex-direction: column;
@@ -3775,7 +3785,7 @@
   font-size: 12px;
 }
 
-/* CTA — üstteki içerikle net mesafe (Detayları Gör) */
+/* CTA — clear margin from the content above (View Details) */
 .gengage-chat-ai-toppick-cta {
   display: block;
   width: calc(100% - 24px);
@@ -3827,7 +3837,7 @@
   }
 }
 
-/* Mobile: 3 sütun grid — yatay taşma / snap yok (lean parity) */
+/* Mobile: 3 column grid — no horizontal overflow / snap (lean parity) */
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3988,9 +3998,10 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
+  /* Always stack name + description vertically for consistent card height */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .gengage-chat-grouping-card-name {

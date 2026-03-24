@@ -1142,6 +1142,9 @@ function renderDivider(element: UIElement): HTMLElement {
     labelEl.textContent = label;
     wrapper.appendChild(hr);
     wrapper.appendChild(labelEl);
+    const hr2 = document.createElement('hr');
+    hr2.className = 'gengage-chat-divider';
+    wrapper.appendChild(hr2);
     return wrapper;
   }
   return hr;
