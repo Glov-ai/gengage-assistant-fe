@@ -66,7 +66,9 @@ test.describe('prefers-reduced-motion: reduce', () => {
     await page.locator('.gengage-chat-send').click();
 
     // Wait for the response bubble
-    const bubble = page.locator('.gengage-chat-bubble').first();
+    const bubble = page
+      .locator('.gengage-chat-bubble--assistant:not(.gengage-chat-bubble--presentation-collapsed)')
+      .last();
     await expect(bubble).toBeVisible({ timeout: 5000 });
 
     const styles = await bubble.evaluate((el) => {

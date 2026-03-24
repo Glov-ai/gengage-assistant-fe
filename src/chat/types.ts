@@ -217,6 +217,12 @@ export interface ChatI18n {
   accountInactiveMessage: string;
   favoritesPageTitle: string;
   emptyFavoritesMessage: string;
+  /** Sticky control when transcript is focused on the latest thread — restores full history */
+  showFormerMessagesButton: string;
+  /** Shown above the product grid on desktop while AI picks/groupings are still streaming. */
+  aiAnalysisAnalyzingLabel: string;
+  /** Section heading above AI grouping cards (panel browse categories). */
+  aiBrowseCategoriesTitle: string;
 }
 
 export interface ChatUISpecRenderContext {
@@ -269,6 +275,7 @@ export interface ChatUISpecRenderContext {
     | 'reviewFilterNegative'
     | 'decreaseLabel'
     | 'increaseLabel'
+    | 'aiBrowseCategoriesTitle'
   >;
   productSort?: ProductSortState | undefined;
   onSortChange?: ((sort: ProductSortState) => void) | undefined;

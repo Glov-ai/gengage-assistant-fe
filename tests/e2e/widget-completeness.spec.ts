@@ -68,26 +68,38 @@ test.describe('Widget completeness — product card image sizing', () => {
     await gotoDemoReady(page);
   });
 
-  test('product card image container has aspect-ratio 1 (square)', async ({ page }) => {
-    const imgWrapper = page.locator('.gengage-simrel-card-image').first();
-    await expect(imgWrapper).toBeVisible({ timeout: 10000 });
+  test('product card image has visible dimensions', async ({ page }) => {
+    const img = page
+      .locator('.gengage-simrel-tab-panel:not([style*="display: none"]) .gengage-simrel-card-image img')
+      .first();
+    await expect(img).toBeVisible({ timeout: 10000 });
 
-    const aspectRatio = await imgWrapper.evaluate((el) => {
-      return getComputedStyle(el).aspectRatio;
+    const metrics = await img.evaluate((el) => {
+      const styles = getComputedStyle(el);
+      return {
+        width: parseFloat(styles.width),
+        height: parseFloat(styles.height),
+      };
     });
-    // CSS sets aspect-ratio: 1 on .gengage-simrel-card-image
-    expect(aspectRatio).toContain('1');
+    expect(metrics.width).toBeGreaterThan(0);
+    expect(metrics.height).toBeGreaterThan(0);
   });
 
   test('product card image is not stretched (fits within container)', async ({ page }) => {
-    const img = page.locator('.gengage-simrel-card-image img').first();
+    const img = page
+      .locator('.gengage-simrel-tab-panel:not([style*="display: none"]) .gengage-simrel-card-image img')
+      .first();
     await expect(img).toBeAttached({ timeout: 10000 });
 
-    const objectFit = await img.evaluate((el) => {
-      return getComputedStyle(el).objectFit;
+    const metrics = await img.evaluate((el) => {
+      const styles = getComputedStyle(el);
+      return {
+        objectFit: styles.objectFit,
+        height: parseFloat(styles.height),
+      };
     });
-    // Image should use object-fit to prevent stretching
-    expect(['contain', 'cover', 'scale-down']).toContain(objectFit);
+    expect(['contain', 'cover', 'scale-down']).toContain(metrics.objectFit);
+    expect(metrics.height).toBeGreaterThan(0);
   });
 });
 

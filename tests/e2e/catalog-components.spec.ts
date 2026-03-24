@@ -28,8 +28,8 @@ test.describe('AITopPicks', () => {
     await page.waitForSelector('.catalog-card-preview');
     await page.waitForTimeout(500);
 
-    // Winner cards should have a role badge
-    const badges = page.locator('.gengage-chat-ai-top-picks-role');
+    // Cards should have a role badge
+    const badges = page.locator('.gengage-chat-ai-toppick-badge');
     const count = await badges.count();
     expect(count).toBeGreaterThan(0);
   });

@@ -87,6 +87,7 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"catalog/**/*.{ts,tsx,css,js,html}\" \"demos/**/*.{ts,tsx,css,js,html}\" \"tests/**/*.ts\" \"scripts/**/*.ts\" && eslint src --fix && npm run typecheck && npm run typecheck:catalog",
     "test": "vitest run",
+    "test:chat": "vitest run tests/ai-suggested-search-cards.test.ts tests/protocol-adapter.test.ts tests/suggested-search-keywords.test.ts",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:fullstack": "playwright test --project=full-stack",
     "docs:dev": "vitepress dev docs",

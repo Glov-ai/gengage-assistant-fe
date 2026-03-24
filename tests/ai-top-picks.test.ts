@@ -86,10 +86,9 @@ describe('renderAITopPicks', () => {
     const compactCards = dom.querySelectorAll('.gengage-chat-ai-toppick-card--compact');
     expect(compactCards).toHaveLength(2);
 
-    // Check role labels
-    const roles = dom.querySelectorAll('.gengage-chat-ai-toppick-role');
-    expect(roles[0]?.textContent).toBe('En Uygun Fiyatlı');
-    expect(roles[1]?.textContent).toBe('En İyi Alternatif');
+    // Role pills (same badge component as winner)
+    expect(compactCards[0]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En Uygun Fiyatlı');
+    expect(compactCards[1]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En İyi Alternatif');
   });
 
   it('renders sentiment chips with correct data-sentiment', () => {

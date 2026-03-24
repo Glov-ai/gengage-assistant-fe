@@ -142,3 +142,6 @@ export type {
   SimilarProductsJsonResponse,
   ProductGroupingsJsonResponse,
 } from './protocol-adapter.js';
+
+export { getSuggestedSearchKeywords, getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
+export type { SuggestedSearchKeywordSource } from './suggested-search-keywords.js';

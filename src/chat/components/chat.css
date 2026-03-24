@@ -524,6 +524,154 @@
   background: rgba(0, 0, 0, 0.25);
 }
 
+/* Above main panel body: analyzing strip + AITopPicks / AIGroupingCards (desktop) */
+.gengage-chat-panel-ai-zone {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--_gengage-border-color, rgba(0, 0, 0, 0.08));
+  max-height: min(42vh, 320px);
+  overflow: auto;
+}
+
+/* Category rail / AI Top Picks: title + scroll row */
+.gengage-chat-panel-ai-zone:has(.gengage-chat-grouping-cards) {
+  max-height: min(52vh, 520px);
+}
+
+/* Top Picks: full height — no inner vertical scroll / clipped borders (lean grid parity) */
+.gengage-chat-panel-ai-zone:has(.gengage-chat-ai-top-picks) {
+  max-height: none;
+  overflow: visible;
+}
+
+.gengage-chat-panel-ai-zone[hidden] {
+  display: none !important;
+}
+
+.gengage-chat-panel-ai-zone-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gengage-chat-panel-ai-zone-text {
+  font-size: 13px;
+  color: var(--_gengage-muted, #64748b);
+}
+
+/* Panel AI zone: grouping cards — title fixed row, cards in horizontal scroll rail */
+.gengage-chat-grouping-section-title {
+  display: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-section-title {
+  display: block;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gengage-text-color, #1e293b);
+  letter-spacing: -0.01em;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  max-height: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-cards-scroll {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 10px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card {
+  flex: 0 0 auto;
+  width: 136px;
+  min-width: 136px;
+  max-width: 150px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 10px 14px;
+  background: #fff;
+  border: 1px solid var(--gengage-border-color, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card:hover {
+  border-color: var(--gengage-primary-color, #ea580c);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.12);
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-arrow {
+  display: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-img {
+  width: 100%;
+  max-width: 88px;
+  height: 72px;
+  min-width: 0;
+  min-height: 72px;
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-body {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-desc {
+  font-size: 11px;
+  color: var(--gengage-text-muted, #64748b);
+  line-height: 1.3;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-grouping-card-labels {
+  display: block;
+  margin-top: 0;
+  font-size: 11px;
+  color: var(--gengage-chat-text-secondary, #64748b);
+  white-space: normal;
+  text-overflow: unset;
+  overflow: visible;
+  line-height: 1.35;
+}
+
 /* Divider between panel and conversation */
 .gengage-chat-panel-divider {
   display: flex;
@@ -745,6 +893,33 @@
 }
 .gengage-chat-messages::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* Thread focus: collapse older turns until user expands history */
+.gengage-chat-bubble--presentation-collapsed {
+  display: none !important;
+}
+
+.gengage-chat-former-messages-btn {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--_gengage-border-color, #e5e7eb);
+  background: var(--gengage-background-color, #fff);
+  color: var(--_gengage-text-primary, #1f2937);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-former-messages-btn:hover {
+  background: var(--_gengage-surface-secondary, #f3f4f6);
 }
 
 .gengage-chat-bubble {
@@ -2025,6 +2200,11 @@
   padding: 4px 0;
 }
 
+/* ChoicePrompter sağ altta — grid son satırının üstüne binmesin */
+.gengage-chat-panel:has(.gengage-chat-choice-prompter) .gengage-chat-product-grid {
+  padding-bottom: 120px;
+}
+
 .gengage-chat-panel .gengage-chat-product-card-img {
   width: 100%;
   height: 160px;
@@ -3209,112 +3389,236 @@
   margin: 0 0 4px;
 }
 
-.gengage-chat-ai-top-picks-cards {
+.gengage-chat-ai-top-picks-scroll {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
-.gengage-chat-ai-toppick-discount-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--gengage-discount-bg, #ef4444);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  z-index: 1;
+/* Panel AI zone: title row + horizontal scroll rail (parity with grouping cards / legacy Top Picks) */
+.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks {
+  gap: 0;
+  padding-top: 4px;
 }
 
-/* Winner card — vertical, prominent */
-.gengage-chat-ai-toppick-card--winner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border: 2px solid var(--gengage-primary-color, #3b82f6);
-  border-radius: 12px;
-  background: #fff;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-}
-
-.gengage-chat-ai-toppick-card--winner:hover {
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
-}
-
-.gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-img {
+.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-title {
+  flex-shrink: 0;
   width: 100%;
-  height: 140px;
-  object-fit: contain;
-  background: var(--_gengage-surface-muted);
+  margin: 0 0 10px;
+  font-weight: 700;
 }
 
-/* Compact card — horizontal */
+.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px; /* gap-3 */
+  overflow: visible;
+  /* Üstte border-rozet için boşluk */
+  padding: 12px 0 12px;
+  margin: 0;
+  scrollbar-width: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner,
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: initial;
+  scroll-snap-align: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Panel: görsel max yükseklik (dar sütun) — lean aspect-square korunur */
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media,
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media {
+  max-height: 140px;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img,
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-img {
+  width: 100%;
+  height: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-body,
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-body {
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
+  width: calc(100% - 24px);
+  margin: 14px 12px 12px;
+  align-self: stretch;
+  border: 1px solid var(--gengage-primary-color, #ea580c);
+  background: transparent;
+  color: var(--gengage-primary-color, #ea580c);
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta {
+  width: calc(100% - 24px);
+  margin: 14px 12px 12px;
+  border: 1px solid var(--gengage-primary-color, #ea580c);
+  background: transparent;
+  color: var(--gengage-primary-color, #ea580c);
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta:hover,
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta:hover {
+  background: rgba(234, 88, 12, 0.06);
+  filter: none;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--winner {
+  border-color: var(--gengage-primary-color, #ea580c);
+}
+
+.gengage-chat-ai-toppick-rating {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ca8a04;
+  margin-top: 4px;
+}
+
+/* İndirim: lean top-1 left-1, text-[9px] font-extrabold */
+.gengage-chat-ai-toppick-media .gengage-chat-ai-toppick-discount-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: auto;
+  background: var(--gengage-primary-color, #ea580c);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  z-index: 1;
+  line-height: 1.2;
+}
+
+/*
+ * AI Top Picks kartları — robot-engine-lean TopPicksResults ile aynı düzen:
+ * relative p-3 rounded-xl border | badge absolute -top-2.5 left-3 |
+ * görsel: aspect-square rounded-lg border-gray-100 mt-1 mb-2
+ */
+.gengage-chat-ai-toppick-card--winner,
 .gengage-chat-ai-toppick-card--compact {
   position: relative;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--gengage-border-color, #e2e8f0);
-  border-radius: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 12px;
   background: #fff;
-  padding: 10px;
+  overflow: visible;
   transition:
     box-shadow 0.2s ease,
+    background 0.15s ease,
     transform 0.15s ease;
 }
 
+.gengage-chat-ai-toppick-card--winner {
+  border: 1.5px solid var(--gengage-primary-color, #ea580c);
+}
+
+.gengage-chat-ai-toppick-card--winner:hover {
+  background: #fafafa;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.12);
+}
+
+.gengage-chat-ai-toppick-card--compact {
+  border: 1px solid #e5e7eb;
+}
+
 .gengage-chat-ai-toppick-card--compact:hover {
+  background: #fafafa;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
 
-.gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 8px;
-  background: var(--_gengage-surface-muted);
-  flex-shrink: 0;
-}
-
-/* Badge */
+/* Rol rozeti: absolute -top-2.5 left-3 (translateY yok — overlap önlenir) */
 .gengage-chat-ai-toppick-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: var(--gengage-primary-color, #3b82f6);
-  color: #fff;
+  top: -10px;
+  left: 12px;
+  z-index: 2;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
   font-size: 10px;
   font-weight: 700;
+  line-height: 1.25;
+  padding: 2px 10px;
+  border-radius: 999px;
   text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 4px;
-  z-index: 1;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  white-space: normal;
 }
 
-/* Body */
+.gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-badge {
+  background: var(--gengage-primary-color, #ea580c);
+  color: #fff;
+}
+
+.gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-badge {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.gengage-chat-ai-toppick-media {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+  background: #fff;
+}
+
+.gengage-chat-ai-toppick-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Body — padding kartta (p-3); lean’de ekstra sarmalayıcı yok */
 .gengage-chat-ai-toppick-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px;
+  gap: 0;
+  padding: 0;
   flex: 1;
   min-width: 0;
 }
 
-.gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-body {
-  padding: 0;
-}
-
 .gengage-chat-ai-toppick-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--gengage-text-primary, #1e293b);
+  line-height: 1.375;
+  color: #111827;
+  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -3336,6 +3640,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  margin-top: 6px;
 }
 
 .gengage-chat-ai-toppick-label {
@@ -3365,23 +3670,37 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--gengage-primary-color, #3b82f6);
+  margin-top: 6px;
 }
 
 /* Review quote */
 .gengage-chat-ai-toppick-reason {
-  font-size: 12px;
-  color: var(--gengage-chat-text-secondary, #666);
-  line-height: 1.4;
-  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.45;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .gengage-chat-ai-toppick-review {
   font-size: 12px;
   font-style: italic;
   color: var(--gengage-text-secondary, #64748b);
-  margin: 2px 0;
+  margin: 6px 0 0;
   padding-left: 8px;
   border-left: 2px solid var(--gengage-border-color, #e2e8f0);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Price */
@@ -3389,6 +3708,7 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--gengage-text-primary, #1e293b);
+  margin-top: 4px;
 }
 
 .gengage-chat-ai-toppick-original-price {
@@ -3398,11 +3718,11 @@
   font-size: 12px;
 }
 
-/* CTA button */
+/* CTA — üstteki içerikle net mesafe (Detayları Gör) */
 .gengage-chat-ai-toppick-cta {
   display: block;
-  width: calc(100% - 20px);
-  margin: 6px 10px 10px;
+  width: calc(100% - 24px);
+  margin: 14px 12px 12px;
   padding: 8px 0;
   border: none;
   border-radius: 8px;
@@ -3413,18 +3733,13 @@
   cursor: pointer;
   text-align: center;
   transition: background 0.15s ease;
+  flex-shrink: 0;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
 .gengage-chat-ai-toppick-cta:hover {
   filter: brightness(0.92);
-}
-
-.gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
-  width: auto;
-  margin: 0;
-  padding: 6px 14px;
-  flex-shrink: 0;
-  align-self: center;
 }
 
 /* Per-card loading spinner overlay */
@@ -3436,7 +3751,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  z-index: 3;
+  z-index: 6;
 }
 
 .gengage-chat-ai-toppick-spinner::after {
@@ -3455,22 +3770,22 @@
   }
 }
 
-/* Mobile: horizontal scroll for AI Top Picks */
-.gengage-chat-root--mobile .gengage-chat-ai-top-picks-cards {
-  flex-direction: row;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  gap: 10px;
-  padding-bottom: 4px;
+/* Mobile: 3 sütun grid — yatay taşma / snap yok (lean parity) */
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+  padding: 10px 0 4px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
-  min-width: 280px;
-  max-width: 280px;
-  flex-shrink: 0;
-  scroll-snap-align: start;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex-shrink: 1;
+  scroll-snap-align: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
@@ -3478,15 +3793,30 @@
   align-items: stretch;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img {
-  width: 100%;
-  height: 100px;
-  border-radius: 8px 8px 0 0;
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media,
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media {
+  max-height: 76px;
+  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img,
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-img {
+  max-height: 76px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-badge {
+  top: -8px;
+  left: 6px;
+  font-size: 7px;
+  padding: 2px 5px;
+  max-width: calc(100% - 12px);
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta,
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta {
   width: calc(100% - 20px);
-  margin: 6px 10px 10px;
+  margin: 12px 10px 10px;
   align-self: stretch;
 }
 
@@ -3552,6 +3882,14 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Card list: chat = vertical stack; panel AI zone overrides row + overflow-x */
+.gengage-chat-grouping-cards-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 .gengage-chat-grouping-card {
@@ -4233,17 +4571,11 @@
   box-sizing: border-box;
 }
 
-/* ── ThumbnailsColumn ── */
+/* ── ThumbnailsColumn ──
+ * Mantık/DOM korunur; ürün panelinde şerit gösterilmiyor (legacy parity). */
 .gengage-chat-thumbnails-column {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 2;
-  pointer-events: auto;
+  display: none !important;
+  pointer-events: none;
 }
 
 .gengage-chat-thumbnail-btn {
