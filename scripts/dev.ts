@@ -111,7 +111,8 @@ function parseArgs(argv: string[]): DevOptions {
     failUsage('Provide SKU either as positional arg or --sku=..., not both.');
   }
 
-  const backendUrl = args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? '';
+  const backendUrl =
+    args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? 'https://chatbe-dev.gengage.ai';
   const sku = flagSku ?? positionalSku;
 
   return { demo, sku, port, backendUrl };

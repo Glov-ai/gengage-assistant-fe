@@ -1,10 +1,18 @@
 .gengage-qna-container {
-  font-family: var(--gengage-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-family: var(
+    --gengage-font-family,
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif
+  );
   font-size: var(--gengage-font-size, 14px);
-  color: var(--gengage-foreground-color, #333);
+  color: var(--gengage-foreground-color, #191c1d);
 
   /* Semantic color tokens (overridable by customers) */
-  --_gengage-border-color: var(--gengage-border-color, #e5e7eb);
+  --_gengage-border-color: var(--gengage-border-color, #edeeef);
 }
 
 .gengage-qna-uispec {
@@ -43,7 +51,7 @@
   padding: 8px 14px;
   border: none;
   border-radius: var(--gengage-qna-pill-radius, 999px);
-  background: var(--gengage-primary-color, #3b82f6);
+  background: var(--gengage-primary-color, #b7102a);
   color: var(--gengage-primary-foreground, #fff);
   font-size: 13px;
   font-weight: 600;
@@ -66,7 +74,7 @@
 }
 
 .gengage-qna-button:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #3b82f6);
+  outline: 2px solid var(--gengage-primary-color, #b7102a);
   outline-offset: 2px;
 }
 
@@ -75,10 +83,10 @@
   align-items: center;
   min-height: 40px;
   padding: 8px 14px;
-  border: 1px solid color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 65%, #cbd5e1 35%);
+  border: 1px solid color-mix(in srgb, var(--gengage-primary-color, #b7102a) 65%, #cbd5e1 35%);
   border-radius: var(--gengage-qna-pill-radius, 999px);
   background: transparent;
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -96,7 +104,7 @@
 }
 
 .gengage-qna-cta:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #3b82f6);
+  outline: 2px solid var(--gengage-primary-color, #b7102a);
   outline-offset: 2px;
 }
 
@@ -134,8 +142,8 @@
 }
 
 .gengage-qna-input:focus {
-  border-color: var(--gengage-primary-color, #3b82f6);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gengage-primary-color, #3b82f6) 18%, transparent);
+  border-color: var(--gengage-primary-color, #b7102a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gengage-primary-color, #b7102a) 18%, transparent);
 }
 
 .gengage-qna-send {
@@ -143,10 +151,10 @@
   min-height: 44px;
   height: 48px;
   padding: 0 16px;
-  border: 1px solid var(--gengage-qna-primary, var(--gengage-primary-color, #3b82f6));
+  border: 1px solid var(--gengage-qna-primary, var(--gengage-primary-color, #b7102a));
   border-radius: var(--gengage-qna-pill-radius, 999px);
   background: transparent;
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -164,7 +172,7 @@
 }
 
 .gengage-qna-send:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #3b82f6);
+  outline: 2px solid var(--gengage-primary-color, #b7102a);
   outline-offset: 2px;
 }
 
@@ -176,7 +184,7 @@
   font-size: 1.04em;
   font-weight: 700;
   margin: 0 0 6px;
-  color: var(--gengage-foreground-color, #333);
+  color: var(--gengage-foreground-color, #191c1d);
 }
 
 .gengage-qna-loading {
@@ -189,7 +197,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--gengage-primary-color, #3b82f6);
+  background: var(--gengage-primary-color, #b7102a);
   opacity: 0.4;
   animation: gengage-qna-pulse 1.4s infinite ease-in-out both;
 }
