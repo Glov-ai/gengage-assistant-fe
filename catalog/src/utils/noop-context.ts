@@ -22,6 +22,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     retryButton: 'Tekrar Dene',
     loadingMessage: 'Dusunuyorum...',
     productCtaLabel: 'Incele',
+    viewOnSiteLabel: 'Sitede Gor',
     attachImageButton: 'Resim ekle',
     removeAttachmentButton: 'Resmi kaldir',
     invalidFileType: 'Sadece JPEG, PNG ve WebP dosyalari destekleniyor.',
@@ -37,6 +38,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     sortRelated: 'Onerilen',
     sortPriceAsc: 'Fiyat \u2191',
     sortPriceDesc: 'Fiyat \u2193',
+    sortToolbarAriaLabel: 'Urunleri sirala',
     compareSelected: 'Karsilastir',
     panelTitleProductDetails: 'Urun Detayi',
     panelTitleSimilarProducts: 'Benzer Urunler',
@@ -52,6 +54,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     viewMoreLabel: 'Daha Fazla Goster',
     similarProductsLabel: 'Benzer Urunler',
     addToCartButton: 'Sepete Ekle',
+    addedToCartToast: 'Sepete eklendi',
     shareButton: 'Paylas',
     productInfoTab: 'Urun Bilgileri',
     specificationsTab: 'Teknik Ozellikler',
@@ -119,6 +122,7 @@ export function createNoopQnaContext(): QNAUISpecRenderContext {
       sendButton: 'Gonder',
       sendQuestionAriaLabel: 'Soruyu gonder',
       defaultCtaText: 'Baska bir sey sor',
+      redirectingToChat: 'Sohbete yonlendiriliyor...',
     },
   };
 }
@@ -149,6 +153,8 @@ export function createNoopSimrelContext(): SimRelUISpecRenderContext {
       errorLoadingMessage: 'Could not load similar products.',
       retryButtonText: 'Try again',
       priceSuffix: ' TL',
+      scrollTabsLeft: 'Sola kaydir',
+      scrollTabsRight: 'Saga kaydir',
     },
     pricing: {
       currencySymbol: 'TL',

@@ -121,7 +121,57 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     panels.push(panel);
   }
 
-  container.appendChild(tabBar);
+  // Scroll arrow buttons for mouse-only users
+  const scrollLeftBtn = document.createElement('button');
+  scrollLeftBtn.type = 'button';
+  scrollLeftBtn.className = 'gengage-simrel-tabs-arrow gengage-simrel-tabs-arrow--left';
+  scrollLeftBtn.setAttribute('aria-label', options.i18n?.scrollTabsLeft ?? 'Scroll tabs left');
+  scrollLeftBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+
+  const scrollRightBtn = document.createElement('button');
+  scrollRightBtn.type = 'button';
+  scrollRightBtn.className = 'gengage-simrel-tabs-arrow gengage-simrel-tabs-arrow--right';
+  scrollRightBtn.setAttribute('aria-label', options.i18n?.scrollTabsRight ?? 'Scroll tabs right');
+  scrollRightBtn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+  const SCROLL_AMOUNT = 200;
+
+  scrollLeftBtn.addEventListener('click', () => {
+    tabBar.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+  });
+  scrollRightBtn.addEventListener('click', () => {
+    tabBar.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+  });
+
+  const updateArrows = () => {
+    const atLeft = tabBar.scrollLeft <= 4;
+    const atRight = tabBar.scrollLeft + tabBar.clientWidth >= tabBar.scrollWidth - 4;
+    scrollLeftBtn.style.display = atLeft ? 'none' : '';
+    scrollRightBtn.style.display = atRight ? 'none' : '';
+  };
+
+  tabBar.addEventListener('scroll', updateArrows, { passive: true });
+
+  // Use ResizeObserver to update arrows when container size changes (not available in jsdom/tests)
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(updateArrows);
+    ro.observe(tabBar);
+  }
+
+  // Initial state — hide arrows until we know overflow state
+  scrollLeftBtn.style.display = 'none';
+  scrollRightBtn.style.display = 'none';
+  // Check after initial render
+  requestAnimationFrame(updateArrows);
+
+  const tabBarWrapper = document.createElement('div');
+  tabBarWrapper.className = 'gengage-simrel-tabs-wrapper';
+  tabBarWrapper.appendChild(scrollLeftBtn);
+  tabBarWrapper.appendChild(tabBar);
+  tabBarWrapper.appendChild(scrollRightBtn);
+  container.appendChild(tabBarWrapper);
 
   // Render the initial (first) tab content
   const firstPanel = panels[0]!;

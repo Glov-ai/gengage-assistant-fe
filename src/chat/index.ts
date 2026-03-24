@@ -131,6 +131,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _lastSku: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
+  private _comparisonRefreshRafId: number | null = null;
   /** SKUs of products the user has viewed across panel product grids. */
   private _viewedProductSkus = new Set<string>();
   private _thumbnailEntries: ThumbnailEntry[] = [];
@@ -271,6 +272,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onRollback: (messageId) => this._handleRollback(messageId),
       onPanelBack: () => this._navigatePanelBack(),
       onPanelForward: () => this._panel?.navigateForward(),
+      onPanelClose: () => {
+        // User tapped ✕ on mobile — clear all panel history and comparison state
+        this._localPanelHistory = [];
+        this._comparisonSelectMode = false;
+        this._comparisonSelectedSkus = [];
+        this._currentPanelSource = null;
+      },
       headerTitle: config.headerTitle,
       headerAvatarUrl: config.headerAvatarUrl,
       launcherImageUrl: config.launcherImageUrl,
@@ -517,6 +525,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTypewriter = null;
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
+    if (this._comparisonRefreshRafId !== null) {
+      cancelAnimationFrame(this._comparisonRefreshRafId);
+      this._comparisonRefreshRafId = null;
+    }
     this._drawer?.destroy();
     invalidateChatScrollCache();
     this._drawer = null;
@@ -991,8 +1003,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._choicePrompterEl?.remove();
     this._choicePrompterEl = null;
 
-    // Clear comparison mode when starting a new request (unless preservePanel)
-    if (!options?.preservePanel && this._comparisonSelectMode) {
+    // Clear comparison mode when starting a new request (unless preservePanel).
+    // Exception: getComparisonTable actions keep comparison state visible during
+    // the request so the floating button and checkboxes stay as loading feedback.
+    // State is cleared once the ComparisonTable UISpec actually renders in the panel.
+    if (!options?.preservePanel && this._comparisonSelectMode && action.type !== 'getComparisonTable') {
       this._comparisonSelectMode = false;
       this._comparisonSelectedSkus = [];
     }
@@ -2427,7 +2442,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         ga.trackComparePreselection(sku);
       }
     }
-    this._refreshComparisonUI();
+    // Debounce: cancel any pending refresh and schedule a new one to batch rapid toggles
+    if (this._comparisonRefreshRafId !== null) {
+      cancelAnimationFrame(this._comparisonRefreshRafId);
+    }
+    this._comparisonRefreshRafId = requestAnimationFrame(() => {
+      this._comparisonRefreshRafId = null;
+      this._refreshComparisonUI();
+    });
   }
 
   /**
@@ -2476,8 +2498,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         // Allow clicking anywhere on the card (not just the tiny checkbox) to toggle selection
         wrapper.style.cursor = 'pointer';
         wrapper.addEventListener('click', (e) => {
-          // Avoid double-toggle when the checkbox itself is clicked
-          if (e.target === checkbox) return;
+          // Use .closest() rather than strict target equality — on mobile touch the
+          // event target can be the checkbox's inner pseudo-element or the label
+          // area, causing the guard to miss and the toggle to fire twice (change +
+          // click).  .closest() is robust to that ambiguity.
+          if ((e.target as HTMLElement).closest('.gengage-chat-comparison-checkbox')) return;
+          e.stopPropagation();
           checkbox.checked = !checkbox.checked;
           this._toggleComparisonSku(sku);
         });
@@ -2515,8 +2541,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         btn.addEventListener('click', () => {
           if (this._comparisonSelectedSkus.length < 2) return;
           ga.trackCompareSelected(this._comparisonSelectedSkus);
-          // On mobile: hide the side panel first so the user sees the chat stream starting
-          if (this._isMobileViewport) this._drawer?.hideMobilePanel();
+          // Cancel any pending rAF refresh so it cannot tear down the floating
+          // button between the click and the panel response arriving.
+          if (this._comparisonRefreshRafId !== null) {
+            cancelAnimationFrame(this._comparisonRefreshRafId);
+            this._comparisonRefreshRafId = null;
+          }
+          // On mobile the ComparisonTable renders exclusively in the panel.
+          // Keep the panel visible and show a loading skeleton so the user
+          // gets immediate feedback, rather than hiding the panel and leaving
+          // them staring at a blank conversation.
+          if (this._isMobileViewport) this._drawer?.showPanelLoading();
           this._sendAction({
             title: label,
             type: 'getComparisonTable',
@@ -2600,6 +2635,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           },
           { preservePanel: true },
         );
+        // Show success toast and flash cart icon
+        const toastMsg = this._i18n.addedToCartToast ?? 'Added to cart';
+        this._drawer?.showCartToast(toastMsg);
+        this._drawer?.flashCartBadge();
       },
       onProductSelect: (product) => {
         // Save current panel source to local history so back button can re-render it

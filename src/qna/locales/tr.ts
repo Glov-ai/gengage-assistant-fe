@@ -7,4 +7,5 @@ export const QNA_I18N_TR: QNAI18n = {
   sendButton: 'Sor',
   sendQuestionAriaLabel: 'Soruyu gönder',
   defaultCtaText: 'Başka bir şey sor',
+  redirectingToChat: 'Sohbete yönlendiriliyor...',
 };

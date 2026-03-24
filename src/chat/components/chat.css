@@ -3387,7 +3387,9 @@
   .gengage-skeleton-line,
   .gengage-skeleton-img,
   .gengage-skeleton-text,
-  .gengage-skeleton-price {
+  .gengage-skeleton-price,
+  .gengage-chat-cart-toast,
+  .gengage-chat-header-btn--cart-flash {
     animation: none !important;
     transition: none !important;
     transform: none !important;
@@ -4336,6 +4338,16 @@
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* On mobile the panel is position:absolute with overflow-y:auto — position:sticky
+   inside such a container is unreliable on some mobile browsers (especially Safari).
+   Switch to a margin-based flush-bottom layout that is universally supported. */
+.gengage-chat-root--mobile .gengage-chat-comparison-floating-btn {
+  position: relative;
+  bottom: auto;
+  margin-top: 12px;
+  border-radius: 12px;
+}
+
 .gengage-chat-comparison-floating-btn:hover:not(:disabled) {
   background: var(--gengage-primary-hover, #9a0d23);
 }
@@ -4404,6 +4416,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
+}
+
+/* Close button — hidden on desktop, shown on mobile as an escape hatch to
+   dismiss all panel layers at once without tapping Back repeatedly. */
+.gengage-chat-panel-topbar-close {
+  display: none;
 }
 
 /* ── Typewriter block reveal animation ── */
@@ -5370,7 +5388,8 @@
 
 .gengage-chat-root--mobile .gengage-chat-product-card-cta,
 .gengage-chat-root--mobile .gengage-chat-choice-prompter-cta,
-.gengage-chat-root--mobile .gengage-chat-product-grid-view-more {
+.gengage-chat-root--mobile .gengage-chat-product-grid-view-more,
+.gengage-chat-root--mobile .gengage-chat-comparison-floating-btn {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -5383,6 +5402,29 @@
 .gengage-chat-root--mobile .gengage-chat-product-details-share {
   width: 44px;
   height: 44px;
+}
+
+/* Close (✕) button — mobile only, dismisses all panel layers at once */
+.gengage-chat-root--mobile .gengage-chat-panel-topbar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--_gengage-text-secondary, #6b7280);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  margin-left: auto;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel-topbar-close:hover {
+  background: var(--_gengage-surface-secondary, #f3f4f6);
+  color: var(--_gengage-text-primary, #111827);
 }
 
 /* ---------------------------------------------------------------------------
@@ -5480,4 +5522,53 @@
     opacity: 0;
     transition: opacity 150ms ease;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Cart success toast
+ * ---------------------------------------------------------------------------*/
+.gengage-chat-cart-toast {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--_gengage-success-color, #16a34a);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.gengage-chat-cart-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Cart button flash animation */
+@keyframes gengage-cart-flash {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.25);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.gengage-chat-header-btn--cart-flash {
+  animation: gengage-cart-flash 0.5s ease;
 }

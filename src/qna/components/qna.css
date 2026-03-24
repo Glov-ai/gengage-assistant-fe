@@ -10,6 +10,7 @@
   );
   font-size: var(--gengage-font-size, 14px);
   color: var(--gengage-foreground-color, #191c1d);
+  position: relative;
 
   /* Semantic color tokens (overridable by customers) */
   --_gengage-border-color: var(--gengage-border-color, #edeeef);
@@ -263,9 +264,42 @@
   .gengage-qna-uispec > *,
   .gengage-qna-button,
   .gengage-qna-cta,
-  .gengage-qna-send {
+  .gengage-qna-send,
+  .gengage-qna--transitioning,
+  .gengage-qna-transition-indicator {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+}
+
+/* Transition indicator when QnA bridges to Chat */
+.gengage-qna--transitioning {
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.gengage-qna-transition-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--gengage-primary-color, #b7102a);
+  font-weight: 500;
+  animation: gengage-qna-fade-in 0.15s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes gengage-qna-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }

@@ -43,6 +43,7 @@ export interface QNAI18n {
   sendButton: string;
   sendQuestionAriaLabel: string;
   defaultCtaText: string;
+  redirectingToChat: string;
 }
 
 export interface QNAUISpecRenderContext {

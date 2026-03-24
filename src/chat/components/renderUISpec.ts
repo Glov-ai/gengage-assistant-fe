@@ -743,7 +743,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       safeSetAttribute(cta, 'href', url);
       safeSetAttribute(cta, 'target', '_blank');
       safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-      cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
+      cta.textContent = ctx.i18n?.viewOnSiteLabel ?? ctx.i18n?.productCtaLabel ?? 'View on Site';
       cta.addEventListener('click', (e) => {
         if (ctx.onProductClick && sku) {
           e.preventDefault();
@@ -978,6 +978,8 @@ function renderProductGrid(
   if (childIds.length > 1 && ctx?.onSortChange) {
     const toolbar = document.createElement('div');
     toolbar.className = 'gengage-chat-product-sort-toolbar';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', ctx.i18n?.sortToolbarAriaLabel ?? 'Sort products');
 
     const sort = ctx.productSort ?? { type: 'related' as const };
 

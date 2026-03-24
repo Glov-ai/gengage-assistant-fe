@@ -215,10 +215,12 @@ export abstract class BaseWidget<
       if (!el) throw new Error(`[gengage] Mount target not found: "${target}"`);
       return el;
     }
-    // Default: create a div appended to body — widget owns it and will remove on destroy
+    // Default: create a div prepended to body so the widget's launcher appears
+    // near the start of the tab order rather than being buried at the very end
+    // (which would force keyboard-only users to tab through the entire page).
     const div = document.createElement('div');
     div.dataset['gengageWidget'] = this.constructor.name.toLowerCase();
-    document.body.appendChild(div);
+    document.body.insertBefore(div, document.body.firstChild);
     this._ownsRoot = true;
     return div;
   }

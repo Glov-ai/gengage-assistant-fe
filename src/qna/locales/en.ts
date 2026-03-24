@@ -7,4 +7,5 @@ export const QNA_I18N_EN: QNAI18n = {
   sendButton: 'Ask',
   sendQuestionAriaLabel: 'Send question',
   defaultCtaText: 'Ask something else',
+  redirectingToChat: 'Redirecting to chat...',
 };

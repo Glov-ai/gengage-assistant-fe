@@ -11,4 +11,6 @@ export const SIMREL_I18N_TR: SimRelI18n = {
   errorLoadingMessage: 'Benzer ürünler yüklenemedi.',
   retryButtonText: 'Tekrar dene',
   priceSuffix: ' TL',
+  scrollTabsLeft: 'Sola kaydır',
+  scrollTabsRight: 'Sağa kaydır',
 };

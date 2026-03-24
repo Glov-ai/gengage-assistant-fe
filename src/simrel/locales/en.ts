@@ -11,4 +11,6 @@ export const SIMREL_I18N_EN: SimRelI18n = {
   errorLoadingMessage: 'Could not load similar products.',
   retryButtonText: 'Try again',
   priceSuffix: '',
+  scrollTabsLeft: 'Scroll tabs left',
+  scrollTabsRight: 'Scroll tabs right',
 };

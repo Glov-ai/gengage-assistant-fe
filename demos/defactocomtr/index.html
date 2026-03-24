@@ -110,7 +110,14 @@
         color: var(--brand-muted);
         font-size: 13px;
         white-space: nowrap;
-        overflow: auto;
+        overflow-x: auto;
+        /* Hide scrollbar — nav is swiped on mobile, no visible bar needed */
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .host-nav::-webkit-scrollbar {
+        display: none;
       }
 
       .host-nav span {
@@ -360,6 +367,8 @@
         }
         .host-topbar {
           border-radius: 10px;
+          flex-wrap: wrap;
+          gap: 8px;
         }
         .gallery-main {
           height: 290px;
@@ -539,6 +548,22 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      // Demo host-page "Sepete Ekle" button — brief success feedback so the page
+      // feels realistic on mobile (this would be the merchant's own cart logic).
+      document.querySelector('.cta-row .btn--primary')?.addEventListener('click', function () {
+        const btn = /** @type {HTMLButtonElement} */ (this);
+        if (btn.disabled) return;
+        const original = btn.textContent ?? '';
+        btn.textContent = '✓ Sepete Eklendi';
+        btn.disabled = true;
+        btn.style.background = '#16a34a';
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.disabled = false;
+          btn.style.background = '';
+        }, 1800);
+      });
 
       // Demo: register add-to-cart callback hook via the generic addCallback API
       if (controller.chat) {

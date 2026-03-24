@@ -148,6 +148,14 @@ export const SIMREL_SPECS: Record<string, { spec: Record<string, unknown>; descr
                 name: 'Ayni Marka',
                 products: [simrelProduct(p0)],
               },
+              {
+                name: 'Sık Satılanlar',
+                products: [simrelProduct(p1), simrelProduct(p2), simrelProduct(p3)],
+              },
+              {
+                name: 'Yeni Gelenler',
+                products: [simrelProduct(p0), simrelProduct(p4)],
+              },
             ],
           },
         },

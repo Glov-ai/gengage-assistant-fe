@@ -104,6 +104,8 @@ export interface SimRelI18n {
    * Kept for backwards compatibility with existing custom integrations.
    */
   priceSuffix: string;
+  scrollTabsLeft?: string;
+  scrollTabsRight?: string;
 }
 
 export interface SimRelUISpecRenderContext {

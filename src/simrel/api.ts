@@ -90,7 +90,7 @@ export async function fetchSimilarProducts(
   }
 
   const text = await response.text();
-  if (!text) return [];
+  if (!text) throw new Error('Empty response body from similar_products endpoint');
   try {
     return normalizeSimilarProductsResponse(JSON.parse(text));
   } catch {
