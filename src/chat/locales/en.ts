@@ -78,6 +78,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   rollbackAriaLabel: 'Rollback to this message',
   backAriaLabel: 'Back',
   forwardAriaLabel: 'Forward',
+  closePanelAriaLabel: 'Close panel',
   dismissAriaLabel: 'Dismiss',
   cartAddErrorMessage: "Sorry, I couldn't add that to your cart. Something went wrong.",
   reviewFilterAll: 'All',

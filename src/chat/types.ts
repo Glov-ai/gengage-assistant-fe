@@ -223,6 +223,8 @@ export interface ChatI18n {
   rollbackAriaLabel: string;
   backAriaLabel: string;
   forwardAriaLabel: string;
+  /** Aria label for the panel close (✕) button shown on mobile. */
+  closePanelAriaLabel: string;
   dismissAriaLabel: string;
   cartAddErrorMessage: string;
   reviewFilterAll: string;

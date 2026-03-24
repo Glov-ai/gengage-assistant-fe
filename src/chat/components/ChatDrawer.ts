@@ -49,6 +49,9 @@ export interface ChatDrawerOptions {
   onPanelBack?: (() => void) | undefined;
   /** Callback fired when the panel forward button is clicked. */
   onPanelForward?: (() => void) | undefined;
+  /** Callback fired when the mobile panel close (✕) button is tapped.
+   *  Should clear panel history and comparison state in the caller. */
+  onPanelClose?: (() => void) | undefined;
   /**
    * Fired when the user drags the mobile handle and releases.
    * 'half' | 'full' → switch to that snap position.
@@ -401,8 +404,13 @@ export class ChatDrawer {
     this._panelTopBar = new PanelTopBar({
       onBack: () => options.onPanelBack?.(),
       onForward: () => options.onPanelForward?.(),
+      onClose: () => {
+        this.clearPanel();
+        options.onPanelClose?.();
+      },
       backAriaLabel: this.i18n.backAriaLabel,
       forwardAriaLabel: this.i18n.forwardAriaLabel,
+      closePanelAriaLabel: this.i18n.closePanelAriaLabel,
     });
     this._panelEl.appendChild(this._panelTopBar.getElement());
 

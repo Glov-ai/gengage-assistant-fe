@@ -272,6 +272,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onRollback: (messageId) => this._handleRollback(messageId),
       onPanelBack: () => this._navigatePanelBack(),
       onPanelForward: () => this._panel?.navigateForward(),
+      onPanelClose: () => {
+        // User tapped ✕ on mobile — clear all panel history and comparison state
+        this._localPanelHistory = [];
+        this._comparisonSelectMode = false;
+        this._comparisonSelectedSkus = [];
+        this._currentPanelSource = null;
+      },
       headerTitle: config.headerTitle,
       headerAvatarUrl: config.headerAvatarUrl,
       launcherImageUrl: config.launcherImageUrl,
@@ -2488,8 +2495,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         // Allow clicking anywhere on the card (not just the tiny checkbox) to toggle selection
         wrapper.style.cursor = 'pointer';
         wrapper.addEventListener('click', (e) => {
-          // Avoid double-toggle when the checkbox itself is clicked
-          if (e.target === checkbox) return;
+          // Use .closest() rather than strict target equality — on mobile touch the
+          // event target can be the checkbox's inner pseudo-element or the label
+          // area, causing the guard to miss and the toggle to fire twice (change +
+          // click).  .closest() is robust to that ambiguity.
+          if ((e.target as HTMLElement).closest('.gengage-chat-comparison-checkbox')) return;
+          e.stopPropagation();
           checkbox.checked = !checkbox.checked;
           this._toggleComparisonSku(sku);
         });
@@ -2527,8 +2538,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         btn.addEventListener('click', () => {
           if (this._comparisonSelectedSkus.length < 2) return;
           ga.trackCompareSelected(this._comparisonSelectedSkus);
-          // On mobile: hide the side panel first so the user sees the chat stream starting
-          if (this._isMobileViewport) this._drawer?.hideMobilePanel();
+          // On mobile the ComparisonTable renders exclusively in the panel.
+          // Keep the panel visible and show a loading skeleton so the user
+          // gets immediate feedback, rather than hiding the panel and leaving
+          // them staring at a blank conversation.
+          if (this._isMobileViewport) this._drawer?.showPanelLoading();
           this._sendAction({
             title: label,
             type: 'getComparisonTable',

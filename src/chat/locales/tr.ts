@@ -78,6 +78,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   rollbackAriaLabel: 'Bu mesaja geri dön',
   backAriaLabel: 'Geri',
   forwardAriaLabel: 'İleri',
+  closePanelAriaLabel: 'Paneli kapat',
   dismissAriaLabel: 'Kapat',
   cartAddErrorMessage: 'Üzgünüm sepete ekleyemedim, bir sorunla karşılaştım.',
   reviewFilterAll: 'Tümü',
