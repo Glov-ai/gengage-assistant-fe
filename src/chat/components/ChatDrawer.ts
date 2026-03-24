@@ -333,8 +333,7 @@ export class ChatDrawer {
         if (!t) return;
         dragDelta = t.clientY - dragStartY;
         const currentState = options.getMobileState?.() ?? 'full';
-        const clampedDelta =
-          currentState === 'full' ? Math.max(0, dragDelta) : dragDelta;
+        const clampedDelta = currentState === 'full' ? Math.max(0, dragDelta) : dragDelta;
         e.preventDefault();
         this.root.style.transform = `translateY(${clampedDelta}px)`;
       };

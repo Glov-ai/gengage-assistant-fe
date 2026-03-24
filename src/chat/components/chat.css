@@ -316,7 +316,6 @@
   border-radius: 0;
 }
 
-
 .gengage-chat-root--mobile .gengage-chat-input-area {
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--_gengage-border-color, #e5e7eb);
