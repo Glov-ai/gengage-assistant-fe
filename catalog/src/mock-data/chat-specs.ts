@@ -308,20 +308,20 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
               {
                 shortName: 'Akulu Matkap Seti',
                 detailedMessage: 'Matkap + canta + sarj aleti + 2 aku iceren komple setler.',
-                whyDifferent: 'Tek tek almaktan daha uygun.',
+                whyDifferent: 'akulu • set • komple',
                 image: `https://placehold.co/200x200/0077cc/fff?text=Set`,
                 action: { title: 'Akulu Matkap Seti', type: 'search', payload: { query: 'akulu matkap seti' } },
               },
               {
                 shortName: 'Darbeli Matkap',
                 detailedMessage: 'Beton ve tugla delme ozelligi olan matkaplar.',
-                whyDifferent: 'Duvar isleri icin darbe fonksiyonu sart.',
+                whyDifferent: 'darbeli • beton • tugla',
                 action: { title: 'Darbeli Matkap', type: 'search', payload: { query: 'darbeli matkap' } },
               },
               {
                 shortName: 'Mini Matkap',
                 detailedMessage: 'Dar alanlar ve hassas isler icin kompakt matkaplar.',
-                whyDifferent: 'Daha hafif ve kucuk govde.',
+                whyDifferent: 'mini • kompakt • hafif',
                 action: { title: 'Mini Matkap', type: 'search', payload: { query: 'mini matkap' } },
               },
             ],
