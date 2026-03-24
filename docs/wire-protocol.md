@@ -781,7 +781,6 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
         "display_keywords": ["Keyword one", "Keyword two"],
         "representative_product_sku": "SKU789",
         "group_skus": ["SKU789", "SKU101"],
-        "sku": "SKU789",
         "image": "https://..."
       }
     ]
@@ -789,9 +788,13 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
 }
 ```
 
+Each `suggested_searches` item should provide `short_name`, `detailed_user_message`,
+`representative_product_sku`, `group_skus`, and may also include `image`, `chosen_attribute`,
+`requestDetails`, `why_different`, and `display_keywords`.
+
 **`display_keywords`**: Optional string array. When present, the client builds the tertiary browse line
-from these values (joined with ` • `), instead of using `why_different`. If omitted, the UI derives
-short fragments from `chosen_attribute` and `short_name` only — never full-sentence `why_different`.
+from these values (joined with ` • `). If omitted, the UI derives short fragments from
+`chosen_attribute` and `short_name` only — never full-sentence `why_different`.
 
 Suggestions follow a strict superiority filter — only upgrade/upsell direction, never lateral or cheaper alternatives.
 

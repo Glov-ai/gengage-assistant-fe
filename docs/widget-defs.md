@@ -440,7 +440,8 @@ reason, expert_quality_score, review_highlight, product_item, requestDetails }`)
 ### `aiSuggestedSearches` — Upsell search suggestions
 
 **Payload fields used**: `suggested_searches` (array of entries with `short_name`, `detailed_user_message`,
-`sku`, `image`, `group_skus`, optional `requestDetails`, and optional **`display_keywords`**.)
+`representative_product_sku`, `image`, `group_skus`, optional `requestDetails`, and optional
+**`display_keywords`**.)
 
 **Browse card compact line**: The tertiary line on each card is built from `display_keywords` / short
 fragments of `chosen_attribute` / `short_name` (see `getSuggestedSearchKeywords` in the SDK). The
