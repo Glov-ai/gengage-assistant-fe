@@ -312,7 +312,11 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     const isPdp = this._pageContext.pageType === 'pdp' && sku !== undefined && sku.length > 0;
 
     if (!isPdp) {
-      this._destroyPdpWidgets();
+      // Hide rather than destroy — the mount target stays populated so the
+      // user sees a graceful empty state instead of a blank/missing widget.
+      // Widgets are re-shown and updated when navigation returns to a PDP page.
+      this._qna?.hide();
+      this._simrel?.hide();
       return;
     }
 
