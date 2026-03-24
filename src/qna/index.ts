@@ -387,12 +387,14 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
   }
 
   private _handleAction(action: ActionPayload): void {
+    this._showTransitionIndicator();
     ga.trackSuggestedQuestion(action.title, action.type);
     this.config.onActionSelected?.(action);
     dispatch('gengage:qna:action', action);
   }
 
   private _handleOpenChat(): void {
+    this._showTransitionIndicator();
     // Couple CTA with the inline QNA text input when available.
     const input = this._contentEl?.querySelector<HTMLInputElement>('.gengage-qna-input');
     if (input) {
@@ -400,6 +402,22 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     }
     this.config.onOpenChat?.();
     dispatch('gengage:qna:open-chat', {});
+  }
+
+  private _showTransitionIndicator(): void {
+    if (!this._contentEl) return;
+    // Remove any previously appended indicator to prevent duplicates on rapid clicks
+    this._contentEl.querySelector('.gengage-qna-transition-indicator')?.remove();
+    this._contentEl.classList.add('gengage-qna--transitioning');
+    const msg = this._i18n.redirectingToChat ?? 'Redirecting to chat...';
+    const indicator = document.createElement('div');
+    indicator.className = 'gengage-qna-transition-indicator';
+    indicator.textContent = msg;
+    this._contentEl.appendChild(indicator);
+    setTimeout(() => {
+      this._contentEl?.classList.remove('gengage-qna--transitioning');
+      indicator.remove();
+    }, 600);
   }
 
   _actionHandler = this._handleAction.bind(this);

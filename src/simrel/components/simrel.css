@@ -385,13 +385,19 @@
   margin-bottom: 16px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   /* Prevent the last tab from being visually clipped at the scroll edge */
   padding-right: 24px;
 }
 
 .gengage-simrel-tabs::-webkit-scrollbar {
-  display: none;
+  height: 3px;
+}
+
+.gengage-simrel-tabs::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
 .gengage-simrel-tab {
@@ -422,6 +428,50 @@
   border-bottom-color: var(--gengage-primary-color, #b7102a);
   font-weight: 600;
   opacity: 1;
+}
+
+/* Tab bar wrapper with scroll arrows */
+.gengage-simrel-tabs-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.gengage-simrel-tabs-wrapper .gengage-simrel-tabs {
+  flex: 1;
+  min-width: 0;
+}
+
+.gengage-simrel-tabs-arrow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 40px;
+  border: none;
+  background: var(--_gengage-bg-color, #fff);
+  color: var(--_gengage-text-secondary, #6b7280);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+  margin-bottom: 2px;
+}
+
+.gengage-simrel-tabs-arrow:hover {
+  color: var(--gengage-primary-color, #b7102a);
+  background: var(--_gengage-surface-secondary, #f3f4f6);
+}
+
+.gengage-simrel-tabs-arrow--left {
+  margin-right: 4px;
+}
+
+.gengage-simrel-tabs-arrow--right {
+  margin-left: 4px;
 }
 
 .gengage-simrel-loading {
@@ -509,7 +559,8 @@
   .gengage-simrel-card,
   .gengage-simrel-card-image img,
   .gengage-simrel-quick-action,
-  .gengage-simrel-spinner {
+  .gengage-simrel-spinner,
+  .gengage-simrel-tabs-arrow {
     animation: none !important;
     transition: none !important;
     transform: none !important;

@@ -138,6 +138,8 @@ export class ChatDrawer {
   private _touchStartY: number | null = null;
   private _presentationPinned = true;
   private _presentationUserInteracting = false;
+  private _resizeRafId: number | null = null;
+  private _cartBtn: HTMLButtonElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -256,6 +258,7 @@ export class ChatDrawer {
       cartBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
       cartBtn.addEventListener('click', () => options.onCartClick?.());
       headerRight.appendChild(cartBtn);
+      this._cartBtn = cartBtn;
     }
 
     // New Chat button (optional — reset conversation)
@@ -665,7 +668,12 @@ export class ChatDrawer {
 
     // Auto-expand on desktop as user types (capped at 120px)
     this.inputEl.addEventListener('input', () => {
-      requestAnimationFrame(() => {
+      // Cancel any pending resize rAF to avoid queuing multiple reflows
+      if (this._resizeRafId !== null) {
+        cancelAnimationFrame(this._resizeRafId);
+      }
+      this._resizeRafId = requestAnimationFrame(() => {
+        this._resizeRafId = null;
         this.inputEl.style.height = 'auto';
         this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
       });
@@ -805,6 +813,10 @@ export class ChatDrawer {
       this._voiceInput = new VoiceInput(
         {
           onInterim: (text) => {
+            if (this._resizeRafId !== null) {
+              cancelAnimationFrame(this._resizeRafId);
+              this._resizeRafId = null;
+            }
             this.inputEl.value = text;
             this.inputEl.style.height = 'auto';
             this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, 120)}px`;
@@ -1862,11 +1874,50 @@ export class ChatDrawer {
     }
   }
 
+  /** Briefly animate the cart icon button to signal a successful add-to-cart. */
+  flashCartBadge(): void {
+    if (!this._cartBtn) return;
+    // Restart animation by removing then re-adding the class after a reflow
+    this._cartBtn.classList.remove('gengage-chat-header-btn--cart-flash');
+    void this._cartBtn.offsetWidth;
+    this._cartBtn.classList.add('gengage-chat-header-btn--cart-flash');
+    this._cartBtn.addEventListener(
+      'animationend',
+      () => {
+        this._cartBtn?.classList.remove('gengage-chat-header-btn--cart-flash');
+      },
+      { once: true },
+    );
+  }
+
+  /** Show a temporary success toast inside the shadow root. */
+  showCartToast(message: string): void {
+    const existing = this.root.querySelector('.gengage-chat-cart-toast');
+    existing?.remove();
+    const toast = document.createElement('div');
+    toast.className = 'gengage-chat-cart-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.textContent = message;
+    this.root.appendChild(toast);
+    // Force reflow then add visible class for animation
+    void toast.offsetWidth;
+    toast.classList.add('gengage-chat-cart-toast--visible');
+    setTimeout(() => {
+      toast.classList.remove('gengage-chat-cart-toast--visible');
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+
   /** Clean up event listeners and child resources (VoiceInput, timers). */
   destroy(): void {
     registerChatScrollElement(null);
     this.releaseFocus();
     this._clearStillWorkingTimer();
+    if (this._resizeRafId !== null) {
+      cancelAnimationFrame(this._resizeRafId);
+      this._resizeRafId = null;
+    }
     for (const cleanup of this._cleanups) cleanup();
     this._cleanups.length = 0;
     this._voiceInput?.destroy();

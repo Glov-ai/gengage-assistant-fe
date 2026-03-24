@@ -131,6 +131,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _lastSku: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
+  private _comparisonRefreshRafId: number | null = null;
   /** SKUs of products the user has viewed across panel product grids. */
   private _viewedProductSkus = new Set<string>();
   private _thumbnailEntries: ThumbnailEntry[] = [];
@@ -517,6 +518,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTypewriter = null;
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
+    if (this._comparisonRefreshRafId !== null) {
+      cancelAnimationFrame(this._comparisonRefreshRafId);
+      this._comparisonRefreshRafId = null;
+    }
     this._drawer?.destroy();
     invalidateChatScrollCache();
     this._drawer = null;
@@ -2427,7 +2432,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         ga.trackComparePreselection(sku);
       }
     }
-    this._refreshComparisonUI();
+    // Debounce: cancel any pending refresh and schedule a new one to batch rapid toggles
+    if (this._comparisonRefreshRafId !== null) {
+      cancelAnimationFrame(this._comparisonRefreshRafId);
+    }
+    this._comparisonRefreshRafId = requestAnimationFrame(() => {
+      this._comparisonRefreshRafId = null;
+      this._refreshComparisonUI();
+    });
   }
 
   /**
@@ -2600,6 +2612,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           },
           { preservePanel: true },
         );
+        // Show success toast and flash cart icon
+        const toastMsg = this._i18n.addedToCartToast ?? 'Added to cart';
+        this._drawer?.showCartToast(toastMsg);
+        this._drawer?.flashCartBadge();
       },
       onProductSelect: (product) => {
         // Save current panel source to local history so back button can re-render it

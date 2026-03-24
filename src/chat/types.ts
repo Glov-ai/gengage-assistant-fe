@@ -156,6 +156,8 @@ export interface ChatI18n {
   retryButton: string;
   loadingMessage: string;
   productCtaLabel: string;
+  /** CTA label in the product details panel when navigating to the product URL (distinct from the card "İncele" CTA). */
+  viewOnSiteLabel: string;
   attachImageButton: string;
   removeAttachmentButton: string;
   invalidFileType: string;
@@ -171,6 +173,7 @@ export interface ChatI18n {
   sortRelated: string;
   sortPriceAsc: string;
   sortPriceDesc: string;
+  sortToolbarAriaLabel: string;
   compareSelected: string;
   compareMinHint: string;
   panelTitleProductDetails: string;
@@ -187,6 +190,7 @@ export interface ChatI18n {
   viewMoreLabel: string;
   similarProductsLabel: string;
   addToCartButton: string;
+  addedToCartToast: string;
   shareButton: string;
   productInfoTab: string;
   specificationsTab: string;
@@ -248,6 +252,7 @@ export interface ChatUISpecRenderContext {
   i18n?: Pick<
     ChatI18n,
     | 'productCtaLabel'
+    | 'viewOnSiteLabel'
     | 'aiTopPicksTitle'
     | 'roleWinner'
     | 'roleBestValue'
@@ -259,6 +264,7 @@ export interface ChatUISpecRenderContext {
     | 'sortRelated'
     | 'sortPriceAsc'
     | 'sortPriceDesc'
+    | 'sortToolbarAriaLabel'
     | 'compareSelected'
     | 'panelTitleProductDetails'
     | 'panelTitleSimilarProducts'
