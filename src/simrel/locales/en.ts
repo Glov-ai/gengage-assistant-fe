@@ -8,5 +8,7 @@ export const SIMREL_I18N_EN: SimRelI18n = {
   outOfStockLabel: 'Out of Stock',
   decreaseLabel: 'Decrease',
   increaseLabel: 'Increase',
+  errorLoadingMessage: 'Could not load similar products.',
+  retryButtonText: 'Try again',
   priceSuffix: '',
 };

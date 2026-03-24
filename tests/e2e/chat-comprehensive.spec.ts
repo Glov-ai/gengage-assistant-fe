@@ -29,19 +29,14 @@ test.describe('Chat widget — launcher positioning & style', () => {
     expect(centerY).toBeGreaterThan(viewport!.height / 2);
   });
 
-  test('launcher has the configured primary background color (orange)', async ({ page }) => {
+  test('launcher renders the configured image-mode presentation', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
+    await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
+    await expect(launcher.locator('img')).toBeVisible();
 
     const bgColor = await launcher.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // #ec6e00 = rgb(236, 110, 0) — check approximate ranges
-    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    expect(match).toBeTruthy();
-    const [, r, g, b] = match!;
-    expect(Number(r)).toBeGreaterThan(200); // high red
-    expect(Number(g)).toBeGreaterThan(50); // moderate green
-    expect(Number(g)).toBeLessThan(160);
-    expect(Number(b)).toBeLessThan(40); // low blue
+    expect(bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)' || bgColor.includes('0, 0, 0, 0')).toBe(true);
   });
 
   test('launcher z-index is high (>= 1000)', async ({ page }) => {

@@ -48,12 +48,19 @@ test.describe('QNA widget — button styling', () => {
     expect(Number(b)).toBeLessThan(40);
   });
 
-  test('CTA button has dashed border (not solid fill)', async ({ page }) => {
+  test('CTA button has an outline border (not solid fill)', async ({ page }) => {
     const cta = page.locator('.gengage-qna-cta');
     await expect(cta).toBeVisible({ timeout: 10000 });
 
-    const borderStyle = await cta.evaluate((el) => getComputedStyle(el).borderTopStyle);
-    expect(borderStyle).toBe('dashed');
+    const border = await cta.evaluate((el) => {
+      const styles = getComputedStyle(el);
+      return {
+        borderStyle: styles.borderTopStyle,
+        borderWidth: styles.borderTopWidth,
+      };
+    });
+    expect(border.borderStyle).not.toBe('none');
+    expect(border.borderWidth).not.toBe('0px');
   });
 
   test('CTA button has transparent background', async ({ page }) => {

@@ -21,6 +21,7 @@ import type {
   StreamEventError,
   UIElement,
 } from './types.js';
+import { getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
 
 type WidgetName = 'chat' | 'qna' | 'simrel';
 
@@ -294,7 +295,10 @@ interface V1AiProductGroupings {
 interface V1AiSuggestedSearch {
   short_name?: string;
   detailed_user_message?: string;
+  /** Long explanatory copy — not used for the compact browse keyword line */
   why_different?: string;
+  /** Preferred compact keyword chips for the browse card (see suggested-search-keywords) */
+  display_keywords?: string[];
   chosen_attribute?: string;
   representative_product_sku?: string;
   group_skus?: string[];
@@ -1241,8 +1245,13 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
     const entry: Record<string, unknown> = { shortName, action };
     const detailedMessage = firstNonEmptyString(search.detailed_user_message);
     if (detailedMessage && detailedMessage !== shortName) entry['detailedMessage'] = detailedMessage;
-    const whyDifferent = firstNonEmptyString(search.why_different);
-    if (whyDifferent) entry['whyDifferent'] = whyDifferent;
+    const keywordLine = getSuggestedSearchKeywordsText(search);
+    if (keywordLine) {
+      const dm = detailedMessage ?? '';
+      if (keywordLine !== shortName && keywordLine !== dm) {
+        entry['whyDifferent'] = keywordLine;
+      }
+    }
     if (typeof search.image === 'string') entry['image'] = search.image;
     entries.push(entry);
   }
@@ -1276,8 +1285,7 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
 function adaptGetGroundingReview(event: V1GetGroundingReview): StreamEventUISpec | StreamEventMetadata {
   const action = requestDetailsToAction(
     event.payload.requestDetails,
-    firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ??
-      'Urun yorumlarini goster',
+    firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ?? 'Show product reviews',
   );
   if (!action) {
     return {

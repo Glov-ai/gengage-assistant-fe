@@ -244,7 +244,7 @@ describe('CommunicationBridge', () => {
 
   it('wildcard origin accepts messages from any origin', () => {
     const onMessage = vi.fn();
-    bridge = new CommunicationBridge({ namespace: 'chat', onMessage });
+    bridge = new CommunicationBridge({ namespace: 'chat', allowedOrigins: ['*'], onMessage });
 
     window.dispatchEvent(
       new MessageEvent('message', {

@@ -1,7 +1,7 @@
 import { ROUTES, navigate, getCurrentPath, getBreadcrumb } from './router.js';
 import type { Route } from './router.js';
 import { applyTheme } from './utils/theme-applicator.js';
-import { getMerchantConfig } from './merchant-configs.js';
+import { getMerchantConfig, getMerchantIds } from './merchant-configs.js';
 
 let contentEl: HTMLElement | null = null;
 let breadcrumbEl: HTMLElement | null = null;
@@ -84,21 +84,7 @@ export function mountLayout(root: HTMLElement): HTMLElement {
   noneOpt.textContent = 'None (default)';
   themeDropdownEl.appendChild(noneOpt);
 
-  const merchantIds = [
-    'koctascomtr',
-    'n11com',
-    'hepsiburadacom',
-    'arcelikcomtr',
-    'yatasbeddingcomtr',
-    'trendyolcom',
-    'boynercomtr',
-    'evideacom',
-    'aygazcomtr',
-    'otokoccomtr',
-    'divanpastanelericomtr',
-    'screwfixcom',
-  ];
-  for (const id of merchantIds) {
+  for (const id of getMerchantIds()) {
     const opt = document.createElement('option');
     opt.value = id;
     opt.textContent = id;

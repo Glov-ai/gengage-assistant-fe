@@ -12,8 +12,11 @@
  *   npm run dev -- react --sku=DEMO-001 --port=3005
  *
  * Available demos:
- *   Account demos  — koctascomtr, arcelikcomtr, n11com, yatasbeddingcomtr, hepsiburadacom
- *   Framework demos — vanilla-script, vanilla-esm, react, nextjs, native
+ *   Account demos  — koctascomtr, arcelikcomtr, n11com, hepsiburadacom, yatasbeddingcomtr,
+ *                     penticom, trendyolcom, boynercomtr, evideacom, aygazcomtr,
+ *                     divanpastanelericomtr, screwfixcom, pazaramacom, lcwcom, flocomtr,
+ *                     defactocomtr, avansascom, teknosacom
+ *   Framework demos — vanilla-script, vanilla-esm, react, nextjs, native, gtm-custom
  */
 
 import { createServer, type Plugin } from 'vite';
@@ -109,7 +112,8 @@ function parseArgs(argv: string[]): DevOptions {
     failUsage('Provide SKU either as positional arg or --sku=..., not both.');
   }
 
-  const backendUrl = args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? '';
+  const backendUrl =
+    args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? 'https://chatbe-dev.gengage.ai';
   const sku = flagSku ?? positionalSku;
 
   return { demo, sku, port, backendUrl };

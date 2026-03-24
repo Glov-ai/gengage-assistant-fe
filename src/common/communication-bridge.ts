@@ -41,14 +41,10 @@ export class CommunicationBridge {
 
   constructor(options: CommunicationBridgeOptions) {
     this._namespace = options.namespace;
-    // KNOWN TECH DEBT [SECURITY]: Default wildcard origin ['*'] silently accepts
-    // postMessages from any cross-origin iframe in production. An attacker on an
-    // unrelated domain can send { gengage: 'chat', type: 'openChat' } to trigger
-    // widget actions. Tracked for fix: default to [location.origin] and require
-    // explicit opt-in for wildcard. Risk is mitigated by: (1) message shape
-    // validation (gengage namespace + type), (2) no destructive actions exposed
-    // through bridge, (3) host page typically controls all iframes.
-    this._allowedOrigins = options.allowedOrigins ?? ['*'];
+    // Default to same-origin for postMessage security. Customers who need
+    // cross-origin iframe communication can pass allowedOrigins: ['*'] or a
+    // specific list of origins via ChatWidgetConfig.allowedOrigins.
+    this._allowedOrigins = options.allowedOrigins ?? [location.origin];
     this._onMessage = options.onMessage;
 
     if (this._allowedOrigins.includes('*') && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {

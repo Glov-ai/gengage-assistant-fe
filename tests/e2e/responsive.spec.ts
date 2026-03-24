@@ -40,7 +40,7 @@ test.describe('Responsive — mobile viewport (640px)', () => {
     expect(padding).toBeLessThanOrEqual(14);
   });
 
-  test('SimRel grid reduces columns at 768px', async ({ page }) => {
+  test('SimRel rail stays horizontally scrollable at 768px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 768, height: 900 });
     await gotoDemoReady(page);
@@ -48,13 +48,15 @@ test.describe('Responsive — mobile viewport (640px)', () => {
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });
 
-    const columns = await grid.evaluate((el) => {
+    const layout = await grid.evaluate((el) => {
       const style = getComputedStyle(el);
-      return style.gridTemplateColumns;
+      return {
+        display: style.display,
+        overflowX: style.overflowX,
+      };
     });
-    // At 768px, the CSS sets grid-template-columns: repeat(2, 1fr)
-    const columnParts = columns.trim().split(/\s+/);
-    expect(columnParts.length).toBeLessThanOrEqual(3);
+    expect(layout.display).toBe('flex');
+    expect(layout.overflowX === 'auto' || layout.overflowX === 'scroll').toBe(true);
   });
 });
 
@@ -76,7 +78,7 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
     expect(columnParts.length).toBe(2);
   });
 
-  test('SimRel grid has multiple columns at 1280px', async ({ page }) => {
+  test('SimRel rail remains a horizontal list at 1280px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 1280, height: 900 });
     await gotoDemoReady(page);
@@ -84,14 +86,16 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });
 
-    const columns = await grid.evaluate((el) => {
+    const layout = await grid.evaluate((el) => {
       const style = getComputedStyle(el);
-      return style.gridTemplateColumns;
+      return {
+        display: style.display,
+        overflowX: style.overflowX,
+        gap: style.columnGap,
+      };
     });
-    // Default is repeat(4, minmax(0, 1fr)) — should have at least 2 columns
-    // On desktop at 1280px the host-shell is max-width: 1280px, minus padding, the
-    // simrel-mount may be narrower but the grid should still have 2+ columns
-    const columnParts = columns.trim().split(/\s+/);
-    expect(columnParts.length).toBeGreaterThanOrEqual(2);
+    expect(layout.display).toBe('flex');
+    expect(layout.overflowX === 'auto' || layout.overflowX === 'scroll').toBe(true);
+    expect(parseInt(layout.gap, 10)).toBeGreaterThan(0);
   });
 });

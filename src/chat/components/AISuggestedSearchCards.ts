@@ -1,8 +1,9 @@
 /**
  * AI Suggested Search Cards renderer.
  *
- * Cards with image, short_name, detailed_user_message, and why_different.
- * Clicking a card dispatches the associated action.
+ * Cards with image, short name, optional detailed line, and optional third line.
+ * The tertiary line (`whyDifferent` prop) is populated by the protocol adapter
+ * from `display_keywords` / compact fragments — not from raw `why_different` sentences.
  *
  * XSS safety: All text is set via textContent. Image URLs are validated
  * for safe protocols. No innerHTML.

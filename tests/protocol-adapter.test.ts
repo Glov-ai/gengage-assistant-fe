@@ -392,7 +392,27 @@ describe('adaptBackendEvent', () => {
     expect(entries).toHaveLength(1);
     expect(entries![0]!['shortName']).toBe('Daha guclu');
     expect(entries![0]!['detailedMessage']).toBe('Daha guclu modelleri goster');
-    expect(entries![0]!['whyDifferent']).toBe('Daha yuksek performans');
+    // Compact keyword line — not raw why_different; duplicates short name are omitted
+    expect(entries![0]!['whyDifferent']).toBeUndefined();
+  });
+
+  it('maps display_keywords to AISuggestedSearchCards whyDifferent line', () => {
+    const searches = adaptBackendEvent({
+      type: 'aiSuggestedSearches',
+      payload: {
+        suggested_searches: [
+          {
+            short_name: 'Premium',
+            detailed_user_message: 'Premium modelleri goster',
+            why_different: 'Long sentence that must not appear on the card.',
+            display_keywords: ['A', 'B'],
+            sku: 'SKU1',
+          },
+        ],
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    const entries = searches.spec?.elements['root']?.props?.['entries'] as Array<Record<string, unknown>> | undefined;
+    expect(entries?.[0]?.['whyDifferent']).toBe('A • B');
   });
 
   it('normalizes findSimilar suggested-search actions into inputText search actions when detailed text exists', () => {

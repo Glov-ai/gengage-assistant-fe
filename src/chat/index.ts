@@ -9,7 +9,7 @@ import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UISpec
 import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { ActionRouterOptions } from '../common/action-router.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
-import type { BridgeMessage } from '../common/communication-bridge.js';
+import type { BridgeMessage, CommunicationBridgeOptions } from '../common/communication-bridge.js';
 import type { BackendRequestMeta } from './api.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
@@ -26,6 +26,7 @@ import {
   llmUsageEvent,
   meteringIncrementEvent,
   chatHistorySnapshotEvent,
+  basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
 import { validateImageFile } from './attachment-utils.js';
@@ -63,6 +64,8 @@ import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
 import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
+import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
+import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
 import {
   containsKvkk,
   isKvkkShown,
@@ -182,6 +185,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     | null = null;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
+  /** Transcript focus, pin-to-bottom, and scroll request coordination. */
+  private readonly _presentation = new ChatPresentationState();
   /** Registered event callbacks (GA4 event hooks). Key = event name, value = set of callbacks. */
   private _eventCallbacks = new Map<string, Set<(detail: Record<string, unknown>) => boolean | Promise<boolean>>>();
   /** Last sent action+options for retry on error. */
@@ -323,8 +328,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.setThumbnails([]);
         this._panel!.snapshots.clear();
         this._panel!.threads = [];
+        this._presentation.reset();
+        this._drawer?.setPresentationFocus(null);
+        this._drawer?.setFormerMessagesButtonVisible(false);
         // Re-show welcome if configured
         this._showWelcomeIfNeeded();
+      },
+      presentation: {
+        onPinnedToBottomChange: (pinned) => {
+          this._presentation.pinnedToBottom = pinned;
+        },
+        onUserInteractingChange: (interacting) => {
+          this._presentation.userInteracting = interacting;
+        },
+        onFormerMessagesHint: () => {
+          if (this._presentation.focusedThreadId && this._hasMultipleThreadIds()) {
+            this._drawer?.setFormerMessagesButtonVisible(true);
+          }
+        },
+        shouldBlockSoftAutoScroll: () => this._presentation.shouldBlockStreamAutoScroll(),
+        onReleasePresentationFocus: () => this._releasePresentationFocus(),
       },
     });
 
@@ -411,18 +434,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this.addCleanup(() => window.visualViewport?.removeEventListener('resize', onViewportResize));
     }
 
-    // Inline variant starts visible
+    // Inline variant starts visible (onShow() is not invoked — mirror presentation state here)
     if (variant === 'inline') {
       this._drawerVisible = true;
       this.isVisible = true;
       this._applyOpenStateClasses();
+      this._presentation.setShown(true);
+      setTimeout(() => this._maybeAutoAnchorUnreadAssistant(), 60);
     }
 
     // Communication bridge for host ↔ widget messaging
-    this._bridge = new CommunicationBridge({
+    const bridgeOpts: CommunicationBridgeOptions = {
       namespace: 'chat',
       onMessage: (msg) => this._handleBridgeMessage(msg),
-    });
+    };
+    if (config.allowedOrigins !== undefined) bridgeOpts.allowedOrigins = config.allowedOrigins;
+    this._bridge = new CommunicationBridge(bridgeOpts);
 
     // Track initial SKU for page-change detection
     this._lastSku = this.config.pageContext?.sku;
@@ -491,6 +518,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._activeTtsHandle?.stop();
     this._activeTtsHandle = null;
     this._drawer?.destroy();
+    invalidateChatScrollCache();
     this._drawer = null;
     this._bridge?.destroy();
     this._bridge = null;
@@ -634,6 +662,68 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._pdpPrimingInFlight = false;
     this._queuedUserMessages = [];
     this._productContextUnavailableSku = null;
+    this._presentation.reset();
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+  }
+
+  private _flushPresentationScroll(): void {
+    const req = this._presentation.scrollRequest;
+    if (!req || !this._drawer) return;
+    let handled = false;
+    if (req.type === 'thread' && req.threadId) {
+      handled = this._drawer.scrollThreadIntoView(req.threadId, req.behavior);
+      if (!handled) {
+        this._drawer.scrollToBottomPresentation(req.behavior);
+        handled = true;
+      }
+    } else if (req.type === 'bottom') {
+      this._drawer.scrollToBottomPresentation(req.behavior);
+      handled = true;
+    }
+    if (handled) {
+      this._presentation.consumeScrollRequest(req.id);
+    }
+  }
+
+  private _releasePresentationFocus(): void {
+    this._presentation.releaseFocusedThread();
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+  }
+
+  private _hasMultipleThreadIds(): boolean {
+    const ids = new Set<string>();
+    for (const m of this._messages) {
+      if (m.threadId) ids.add(m.threadId);
+    }
+    return ids.size > 1;
+  }
+
+  private _orderedThreadIds(): string[] {
+    const ordered: string[] = [];
+    const seen = new Set<string>();
+    for (const m of this._messages) {
+      if (m.threadId && !seen.has(m.threadId)) {
+        seen.add(m.threadId);
+        ordered.push(m.threadId);
+      }
+    }
+    return ordered;
+  }
+
+  private _maybeAutoAnchorUnreadAssistant(): void {
+    if (!this._drawer || !this._presentation.shown) return;
+    const threadIds = this._orderedThreadIds();
+    if (threadIds.length === 0) return;
+    const latestUnread = getLatestUnreadAssistantThreadId(threadIds, this._presentation);
+    if (!latestUnread) return;
+    const gid = `${latestUnread}:assistant`;
+    if (this._presentation.lastAutoAnchoredGroupId === gid) return;
+    if (this._presentation.userInteracting && !this._presentation.pinnedToBottom) return;
+    if (this._drawer.scrollThreadIntoView(latestUnread, 'smooth')) {
+      this._presentation.markGroupAutoAnchored(gid);
+    }
   }
 
   private _handleBridgeMessage(msg: BridgeMessage): void {
@@ -690,7 +780,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         break;
       }
       case 'scrollToBottom':
-        this._drawer?.scrollToBottomIfNeeded();
+        this._presentation.requestScrollToBottom('smooth');
+        setTimeout(() => this._flushPresentationScroll(), 40);
         break;
       case 'addToCardHandler': {
         // Host notifies widget of add-to-cart result
@@ -757,6 +848,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.focusInput();
     }
     this._extendedModeManager?.setChatShown(true);
+    this._presentation.setShown(true);
+    setTimeout(() => this._maybeAutoAnchorUnreadAssistant(), 60);
   }
 
   /** Show welcome message and starter pills on first open with empty history. */
@@ -800,6 +893,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._applyOpenStateClasses();
     this._extendedModeManager?.setChatShown(false);
+    this._presentation.setShown(false);
+    this._drawer?.setPresentationFocus(null);
+    this._drawer?.setFormerMessagesButtonVisible(false);
   }
 
   private _syncViewportState(): void {
@@ -1031,6 +1127,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Note: silent flag only skips the USER message above — bot response is always rendered
     this._messages.push(botMsg);
 
+    this._presentation.registerAssistantActivity(threadId);
+    this._presentation.requestThreadFocus(threadId, 'smooth');
+    this._drawer?.setPresentationFocus(threadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+    setTimeout(() => this._flushPresentationScroll(), 40);
+
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
       this._abortControllers.forEach((c) => c.abort());
@@ -1127,6 +1229,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     let chunkIndex = 0;
     let panelLoadingSeen = false;
     let panelContentReceived = false;
+    /** Desktop: panel shows ProductGrid / Categories — AI picks can render above instead of in chat. */
+    let panelListEligibleForAiZone = false;
+    let aiAnalysisUiReceivedForPanel = false;
+    let streamDone = false;
+    /** AITopPicks / AIGroupingCards often arrive before product_list; flush when grid mounts. */
+    let pendingPanelAiSpec: UISpec | null = null;
+
+    const syncPanelAiAnalysisZone = (): void => {
+      if (!this._drawer) return;
+      if (this._isMobileViewport || !panelListEligibleForAiZone) {
+        this._drawer.setPanelAiZoneState('hidden');
+        return;
+      }
+      if (aiAnalysisUiReceivedForPanel) return;
+      if (!streamDone) {
+        this._drawer.setPanelAiZoneState('analyzing', { analyzingLabel: this._i18n.aiAnalysisAnalyzingLabel });
+      } else {
+        this._drawer.setPanelAiZoneState('hidden');
+      }
+    };
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -1173,9 +1295,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               if (kvkkHtml) {
                 this._drawer?.showKvkkBanner(kvkkHtml, () => {
                   this._drawer?.hideKvkkBanner();
+                  markKvkkShown(acctId);
                 });
+              } else {
+                // No KVKK block found — mark as shown so we don't re-check
+                markKvkkShown(acctId);
               }
-              markKvkkShown(acctId);
             }
             displayText = stripKvkkBlock(displayText);
           }
@@ -1261,10 +1386,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
 
           const panelSpec = panelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
-          const shouldRenderInline =
-            !botMsg.silent &&
-            (panelHint !== 'panel' || componentType === 'ProductCard') &&
-            componentType !== 'ActionButtons'; // ActionButtons render as bottom pills only
 
           if (panelHint === 'panel' && this._panel) {
             const isFirstPanelContentInStream = !panelContentReceived;
@@ -1283,6 +1404,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._appendSimilarsToPanel(panelSpec, renderContext);
             } else if (panelAction === 'append') {
               this._drawer?.appendPanelContent(this._renderUISpec(panelSpec, renderContext));
+              if (this._comparisonSelectMode) {
+                this._refreshComparisonUI();
+              }
             } else {
               // Reset comparison state when new panel content replaces the grid
               this._comparisonSelectMode = false;
@@ -1306,6 +1430,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
             this._panel.updateTopBar(titleType, backendTitle);
             this._panel.updateExtendedMode(componentType);
+
+            // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
+            if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
+              panelListEligibleForAiZone = !this._isMobileViewport;
+              // Top Picks / groupings may have streamed before product_list — apply now that panel + zone exist
+              if (pendingPanelAiSpec) {
+                const flushCtx = this._buildRenderContext();
+                flushCtx.isStreaming = true;
+                const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+                aiAnalysisUiReceivedForPanel = true;
+                this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
+                pendingPanelAiSpec = null;
+              }
+            } else if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
+              panelListEligibleForAiZone = false;
+              pendingPanelAiSpec = null;
+              this._drawer?.setPanelAiZoneState('hidden');
+            }
           }
 
           // ProductDetailsPanel goes to the panel, but also render a compact
@@ -1331,9 +1473,33 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 }
                 messagesContainer.appendChild(inline);
                 inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+                this._drawer?.refreshPresentationCollapsed();
               }
             }
           }
+
+          const isAiAnalysisComponent = componentType === 'AITopPicks' || componentType === 'AIGroupingCards';
+          let routeAiAnalysisToPanel = false;
+          let deferAiPanelUntilGrid = false;
+          if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
+            if (panelListEligibleForAiZone) {
+              const aiEl = this._renderUISpec(spec, renderContext);
+              aiAnalysisUiReceivedForPanel = true;
+              this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
+              routeAiAnalysisToPanel = true;
+              pendingPanelAiSpec = null;
+            } else {
+              pendingPanelAiSpec = spec;
+              deferAiPanelUntilGrid = true;
+            }
+          }
+
+          const shouldRenderInline =
+            !botMsg.silent &&
+            (panelHint !== 'panel' || componentType === 'ProductCard') &&
+            componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
+            !routeAiAnalysisToPanel &&
+            !(deferAiPanelUntilGrid && isAiAnalysisComponent);
 
           if (shouldRenderInline) {
             const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
@@ -1344,6 +1510,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               }
               messagesContainer.appendChild(inline);
               inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._drawer?.refreshPresentationCollapsed();
             }
           }
 
@@ -1506,6 +1673,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
+          syncPanelAiAnalysisZone();
           botMsg.uiSpec = spec;
         },
         onAction: (event: StreamEvent) => {
@@ -1660,6 +1828,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip error handling for aborted/superseded requests (including when no active request)
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          streamDone = true;
+          syncPanelAiAnalysisZone();
+          pendingPanelAiSpec = null;
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
@@ -1750,6 +1921,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          streamDone = true;
+          syncPanelAiAnalysisZone();
+          // product_list never arrived but AI Top Picks / groupings were deferred — show in chat
+          if (pendingPanelAiSpec) {
+            const flushCtx = this._buildRenderContext();
+            flushCtx.isStreaming = false;
+            const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
+            if (messagesContainer) {
+              const inline = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+              if (botMsg.threadId) inline.dataset['threadId'] = botMsg.threadId;
+              messagesContainer.appendChild(inline);
+              inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._drawer?.refreshPresentationCollapsed();
+            }
+            pendingPanelAiSpec = null;
+          }
           this._activeRequestThreadId = null;
           // Reset consecutive error counter on successful stream completion
           this._consecutiveErrorCount = 0;
@@ -1779,6 +1966,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             botMsg.status = 'done';
             ga.trackMessageReceived();
           }
+          this._presentation.finalizeAssistantGroup(threadId);
 
           // Reveal the comparison toggle button (hidden during streaming) with fade-in
           const hiddenCompareBtn = this._shadow?.querySelector('.gengage-chat-comparison-toggle-btn--hidden');
@@ -1887,8 +2075,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Rewind the conversation to the given thread. */
   private _rollbackToThread(threadId: string): void {
+    // Validate thread ID exists in known threads
+    if (this._panel && this._panel.threads.length > 0 && !this._panel.threads.includes(threadId)) {
+      // Check if any message has this threadId as fallback
+      if (!this._messages.some((m) => m.threadId === threadId)) {
+        return; // Invalid thread ID — silently ignore
+      }
+    }
     this._currentThreadId = threadId;
     this._extendedModeManager?.setHiddenByUser(false);
+    this._presentation.setFocusedThreadId(threadId);
+    this._drawer?.setPresentationFocus(threadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
 
     // Toggle visibility of messages after the cutoff
     for (const msg of this._messages) {
@@ -1917,6 +2115,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.clearPanel();
       this._currentPanelSource = null;
     }
+    if (restored && targetBot) {
+      // Update panel source so drilldown history captures the correct context.
+      // We can't reconstruct the exact spec, so clear it to prevent stale history pushes.
+      this._currentPanelSource = null;
+    }
     // Always update topbar navigation state for the new thread position
     const panelType = this._panel!.currentType ?? '';
     this._panel?.updateTopBar(panelType);
@@ -1925,23 +2128,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._drawer?.setPills([]);
 
     // Load context from IndexedDB for the target thread so the next request
-    // sends the correct historical context (not the latest one).
+    // sends the correct historical context, then prune future entries.
     if (this._session?.db && this.config.session?.sessionId) {
-      this._session?.db
-        .loadContext(this.config.session.sessionId, threadId)
-        .then((ctx) => {
+      const sid = this.config.session.sessionId;
+      void (async () => {
+        try {
+          const ctx = await this._session?.db?.loadContext(sid, threadId);
           if (ctx) this._lastBackendContext = ctx.context;
-        })
-        .catch(() => {
+          await this._session?.db?.deleteContextsAfterThread(sid, threadId);
+        } catch {
           /* non-fatal */
-        });
-    }
-
-    // Prune future context entries from IndexedDB
-    if (this._session?.db && this.config.session?.sessionId) {
-      this._session?.db.deleteContextsAfterThread(this.config.session.sessionId, threadId).catch(() => {
-        /* non-fatal */
-      });
+        }
+      })();
     }
   }
 
@@ -2048,6 +2246,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Restore thread cursors and creation timestamp
     this._currentThreadId = session.currentThreadId;
     this._lastThreadId = session.lastThreadId;
+    // Validate thread invariants — corrupted IDB data must not break navigation
+    if (this._currentThreadId && this._lastThreadId && this._currentThreadId > this._lastThreadId) {
+      this._currentThreadId = this._lastThreadId;
+    }
     this._chatCreatedAt = session.createdAt;
 
     // Restore panel threads and thumbnail entries
@@ -2169,6 +2371,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
       }
     }
+
+    this._presentation.releaseFocusedThread();
+    this._drawer?.setPresentationFocus(null);
 
     // After lockout expires, scroll to last thread boundary instead of absolute bottom
     setTimeout(() => {
@@ -2376,6 +2581,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         dispatch('gengage:chat:add-to-cart', detail);
         this._bridge?.send('addToCart', params);
         void this._runEventCallbacks('gengage-cart-add', detail as unknown as Record<string, unknown>);
+        this.track(
+          basketAddEvent(this.analyticsContext(), {
+            attribution_source: 'chat',
+            attribution_action_id: crypto.randomUUID(),
+            cart_value: 0, // Host page should enrich via event listener
+            currency: 'TRY',
+            line_items: params.quantity,
+            sku: params.sku,
+          }),
+        );
         // Send addToCart action to backend — preservePanel keeps current products visible
         this._sendAction(
           {
@@ -2585,6 +2800,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const inline = this._renderUISpec(inlineSpec, renderContext);
       if (chatMsg.threadId) inline.dataset['threadId'] = chatMsg.threadId;
       messagesContainer.appendChild(inline);
+      this._drawer?.refreshPresentationCollapsed();
       return;
     }
 
@@ -2593,6 +2809,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       inline.dataset['threadId'] = chatMsg.threadId;
     }
     messagesContainer.appendChild(inline);
+    this._drawer?.refreshPresentationCollapsed();
   }
 
   private _createMessage(role: 'user' | 'assistant', content: string): ChatMessage {
@@ -2662,3 +2879,10 @@ export {
 export type { UISpecRenderContext } from './components/renderUISpec.js';
 export { chatCatalog } from './catalog.js';
 export type { ChatCatalog, ChatComponentName } from './catalog.js';
+export {
+  getChatScrollElement,
+  invalidateChatScrollCache,
+  CHAT_SCROLL_ELEMENT_ID,
+} from './utils/get-chat-scroll-element.js';
+export { ChatPresentationState } from './chat-presentation-state.js';
+export type { GroupReadState, PresentationGroupMeta, ScrollRequest } from './chat-presentation-state.js';

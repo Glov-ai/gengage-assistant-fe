@@ -439,8 +439,14 @@ reason, expert_quality_score, review_highlight, product_item, requestDetails }`)
 
 ### `aiSuggestedSearches` — Upsell search suggestions
 
-**Payload fields used**: `suggested_searches` (array of `{ short_name, detailed_user_message,
-why_different, sku, image, group_skus }`)
+**Payload fields used**: `suggested_searches` (array of entries with `short_name`, `detailed_user_message`,
+`representative_product_sku`, `image`, `group_skus`, optional `requestDetails`, and optional
+**`display_keywords`**.)
+
+**Browse card compact line**: The tertiary line on each card is built from `display_keywords` / short
+fragments of `chosen_attribute` / `short_name` (see `getSuggestedSearchKeywords` in the SDK). The
+backend field `why_different` is **not** shown on the card — it is reserved for non-UI or legacy
+uses; long explanatory sentences must not appear in that slot.
 
 ```
 ┌─────────────────────────────────┐

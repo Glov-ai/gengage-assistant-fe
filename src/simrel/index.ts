@@ -66,7 +66,6 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     this._lastSku = config.sku;
     await this._fetchAndRender(config.sku);
-    this.isVisible = true;
     ga.trackInit('simrel');
   }
 
@@ -255,6 +254,9 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         }
       }
 
+      // If aborted (new SKU fetch started), bail out — new invocation owns _contentEl
+      if (signal.aborted) return;
+
       // Flat grid (no groupings or groupings failed)
       if (this._contentEl) {
         const gridSpec = this._buildProductsSpec(products);
@@ -310,13 +312,11 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         const errorEl = document.createElement('div');
         errorEl.className = 'gengage-simrel-error';
         const msgEl = document.createElement('span');
-        msgEl.textContent = this.config.locale?.startsWith('tr')
-          ? 'Benzer \u00FCr\u00FCnler y\u00FCklenemedi.'
-          : 'Could not load similar products.';
+        msgEl.textContent = this._i18n.errorLoadingMessage;
         errorEl.appendChild(msgEl);
         const retryBtn = document.createElement('button');
         retryBtn.className = 'gengage-simrel-retry';
-        retryBtn.textContent = this.config.locale?.startsWith('tr') ? 'Tekrar dene' : 'Try again';
+        retryBtn.textContent = this._i18n.retryButtonText;
         retryBtn.addEventListener('click', () => {
           void this._fetchAndRender(this.config.sku);
         });

@@ -144,7 +144,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     accountId: 'boynercomtr',
     locale: 'tr',
     theme: {
-      primaryColor: '#000000',
+      primaryColor: '#EE403D',
       primaryForeground: '#ffffff',
       backgroundColor: '#ffffff',
       foregroundColor: '#333333',
@@ -162,7 +162,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     accountId: 'evideacom',
     locale: 'tr',
     theme: {
-      primaryColor: '#e84393',
+      primaryColor: '#ff6a00',
       primaryForeground: '#ffffff',
       backgroundColor: '#ffffff',
       foregroundColor: '#2d3436',
@@ -194,24 +194,6 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
   },
 
-  otokoccomtr: {
-    accountId: 'otokoccomtr',
-    locale: 'tr',
-    theme: {
-      primaryColor: '#003087',
-      primaryForeground: '#ffffff',
-      backgroundColor: '#ffffff',
-      foregroundColor: '#333333',
-      borderRadius: '8px',
-      fontFamily: '"Roboto", Arial, sans-serif',
-      fontSize: '14px',
-    },
-    chatI18n: {
-      inputPlaceholder: 'Araç veya hizmet arayın',
-      poweredBy: 'Otokoç AI Asistan',
-    },
-  },
-
   divanpastanelericomtr: {
     accountId: 'divanpastanelericomtr',
     locale: 'tr',
@@ -234,8 +216,8 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     accountId: 'screwfixcom',
     locale: 'en',
     theme: {
-      primaryColor: '#f6a623',
-      primaryForeground: '#1a1a1a',
+      primaryColor: '#00539f',
+      primaryForeground: '#ffffff',
       backgroundColor: '#ffffff',
       foregroundColor: '#333333',
       borderRadius: '4px',
@@ -251,6 +233,150 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     chatI18n: {
       inputPlaceholder: 'Search products or ask a question',
       poweredBy: 'Screwfix AI Assistant',
+    },
+  },
+
+  penticom: {
+    accountId: 'penticom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#E91E63',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#333333',
+      borderRadius: '8px',
+      fontFamily: '"Nunito Sans", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ürün ara veya soru sor',
+      poweredBy: 'Penti AI Asistan',
+    },
+  },
+
+  pazaramacom: {
+    accountId: 'pazaramacom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#0039A6',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#2B2422',
+      borderRadius: '8px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ürün ara veya soru sor',
+      poweredBy: 'Pazarama AI Asistan',
+    },
+  },
+
+  lcwcom: {
+    accountId: 'lcwcom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#B82020',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#0C0B37',
+      borderRadius: '8px',
+      fontFamily: '"Metropolis", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ürün ara veya soru sor',
+      poweredBy: 'LC Waikiki AI Asistan',
+    },
+  },
+
+  flocomtr: {
+    accountId: 'flocomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#FF6600',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#000000',
+      borderRadius: '8px',
+      fontFamily: '"Roboto", sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ayakkabı veya aksesuar arayın',
+      poweredBy: 'FLO AI Asistan',
+    },
+  },
+
+  defactocomtr: {
+    accountId: 'defactocomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#f28100',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#22242a',
+      borderRadius: '8px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ürün ara veya soru sor',
+      poweredBy: 'DeFacto AI Asistan',
+    },
+  },
+
+  avansascom: {
+    accountId: 'avansascom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#F07E01',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#333333',
+      borderRadius: '8px',
+      fontFamily: '"Open Sans", sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ofis malzemesi ara veya soru sor',
+      poweredBy: 'Avansas AI Asistan',
+    },
+  },
+
+  teknosacom: {
+    accountId: 'teknosacom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#F58220',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#0C0B37',
+      borderRadius: '8px',
+      fontFamily: '"Metropolis", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Elektronik ürün ara veya soru sor',
+      poweredBy: 'Teknosa AI Asistan',
+    },
+  },
+
+  skecherscomtr: {
+    accountId: 'skecherscomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#003478',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#1a1a2e',
+      borderRadius: '8px',
+      fontFamily: '"Helvetica Neue", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Ayakkabı ara veya soru sor',
+      poweredBy: 'Skechers AI Asistan',
     },
   },
 };

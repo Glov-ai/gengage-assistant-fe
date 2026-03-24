@@ -87,4 +87,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   accountInactiveMessage: 'This account is currently inactive. Please try again later.',
   favoritesPageTitle: 'My Favorites',
   emptyFavoritesMessage: 'No favorites yet. Heart a product to save it here.',
+  showFormerMessagesButton: '↑ Show earlier messages',
+  aiAnalysisAnalyzingLabel: 'Analyzing products...',
+  aiBrowseCategoriesTitle: 'Browse categories',
 };

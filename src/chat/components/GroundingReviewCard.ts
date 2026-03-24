@@ -55,7 +55,15 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   // Make entire card clickable
   if (action) {
     container.style.cursor = 'pointer';
+    container.setAttribute('role', 'button');
+    container.setAttribute('tabindex', '0');
     container.addEventListener('click', () => ctx.onAction(action));
+    container.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        ctx.onAction(action);
+      }
+    });
   }
 
   return container;

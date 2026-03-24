@@ -1,4 +1,5 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
+import { registerChatScrollElement, CHAT_SCROLL_ELEMENT_ID } from '../utils/get-chat-scroll-element.js';
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
@@ -68,6 +69,20 @@ export interface ChatDrawerOptions {
   voiceLang?: string | undefined;
   /** Callback fired when the "New Chat" button is clicked. */
   onNewChat?: (() => void) | undefined;
+  /**
+   * Transcript presentation hooks (focus thread, pin-to-bottom heuristics).
+   * Optional — when omitted, legacy scroll behaviour is unchanged.
+   */
+  presentation?: {
+    onPinnedToBottomChange?: (pinned: boolean) => void;
+    onUserInteractingChange?: (interacting: boolean) => void;
+    /** User scrolled up while a thread focus is active — parent may show "former messages" */
+    onFormerMessagesHint?: () => void;
+    /** When true, stream-driven soft scroll-to-bottom is suppressed */
+    shouldBlockSoftAutoScroll?: () => boolean;
+    /** User tapped "show former messages" */
+    onReleasePresentationFocus?: () => void;
+  };
 }
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
@@ -99,6 +114,8 @@ export class ChatDrawer {
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
   private _panelFloatingEl: HTMLElement;
+  /** Slot between panel top bar and main scroll content (desktop AI picks / analyzing strip). */
+  private _panelAiZoneEl!: HTMLElement;
   private _favBadgeEl: HTMLElement | null = null;
   private _thinkingSteps: string[] = [];
   private _firstBotMessageIds: Set<string> = new Set();
@@ -114,6 +131,13 @@ export class ChatDrawer {
   private _conversationEl: HTMLElement | null = null;
   private readonly _options: ChatDrawerOptions;
   private _reopenPanelBtn: HTMLButtonElement | null = null;
+  private _presentationFocusThreadId: string | null = null;
+  private _formerMessagesBtn: HTMLButtonElement | null = null;
+  private _programmaticScrollUntil = 0;
+  private _userInteractionUntil = 0;
+  private _touchStartY: number | null = null;
+  private _presentationPinned = true;
+  private _presentationUserInteracting = false;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -477,28 +501,97 @@ export class ChatDrawer {
     this._kvkkSlot.className = 'gengage-chat-kvkk-slot';
     conversation.appendChild(this._kvkkSlot);
 
-    // Messages area
+    // Messages area (stable id for host tooling / getChatScrollElement registration)
     this.messagesEl = document.createElement('div');
+    this.messagesEl.id = CHAT_SCROLL_ELEMENT_ID;
     this.messagesEl.className = 'gengage-chat-messages';
     this.messagesEl.setAttribute('role', 'log');
     this.messagesEl.setAttribute('aria-live', 'polite');
     this.messagesEl.setAttribute('aria-atomic', 'false');
     this.messagesEl.setAttribute('aria-label', this.i18n.chatMessagesAriaLabel);
+    registerChatScrollElement(this.messagesEl);
 
-    // Track user scroll position to avoid auto-scrolling when reading history
+    const formerBtn = document.createElement('button');
+    formerBtn.type = 'button';
+    formerBtn.className = 'gengage-chat-former-messages-btn';
+    formerBtn.textContent = this.i18n.showFormerMessagesButton;
+    formerBtn.setAttribute('aria-label', this.i18n.showFormerMessagesButton);
+    formerBtn.style.display = 'none';
+    formerBtn.addEventListener('click', () => {
+      this._options.presentation?.onReleasePresentationFocus?.();
+    });
+    this.messagesEl.appendChild(formerBtn);
+    this._formerMessagesBtn = formerBtn;
+
+    const markExplicitUserInteraction = () => {
+      this._userInteractionUntil = Date.now() + 2000;
+    };
+
+    // Track user scroll position + presentation pin / interaction (aligned with legacy UX)
     let scrollRafPending = false;
+    const pres = () => this._options.presentation;
     const onMessagesScroll = () => {
       if (scrollRafPending) return;
       scrollRafPending = true;
       requestAnimationFrame(() => {
         scrollRafPending = false;
         const { scrollTop, scrollHeight, clientHeight } = this.messagesEl;
-        this._userScrolledUp = scrollHeight - scrollTop - clientHeight > 10;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        this._userScrolledUp = distanceFromBottom > 10;
+
+        const pinnedEnterThreshold = 32;
+        const pinnedExitThreshold = 96;
+        const previouslyPinned = this._presentationPinned;
+        const pinned = previouslyPinned
+          ? distanceFromBottom < pinnedExitThreshold
+          : distanceFromBottom < pinnedEnterThreshold;
+
+        const now = Date.now();
+        const isProgrammaticScroll = now < this._programmaticScrollUntil;
+        const explicitUserInteracting = !pinned && now < this._userInteractionUntil;
+        const nextUserInteracting = isProgrammaticScroll ? false : explicitUserInteracting;
+
+        if (pinned !== this._presentationPinned) {
+          this._presentationPinned = pinned;
+          pres()?.onPinnedToBottomChange?.(pinned);
+        }
+        if (nextUserInteracting !== this._presentationUserInteracting) {
+          this._presentationUserInteracting = nextUserInteracting;
+          pres()?.onUserInteractingChange?.(nextUserInteracting);
+        }
       });
     };
     this.messagesEl.addEventListener('scroll', onMessagesScroll, { passive: true });
     this._cleanups.push(() => {
       this.messagesEl.removeEventListener('scroll', onMessagesScroll);
+    });
+
+    const onWheel = (e: WheelEvent) => {
+      markExplicitUserInteraction();
+      if (e.deltaY < -6 && this._presentationFocusThreadId) {
+        this._options.presentation?.onFormerMessagesHint?.();
+      }
+    };
+    this.messagesEl.addEventListener('wheel', onWheel, { passive: true });
+    this._cleanups.push(() => this.messagesEl.removeEventListener('wheel', onWheel));
+
+    const onTouchStart = (e: TouchEvent) => {
+      markExplicitUserInteraction();
+      this._touchStartY = e.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      markExplicitUserInteraction();
+      const y = e.touches[0]?.clientY;
+      const start = this._touchStartY;
+      if (typeof y === 'number' && typeof start === 'number' && y - start > 10 && this._presentationFocusThreadId) {
+        this._options.presentation?.onFormerMessagesHint?.();
+      }
+    };
+    this.messagesEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    this.messagesEl.addEventListener('touchmove', onTouchMove, { passive: true });
+    this._cleanups.push(() => {
+      this.messagesEl.removeEventListener('touchstart', onTouchStart);
+      this.messagesEl.removeEventListener('touchmove', onTouchMove);
     });
 
     conversation.appendChild(this.messagesEl);
@@ -514,6 +607,8 @@ export class ChatDrawer {
     this._panelFloatingEl = document.createElement('div');
     this._panelFloatingEl.className = 'gengage-chat-panel-float';
     this._panelEl.appendChild(this._panelFloatingEl);
+
+    this._resetPanelAiZoneElement();
 
     // Suggestion pills row (between messages and input)
     this._pillsEl = document.createElement('div');
@@ -595,7 +690,11 @@ export class ChatDrawer {
       if (file && file.type.startsWith('image/')) {
         e.preventDefault();
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }
@@ -611,7 +710,11 @@ export class ChatDrawer {
       const file = this._fileInput.files?.[0];
       if (file) {
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }
@@ -667,7 +770,11 @@ export class ChatDrawer {
       const file = e.dataTransfer?.files[0];
       if (file) {
         if (this._onAttachment) {
-          this._onAttachment(file);
+          try {
+            this._onAttachment(file);
+          } catch (err) {
+            console.error('[gengage:chat] Attachment callback error:', err);
+          }
         } else {
           this.stageAttachment(file);
         }
@@ -823,6 +930,9 @@ export class ChatDrawer {
     }
 
     this.messagesEl.appendChild(bubble);
+    if (this._presentationFocusThreadId) {
+      this._applyPresentationCollapsed();
+    }
     this._scrollToBottom(message.role === 'user');
   }
 
@@ -956,7 +1066,10 @@ export class ChatDrawer {
   }
 
   clearMessages(): void {
-    this.messagesEl.innerHTML = '';
+    const former = this._formerMessagesBtn;
+    for (const child of [...this.messagesEl.children]) {
+      if (child !== former) child.remove();
+    }
   }
 
   /** Replace suggestion pills. Pass empty array to hide. */
@@ -1073,6 +1186,48 @@ export class ChatDrawer {
     return this._pendingAttachment;
   }
 
+  /**
+   * Desktop: area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
+   * so they are not duplicated in the chat column.
+   */
+  setPanelAiZoneState(
+    state: 'hidden' | 'analyzing' | 'results',
+    options?: { resultEl?: HTMLElement; analyzingLabel?: string },
+  ): void {
+    if (!this._panelAiZoneEl.isConnected) return;
+    if (state === 'hidden') {
+      this._panelAiZoneEl.innerHTML = '';
+      this._panelAiZoneEl.setAttribute('hidden', '');
+      return;
+    }
+    this._panelAiZoneEl.removeAttribute('hidden');
+    if (state === 'analyzing') {
+      this._panelAiZoneEl.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'gengage-chat-panel-ai-zone-inner';
+      const dots = document.createElement('div');
+      dots.className = 'gengage-chat-typing-dots';
+      for (let i = 0; i < 3; i++) {
+        dots.appendChild(document.createElement('span'));
+      }
+      const text = document.createElement('span');
+      text.className = 'gengage-chat-panel-ai-zone-text';
+      text.textContent = options?.analyzingLabel ?? this.i18n.aiAnalysisAnalyzingLabel;
+      wrap.appendChild(dots);
+      wrap.appendChild(text);
+      this._panelAiZoneEl.appendChild(wrap);
+    } else if (state === 'results' && options?.resultEl) {
+      this._panelAiZoneEl.innerHTML = '';
+      this._panelAiZoneEl.appendChild(options.resultEl);
+    }
+  }
+
+  private _resetPanelAiZoneElement(): void {
+    this._panelAiZoneEl = document.createElement('div');
+    this._panelAiZoneEl.className = 'gengage-chat-panel-ai-zone';
+    this._panelAiZoneEl.setAttribute('hidden', '');
+  }
+
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
     const wasVisible = this._panelVisible;
@@ -1082,8 +1237,11 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--transitioning');
     }
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
     this._panelEl.appendChild(el);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
@@ -1104,7 +1262,9 @@ export class ChatDrawer {
 
   /** Append content to the panel without replacing existing content. */
   appendPanelContent(el: HTMLElement): void {
-    this._panelEl.insertBefore(el, this._panelFloatingEl);
+    const thumb = this._thumbnailsColumn.getElement();
+    const ref = thumb.parentElement === this._panelEl ? thumb : this._panelFloatingEl;
+    this._panelEl.insertBefore(el, ref);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1120,6 +1280,7 @@ export class ChatDrawer {
       const child = children[i] as HTMLElement;
       if (
         child.classList.contains('gengage-chat-panel-topbar') ||
+        child.classList.contains('gengage-chat-panel-ai-zone') ||
         child.classList.contains('gengage-chat-thumbnails-column') ||
         child.classList.contains('gengage-chat-panel-float')
       ) {
@@ -1149,7 +1310,9 @@ export class ChatDrawer {
   showPanelLoading(contentType?: string): void {
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
     const skeleton = document.createElement('div');
     skeleton.className = 'gengage-chat-panel-skeleton';
 
@@ -1200,6 +1363,7 @@ export class ChatDrawer {
     }
 
     this._panelEl.appendChild(skeleton);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1238,7 +1402,10 @@ export class ChatDrawer {
    */
   clearPanel(): void {
     this._panelEl.innerHTML = '';
+    this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
+    this._panelEl.appendChild(this._panelAiZoneEl);
+    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
@@ -1472,6 +1639,7 @@ export class ChatDrawer {
   /** Scroll to bottom only if user hasn't scrolled up. Force=true always scrolls. */
   private _scrollToBottom(force = false): void {
     if (!force && this._userScrolledUp) return;
+    if (!force && this._options.presentation?.shouldBlockSoftAutoScroll?.()) return;
     if (!force && Date.now() < this._scrollLockedUntil) return;
     requestAnimationFrame(() => {
       this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
@@ -1519,6 +1687,7 @@ export class ChatDrawer {
       this._scrollToBottom(true);
       return;
     }
+    this._programmaticScrollUntil = Date.now() + 700;
     const target = this.messagesEl.querySelector(`[data-thread-id="${CSS.escape(lastThreadId)}"]`);
     if (target) {
       requestAnimationFrame(() => {
@@ -1527,6 +1696,69 @@ export class ChatDrawer {
       });
     } else {
       this._scrollToBottom(true);
+    }
+  }
+
+  /**
+   * Smooth scroll transcript so the given thread’s first bubble is near the top.
+   * Used by centralized presentation scroll requests.
+   */
+  scrollThreadIntoView(threadId: string, behavior: ScrollBehavior = 'smooth'): boolean {
+    const target = this.messagesEl.querySelector(`[data-thread-id="${CSS.escape(threadId)}"]`) as HTMLElement | null;
+    if (!target) return false;
+    const topInset = 20;
+    const nextTop = Math.max(target.offsetTop - topInset, 0);
+    this._programmaticScrollUntil = Date.now() + 700;
+    this._scrollMessagesTo(nextTop, behavior);
+    return true;
+  }
+
+  /** Programmatic scroll to bottom (e.g. host bridge) — bypasses “user scrolled up” until next frame. */
+  scrollToBottomPresentation(behavior: ScrollBehavior = 'smooth'): void {
+    this._programmaticScrollUntil = Date.now() + 700;
+    requestAnimationFrame(() => {
+      this._scrollMessagesTo(this.messagesEl.scrollHeight, behavior);
+      this._userScrolledUp = false;
+    });
+  }
+
+  private _scrollMessagesTo(top: number, behavior: ScrollBehavior): void {
+    if (typeof this.messagesEl.scrollTo === 'function') {
+      this.messagesEl.scrollTo({ top, behavior });
+      return;
+    }
+    this.messagesEl.scrollTop = top;
+  }
+
+  /** Collapse transcript to a single thread (null = show full history). */
+  setPresentationFocus(threadId: string | null): void {
+    this._presentationFocusThreadId = threadId;
+    this._applyPresentationCollapsed();
+  }
+
+  setFormerMessagesButtonVisible(visible: boolean): void {
+    if (this._formerMessagesBtn) {
+      this._formerMessagesBtn.style.display = visible ? '' : 'none';
+    }
+  }
+
+  private _applyPresentationCollapsed(): void {
+    const focus = this._presentationFocusThreadId;
+    this.messagesEl.querySelectorAll<HTMLElement>('[data-thread-id]').forEach((el) => {
+      const tid = el.dataset['threadId'];
+      if (!tid) return;
+      if (focus && tid !== focus) {
+        el.classList.add('gengage-chat-bubble--presentation-collapsed');
+      } else {
+        el.classList.remove('gengage-chat-bubble--presentation-collapsed');
+      }
+    });
+  }
+
+  /** Call after inline chat DOM (e.g. ProductSummaryCard) is appended — reapplies thread collapse. */
+  refreshPresentationCollapsed(): void {
+    if (this._presentationFocusThreadId) {
+      this._applyPresentationCollapsed();
     }
   }
 
@@ -1633,6 +1865,7 @@ export class ChatDrawer {
 
   /** Clean up event listeners and child resources (VoiceInput, timers). */
   destroy(): void {
+    registerChatScrollElement(null);
     this.releaseFocus();
     this._clearStillWorkingTimer();
     for (const cleanup of this._cleanups) cleanup();

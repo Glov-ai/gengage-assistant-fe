@@ -1,15 +1,23 @@
 .gengage-simrel-container {
-  font-family: var(--gengage-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-family: var(
+    --gengage-font-family,
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif
+  );
   font-size: var(--gengage-font-size, 14px);
-  color: var(--gengage-foreground-color, #333);
+  color: var(--gengage-foreground-color, #191c1d);
 
   /* Semantic color tokens (overridable by customers) */
-  --_gengage-border-color: var(--gengage-border-color, #e5e7eb);
-  --_gengage-discount-color: var(--gengage-discount-color, #ef4444);
-  --_gengage-text-primary: var(--gengage-text-primary, #1f2937);
+  --_gengage-border-color: var(--gengage-border-color, #edeeef);
+  --_gengage-discount-color: var(--gengage-discount-color, #a03d40);
+  --_gengage-text-primary: var(--gengage-text-primary, #191c1d);
   --_gengage-text-secondary: var(--gengage-text-secondary, #6b7280);
-  --_gengage-surface-muted: var(--gengage-surface-muted, #f8fafc);
-  --_gengage-surface-secondary: var(--gengage-surface-secondary, #f3f4f6);
+  --_gengage-surface-muted: var(--gengage-surface-muted, #f8f9fa);
+  --_gengage-surface-secondary: var(--gengage-surface-secondary, #f3f4f5);
   --_gengage-rating-color: var(--gengage-rating-color, #d97706);
 }
 
@@ -179,7 +187,7 @@
   border-top: 1px solid var(--_gengage-surface-muted);
   border-radius: 0;
   background: transparent;
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -191,7 +199,7 @@
 }
 
 .gengage-simrel-card-cta:hover {
-  color: var(--gengage-primary-color, #0b24d6);
+  color: var(--gengage-primary-color, #9a0d23);
   background: var(--_gengage-surface-muted);
 }
 
@@ -271,7 +279,7 @@
   flex: 1;
   border-left: 1px solid var(--_gengage-border-color);
   background: transparent;
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
   font-weight: 700;
   font-size: 12px;
   font-family: inherit;
@@ -284,7 +292,7 @@
 }
 
 .gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit:hover {
-  color: var(--gengage-primary-color, #0b24d6);
+  color: var(--gengage-primary-color, #9a0d23);
   background: var(--_gengage-surface-muted);
 }
 
@@ -330,8 +338,8 @@
 }
 
 .gengage-simrel-quick-action:hover {
-  border-color: var(--gengage-primary-color, #3b82f6);
-  color: var(--gengage-primary-color, #3b82f6);
+  border-color: var(--gengage-primary-color, #b7102a);
+  color: var(--gengage-primary-color, #b7102a);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
   transform: translateY(-1px);
 }
@@ -404,12 +412,12 @@
 }
 
 .gengage-simrel-tab:hover {
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
 }
 
 .gengage-simrel-tab--active {
-  color: var(--gengage-primary-color, #3b82f6);
-  border-bottom-color: var(--gengage-primary-color, #3b82f6);
+  color: var(--gengage-primary-color, #b7102a);
+  border-bottom-color: var(--gengage-primary-color, #b7102a);
   font-weight: 600;
   opacity: 1;
 }
@@ -424,7 +432,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid var(--_gengage-border-color);
-  border-top-color: var(--gengage-primary-color, #3b82f6);
+  border-top-color: var(--gengage-primary-color, #b7102a);
   border-radius: 50%;
   animation: gengage-simrel-spin 0.7s linear infinite;
 }
@@ -490,7 +498,7 @@
 .gengage-simrel-quick-action:focus-visible,
 .gengage-simrel-atc .gengage-qty-btn:focus-visible,
 .gengage-simrel-atc .gengage-qty-submit:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #3b82f6);
+  outline: 2px solid var(--gengage-primary-color, #b7102a);
   outline-offset: 2px;
 }
 
