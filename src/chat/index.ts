@@ -2859,6 +2859,10 @@ export {
 export type { UISpecRenderContext } from './components/renderUISpec.js';
 export { chatCatalog } from './catalog.js';
 export type { ChatCatalog, ChatComponentName } from './catalog.js';
-export { getChatScrollElement, invalidateChatScrollCache, CHAT_SCROLL_ELEMENT_ID } from './utils/get-chat-scroll-element.js';
+export {
+  getChatScrollElement,
+  invalidateChatScrollCache,
+  CHAT_SCROLL_ELEMENT_ID,
+} from './utils/get-chat-scroll-element.js';
 export { ChatPresentationState } from './chat-presentation-state.js';
 export type { GroupReadState, PresentationGroupMeta, ScrollRequest } from './chat-presentation-state.js';

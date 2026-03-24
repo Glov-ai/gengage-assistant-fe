@@ -56,16 +56,18 @@ test.describe('Theme CSS custom properties', () => {
     expect(value).toBe('8px');
   });
 
-  test('chat launcher inherits primary color from theme', async ({ page }) => {
+  test('chat launcher inherits theme presentation in image mode', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
 
-    const bgColor = await launcher.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // #ec6e00 = rgb(236, 110, 0)
-    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    expect(match).toBeTruthy();
-    expect(Number(match![1])).toBeGreaterThan(200); // red channel high
-    expect(Number(match![3])).toBeLessThan(40); // blue channel low
+    await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
+    await expect(launcher.locator('img')).toBeVisible();
+
+    const size = await launcher.evaluate((el) => ({
+      width: getComputedStyle(el).width,
+      height: getComputedStyle(el).height,
+    }));
+    expect(size.width).toBe(size.height);
   });
 
   test('QNA buttons use primary color as background', async ({ page }) => {

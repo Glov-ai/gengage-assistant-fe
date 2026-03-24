@@ -32,13 +32,19 @@ test.describe('Widget visual styles', () => {
     expect(numericRadius).toBeGreaterThanOrEqual(8);
   });
 
-  test('SimRel grid has proper layout', async ({ page }) => {
+  test('SimRel rail has proper horizontal layout', async ({ page }) => {
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });
 
-    // Grid should have display: grid
-    const display = await grid.evaluate((el) => window.getComputedStyle(el).display);
-    expect(display).toBe('grid');
+    const styles = await grid.evaluate((el) => {
+      const computed = window.getComputedStyle(el);
+      return {
+        display: computed.display,
+        overflowX: computed.overflowX,
+      };
+    });
+    expect(styles.display).toBe('flex');
+    expect(styles.overflowX === 'auto' || styles.overflowX === 'scroll').toBe(true);
   });
 
   test('font family is applied from theme', async ({ page }) => {

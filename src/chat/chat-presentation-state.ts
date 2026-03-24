@@ -63,7 +63,7 @@ export class ChatPresentationState {
     this.groups[id] = {
       id,
       threadId,
-      readState: existing?.readState === 'seen' ? nextRead : existing?.readState ?? nextRead,
+      readState: existing?.readState === 'seen' ? nextRead : (existing?.readState ?? nextRead),
       status: 'streaming',
       updatedAt: Date.now(),
     };

@@ -87,11 +87,7 @@ function appendTopPickMedia(product: Record<string, unknown>, alt: string, targe
   target.appendChild(media);
 }
 
-function appendPriceRow(
-  product: Record<string, unknown>,
-  body: HTMLElement,
-  ctx: ChatUISpecRenderContext,
-): void {
+function appendPriceRow(product: Record<string, unknown>, body: HTMLElement, ctx: ChatUISpecRenderContext): void {
   const price = product['price'] as string | undefined;
   const originalPrice = product['originalPrice'] as string | undefined;
   if (!price) return;

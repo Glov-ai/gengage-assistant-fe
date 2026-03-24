@@ -14,10 +14,9 @@ export type SuggestedSearchKeywordSource = {
 
 const MAX_KEYWORDS = 3;
 
-const cleanKeyword = (value: string): string => {
+const cleanKeyword = (value: string, options?: { stripLeadingStopWords?: boolean }): string => {
   const normalized = value
     .replace(/\s+/g, ' ')
-    .replace(/^(?:daha|için)\s+/i, '')
     .trim()
     .replace(/^[,.;:!?•-]+|[,.;:!?•-]+$/g, '');
 
@@ -25,17 +24,25 @@ const cleanKeyword = (value: string): string => {
     return '';
   }
 
-  return normalized.split(/\s+/).slice(0, 3).join(' ').trim();
+  const withoutStopWords = options?.stripLeadingStopWords
+    ? normalized.replace(/^(?:daha|için)\s+/i, '').trim()
+    : normalized;
+
+  if (!withoutStopWords) {
+    return '';
+  }
+
+  return withoutStopWords.split(/\s+/).slice(0, 3).join(' ').trim();
 };
 
-const splitKeywordSource = (value?: string): string[] => {
+const splitKeywordSource = (value?: string, options?: { stripLeadingStopWords?: boolean }): string[] => {
   if (!value) {
     return [];
   }
 
   return value
     .split(/[•,;:/()]|(?:\sve\s)|(?:\sand\s)|(?:\sile\s)|(?:\sfor\s)|(?:\swith\s)/i)
-    .map((part) => cleanKeyword(part))
+    .map((part) => cleanKeyword(part, options))
     .filter(Boolean);
 };
 
@@ -43,14 +50,20 @@ const splitKeywordSource = (value?: string): string[] => {
  * Ordered unique keywords (max 3) for suggested-search browse cards.
  */
 export function getSuggestedSearchKeywords(search: SuggestedSearchKeywordSource): string[] {
-  const orderedCandidates = [
-    ...(search.display_keywords ?? []).flatMap((keyword) => splitKeywordSource(keyword)),
-    ...splitKeywordSource(search.chosen_attribute),
+  const explicitKeywords = (search.display_keywords ?? []).flatMap((keyword) =>
+    splitKeywordSource(keyword, { stripLeadingStopWords: true }),
+  );
+  const uniqueExplicit = explicitKeywords.filter((keyword, index) => explicitKeywords.indexOf(keyword) === index);
+  if (uniqueExplicit.length > 0) {
+    return uniqueExplicit.slice(0, MAX_KEYWORDS);
+  }
+
+  const fallbackKeywords = [
+    ...splitKeywordSource(search.chosen_attribute, { stripLeadingStopWords: true }),
     ...splitKeywordSource(search.short_name),
   ];
-
-  return orderedCandidates
-    .filter((keyword, index) => orderedCandidates.indexOf(keyword) === index)
+  return fallbackKeywords
+    .filter((keyword, index) => fallbackKeywords.indexOf(keyword) === index)
     .slice(0, MAX_KEYWORDS);
 }
 

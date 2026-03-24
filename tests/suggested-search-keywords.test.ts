@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getSuggestedSearchKeywords,
-  getSuggestedSearchKeywordsText,
-} from '../src/common/suggested-search-keywords.js';
+import { getSuggestedSearchKeywords, getSuggestedSearchKeywordsText } from '../src/common/suggested-search-keywords.js';
 
 const base = {
   short_name: 'Standart Toz Torbalari',

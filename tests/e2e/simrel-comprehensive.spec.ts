@@ -72,16 +72,24 @@ test.describe('SimRel widget — card details', () => {
     }
   });
 
-  test('card images have reasonable aspect ratio (square container)', async ({ page }) => {
+  test('card images render with stable dimensions and contain fit', async ({ page }) => {
     const imgWrapper = page.locator('.gengage-simrel-card-image').first();
     await expect(imgWrapper).toBeVisible({ timeout: 10000 });
 
-    const aspectRatio = await imgWrapper.evaluate((el) => {
+    const image = imgWrapper.locator('img');
+    await expect(image).toBeVisible();
+
+    const metrics = await image.evaluate((el) => {
       const style = getComputedStyle(el);
-      return style.aspectRatio;
+      return {
+        width: parseFloat(style.width),
+        height: parseFloat(style.height),
+        objectFit: style.objectFit,
+      };
     });
-    // CSS sets aspect-ratio: 1 on .gengage-simrel-card-image
-    expect(aspectRatio).toContain('1');
+    expect(metrics.width).toBeGreaterThan(0);
+    expect(metrics.height).toBeGreaterThan(0);
+    expect(metrics.objectFit).toBe('contain');
   });
 
   test('SimRel container is within its mount target', async ({ page }) => {

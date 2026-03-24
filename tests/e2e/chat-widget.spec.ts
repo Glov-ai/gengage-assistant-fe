@@ -25,11 +25,11 @@ test.describe('Chat widget', () => {
 
     const box = await launcher.boundingBox();
     expect(box).toBeTruthy();
-    // Launcher should be approximately 56x56 (allow some tolerance for borders/padding)
-    expect(box!.width).toBeGreaterThanOrEqual(40);
-    expect(box!.width).toBeLessThanOrEqual(80);
-    expect(box!.height).toBeGreaterThanOrEqual(40);
-    expect(box!.height).toBeLessThanOrEqual(80);
+    // Koctas demo overrides launcher size to 112px in image mode.
+    expect(box!.width).toBeGreaterThanOrEqual(100);
+    expect(box!.width).toBeLessThanOrEqual(124);
+    expect(box!.height).toBeGreaterThanOrEqual(100);
+    expect(box!.height).toBeLessThanOrEqual(124);
   });
 
   test('drawer is hidden initially (has --hidden class)', async ({ page }) => {

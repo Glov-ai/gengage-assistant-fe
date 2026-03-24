@@ -34,6 +34,8 @@ export function logChatPresentation(scope: string, message: string, payload?: un
   window.__gengageChatPresentationDebugLog.push(entry);
   if (window.__gengageChatPresentationDebugLog.length > 400) window.__gengageChatPresentationDebugLog.shift();
   const prefix = `[gengage-chat-debug #${seq}][${scope}] ${message}`;
+  // eslint-disable-next-line no-console
   if (payload === undefined) console.debug(prefix);
+  // eslint-disable-next-line no-console
   else console.debug(prefix, payload);
 }

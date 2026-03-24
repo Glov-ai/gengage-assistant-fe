@@ -189,15 +189,15 @@ test.describe('Keyboard navigation', () => {
     const drawer = page.locator('.gengage-chat-drawer');
     await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
 
-    // Use keyboard Tab to reach the close button — this triggers :focus-visible
+    // Use keyboard navigation to reach the close button — this triggers :focus-visible
     const input = page.locator('.gengage-chat-input');
     await expect(input).toBeVisible({ timeout: 5000 });
     await input.focus();
 
-    // Tab until we reach the close button
+    // The close button is before the input in DOM order, so navigate backwards.
     let reachedClose = false;
     for (let i = 0; i < 15; i++) {
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
       const info = await getFocusedElementInfo(page);
       if (info.className.includes('gengage-chat-close')) {
         reachedClose = true;

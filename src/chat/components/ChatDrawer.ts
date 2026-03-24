@@ -577,12 +577,7 @@ export class ChatDrawer {
       markExplicitUserInteraction();
       const y = e.touches[0]?.clientY;
       const start = this._touchStartY;
-      if (
-        typeof y === 'number' &&
-        typeof start === 'number' &&
-        y - start > 10 &&
-        this._presentationFocusThreadId
-      ) {
+      if (typeof y === 'number' && typeof start === 'number' && y - start > 10 && this._presentationFocusThreadId) {
         this._options.presentation?.onFormerMessagesHint?.();
       }
     };
@@ -1704,7 +1699,7 @@ export class ChatDrawer {
     const topInset = 20;
     const nextTop = Math.max(target.offsetTop - topInset, 0);
     this._programmaticScrollUntil = Date.now() + 700;
-    this.messagesEl.scrollTo({ top: nextTop, behavior });
+    this._scrollMessagesTo(nextTop, behavior);
     return true;
   }
 
@@ -1712,9 +1707,17 @@ export class ChatDrawer {
   scrollToBottomPresentation(behavior: ScrollBehavior = 'smooth'): void {
     this._programmaticScrollUntil = Date.now() + 700;
     requestAnimationFrame(() => {
-      this.messagesEl.scrollTo({ top: this.messagesEl.scrollHeight, behavior });
+      this._scrollMessagesTo(this.messagesEl.scrollHeight, behavior);
       this._userScrolledUp = false;
     });
+  }
+
+  private _scrollMessagesTo(top: number, behavior: ScrollBehavior): void {
+    if (typeof this.messagesEl.scrollTo === 'function') {
+      this.messagesEl.scrollTo({ top, behavior });
+      return;
+    }
+    this.messagesEl.scrollTop = top;
   }
 
   /** Collapse transcript to a single thread (null = show full history). */
