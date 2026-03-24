@@ -3,19 +3,36 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "outDir": "../catalog-dist",
     "baseUrl": ".",
     "paths": {
-      "@gengage/assistant-fe": ["../dist/index.d.ts"],
-      "@gengage/assistant-fe/chat": ["../dist/chat/index.d.ts"],
-      "@gengage/assistant-fe/qna": ["../dist/qna/index.d.ts"],
-      "@gengage/assistant-fe/simrel": ["../dist/simrel/index.d.ts"],
-      "@gengage/assistant-fe/common": ["../dist/common/index.d.ts"]
+      "@gengage/assistant-fe": [
+        "../dist/index.d.ts"
+      ],
+      "@gengage/assistant-fe/chat": [
+        "../dist/chat/index.d.ts"
+      ],
+      "@gengage/assistant-fe/qna": [
+        "../dist/qna/index.d.ts"
+      ],
+      "@gengage/assistant-fe/simrel": [
+        "../dist/simrel/index.d.ts"
+      ],
+      "@gengage/assistant-fe/common": [
+        "../dist/common/index.d.ts"
+      ]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../src/vite-env.d.ts"
+  ]
 }

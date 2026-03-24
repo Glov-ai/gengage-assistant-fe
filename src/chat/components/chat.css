@@ -4687,7 +4687,7 @@
 /* ── ChoicePrompter ── */
 .gengage-chat-choice-prompter {
   position: absolute;
-  bottom: 12px;
+  bottom: 20px;
   right: 12px;
   pointer-events: auto;
   width: 200px;

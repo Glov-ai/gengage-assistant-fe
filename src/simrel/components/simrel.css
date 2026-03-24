@@ -386,6 +386,8 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* Prevent the last tab from being visually clipped at the scroll edge */
+  padding-right: 24px;
 }
 
 .gengage-simrel-tabs::-webkit-scrollbar {

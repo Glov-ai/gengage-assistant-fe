@@ -3,7 +3,11 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "exactOptionalPropertyTypes": true,
@@ -16,13 +20,29 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@gengage/common": ["src/common/index.ts"],
-      "@gengage/chat": ["src/chat/index.ts"],
-      "@gengage/qna": ["src/qna/index.ts"],
-      "@gengage/simrel": ["src/simrel/index.ts"]
+      "@gengage/common": [
+        "src/common/index.ts"
+      ],
+      "@gengage/chat": [
+        "src/chat/index.ts"
+      ],
+      "@gengage/qna": [
+        "src/qna/index.ts"
+      ],
+      "@gengage/simrel": [
+        "src/simrel/index.ts"
+      ]
     },
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules", "examples", "tests"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "examples",
+    "tests"
+  ]
 }
