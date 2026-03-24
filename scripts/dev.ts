@@ -18,9 +18,10 @@
 
 import { createServer, type Plugin } from 'vite';
 import { readFileSync, existsSync, readdirSync } from 'fs';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
