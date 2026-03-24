@@ -390,18 +390,17 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     this._showTransitionIndicator();
     ga.trackSuggestedQuestion(action.title, action.type);
     this.config.onActionSelected?.(action);
-    dispatch('gengage:qna:action', action);
+    // Delay the bridge dispatch so the transition indicator is visible for a
+    // moment before the chat overlay takes over — without the delay both happen
+    // in the same task and the indicator is never painted.
+    setTimeout(() => dispatch('gengage:qna:action', action), 350);
   }
 
   private _handleOpenChat(): void {
     this._showTransitionIndicator();
-    // Couple CTA with the inline QNA text input when available.
-    const input = this._contentEl?.querySelector<HTMLInputElement>('.gengage-qna-input');
-    if (input) {
-      input.focus();
-    }
     this.config.onOpenChat?.();
-    dispatch('gengage:qna:open-chat', {});
+    // Same 350ms delay so the indicator is perceptible before chat opens.
+    setTimeout(() => dispatch('gengage:qna:open-chat', {}), 350);
   }
 
   private _showTransitionIndicator(): void {

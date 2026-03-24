@@ -55,6 +55,9 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
   private _abortController: AbortController | null = null;
   private _contentEl: HTMLElement | null = null;
   private _lastSku: string | undefined;
+  /** Number of products returned from the last successful fetch. Used to allow
+   *  retry when the same SKU previously produced an empty result set. */
+  private _lastResultCount = -1;
   private _i18n: SimRelI18n = SIMREL_I18N_TR;
 
   protected async onInit(config: SimRelWidgetConfig): Promise<void> {
@@ -71,7 +74,11 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
   protected onUpdate(context: Partial<PageContext>): void {
     const newSku = context.sku;
-    if (!newSku || newSku === this._lastSku) return;
+    // Allow retry for the same SKU when the previous fetch returned no products
+    // (e.g. transient backend empty response). _lastResultCount === 0 means the
+    // last fetch succeeded but produced nothing — worth retrying on the next
+    // page interaction.
+    if (!newSku || (newSku === this._lastSku && this._lastResultCount !== 0)) return;
     this._lastSku = newSku;
     void this._fetchAndRender(newSku);
   }
@@ -206,6 +213,8 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       };
       if (this.config.domain !== undefined) simReq.domain = this.config.domain;
       const products = await fetchSimilarProducts(simReq, transport, signal);
+      // Record result count so onUpdate can retry if last fetch was empty
+      this._lastResultCount = products.length;
 
       if (!this._contentEl) return;
       this._contentEl.innerHTML = '';

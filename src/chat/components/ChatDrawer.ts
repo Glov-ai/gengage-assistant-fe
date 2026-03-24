@@ -230,7 +230,7 @@ export class ChatDrawer {
     powered.href = 'https://gengage.ai/';
     powered.target = '_blank';
     powered.rel = 'noopener noreferrer';
-    powered.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM7 4.5h2v4H7v-4zm0 5h2v2H7v-2z"/></svg>Powered by Gengage`;
+    powered.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM7 4.5h2v4H7v-4zm0 5h2v2H7v-2z"/></svg>${this.i18n.poweredBy}`;
     headerInfo.appendChild(powered);
 
     headerLeft.appendChild(headerInfo);

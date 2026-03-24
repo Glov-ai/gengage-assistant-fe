@@ -1003,8 +1003,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._choicePrompterEl?.remove();
     this._choicePrompterEl = null;
 
-    // Clear comparison mode when starting a new request (unless preservePanel)
-    if (!options?.preservePanel && this._comparisonSelectMode) {
+    // Clear comparison mode when starting a new request (unless preservePanel).
+    // Exception: getComparisonTable actions keep comparison state visible during
+    // the request so the floating button and checkboxes stay as loading feedback.
+    // State is cleared once the ComparisonTable UISpec actually renders in the panel.
+    if (!options?.preservePanel && this._comparisonSelectMode && action.type !== 'getComparisonTable') {
       this._comparisonSelectMode = false;
       this._comparisonSelectedSkus = [];
     }
@@ -2538,6 +2541,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         btn.addEventListener('click', () => {
           if (this._comparisonSelectedSkus.length < 2) return;
           ga.trackCompareSelected(this._comparisonSelectedSkus);
+          // Cancel any pending rAF refresh so it cannot tear down the floating
+          // button between the click and the panel response arriving.
+          if (this._comparisonRefreshRafId !== null) {
+            cancelAnimationFrame(this._comparisonRefreshRafId);
+            this._comparisonRefreshRafId = null;
+          }
           // On mobile the ComparisonTable renders exclusively in the panel.
           // Keep the panel visible and show a loading skeleton so the user
           // gets immediate feedback, rather than hiding the panel and leaving
