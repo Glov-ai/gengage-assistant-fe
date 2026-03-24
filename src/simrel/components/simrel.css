@@ -210,6 +210,7 @@
 
 .gengage-simrel-card .gengage-simrel-atc {
   display: flex;
+  align-items: center;
   width: 100%;
   border-top: 1px solid var(--_gengage-border-color);
   border-left: none;
@@ -217,6 +218,34 @@
   border-bottom: none;
   border-radius: 0;
   background: transparent;
+}
+
+/* Button reset — simrel renders outside the chat shadow DOM so chat.css base
+   styles are not available. These rules replicate the base gengage-qty-btn
+   reset that normally lives in chat.css. */
+.gengage-simrel-atc .gengage-qty-btn,
+.gengage-simrel-atc .gengage-qty-submit {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gengage-simrel-atc .gengage-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.gengage-simrel-atc .gengage-qty-value {
+  text-align: center;
+  font-weight: 600;
+  flex: 0 0 auto;
+  user-select: none;
 }
 
 .gengage-simrel-card .gengage-simrel-atc.gengage-qty-stepper {
