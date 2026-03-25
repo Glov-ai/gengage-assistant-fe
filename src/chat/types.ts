@@ -176,6 +176,8 @@ export interface ChatI18n {
   sortToolbarAriaLabel: string;
   compareSelected: string;
   compareMinHint: string;
+  /** Shown on product cards while comparison mode is on — whole card toggles selection. */
+  comparisonSelectCardHint: string;
   panelTitleProductDetails: string;
   panelTitleSimilarProducts: string;
   panelTitleComparisonResults: string;
@@ -268,6 +270,7 @@ export interface ChatUISpecRenderContext {
     | 'sortPriceDesc'
     | 'sortToolbarAriaLabel'
     | 'compareSelected'
+    | 'comparisonSelectCardHint'
     | 'panelTitleProductDetails'
     | 'panelTitleSimilarProducts'
     | 'panelTitleComparisonResults'

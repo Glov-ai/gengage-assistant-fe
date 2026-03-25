@@ -31,6 +31,8 @@ export const CHAT_I18N_TR: ChatI18n = {
   sortToolbarAriaLabel: 'Ürünleri sırala',
   compareSelected: 'Karşılaştır',
   compareMinHint: 'En az 2 ürün seçin',
+  comparisonSelectCardHint:
+    'Karşılaştırmaya eklemek veya çıkarmak için kartın herhangi bir yerine dokunun.',
   panelTitleProductDetails: 'Ürün Detayı',
   panelTitleSimilarProducts: 'Benzer Ürünler',
   panelTitleComparisonResults: 'Karşılaştırma Sonuçları',

@@ -393,6 +393,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const wrapper = document.createElement('div');
     wrapper.className = 'gengage-chat-comparison-select-wrapper';
 
+    const productName = (product['name'] as string | undefined) ?? sku;
+    const hintText =
+      ctx.i18n?.comparisonSelectCardHint ??
+      'Tap anywhere on the card to add or remove it from comparison.';
+    wrapper.setAttribute('role', 'group');
+    wrapper.setAttribute('aria-label', `${String(productName)}. ${hintText}`);
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'gengage-chat-comparison-checkbox';
@@ -400,6 +407,11 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     checkbox.addEventListener('change', () => {
       ctx.onToggleComparisonSku?.(sku);
     });
+
+    const hint = document.createElement('div');
+    hint.className = 'gengage-chat-comparison-card-hint';
+    hint.setAttribute('aria-hidden', 'true');
+    hint.textContent = hintText;
 
     // Clicking anywhere on the card toggles comparison selection — no product detail navigation.
     // Do NOT manually flip checkbox.checked here: onToggleComparisonSku triggers
@@ -411,6 +423,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     });
 
     wrapper.appendChild(checkbox);
+    wrapper.appendChild(hint);
     wrapper.appendChild(card);
     return wrapper;
   }

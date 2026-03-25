@@ -4274,6 +4274,36 @@
 /* Comparison select wrapper (checkbox overlay on product cards) */
 .gengage-chat-comparison-select-wrapper {
   position: relative;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.gengage-chat-comparison-select-wrapper:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gengage-primary-color, #b7102a) 38%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gengage-chat-comparison-select-wrapper {
+    transition: none;
+  }
+}
+
+/* Pass clicks to wrapper so CTA / favorite / find-similar / stepper do not activate */
+.gengage-chat-comparison-select-wrapper > .gengage-chat-product-card {
+  pointer-events: none;
+}
+
+.gengage-chat-comparison-card-hint {
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--gengage-text-secondary, #64748b);
+  background: color-mix(in srgb, var(--gengage-primary-color, #b7102a) 10%, transparent);
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .gengage-chat-comparison-checkbox {
@@ -4286,6 +4316,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
+  pointer-events: auto;
   accent-color: var(--gengage-primary-color, #b7102a);
   background: #fff;
   border-radius: 4px;
