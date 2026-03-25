@@ -78,6 +78,16 @@ import {
 import chatStyles from './components/chat.css?inline';
 import * as ga from '../common/ga-datalayer.js';
 
+/**
+ * Panel rebuild source for local drilldown history and stream-end snapshots.
+ * `productDetailsWithSimilars` keeps PDP + appended similar grid in sync when
+ * similars arrive in a second stream chunk (DOM append does not update `spec` alone).
+ */
+type PanelSource =
+  | { kind: 'spec'; spec: UISpec }
+  | { kind: 'productDetailsWithSimilars'; pdpSpec: UISpec; similarsSpec: UISpec }
+  | { kind: 'favorites' };
+
 /** Validate that a string is a safe CSS color value (no url(), expression(), etc.). */
 function isSafeCSSColor(value: string): boolean {
   if (value.length > 120) return false;
@@ -175,15 +185,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    *  Stores rebuild info (UISpec or kind) instead of DOM clones so back navigation
    *  produces fresh elements with live event listeners. */
   private _localPanelHistory: Array<{
-    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' };
+    source: PanelSource;
     title: string;
   }> = [];
   private static readonly _MAX_PANEL_HISTORY = 10;
   /** Tracks how the current panel content was produced, for history/error-recovery rebuild. */
-  private _currentPanelSource:
-    | { kind: 'spec'; spec: import('../common/types.js').UISpec }
-    | { kind: 'favorites' }
-    | null = null;
+  private _currentPanelSource: PanelSource | null = null;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
   /** Transcript focus, pin-to-bottom, and scroll request coordination. */
@@ -1115,10 +1122,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       if (!this._drawer?.isPanelLoading()) return;
       if (prePanelSource) {
         const ctx = this._buildRenderContext();
-        const el =
-          prePanelSource.kind === 'favorites'
-            ? this._buildFavoritesPageEl()
-            : this._renderUISpec(prePanelSource.spec, ctx);
+        const el = this._renderPanelFromSource(prePanelSource, ctx);
         this._drawer.setPanelContent(el);
         this._currentPanelSource = prePanelSource;
       } else {
@@ -2000,9 +2004,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             panelSource
               ? () => {
                   const ctx = this._buildRenderContext();
-                  return panelSource.kind === 'favorites'
-                    ? this._buildFavoritesPageEl()
-                    : this._renderUISpec(panelSource.spec, ctx);
+                  return this._renderPanelFromSource(panelSource, ctx);
                 }
               : undefined,
           );
@@ -2080,6 +2082,46 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const grid = this._renderUISpec(spec, ctx);
     grid.classList.add('gengage-chat-product-details-similars');
     panelEl.appendChild(grid);
+    this._mergePanelSourceWithSimilars(spec);
+  }
+
+  /** After similars grid is appended, extend panel source so back/history/snapshot rebuild includes it. */
+  private _mergePanelSourceWithSimilars(similarsSpec: UISpec): void {
+    const prev = this._currentPanelSource;
+    if (prev?.kind === 'spec' && this._panel?.currentType === 'ProductDetailsPanel') {
+      this._currentPanelSource = {
+        kind: 'productDetailsWithSimilars',
+        pdpSpec: prev.spec,
+        similarsSpec,
+      };
+    }
+  }
+
+  /** Re-render PDP plus similar-products block (matches `_appendSimilarsToPanel` structure). */
+  private _renderProductDetailsWithSimilars(
+    pdpSpec: UISpec,
+    similarsSpec: UISpec,
+    ctx: ChatUISpecRenderContext,
+  ): HTMLElement {
+    const panelEl = this._renderUISpec(pdpSpec, ctx);
+    const heading = document.createElement('h3');
+    heading.className = 'gengage-chat-product-details-similars-heading';
+    heading.textContent = this._i18n.similarProductsLabel ?? 'Similar Products';
+    panelEl.appendChild(heading);
+    const grid = this._renderUISpec(similarsSpec, ctx);
+    grid.classList.add('gengage-chat-product-details-similars');
+    panelEl.appendChild(grid);
+    return panelEl;
+  }
+
+  private _renderPanelFromSource(source: PanelSource, ctx: ChatUISpecRenderContext): HTMLElement {
+    if (source.kind === 'favorites') {
+      return this._buildFavoritesPageEl();
+    }
+    if (source.kind === 'productDetailsWithSimilars') {
+      return this._renderProductDetailsWithSimilars(source.pdpSpec, source.similarsSpec, ctx);
+    }
+    return this._renderUISpec(source.spec, ctx);
   }
 
   private _handleRollback(messageId: string): void {
@@ -2409,8 +2451,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const prev = this._localPanelHistory.pop();
     if (prev) {
       const ctx = this._buildRenderContext();
-      const el =
-        prev.source.kind === 'favorites' ? this._buildFavoritesPageEl() : this._renderUISpec(prev.source.spec, ctx);
+      const el = this._renderPanelFromSource(prev.source, ctx);
       this._drawer?.setPanelContent(el);
       this._currentPanelSource = prev.source;
       const canBack = this._localPanelHistory.length > 0 || (this._panel?.threads.length ?? 0) > 1;
