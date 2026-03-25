@@ -178,6 +178,8 @@ export interface ChatI18n {
   compareMinHint: string;
   /** Shown on product cards while comparison mode is on — whole card toggles selection. */
   comparisonSelectCardHint: string;
+  /** Shown on the main panel while the comparison table is being generated. */
+  comparisonPreparingLabel: string;
   panelTitleProductDetails: string;
   panelTitleSimilarProducts: string;
   panelTitleComparisonResults: string;

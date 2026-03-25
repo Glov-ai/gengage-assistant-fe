@@ -33,6 +33,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   compareMinHint: 'En az 2 ürün seçin',
   comparisonSelectCardHint:
     'Karşılaştırmaya eklemek veya çıkarmak için kartın herhangi bir yerine dokunun.',
+  comparisonPreparingLabel: 'Karşılaştırma tablosu hazırlanıyor…',
   panelTitleProductDetails: 'Ürün Detayı',
   panelTitleSimilarProducts: 'Benzer Ürünler',
   panelTitleComparisonResults: 'Karşılaştırma Sonuçları',

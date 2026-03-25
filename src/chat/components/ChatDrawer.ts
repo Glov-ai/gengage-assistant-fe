@@ -1365,12 +1365,143 @@ export class ChatDrawer {
         break;
       }
       case 'comparisonTable': {
-        // Table-like rows
-        for (let i = 0; i < 4; i++) {
-          const row = document.createElement('div');
-          row.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--row';
-          skeleton.appendChild(row);
+        skeleton.classList.add('gengage-chat-panel-skeleton--comparison');
+        const root = document.createElement('div');
+        root.className = 'gengage-chat-comparison gengage-chat-comparison--skeleton';
+        root.setAttribute('aria-busy', 'true');
+
+        const status = document.createElement('div');
+        status.className = 'gengage-chat-comparison-loading-header';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        const spinner = document.createElement('div');
+        spinner.className = 'gengage-chat-comparison-loading-spinner';
+        spinner.setAttribute('aria-hidden', 'true');
+        const statusLabel = document.createElement('p');
+        statusLabel.className = 'gengage-chat-comparison-loading-label';
+        statusLabel.textContent = this.i18n.comparisonPreparingLabel;
+        status.appendChild(spinner);
+        status.appendChild(statusLabel);
+        root.appendChild(status);
+
+        // Önerilen seçim kartı — gerçek .gengage-chat-comparison-recommended ile aynı kutu
+        const rec = document.createElement('div');
+        rec.className = 'gengage-chat-comparison-recommended';
+        const recLabel = document.createElement('div');
+        recLabel.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-label';
+        rec.appendChild(recLabel);
+        const recBody = document.createElement('div');
+        recBody.className = 'gengage-chat-comparison-recommended-body';
+        const recImg = document.createElement('div');
+        recImg.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-img';
+        recImg.setAttribute('aria-hidden', 'true');
+        const recInfo = document.createElement('div');
+        recInfo.className = 'gengage-chat-comparison-recommended-info';
+        for (let i = 0; i < 2; i++) {
+          const t = document.createElement('div');
+          t.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-title';
+          if (i === 1) t.classList.add('gengage-chat-comparison-skeleton-rec-title--short');
+          recInfo.appendChild(t);
         }
+        const recPrice = document.createElement('div');
+        recPrice.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-price';
+        recInfo.appendChild(recPrice);
+        recBody.appendChild(recImg);
+        recBody.appendChild(recInfo);
+        rec.appendChild(recBody);
+        const hl = document.createElement('div');
+        hl.className = 'gengage-chat-comparison-highlights';
+        const hlLab = document.createElement('div');
+        hlLab.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-label';
+        hl.appendChild(hlLab);
+        const hlUl = document.createElement('ul');
+        hlUl.className = 'gengage-chat-comparison-skeleton-hl-list';
+        for (let i = 0; i < 3; i++) {
+          const li = document.createElement('li');
+          const line = document.createElement('div');
+          line.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-line';
+          if (i === 1) line.classList.add('gengage-chat-comparison-skeleton-hl-line--medium');
+          if (i === 2) line.classList.add('gengage-chat-comparison-skeleton-hl-line--short');
+          li.appendChild(line);
+          hlUl.appendChild(li);
+        }
+        hl.appendChild(hlUl);
+        rec.appendChild(hl);
+        root.appendChild(rec);
+
+        // Temel farklar — .gengage-chat-comparison-key-differences
+        const kd = document.createElement('div');
+        kd.className = 'gengage-chat-comparison-key-differences';
+        const kdH = document.createElement('div');
+        kdH.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-heading';
+        kd.appendChild(kdH);
+        const kdContent = document.createElement('div');
+        kdContent.className = 'gengage-chat-comparison-key-differences-content';
+        for (let i = 0; i < 4; i++) {
+          const line = document.createElement('div');
+          line.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-line';
+          kdContent.appendChild(line);
+        }
+        kd.appendChild(kdContent);
+        root.appendChild(kd);
+
+        // Özel durumlar çubuğu — gerçek special ile aynı dolgu/kenar
+        const special = document.createElement('div');
+        special.className = 'gengage-chat-comparison-special gengage-chat-comparison-special--skeleton';
+        const specialInner = document.createElement('div');
+        specialInner.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-special-line';
+        special.appendChild(specialInner);
+        root.appendChild(special);
+
+        // Tablo özeti — thead (görsel + isim + fiyat) + birkaç attribute satırı
+        const tableWrap = document.createElement('div');
+        tableWrap.className = 'gengage-chat-comparison-skeleton-table-wrap';
+        const thead = document.createElement('div');
+        thead.className = 'gengage-chat-comparison-skeleton-table-head';
+        const corner = document.createElement('div');
+        corner.className = 'gengage-chat-comparison-skeleton-table-corner';
+        thead.appendChild(corner);
+        for (let c = 0; c < 3; c++) {
+          const col = document.createElement('div');
+          col.className = 'gengage-chat-comparison-skeleton-table-col';
+          const thImg = document.createElement('div');
+          thImg.className =
+            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-img';
+          const thName = document.createElement('div');
+          thName.className =
+            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-name';
+          const thPrice = document.createElement('div');
+          thPrice.className =
+            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-price';
+          col.appendChild(thImg);
+          col.appendChild(thName);
+          col.appendChild(thPrice);
+          thead.appendChild(col);
+        }
+        tableWrap.appendChild(thead);
+        for (let r = 0; r < 3; r++) {
+          const row = document.createElement('div');
+          row.className = 'gengage-chat-comparison-skeleton-table-row';
+          const labelCell = document.createElement('div');
+          labelCell.className =
+            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-label';
+          row.appendChild(labelCell);
+          for (let c = 0; c < 3; c++) {
+            const cell = document.createElement('div');
+            cell.className =
+              'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-cell';
+            row.appendChild(cell);
+          }
+          tableWrap.appendChild(row);
+        }
+        root.appendChild(tableWrap);
+
+        skeleton.appendChild(root);
         break;
       }
       default: {

@@ -1109,6 +1109,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Preserve panel during the request — don't clear or show loading skeleton
     // until the backend explicitly signals new panel content (panelLoading event).
+    // Exception: getComparisonTable shows the panel skeleton immediately (desktop + mobile)
+    // so users see progress while the table streams in.
     // Captures the panel source (UISpec/kind) so it can be re-rendered with fresh
     // event listeners if the backend fails to deliver new panel content.
     let prePanelSource = this._currentPanelSource;
@@ -1131,6 +1133,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
       prePanelSource = null;
     };
+
+    if (action.type === 'getComparisonTable') {
+      this._drawer?.showPanelLoading('comparisonTable');
+      this._panel?.updateTopBarForLoading('comparisonTable');
+    }
 
     // Show typing indicator
     this._drawer?.showTypingIndicator();
@@ -2588,11 +2595,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             cancelAnimationFrame(this._comparisonRefreshRafId);
             this._comparisonRefreshRafId = null;
           }
-          // On mobile the ComparisonTable renders exclusively in the panel.
-          // Keep the panel visible and show a loading skeleton so the user
-          // gets immediate feedback, rather than hiding the panel and leaving
-          // them staring at a blank conversation.
-          if (this._isMobileViewport) this._drawer?.showPanelLoading();
           this._sendAction({
             title: label,
             type: 'getComparisonTable',

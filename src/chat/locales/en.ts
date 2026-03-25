@@ -32,6 +32,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   compareSelected: 'Compare',
   compareMinHint: 'Select at least 2 products',
   comparisonSelectCardHint: 'Tap anywhere on the card to add or remove it from comparison.',
+  comparisonPreparingLabel: 'Preparing your comparison…',
   panelTitleProductDetails: 'Product Details',
   panelTitleSimilarProducts: 'Similar Products',
   panelTitleComparisonResults: 'Comparison Results',
