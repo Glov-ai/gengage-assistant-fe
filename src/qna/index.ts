@@ -425,7 +425,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     const indicator = document.createElement('div');
     indicator.className = 'gengage-qna-transition-indicator';
     indicator.textContent = msg;
-    this._contentEl.appendChild(indicator);
+    const panel = this._contentEl.querySelector('.gengage-qna-panel');
+    (panel ?? this._contentEl).appendChild(indicator);
     setTimeout(() => {
       this._contentEl?.classList.remove('gengage-qna--transitioning');
       indicator.remove();
