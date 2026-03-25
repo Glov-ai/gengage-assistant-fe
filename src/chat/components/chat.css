@@ -1337,6 +1337,9 @@
   padding: 8px 12px;
   border-top: 1px solid var(--_gengage-border-color);
   background: var(--gengage-background-color, #ffffff);
+  /* Yukarı taşan ek menüsü mesaj listesinin altında kalmaması için */
+  position: relative;
+  z-index: 2;
 }
 
 .gengage-chat-input-pill {
@@ -1350,7 +1353,8 @@
   border: 1px solid var(--_gengage-border-color);
   border-radius: 30px;
   padding: 2px 8px 2px 8px;
-  overflow: hidden;
+  /* overflow:visible — attach menüsü yukarı taşar; hidden menüyü keserdi */
+  overflow: visible;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -2926,6 +2930,74 @@
 .gengage-chat-attach-btn svg {
   width: 20px;
   height: 20px;
+}
+
+.gengage-chat-attach-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-attach-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 196px;
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+  background: #f9fafb;
+  border: 1px solid var(--_gengage-border-color, #edeeef);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.12),
+    0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-attach-menu[hidden] {
+  display: none !important;
+}
+
+.gengage-chat-attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--_gengage-text-primary, #0f172a);
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.gengage-chat-attach-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.gengage-chat-attach-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.gengage-chat-attach-menu-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.gengage-chat-attach-menu-sep {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--_gengage-border-color, #edeeef);
 }
 
 /* Voice input mic button */
@@ -5624,6 +5696,7 @@
 .gengage-chat-find-similar-pill:focus-visible,
 .gengage-chat-favorite-btn:focus-visible,
 .gengage-chat-attach-btn:focus-visible,
+.gengage-chat-attach-menu-item:focus-visible,
 .gengage-chat-mic-btn:focus-visible,
 .gengage-chat-attachment-remove:focus-visible,
 .gengage-chat-kvkk-dismiss:focus-visible,

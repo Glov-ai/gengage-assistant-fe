@@ -159,6 +159,12 @@ export interface ChatI18n {
   /** CTA label in the product details panel when navigating to the product URL (distinct from the card "İncele" CTA). */
   viewOnSiteLabel: string;
   attachImageButton: string;
+  /** Image attach popup: pick from device. */
+  attachMenuSelectPhoto: string;
+  /** Image attach popup: paste from clipboard. */
+  attachMenuPaste: string;
+  /** When clipboard has no image (paste menu or unsupported API). */
+  clipboardNoImageMessage: string;
   removeAttachmentButton: string;
   invalidFileType: string;
   fileTooLarge: string;

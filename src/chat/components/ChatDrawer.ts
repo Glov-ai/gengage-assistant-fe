@@ -1,6 +1,7 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
 import { registerChatScrollElement, CHAT_SCROLL_ELEMENT_ID } from '../utils/get-chat-scroll-element.js';
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
+import { dispatch } from '../../common/events.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
 import { createKvkkBanner } from './KvkkBanner.js';
@@ -90,6 +91,28 @@ export interface ChatDrawerOptions {
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
 
+/** Clipboard API (async read) — Chrome/Edge; Safari may require permission. */
+async function readClipboardImageAsFile(): Promise<File | null> {
+  try {
+    if (navigator.clipboard?.read) {
+      const items = await navigator.clipboard.read();
+      for (const clipItem of items) {
+        for (const type of clipItem.types) {
+          if (type.startsWith('image/')) {
+            const blob = await clipItem.getType(type);
+            const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg';
+            const name = `paste-${Date.now()}.${ext}`;
+            return new File([blob], name, { type: type || blob.type || 'image/png' });
+          }
+        }
+      }
+    }
+  } catch {
+    /* unsupported or permission denied */
+  }
+  return null;
+}
+
 export class ChatDrawer {
   private root: HTMLElement;
   private messagesEl: HTMLElement;
@@ -145,6 +168,10 @@ export class ChatDrawer {
   private _presentationUserInteracting = false;
   private _resizeRafId: number | null = null;
   private _cartBtn: HTMLButtonElement | null = null;
+  private _attachWrapEl: HTMLElement | null = null;
+  private _attachMenuEl: HTMLElement | null = null;
+  private _attachBtn: HTMLButtonElement | null = null;
+  private _attachMenuCleanup: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -703,18 +730,27 @@ export class ChatDrawer {
     });
 
     this.inputEl.addEventListener('paste', (e) => {
-      const file = e.clipboardData?.files[0];
-      if (file && file.type.startsWith('image/')) {
-        e.preventDefault();
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
+      const cd = e.clipboardData;
+      if (!cd) return;
+      let file: File | null = null;
+      const f0 = cd.files?.[0];
+      if (f0 && f0.type.startsWith('image/')) {
+        file = f0;
+      } else if (cd.items?.length) {
+        for (let i = 0; i < cd.items.length; i++) {
+          const item = cd.items[i];
+          if (item?.kind === 'file' && item.type.startsWith('image/')) {
+            const f = item.getAsFile();
+            if (f) {
+              file = f;
+              break;
+            }
           }
-        } else {
-          this.stageAttachment(file);
         }
+      }
+      if (file) {
+        e.preventDefault();
+        this._routeAttachmentFile(file);
       }
     });
 
@@ -726,26 +762,77 @@ export class ChatDrawer {
     this._fileInput.addEventListener('change', () => {
       const file = this._fileInput.files?.[0];
       if (file) {
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
-          }
-        } else {
-          this.stageAttachment(file);
-        }
+        this._routeAttachmentFile(file);
       }
       this._fileInput.value = '';
     });
 
-    // Attach button with camera SVG
+    // Attach: camera button + popup (fotoğraf seç / panodan yapıştır)
+    const attachWrap = document.createElement('div');
+    attachWrap.className = 'gengage-chat-attach-wrap';
+    this._attachWrapEl = attachWrap;
+
     const attachBtn = document.createElement('button');
+    this._attachBtn = attachBtn;
     attachBtn.className = 'gengage-chat-attach-btn';
     attachBtn.type = 'button';
     attachBtn.setAttribute('aria-label', this.i18n.attachImageButton);
+    attachBtn.setAttribute('aria-haspopup', 'menu');
+    attachBtn.setAttribute('aria-expanded', 'false');
     attachBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-    attachBtn.addEventListener('click', () => this._fileInput.click());
+    attachBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      this._toggleAttachMenu();
+    });
+
+    const attachMenu = document.createElement('div');
+    this._attachMenuEl = attachMenu;
+    attachMenu.className = 'gengage-chat-attach-menu';
+    attachMenu.setAttribute('role', 'menu');
+    attachMenu.setAttribute('hidden', '');
+
+    const selectPhotoBtn = document.createElement('button');
+    selectPhotoBtn.type = 'button';
+    selectPhotoBtn.className = 'gengage-chat-attach-menu-item';
+    selectPhotoBtn.setAttribute('role', 'menuitem');
+    selectPhotoBtn.innerHTML =
+      '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>' +
+      `<span class="gengage-chat-attach-menu-label">${this.i18n.attachMenuSelectPhoto}</span>`;
+    selectPhotoBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      this._closeAttachMenu();
+      this._fileInput.click();
+    });
+
+    const sep = document.createElement('div');
+    sep.className = 'gengage-chat-attach-menu-sep';
+    sep.setAttribute('aria-hidden', 'true');
+
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'gengage-chat-attach-menu-item';
+    pasteBtn.setAttribute('role', 'menuitem');
+    pasteBtn.innerHTML =
+      '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M15 2H9a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z"/>' +
+      '<path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>' +
+      '<path d="M16 4h2a2 2 0 0 1 2 2v4"/>' +
+      '<path d="M21 14H11"/>' +
+      '<path d="m15 10-4 4 4 4"/>' +
+      '</svg></span>' +
+      `<span class="gengage-chat-attach-menu-label">${this.i18n.attachMenuPaste}</span>`;
+    pasteBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      void this._pasteImageFromClipboardMenu();
+    });
+
+    attachMenu.appendChild(selectPhotoBtn);
+    attachMenu.appendChild(sep);
+    attachMenu.appendChild(pasteBtn);
+    attachWrap.appendChild(attachBtn);
+    attachWrap.appendChild(attachMenu);
 
     // Attachment preview strip (hidden by default)
     this._previewStrip = document.createElement('div');
@@ -786,22 +873,14 @@ export class ChatDrawer {
       inputArea.classList.remove('gengage-chat-input-area--dragover');
       const file = e.dataTransfer?.files[0];
       if (file) {
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
-          }
-        } else {
-          this.stageAttachment(file);
-        }
+        this._routeAttachmentFile(file);
       }
     });
 
     // Build pill container: [camera] [input] [mic?] [send]
     const pill = document.createElement('div');
     pill.className = 'gengage-chat-input-pill';
-    pill.appendChild(attachBtn);
+    pill.appendChild(attachWrap);
     pill.appendChild(this.inputEl);
 
     // Voice input mic button (Web Speech API STT)
@@ -1200,6 +1279,75 @@ export class ChatDrawer {
     this._pendingAttachment = null;
     this._previewStrip.classList.add('gengage-chat-attachment-preview--hidden');
     this._updateSendEnabled();
+  }
+
+  private _routeAttachmentFile(file: File): void {
+    if (this._onAttachment) {
+      try {
+        this._onAttachment(file);
+      } catch (err) {
+        console.error('[gengage:chat] Attachment callback error:', err);
+      }
+    } else {
+      this.stageAttachment(file);
+    }
+  }
+
+  private _closeAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    this._attachMenuEl.setAttribute('hidden', '');
+    this._attachBtn?.setAttribute('aria-expanded', 'false');
+    if (this._attachMenuCleanup) {
+      this._attachMenuCleanup();
+      this._attachMenuCleanup = null;
+    }
+  }
+
+  private _openAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    this._attachMenuEl.removeAttribute('hidden');
+    this._attachBtn?.setAttribute('aria-expanded', 'true');
+    const onDocCapture = (e: MouseEvent): void => {
+      if (this._attachWrapEl?.contains(e.target as Node)) return;
+      this._closeAttachMenu();
+    };
+    const onEsc = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        this._closeAttachMenu();
+      }
+    };
+    window.setTimeout(() => {
+      document.addEventListener('click', onDocCapture, true);
+    }, 0);
+    document.addEventListener('keydown', onEsc, true);
+    this._attachMenuCleanup = () => {
+      document.removeEventListener('click', onDocCapture, true);
+      document.removeEventListener('keydown', onEsc, true);
+    };
+  }
+
+  private _toggleAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    if (this._attachMenuEl.hasAttribute('hidden')) {
+      this._openAttachMenu();
+    } else {
+      this._closeAttachMenu();
+    }
+  }
+
+  private async _pasteImageFromClipboardMenu(): Promise<void> {
+    const file = await readClipboardImageAsFile();
+    if (file) {
+      this._routeAttachmentFile(file);
+      this._closeAttachMenu();
+      return;
+    }
+    dispatch('gengage:global:error', {
+      message: this.i18n.clipboardNoImageMessage,
+      source: 'chat' as const,
+    });
+    this._closeAttachMenu();
   }
 
   /** Get the currently staged attachment file, or null. */
