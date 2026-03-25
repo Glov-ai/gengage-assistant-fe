@@ -127,6 +127,8 @@ export class ChatDrawer {
   private _voiceEnabled = false;
   private _voiceLang = 'tr-TR';
   private _ignoreNextDividerClick = false;
+  /** Cancels in-flight panel list scroll-to-top tween when a new one starts. */
+  private _panelListScrollAnimToken = 0;
   private readonly _cleanups: Array<() => void> = [];
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
@@ -1274,6 +1276,7 @@ export class ChatDrawer {
     requestAnimationFrame(() => {
       this._panelEl.classList.remove('gengage-chat-panel--transitioning');
       this._updateScrollAffordance();
+      this._smoothScrollPanelListToTop();
     });
     // New content always reopens the panel — hide the reopen button
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
@@ -1389,6 +1392,10 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--visible');
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
+
+    if (contentType === 'productList' || contentType === 'groupList') {
+      this._smoothScrollPanelListToTop();
+    }
   }
 
   /** Update the panel top bar navigation state. */
@@ -1476,6 +1483,54 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+  }
+
+  /**
+   * After new list/grid content is mounted, scroll the left panel toward the top smoothly.
+   * InnerHTML resets scrollTop to 0, so we nudge down first; a rAF tween (ease-out quint) replaces
+   * native smooth scroll for a softer deceleration.
+   */
+  private _smoothScrollPanelListToTop(): void {
+    const panel = this._panelEl;
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
+
+    if (reduceMotion) {
+      panel.scrollTop = 0;
+      return;
+    }
+
+    this._panelListScrollAnimToken += 1;
+    const token = this._panelListScrollAnimToken;
+
+    requestAnimationFrame(() => {
+      if (token !== this._panelListScrollAnimToken) return;
+      const maxScroll = Math.max(0, panel.scrollHeight - panel.clientHeight);
+      if (maxScroll <= 0) return;
+
+      const startTop = Math.min(160, Math.max(48, maxScroll * 0.28));
+      panel.scrollTop = startTop;
+
+      const durationMs = Math.min(720, Math.max(380, 320 + Math.sqrt(startTop) * 28));
+      const t0 = performance.now();
+
+      const easeOutQuint = (t: number) => 1 - (1 - t) ** 5;
+
+      const step = (now: number) => {
+        if (token !== this._panelListScrollAnimToken) return;
+        const elapsed = now - t0;
+        const linear = Math.min(1, elapsed / durationMs);
+        const eased = easeOutQuint(linear);
+        panel.scrollTop = startTop * (1 - eased);
+        if (linear < 1) {
+          requestAnimationFrame(step);
+        } else {
+          panel.scrollTop = 0;
+        }
+      };
+      requestAnimationFrame(step);
+    });
   }
 
   /** Update scroll affordance (bottom fade gradient) on the panel. */
