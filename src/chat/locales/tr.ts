@@ -45,6 +45,8 @@ export const CHAT_I18N_TR: ChatI18n = {
   inStockLabel: 'Stokta',
   outOfStockLabel: 'Tükendi',
   findSimilarLabel: 'Benzerlerini Bul',
+  galleryPrevAriaLabel: 'Önceki görsel',
+  galleryNextAriaLabel: 'Sonraki görsel',
   choicePrompterHeading: 'Kararsız mı kaldın?',
   choicePrompterSuggestion: 'Ürünleri seçip karşılaştırabilirsin',
   choicePrompterCta: 'Seç ve Karşılaştır',

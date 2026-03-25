@@ -194,6 +194,9 @@ export interface ChatI18n {
   inStockLabel: string;
   outOfStockLabel: string;
   findSimilarLabel: string;
+  /** Product details gallery: previous / next image controls */
+  galleryPrevAriaLabel: string;
+  galleryNextAriaLabel: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -287,6 +290,8 @@ export interface ChatUISpecRenderContext {
     | 'inStockLabel'
     | 'outOfStockLabel'
     | 'findSimilarLabel'
+    | 'galleryPrevAriaLabel'
+    | 'galleryNextAriaLabel'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'

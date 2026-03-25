@@ -44,6 +44,8 @@ export const CHAT_I18N_EN: ChatI18n = {
   inStockLabel: 'In Stock',
   outOfStockLabel: 'Out of Stock',
   findSimilarLabel: 'Find Similar',
+  galleryPrevAriaLabel: 'Previous image',
+  galleryNextAriaLabel: 'Next image',
   choicePrompterHeading: "Can't decide?",
   choicePrompterSuggestion: 'Select products to compare them',
   choicePrompterCta: 'Select & Compare',

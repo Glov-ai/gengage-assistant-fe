@@ -48,6 +48,8 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     inStockLabel: 'Stokta',
     outOfStockLabel: 'Tukendi',
     findSimilarLabel: 'Benzerlerini Bul',
+    galleryPrevAriaLabel: 'Onceki gorsel',
+    galleryNextAriaLabel: 'Sonraki gorsel',
     choicePrompterHeading: 'Kararsiz mi kaldin?',
     choicePrompterSuggestion: 'Urunleri secip karsilastirabilirsin',
     choicePrompterCta: 'Sec ve Karsilastir',
