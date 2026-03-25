@@ -62,8 +62,18 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
     grid.className = 'gengage-simrel-grid';
     grid.setAttribute('role', 'list');
 
-    const columns = element.props?.['columns'];
-    if (typeof columns === 'number' && Number.isFinite(columns) && columns > 0) {
+    const propCols = element.props?.['columns'];
+    let columns: number | undefined;
+    if (typeof propCols === 'number' && Number.isFinite(propCols) && propCols > 0) {
+      columns = Math.floor(propCols);
+    } else if (
+      typeof context.gridColumns === 'number' &&
+      Number.isFinite(context.gridColumns) &&
+      context.gridColumns > 0
+    ) {
+      columns = Math.floor(context.gridColumns);
+    }
+    if (columns !== undefined) {
       grid.style.setProperty('--gengage-simrel-columns', String(columns));
     }
 
@@ -139,6 +149,16 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
       onAddToCart: context.onAddToCart,
       i18n: context.i18n,
     };
+    const tabGridCols = element.props?.['columns'];
+    if (typeof tabGridCols === 'number' && Number.isFinite(tabGridCols) && tabGridCols > 0) {
+      options.columns = Math.floor(tabGridCols);
+    } else if (
+      typeof context.gridColumns === 'number' &&
+      Number.isFinite(context.gridColumns) &&
+      context.gridColumns > 0
+    ) {
+      options.columns = Math.floor(context.gridColumns);
+    }
     if (context.discountType !== undefined) options.discountType = context.discountType;
     if (context.renderCard !== undefined) options.renderCard = context.renderCard;
     if (context.renderCardElement !== undefined) options.renderCardElement = context.renderCardElement;

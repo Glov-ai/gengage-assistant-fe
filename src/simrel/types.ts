@@ -59,6 +59,11 @@ export interface SimRelWidgetConfig extends BaseWidgetConfig {
   renderSpecialCard?: (product: SimilarProduct) => string | null;
 
   discountType?: 'strike-through' | 'badge';
+  /**
+   * Masaüstünde bir satıra sığacak ürün kartı sayısı (1–12). Varsayılan: 4.
+   * Dar ekranlarda (≤768px) yatay kaydırmalı carousel davranışı korunur.
+   */
+  gridColumns?: number;
   domain?: string;
   /** Locale key for SDK defaults (for example 'tr', 'en'). */
   locale?: string;
@@ -117,6 +122,8 @@ export interface SimRelUISpecRenderContext {
   renderCardElement?: (product: SimilarProduct, index: number) => HTMLElement | null;
   i18n: SimRelI18n;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig;
+  /** ui_spec `ProductGrid` öğesinde `columns` yoksa kullanılır (widget `gridColumns`). */
+  gridColumns?: number;
 }
 
 export type SimRelRendererConfig = UISpecRendererOverrides<SimRelUISpecRenderContext>;

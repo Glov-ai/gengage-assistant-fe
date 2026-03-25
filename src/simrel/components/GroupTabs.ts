@@ -11,6 +11,8 @@ export interface GroupTabsOptions {
   renderCard?: (product: NormalizedProduct, index: number) => string;
   renderCardElement?: (product: NormalizedProduct, index: number) => HTMLElement | null;
   i18n?: SimRelI18n;
+  /** ProductGrid `columns` — masaüstü satır başına kart sayısı. */
+  columns?: number;
 }
 
 let _groupTabsInstanceCounter = 0;
@@ -44,6 +46,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     if (options.discountType !== undefined) gridOpts.discountType = options.discountType;
     if (options.renderCard !== undefined) gridOpts.renderCard = options.renderCard;
     if (options.renderCardElement !== undefined) gridOpts.renderCardElement = options.renderCardElement;
+    if (options.columns !== undefined) gridOpts.columns = options.columns;
     return gridOpts;
   };
 
@@ -150,6 +153,8 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     const atRight = tabBar.scrollLeft + tabBar.clientWidth >= tabBar.scrollWidth - 4;
     scrollLeftBtn.style.display = atLeft ? 'none' : '';
     scrollRightBtn.style.display = atRight ? 'none' : '';
+    tabBar.classList.toggle('gengage-simrel-tabs--peek-right', !atRight);
+    tabBar.classList.toggle('gengage-simrel-tabs--peek-left', !atLeft);
   };
 
   tabBar.addEventListener('scroll', updateArrows, { passive: true });

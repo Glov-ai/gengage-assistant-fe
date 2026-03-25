@@ -65,6 +65,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-simrel-container';
+    const gridCols = this._clampGridColumns(config.gridColumns);
+    if (gridCols !== undefined) {
+      this._contentEl.style.setProperty('--gengage-simrel-columns', String(gridCols));
+    }
     this.root.appendChild(this._contentEl);
 
     this._lastSku = config.sku;
@@ -335,6 +339,11 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     }
   }
 
+  private _clampGridColumns(n: number | undefined): number | undefined {
+    if (n === undefined || typeof n !== 'number' || !Number.isFinite(n)) return undefined;
+    return Math.max(1, Math.min(12, Math.floor(n)));
+  }
+
   private _resolveI18n(config: SimRelWidgetConfig): SimRelI18n {
     const base = resolveSimRelLocale(config.locale);
     return { ...base, ...config.i18n };
@@ -361,6 +370,8 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       ) => HTMLElement | null;
     }
     if (this.config.pricing !== undefined) context.pricing = this.config.pricing;
+    const gridCols = this._clampGridColumns(this.config.gridColumns);
+    if (gridCols !== undefined) context.gridColumns = gridCols;
     return context;
   }
 
@@ -398,11 +409,13 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         },
       };
     }
+    const gridProps: Record<string, unknown> = { layout: 'grid' };
+    const gridCols = this._clampGridColumns(this.config.gridColumns);
+    if (gridCols !== undefined) gridProps['columns'] = gridCols;
+
     elements['root'] = {
       type: 'ProductGrid',
-      props: {
-        layout: 'grid',
-      },
+      props: gridProps,
       children,
     };
     return {

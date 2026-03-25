@@ -37,23 +37,20 @@
 }
 
 .gengage-simrel-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(var(--gengage-simrel-columns, 4), minmax(0, 1fr));
   gap: 12px;
-  overflow-x: auto;
+  overflow-x: visible;
   padding: 8px 0 12px;
   padding-bottom: 72px; /* GAP-010: space for FAB overlay */
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
-}
-
-.gengage-simrel-grid::-webkit-scrollbar {
-  display: none;
 }
 
 .gengage-simrel-grid > * {
-  scroll-snap-align: start;
-  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.gengage-simrel-grid .gengage-simrel-empty {
+  grid-column: 1 / -1;
 }
 
 .gengage-simrel-card {
@@ -69,9 +66,9 @@
     box-shadow 0.2s ease,
     transform 0.1s ease;
   box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 .gengage-simrel-card:hover {
@@ -346,7 +343,6 @@
 
 .gengage-simrel-empty {
   width: 100%;
-  flex: 1 0 100%;
   text-align: center;
   padding: 40px 20px;
   color: var(--_gengage-text-secondary);
@@ -377,18 +373,27 @@
   background: var(--_gengage-surface-secondary, #f3f4f6);
 }
 
-/* Group tabs */
+/* Group tabs — pill buttons + divider under row */
 .gengage-simrel-tabs {
   display: flex;
-  gap: 8px;
-  border-bottom: 2px solid var(--_gengage-border-color);
-  margin-bottom: 16px;
+  gap: 10px;
+  border-bottom: none;
+  margin-bottom: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  /* Prevent the last tab from being visually clipped at the scroll edge */
   padding-right: 24px;
+  padding-left: 0;
+  transition: padding 0.15s ease;
+}
+
+.gengage-simrel-tabs.gengage-simrel-tabs--peek-right {
+  padding-right: 6px;
+}
+
+.gengage-simrel-tabs.gengage-simrel-tabs--peek-left {
+  padding-left: 6px;
 }
 
 .gengage-simrel-tabs::-webkit-scrollbar {
@@ -402,39 +407,47 @@
 
 .gengage-simrel-tab {
   min-height: 40px;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  color: var(--_gengage-text-primary, #374151);
-  opacity: 0.7;
+  padding: 8px 14px;
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: 999px;
+  background: var(--_gengage-surface-muted);
+  color: var(--_gengage-text-secondary);
+  opacity: 1;
   font-size: inherit;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  margin-bottom: 0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   transition:
     color 0.2s,
     border-color 0.2s,
-    opacity 0.2s;
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .gengage-simrel-tab:hover {
   color: var(--gengage-primary-color, #b7102a);
+  border-color: var(--gengage-primary-color, #b7102a);
+  background: var(--_gengage-surface-secondary);
 }
 
 .gengage-simrel-tab--active {
   color: var(--gengage-primary-color, #b7102a);
-  border-bottom-color: var(--gengage-primary-color, #b7102a);
+  border-color: var(--gengage-primary-color, #b7102a);
   font-weight: 600;
-  opacity: 1;
+  background: var(--_gengage-surface-secondary);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 /* Tab bar wrapper with scroll arrows */
 .gengage-simrel-tabs-wrapper {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  border-bottom: 1px solid var(--_gengage-border-color);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
 }
 
 .gengage-simrel-tabs-wrapper .gengage-simrel-tabs {
@@ -458,7 +471,7 @@
   transition:
     color 0.15s,
     background 0.15s;
-  margin-bottom: 2px;
+  align-self: center;
 }
 
 .gengage-simrel-tabs-arrow:hover {
@@ -497,16 +510,34 @@
 
 @media (max-width: 768px) {
   .gengage-simrel-grid {
+    display: flex;
     gap: 10px;
     padding-top: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     scroll-snap-type: x mandatory;
+  }
+
+  .gengage-simrel-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gengage-simrel-grid > * {
+    scroll-snap-align: center;
+    flex: 0 0 auto;
+    min-width: unset;
   }
 
   .gengage-simrel-card {
     width: 200px;
     min-width: 200px;
     max-width: 200px;
-    scroll-snap-align: center;
+  }
+
+  .gengage-simrel-grid .gengage-simrel-empty {
+    flex: 1 0 100%;
+    min-width: 100%;
   }
 
   .gengage-simrel-card-image img {
