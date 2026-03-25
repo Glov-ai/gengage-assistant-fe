@@ -120,6 +120,8 @@ function isActionLike(value: unknown): value is ActionPayload {
 export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _shadow: ShadowRoot | null = null;
   private _rootEl: HTMLElement | null = null;
+  /** Full-viewport scrim when drawer is open (floating/overlay); not used for inline. */
+  private _backdropEl: HTMLElement | null = null;
   private _launcher: LauncherElements | null = null;
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
@@ -243,8 +245,29 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._rootEl = rootEl;
     this._shadow.appendChild(rootEl);
 
-    // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     const variant = config.variant ?? 'floating';
+    if (variant === 'inline') {
+      rootEl.classList.add('gengage-chat--inline');
+    }
+
+    // Dim page + click outside to close (not for inline — drawer is embedded)
+    if (variant !== 'inline') {
+      const backdropEl = document.createElement('div');
+      backdropEl.className = 'gengage-chat-backdrop';
+      backdropEl.setAttribute('aria-hidden', 'true');
+      backdropEl.setAttribute('role', 'button');
+      backdropEl.setAttribute('tabindex', '-1');
+      backdropEl.setAttribute('aria-label', this._i18n.closeAriaLabel);
+      backdropEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.close();
+      });
+      this._backdropEl = backdropEl;
+      rootEl.prepend(backdropEl);
+    }
+
+    // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     if (variant === 'floating') {
       const launcherOpts: import('./components/Launcher.js').LauncherOptions = {
         onClick: () => this.open(),
@@ -937,6 +960,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._rootEl.classList.toggle('gengage-chat-root--open', this._drawerVisible);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-half', mobileHalf);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-full', mobileFull);
+    if (this._backdropEl) {
+      this._backdropEl.setAttribute('aria-hidden', this._drawerVisible ? 'false' : 'true');
+    }
   }
 
   private _handleAttachment(file: File): void {

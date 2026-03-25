@@ -70,6 +70,31 @@
   --_gengage-qty-btn-size-compact: var(--gengage-qty-btn-size-compact, 24px);
 }
 
+/* Full-viewport scrim: slight dim outside chat; click closes (see index.ts) */
+.gengage-chat-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--gengage-chat-float-backdrop, rgba(0, 0, 0, 0.22));
+  pointer-events: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gengage-chat-root--open:not(.gengage-chat--inline) .gengage-chat-backdrop {
+  display: block;
+  pointer-events: auto;
+}
+
+.gengage-chat--overlay .gengage-chat-backdrop {
+  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
+}
+
 /* Launcher container — fixed-positioned wrapper for button + content areas */
 .gengage-chat-launcher-container {
   position: fixed;
@@ -290,16 +315,6 @@
   height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-}
-
-/* Subtle backdrop behind mobile half-sheet to separate from PDP */
-.gengage-chat-root--mobile.gengage-chat-root--open::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.12);
-  z-index: -1;
   pointer-events: none;
 }
 
@@ -2127,14 +2142,6 @@
   margin: 0 auto;
   border-radius: 0;
   animation: gengage-chat-overlay-in 0.24s cubic-bezier(0.2, 0.72, 0.2, 1);
-}
-
-.gengage-chat--overlay::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
-  z-index: -1;
 }
 
 @keyframes gengage-chat-overlay-in {
