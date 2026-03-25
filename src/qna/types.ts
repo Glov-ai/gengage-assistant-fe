@@ -44,6 +44,11 @@ export interface QNAI18n {
   sendQuestionAriaLabel: string;
   defaultCtaText: string;
   redirectingToChat: string;
+  /**
+   * Replaces the standalone backend “similar products” hero with this quick question pill
+   * (user_message, not findSimilar).
+   */
+  productContextQuickPillLabel: string;
 }
 
 export interface QNAUISpecRenderContext {

@@ -48,6 +48,9 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
   sendBtn.textContent = options.ctaLabel ?? options.sendButtonText ?? 'Ask';
   sendBtn.setAttribute('aria-label', options.sendQuestionAriaLabel ?? 'Send question');
 
+  const combo = document.createElement('div');
+  combo.className = 'gengage-qna-input-combo';
+
   const submit = () => {
     const text = input.value.trim();
     if (!text) return;
@@ -68,8 +71,9 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
     }
   });
 
-  container.appendChild(input);
-  container.appendChild(sendBtn);
+  combo.appendChild(input);
+  combo.appendChild(sendBtn);
+  container.appendChild(combo);
 
   // Cleanup method
   (container as HTMLElement & { _cleanup?: () => void })._cleanup = () => {
