@@ -92,6 +92,16 @@
         border-radius: 10px;
         flex-shrink: 0;
         border: 2px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .card-swatch img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
       }
 
       .card-title {
@@ -176,6 +186,7 @@
           id: 'koctascomtr',
           name: 'Koçtaş',
           color: '#ec6e00',
+          domain: 'koctas.com.tr',
           nav: ['Banyo', 'Mutfak', 'Bahçe', 'Hırdavat', 'Elektrik'],
           skus: ['1000465056', '5002998547', '1000511087'],
         },
@@ -183,6 +194,7 @@
           id: 'arcelikcomtr',
           name: 'Arçelik',
           color: '#e4002b',
+          domain: 'arcelik.com.tr',
           nav: ['Beyaz Eşya', 'Televizyon', 'Küçük Ev Aletleri'],
           skus: ['7296520186'],
         },
@@ -190,6 +202,7 @@
           id: 'n11com',
           name: 'n11',
           color: '#ff44ef',
+          domain: 'n11.com',
           nav: ['Elektronik', 'Moda', 'Ev & Yaşam', 'Kozmetik'],
           skus: ['605132817', '234567890'],
         },
@@ -197,6 +210,7 @@
           id: 'hepsiburadacom',
           name: 'Hepsiburada',
           color: '#ff6000',
+          domain: 'hepsiburada.com',
           nav: ['Elektronik', 'Moda', 'Ev', 'Spor', 'Kozmetik'],
           skus: ['HBCV00001ABCDE', 'BD123456'],
         },
@@ -204,6 +218,7 @@
           id: 'yatasbeddingcomtr',
           name: 'Yataş Bedding',
           color: '#c8102e',
+          domain: 'yatasbedding.com.tr',
           nav: ['Ürünler', 'Kampanyalar', 'Yeni Gelenler', 'Markalar'],
           skus: ['1066800', '1058300'],
         },
@@ -211,6 +226,7 @@
           id: 'penticom',
           name: 'Penti',
           color: '#E91E63',
+          domain: 'penti.com',
           nav: ['Kadın', 'Erkek', 'Çocuk', 'Lisanslı', 'İndirim'],
           skus: ['PLNADGST22IY-BG40', 'PLTPVDMZ21SK-BK3'],
         },
@@ -218,6 +234,7 @@
           id: 'flormarcomtr',
           name: 'Flormar',
           color: '#E45A80',
+          domain: 'flormar.com.tr',
           nav: ['Yüz Makyajı', 'Dudak', 'Göz', 'Tırnak', 'Cilt Bakımı'],
           skus: ['8682536017985', '8682536013727', '8682536007511'],
         },
@@ -225,6 +242,7 @@
           id: 'saatvesaatcomtr',
           name: 'Saat ve Saat',
           color: '#590e2b',
+          domain: 'saatvesaat.com.tr',
           nav: ['Kadın Saat', 'Erkek Saat', 'Akıllı Saat', 'Takı', 'Markalar'],
           skus: [
             'fossil-erkek-kol-saati-p-ffs6092',
@@ -236,6 +254,7 @@
           id: 'trendyolcom',
           name: 'Trendyol',
           color: '#f27a1a',
+          domain: 'trendyol.com',
           nav: ['Kadın', 'Erkek', 'Anne & Çocuk', 'Ev & Yaşam', 'Kozmetik'],
           skus: ['917839672', '889950721', '881465224'],
         },
@@ -243,6 +262,7 @@
           id: 'boynercomtr',
           name: 'Boyner',
           color: '#EE403D',
+          domain: 'boyner.com.tr',
           nav: ['Kadın', 'Erkek', 'Ayakkabı & Çanta', 'Kozmetik', 'Spor'],
           skus: ['15600758', '15600778', '15600848'],
         },
@@ -250,6 +270,7 @@
           id: 'evideacom',
           name: 'Evidea',
           color: '#ff6a00',
+          domain: 'evidea.com',
           nav: ['Mobilya', 'Küçük Ev Aletleri', 'Yatak Odası', 'Banyo', 'Mutfak'],
           skus: ['BMV1004', 'DMD095', 'VAR001'],
         },
@@ -257,6 +278,7 @@
           id: 'aygazcomtr',
           name: 'Aygaz',
           color: '#e30613',
+          domain: 'aygaz.com.tr',
           nav: ['Ürünler', 'Kampanyalar', 'Otogaz', 'Tüpgaz', 'Kurumsal'],
           skus: ['860', '3701', '1349'],
         },
@@ -264,6 +286,7 @@
           id: 'divanpastanelericomtr',
           name: 'Divan Pastaneleri',
           color: '#8b1a2d',
+          domain: 'divanpastaneleri.com.tr',
           nav: ['Pasta', 'Çikolata', 'Lokum', 'Macaron', 'Hediyelik'],
           skus: ['divan-klasik', 'profiterol-', 'madlen-cikolata-1000-gr'],
         },
@@ -271,6 +294,7 @@
           id: 'screwfixcom',
           name: 'Screwfix',
           color: '#00539f',
+          domain: 'screwfix.com',
           nav: ['Tools', 'Heating & Plumbing', 'Electrical', 'Bathrooms', 'Outdoor'],
           skus: ['979HF', '4172G', '48570'],
         },
@@ -278,6 +302,7 @@
           id: 'pazaramacom',
           name: 'Pazarama',
           color: '#0039A6',
+          domain: 'pazarama.com',
           nav: ['Elektronik', 'Ev & Yaşam', 'Anne Bebek', 'Cep Telefonu', 'Moda'],
           skus: ['195949036040', '195949036583', '8806097662228'],
         },
@@ -285,6 +310,7 @@
           id: 'lcwcom',
           name: 'LC Waikiki',
           color: '#B82020',
+          domain: 'lcwaikiki.com',
           nav: ['Kadın', 'Erkek', 'Kız Çocuk', 'Erkek Çocuk', 'Bebek'],
           skus: ['5252094', '5103594', '5232988'],
         },
@@ -292,6 +318,7 @@
           id: 'flocomtr',
           name: 'FLO',
           color: '#FF6600',
+          domain: 'flo.com.tr',
           nav: ['Ayakkabı', 'Spor', 'Giyim', 'Çanta & Aksesuar', 'Markalar'],
           skus: ['102013125', '101792825', '102121189'],
         },
@@ -299,6 +326,7 @@
           id: 'defactocomtr',
           name: 'DeFacto',
           color: '#f28100',
+          domain: 'defacto.com.tr',
           nav: ['Kadın', 'Erkek', 'Çocuk & Bebek', 'Ev & Yaşam', 'Spor'],
           skus: ['3377596', '3337076', '3356354'],
         },
@@ -306,6 +334,7 @@
           id: 'avansascom',
           name: 'Avansas',
           color: '#F07E01',
+          domain: 'avansas.com',
           nav: ['Ofis Kırtasiye', 'Kağıt Ürünleri', 'Temizlik', 'Gıda', 'Teknoloji'],
           skus: ['80601', '65104', '62951'],
         },
@@ -313,6 +342,7 @@
           id: 'teknosacom',
           name: 'Teknosa',
           color: '#F58220',
+          domain: 'teknosa.com',
           nav: ['Telefon', 'Bilgisayar & Tablet', 'TV & Ses', 'Beyaz Eşya', 'Ev Aletleri'],
           skus: ['100000061517', '100000061514', '125078212'],
         },
@@ -320,6 +350,7 @@
           id: 'skecherscomtr',
           name: 'Skechers',
           color: '#003478',
+          domain: 'skechers.com.tr',
           nav: ['Erkek', 'Kadın', 'Çocuk', 'Spor', 'Yeni Gelenler'],
           skus: ['232700', '149710', '150051'],
         },
@@ -337,10 +368,13 @@
       function renderMerchantCard(m) {
         const firstSku = m.skus[0];
         const href = `${m.id}/?sku=${firstSku}`;
+        const faviconUrl = `https://www.google.com/s2/favicons?domain=${m.domain}&sz=32`;
         return `
           <a class="card" href="${href}" style="--brand: ${m.color}">
             <div class="card-top">
-              <div class="card-swatch" style="background: ${m.color}"></div>
+              <div class="card-swatch" style="background: ${m.color}">
+                <img src="${faviconUrl}" alt="" loading="lazy" onerror="this.style.display='none'">
+              </div>
               <div>
                 <div class="card-title">${m.name}</div>
                 <div class="card-subtitle">${m.id}</div>
