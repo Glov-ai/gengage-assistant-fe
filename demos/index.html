@@ -91,11 +91,24 @@
         height: 36px;
         border-radius: 10px;
         flex-shrink: 0;
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border: 2px solid rgba(255, 255, 255, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        position: relative;
+      }
+
+      .card-swatch::after {
+        content: '';
+        position: absolute;
+        bottom: 3px;
+        right: 3px;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--brand);
       }
 
       .card-swatch img {
@@ -372,7 +385,7 @@
         return `
           <a class="card" href="${href}" style="--brand: ${m.color}">
             <div class="card-top">
-              <div class="card-swatch" style="background: ${m.color}">
+              <div class="card-swatch">
                 <img src="${faviconUrl}" alt="" loading="lazy" onerror="this.style.display='none'">
               </div>
               <div>
