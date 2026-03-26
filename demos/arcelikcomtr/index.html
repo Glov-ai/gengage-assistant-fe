@@ -484,7 +484,7 @@
       const launcherUrl = new URL('./glov-arcelikcomtr-launcher.svg', import.meta.url).href;
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const sku = params.get('sku') ?? '7296520186';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
