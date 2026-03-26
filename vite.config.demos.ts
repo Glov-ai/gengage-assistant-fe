@@ -49,6 +49,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: discoverDemoEntries(),
+      treeshake: false,
     },
     sourcemap: false,
   },
