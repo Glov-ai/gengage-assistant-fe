@@ -26,6 +26,7 @@ import { fileURLToPath } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
@@ -92,7 +93,8 @@ function parseArgs(argv: string[]): DevOptions {
   const demo = positionalDemo ?? namedDemo;
 
   if (!demo) {
-    return { demo: '', sku: undefined, port, backendUrl: '' };
+    const backendUrl = process.env['MIDDLEWARE_URL'] ?? 'https://chatbe-dev.gengage.ai';
+    return { demo: '', sku: undefined, port, backendUrl };
   }
 
   // Legacy positional SKU support:
@@ -113,7 +115,9 @@ function parseArgs(argv: string[]): DevOptions {
   }
 
   const backendUrl =
-    args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ?? 'https://chatbe-dev.gengage.ai';
+    args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ??
+    process.env['MIDDLEWARE_URL'] ??
+    'https://chatbe-dev.gengage.ai';
   const sku = flagSku ?? positionalSku;
 
   return { demo, sku, port, backendUrl };
@@ -176,7 +180,7 @@ function gengageDevPlugin(opts: DevOptions): Plugin {
 // Vite plugin: launcher page — serves demos/index.html, redirects ?demo= picks
 // ---------------------------------------------------------------------------
 
-function gengageLauncherPlugin(port: number): Plugin {
+function gengageLauncherPlugin(port: number, backendUrl: string): Plugin {
   const launcherPath = resolve(ROOT, 'demos', 'index.html');
 
   return {
@@ -195,6 +199,14 @@ function gengageLauncherPlugin(port: number): Plugin {
           const demoDir = resolve(ROOT, 'demos', demoName);
           const htmlPath = resolve(demoDir, 'index.html');
           if (existsSync(htmlPath)) {
+            // Inject middlewareUrl if not already present in query
+            if (backendUrl && !parsed.searchParams.has('middlewareUrl')) {
+              parsed.searchParams.set('middlewareUrl', backendUrl);
+              res.statusCode = 302;
+              res.setHeader('Location', `/${demoName}/?${parsed.searchParams.toString()}`);
+              res.end();
+              return;
+            }
             const html = readFileSync(htmlPath, 'utf-8');
             const transformUrl = `/demos/${demoName}/index.html`;
             server
@@ -238,14 +250,21 @@ async function main() {
   if (!opts.demo) {
     console.log('\n── Gengage Dev Server ──────────────────────────────');
     console.log('  Mode:     Demo Launcher');
+    console.log(`  Backend:  ${opts.backendUrl}`);
     console.log(`  URL:      http://localhost:${opts.port}`);
     console.log('────────────────────────────────────────────────────\n');
 
     const server = await createServer({
       root: ROOT,
       cacheDir: resolve(ROOT, 'node_modules/.vite', `demo-launcher-${opts.port}`),
-      server: { port: opts.port },
-      plugins: [gengageLauncherPlugin(opts.port)],
+      server: {
+        port: opts.port,
+        proxy: {
+          '/chat': { target: opts.backendUrl, changeOrigin: true },
+          '/analytics': { target: opts.backendUrl, changeOrigin: true },
+        },
+      },
+      plugins: [gengageLauncherPlugin(opts.port, opts.backendUrl)],
       resolve: {
         alias: { '@gengage/assistant-fe': resolve(ROOT, 'src/index.ts') },
       },

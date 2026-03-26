@@ -79,7 +79,7 @@
     "build:lib": "tsc && vite build",
     "build:iife": "tsx scripts/build-iife.ts",
     "build:demos": "vite build --config vite.config.demos.ts",
-    "dev": "tsx scripts/dev.ts",
+    "dev": "node --env-file=.env --import=tsx/esm scripts/dev.ts",
     "kill": "tsx scripts/kill.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:catalog": "tsc --noEmit -p catalog/tsconfig.json",
