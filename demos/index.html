@@ -416,7 +416,7 @@
           </a>`;
       }
 
-      document.getElementById('merchant-grid').innerHTML = merchants.map(renderMerchantCard).join('');
+      document.getElementById('merchant-grid').innerHTML = merchants.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr')).map(renderMerchantCard).join('');
       document.getElementById('framework-grid').innerHTML = frameworks.map(renderFrameworkCard).join('');
     </script>
   </body>
