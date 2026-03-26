@@ -26,7 +26,6 @@ import { fileURLToPath } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------

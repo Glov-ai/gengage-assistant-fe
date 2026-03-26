@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Dev — saatvesaatcomtr</title>
+    <style>
+      :root {
+        --brand-primary: #590e2b;
+        --brand-secondary: #7a1040;
+        --brand-bg: #f9f2f3;
+        --brand-surface: #ffffff;
+        --brand-text: #1a1a1a;
+        --brand-muted: #58585a;
+        --brand-border: #e0d0d4;
+        --brand-font: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--brand-bg);
+        color: var(--brand-text);
+        font-family: var(--brand-font);
+        line-height: 1.4;
+      }
+
+      /* ── Dev header ── */
+      .dev-header {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        background: #111827;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1f2937;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 10px 16px;
+      }
+
+      .dev-header__title {
+        color: #f8fafc;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 6px;
+        letter-spacing: 0.02em;
+      }
+
+      .dev-header__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+      }
+
+      .dev-header__item strong {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+
+      .dev-header__item span {
+        color: #e2e8f0;
+      }
+
+      /* ── Host shell ── */
+      .host-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+
+      /* ── Topbar ── */
+      .host-topbar {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .host-topbar__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: var(--brand-primary);
+        font-size: 22px;
+        letter-spacing: 0.04em;
+      }
+
+      .host-topbar__logo {
+        height: 30px;
+        width: auto;
+        display: block;
+      }
+
+      .host-nav {
+        display: flex;
+        gap: 14px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: auto;
+      }
+
+      .host-nav span {
+        padding: 4px 0;
+      }
+
+      .host-nav span:first-child {
+        color: var(--brand-text);
+        font-weight: 600;
+        border-bottom: 2px solid var(--brand-primary);
+      }
+
+      /* ── Breadcrumb ── */
+      .host-breadcrumb {
+        font-size: 12px;
+        color: var(--brand-muted);
+        margin: 10px 4px 14px;
+      }
+
+      .host-breadcrumb strong {
+        color: var(--brand-text);
+      }
+
+      /* ── PDP layout ── */
+      .pdp-layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(360px, 480px);
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 22px;
+      }
+
+      .gallery-card,
+      .summary-card,
+      .content-card,
+      .simrel-card {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      /* ── Gallery ── */
+      .gallery-card {
+        padding: 16px;
+      }
+
+      .gallery-main {
+        height: clamp(200px, 26vw, 320px);
+        border-radius: 10px;
+        border: 1px solid var(--brand-border);
+        background:
+          radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--brand-secondary) 14%, white), transparent 45%),
+          radial-gradient(circle at 70% 65%, color-mix(in srgb, var(--brand-primary) 12%, white), transparent 50%),
+          linear-gradient(160deg, #ffffff, color-mix(in srgb, var(--brand-primary) 4%, white));
+        display: grid;
+        place-items: center;
+        color: color-mix(in srgb, var(--brand-primary) 72%, #1f2937);
+        font-weight: 700;
+        text-align: center;
+        padding: 16px;
+      }
+
+      .gallery-main small {
+        display: block;
+        font-weight: 500;
+        color: var(--brand-muted);
+        margin-top: 6px;
+      }
+
+      .gallery-thumbs {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .gallery-thumb {
+        border: 1px solid var(--brand-border);
+        border-radius: 8px;
+        height: 70px;
+        background: linear-gradient(140deg, #fff, color-mix(in srgb, var(--brand-primary) 5%, white));
+      }
+
+      /* ── Summary card ── */
+      .summary-card {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 420px;
+      }
+
+      .badge-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--brand-primary);
+      }
+
+      .summary-title {
+        margin: 0;
+        font-size: clamp(20px, 2.2vw, 30px);
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+
+      .summary-meta {
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .price-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .price-main {
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--brand-primary);
+        letter-spacing: -0.02em;
+      }
+
+      .price-old {
+        font-size: 16px;
+        color: var(--brand-muted);
+        text-decoration: line-through;
+      }
+
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 16px;
+        cursor: pointer;
+      }
+
+      .btn--primary {
+        background: var(--brand-primary);
+        color: #fff;
+      }
+
+      .btn--ghost {
+        background: color-mix(in srgb, var(--brand-primary) 8%, white);
+        color: var(--brand-primary);
+        border-color: color-mix(in srgb, var(--brand-primary) 34%, white);
+      }
+
+      .feature-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .shade-selector {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .shade-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .shade-dot:first-child {
+        border-color: var(--brand-primary);
+        outline: 2px solid color-mix(in srgb, var(--brand-primary) 30%, white);
+        outline-offset: 2px;
+      }
+
+      /* ── Content card ── */
+      .content-card {
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .tab-pill {
+        border: 1px solid var(--brand-border);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 13px;
+        color: var(--brand-muted);
+        background: #fff;
+      }
+
+      .tab-pill--active {
+        color: var(--brand-primary);
+        border-color: color-mix(in srgb, var(--brand-primary) 38%, white);
+        background: color-mix(in srgb, var(--brand-primary) 8%, white);
+      }
+
+      .content-card p {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
+      /* ── SimRel section ── */
+      .simrel-card {
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+
+      .simrel-mount {
+        min-height: 180px;
+      }
+
+      /* ── QNA section ── */
+      .qna-section {
+        margin-top: 14px;
+        min-height: 72px;
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 1060px) {
+        .pdp-layout {
+          grid-template-columns: 1fr;
+        }
+        .summary-card {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .host-shell {
+          padding: 12px;
+        }
+        .host-topbar {
+          border-radius: 10px;
+        }
+        .gallery-main {
+          height: 290px;
+        }
+        .summary-card,
+        .content-card,
+        .simrel-card {
+          border-radius: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Dev header -->
+    <div class="dev-header">
+      <p class="dev-header__title">Gengage Dev — saatvesaatcomtr</p>
+      <div class="dev-header__row">
+        <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>saatvesaatcomtr</span></span>
+        <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
+      </div>
+    </div>
+
+    <main class="host-shell">
+      <!-- Store topbar -->
+      <section class="host-topbar">
+        <div class="host-topbar__brand">
+          <img
+            src="./saatvesaat-avatar.svg"
+            alt="Saat & Saat"
+            class="host-topbar__logo"
+            style="height: 36px; width: auto"
+          />
+        </div>
+        <nav class="host-nav" aria-label="Main navigation">
+          <span>Kadın Saat</span>
+          <span>Erkek Saat</span>
+          <span>Akıllı Saat</span>
+          <span>Takı</span>
+          <span>Aksesuar</span>
+        </nav>
+      </section>
+
+      <p class="host-breadcrumb">Ana Sayfa / Erkek Saat / Guess / <strong id="breadcrumb-sku">—</strong></p>
+
+      <!-- Product hero -->
+      <section class="pdp-layout">
+        <article class="gallery-card">
+          <div class="gallery-main">
+            <span>
+              Demo Ürün Görseli
+              <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
+            </span>
+          </div>
+          <div class="gallery-thumbs" aria-hidden="true">
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+          </div>
+        </article>
+
+        <article class="summary-card">
+          <div class="badge-chip">%37 İndirim</div>
+          <h1 class="summary-title">GUU1461L2M Erkek Kol Saati — Harley Serisi</h1>
+          <div class="summary-meta">
+            <span>Marka: Guess</span>
+            <span>&bull;</span>
+            <span>Ürün Kodu: <span id="summary-sku">—</span></span>
+            <span>&bull;</span>
+            <span>4.8 / 5 (187 değerlendirme)</span>
+          </div>
+
+          <div style="margin-bottom: 4px">
+            <div style="font-size: 13px; font-weight: 600; color: var(--brand-text); margin-bottom: 6px">
+              Renk / Kayış
+            </div>
+            <div class="shade-selector">
+              <div class="shade-dot" style="background: #c9a84c" title="Altın"></div>
+              <div class="shade-dot" style="background: #c0c0c0" title="Gümüş"></div>
+              <div class="shade-dot" style="background: #1a1a1a" title="Siyah"></div>
+              <div class="shade-dot" style="background: #b76e79" title="Rose Gold"></div>
+              <div class="shade-dot" style="background: #8c6a3e" title="Bronz"></div>
+            </div>
+          </div>
+
+          <div class="price-wrap">
+            <div class="price-old">₺7.088,60</div>
+            <div class="price-main">₺4.469,00</div>
+            <div class="price-discount">%37</div>
+          </div>
+
+          <div class="cta-row">
+            <button class="btn btn--primary" type="button">Sepete Ekle</button>
+            <button class="btn btn--ghost" type="button">Favorilerime Ekle</button>
+          </div>
+
+          <ul class="feature-list">
+            <li>Su Geçirmezlik: 3 ATM</li>
+            <li>Mekanizma: Quartz</li>
+            <li>Kasa: Çelik, 40mm çap</li>
+            <li>Garanti: 2 Yıl</li>
+            <li>30 gün içinde iade ve değişim</li>
+          </ul>
+        </article>
+      </section>
+
+      <!-- Content tabs -->
+      <section class="content-card">
+        <div class="tabs">
+          <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
+          <span class="tab-pill">Teknik Özellikler</span>
+          <span class="tab-pill">Garanti & İade</span>
+          <span class="tab-pill">Değerlendirmeler</span>
+        </div>
+        <p>
+          Guess Harley Serisi erkek kol saati, şık çelik kasası ve kaliteli quartz mekanizmasıyla dikkat çeken bir
+          tasarıma sahiptir. 40mm kasa çapı ve 3 ATM su geçirmezlik özelliğiyle günlük kullanıma uygundur. Widget
+          verileri bu sayfadaki içerikten bağımsız olarak backend tarafından sağlanır.
+        </p>
+      </section>
+
+      <!-- QNA widget mount point -->
+      <div id="saatvesaat-qna-section" class="qna-section"></div>
+
+      <!-- SimRel widget mount point -->
+      <section class="simrel-card">
+        <h2 class="section-title">Benzer Ürünler</h2>
+        <div id="saatvesaat-similar-products" class="simrel-mount"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
+
+      const params = new URLSearchParams(location.search);
+      const sku = params.get('sku') ?? 'GUU1461L2M';
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+
+      const skuDisplay = sku ?? '—';
+      document.getElementById('dev-sku').textContent = skuDisplay;
+      document.getElementById('breadcrumb-sku').textContent = skuDisplay;
+      document.getElementById('summary-sku').textContent = skuDisplay;
+
+      const avatarUrl = new URL('./saatvesaat-avatar.svg', import.meta.url).href;
+
+      const controller = await initOverlayWidgets({
+        accountId: 'saatvesaatcomtr',
+        middlewareUrl,
+        locale: 'tr',
+        sku,
+        pageContext: { pageType: sku ? 'pdp' : 'other', sku },
+        theme: {
+          primaryColor: '#590e2b',
+          primaryForeground: '#ffffff',
+          backgroundColor: '#ffffff',
+          foregroundColor: '#1a1a1a',
+          borderRadius: '4px',
+          fontFamily: '"Roboto", "Helvetica Neue", Arial, sans-serif',
+          fontSize: '14px',
+          zIndex: '1000',
+          '--color-client-primary': '#590e2b',
+          '--color-client-saturated': '#7a1040',
+          '--root-background': '#ffffff',
+          '--root-background-mobile': '#ffffff',
+          '--client-message-bubble': '#f5e6ea',
+          '--client-card': '#ffffff',
+          '--client-background': '#2a1520',
+          '--client-foreground': '#fafafa',
+          '--client-border': '#e0d0d4',
+          '--client-text': '#2a1520',
+          '--client-primary-color': '#590e2b',
+          '--root-wrapper-background-color': '#f9f2f3',
+          '--root-wrapper-border-color': '#e0d0d4',
+          '--gengage-chat-launcher-size': '80px',
+        },
+        chat: {
+          variant: 'floating',
+          mobileBreakpoint: 768,
+          headerTitle: "Saat & Saat'e Sor",
+          launcherImageUrl: avatarUrl,
+          headerAvatarUrl: avatarUrl,
+          i18n: {
+            inputPlaceholder: 'Bu ürünle ilgili soru sor',
+            poweredBy: 'Saat & Saat AI Asistan',
+          },
+        },
+        qna: {
+          mountTarget: '#saatvesaat-qna-section',
+          hideButtonRowCta: true,
+          inputPlaceholder: true,
+          i18n: {
+            sendButton: 'Bu ürünle ilgili soru sor',
+          },
+        },
+        simrel: {
+          mountTarget: '#saatvesaat-similar-products',
+          discountType: 'badge',
+        },
+        kvkk: {
+          message: 'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
+          linkUrl: 'https://www.saatvesaat.com.tr/gizlilik-politikasi',
+          linkText: 'KVKK Aydınlatma Metni',
+        },
+        onAddToCart: (p) => {
+          console.log('[saatvesaat] add-to-cart', p);
+          alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
+        },
+        onProductNavigate: (url, prodSku, sid) => {
+          controller.chat?.saveSession(sid ?? '', prodSku);
+          window.location.href = url;
+        },
+      });
+
+      document.getElementById('dev-session').textContent = controller.session.sessionId;
+    </script>
+  </body>
+</html>
