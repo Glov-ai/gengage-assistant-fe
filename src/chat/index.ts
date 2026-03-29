@@ -52,6 +52,8 @@ import {
   isChoicePrompterGloballyDismissed,
 } from './components/ChoicePrompter.js';
 import type {
+  ChatActionChip,
+  OpeningContextKey,
   ChatWidgetConfig,
   ChatMessage,
   ChatI18n,
@@ -77,6 +79,14 @@ import {
 
 import chatStyles from './components/chat.css?inline';
 import * as ga from '../common/ga-datalayer.js';
+
+type SendActionOptions = {
+  silent?: boolean;
+  attachment?: File;
+  preservePanel?: boolean;
+  isPdpPrime?: boolean;
+  preservePills?: boolean;
+};
 
 /** Validate that a string is a safe CSS color value (no url(), expression(), etc.). */
 function isSafeCSSColor(value: string): boolean {
@@ -140,6 +150,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
   private _pdpLaunched = false;
+  private _entryContextPrimed = false;
   /** True while the initial silent PDP launch request is in flight. */
   private _pdpPrimingInFlight = false;
   /** User messages queued until silent PDP priming completes. */
@@ -162,7 +173,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Queue of actions received before init completes. Max 10, FIFO discard. */
   private _pendingActions: Array<{
     action: ActionPayload;
-    options?: { silent?: boolean; attachment?: File } | undefined;
+    options?: SendActionOptions | undefined;
   }> = [];
   /** Supplemental context received from host via bridge (e.g. PDP detail context). */
   private _bridgeContext: Record<string, unknown> | null = null;
@@ -193,7 +204,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Last sent action+options for retry on error. */
   private _lastSentAction: {
     action: ActionPayload;
-    options?: { silent?: boolean; attachment?: File; preservePanel?: boolean; isPdpPrime?: boolean } | undefined;
+    options?: SendActionOptions | undefined;
   } | null = null;
   /** Consecutive identical error counter for account-inactive detection. */
   private _consecutiveErrorCount = 0;
@@ -326,6 +337,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.clearMessages();
         this._currentThreadId = uuidv7();
         this._lastThreadId = this._currentThreadId;
+        this._entryContextPrimed = false;
         this._choicePrompterEl?.remove();
         this._choicePrompterEl = null;
         this._viewedProductSkus.clear();
@@ -341,6 +353,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.setFormerMessagesButtonVisible(false);
         // Re-show welcome if configured
         this._showWelcomeIfNeeded();
+        this._maybePrimeEntryContextOpening();
       },
       presentation: {
         onPinnedToBottomChange: (pinned) => {
@@ -491,6 +504,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Show welcome message on first open with empty history
     this._showWelcomeIfNeeded();
 
+    // Prime a contextual opening for blank / homepage / listing states when
+    // the merchant configured startup journeys in the SaaS.
+    this._maybePrimeEntryContextOpening();
+
     // Auto-launch PDP context on first open when SKU is available
     if (!this._pdpLaunched && this.config.pageContext?.sku) {
       this._pdpLaunched = true;
@@ -499,9 +516,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         {
           title: '',
           type: 'launchSingleProduct',
-          payload: { sku: this.config.pageContext.sku },
+          payload: {
+            sku: this.config.pageContext.sku,
+            ...(this._resolveContextualOpeningMessage('product')
+              ? { opening_message: this._resolveContextualOpeningMessage('product') }
+              : {}),
+            ...(this._resolveContextualOpeningGuidance('product')
+              ? { opening_guidance: this._resolveContextualOpeningGuidance('product') }
+              : {}),
+          },
         },
-        { silent: true, isPdpPrime: true },
+        { silent: true, isPdpPrime: true, preservePills: true },
       );
     }
   }
@@ -671,6 +696,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._chatCreatedAt = new Date().toISOString();
     // Allow PDP auto-launch for new SKU
     this._pdpLaunched = false;
+    this._entryContextPrimed = false;
     this._pdpPrimingInFlight = false;
     this._queuedUserMessages = [];
     this._productContextUnavailableSku = null;
@@ -866,24 +892,212 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Show welcome message and starter pills on first open with empty history. */
   private _showWelcomeIfNeeded(): void {
-    if (this._messages.length !== 0 || !this.config.welcomeMessage) return;
+    if (this._messages.length !== 0) return;
+
+    const contextKey = this._resolveOpeningContextKey();
+    const openingActions = this._resolveContextualOpeningActions(contextKey);
+    if (openingActions.length > 0) {
+      this._drawer?.setPills(
+        openingActions.map((action) => ({
+          label: action.title,
+          onAction: () => this._sendAction(this._resolveContextualOpeningAction(action, contextKey)),
+        })),
+      );
+    }
+
+    if (contextKey === 'product' && this.config.pageContext?.sku) {
+      return;
+    }
+
+    if (this._shouldPrimeContextualOpening(contextKey)) {
+      return;
+    }
+
+    const welcomeMessage = this._resolveContextualOpeningMessage(contextKey);
+    if (!welcomeMessage) return;
+
     const welcomeMsg: ChatMessage = {
       id: uuidv7(),
       role: 'assistant',
-      content: this.config.welcomeMessage,
+      content: welcomeMessage,
       timestamp: Date.now(),
       status: 'done',
     };
     this._messages.push(welcomeMsg);
     this._drawer?.addMessage(welcomeMsg);
-    if (this.config.welcomeActions?.length) {
-      this._drawer?.setPills(
-        this.config.welcomeActions.map((label) => ({
-          label,
-          onAction: () => this._sendMessage(label),
-        })),
-      );
+  }
+
+  private _resolveOpeningContextKey(): OpeningContextKey {
+    switch (this.config.pageContext?.pageType) {
+      case 'home':
+        return 'home';
+      case 'search':
+      case 'plp':
+        return 'listing';
+      case 'pdp':
+        return 'product';
+      default:
+        return 'default';
     }
+  }
+
+  private _resolveContextualOpeningMessage(contextKey = this._resolveOpeningContextKey()): string | undefined {
+    return (
+      this.config.openingMessagesByContext?.[contextKey] ??
+      (contextKey !== 'default' ? this.config.openingMessagesByContext?.default : undefined) ??
+      this.config.welcomeMessage
+    );
+  }
+
+  private _resolveContextualOpeningGuidance(contextKey = this._resolveOpeningContextKey()): string | undefined {
+    return (
+      this.config.openingGuidanceByContext?.[contextKey] ??
+      (contextKey !== 'default' ? this.config.openingGuidanceByContext?.default : undefined)
+    );
+  }
+
+  private _resolveContextualOpeningActions(contextKey = this._resolveOpeningContextKey()): ChatActionChip[] {
+    const contextualActions =
+      this.config.welcomeActionsByContext?.[contextKey] ??
+      (contextKey !== 'default' ? this.config.welcomeActionsByContext?.default : undefined);
+
+    if (contextualActions?.length) {
+      return contextualActions.filter((action) => typeof action?.title === 'string' && action.title.trim().length > 0);
+    }
+
+    return (this.config.welcomeActions ?? [])
+      .filter((title) => typeof title === 'string' && title.trim().length > 0)
+      .map((title) => ({ title }));
+  }
+
+  private _resolveContextualOpeningAction(
+    action: ChatActionChip,
+    contextKey = this._resolveOpeningContextKey(),
+  ): ActionPayload {
+    const title = action.title.trim();
+    const primarySku = this.config.pageContext?.sku ?? this._readContextStringField('sku');
+    const visibleSkus = this._readContextStringListField('visible_skus') ?? [];
+
+    if (action.icon === 'review' && primarySku) {
+      return {
+        title,
+        type: 'reviewSummary',
+        payload: { sku: primarySku },
+      };
+    }
+
+    if (action.icon === 'similar' && primarySku) {
+      return {
+        title,
+        type: 'findSimilar',
+        payload: { sku: primarySku },
+      };
+    }
+
+    if (action.icon === 'compare' && contextKey === 'listing' && visibleSkus.length >= 2) {
+      return {
+        title,
+        type: 'getComparisonTable',
+        payload: { sku_list: visibleSkus.slice(0, 2) },
+      };
+    }
+
+    return {
+      title,
+      type: 'user_message',
+      payload: title,
+    };
+  }
+
+  private _readContextStringField(key: string): string | undefined {
+    const pageContext = this.config.pageContext as Record<string, unknown> | undefined;
+    const extra =
+      pageContext?.extra && typeof pageContext.extra === 'object' && !Array.isArray(pageContext.extra)
+        ? (pageContext.extra as Record<string, unknown>)
+        : undefined;
+    const altCamel = key.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
+    const candidate = pageContext?.[key] ?? extra?.[key] ?? pageContext?.[altCamel] ?? extra?.[altCamel];
+    return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : undefined;
+  }
+
+  private _readContextStringListField(key: string): string[] | undefined {
+    const pageContext = this.config.pageContext as Record<string, unknown> | undefined;
+    const extra =
+      pageContext?.extra && typeof pageContext.extra === 'object' && !Array.isArray(pageContext.extra)
+        ? (pageContext.extra as Record<string, unknown>)
+        : undefined;
+    const altCamel = key.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
+    const candidate = pageContext?.[key] ?? extra?.[key] ?? pageContext?.[altCamel] ?? extra?.[altCamel];
+    if (!Array.isArray(candidate)) return undefined;
+    const values = candidate.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+    return values.length > 0 ? values : undefined;
+  }
+
+  private _buildEntryOpeningPageDetails(): Record<string, unknown> | undefined {
+    const pageDetails: Record<string, unknown> = {};
+
+    pageDetails.url = this.config.pageContext?.url ?? window.location.href;
+
+    const pageTitle = this._readContextStringField('page_title');
+    if (pageTitle) pageDetails.page_title = pageTitle;
+
+    const pageDescription = this._readContextStringField('page_description');
+    if (pageDescription) pageDetails.page_description = pageDescription;
+
+    const searchQuery = this._readContextStringField('search_query');
+    if (searchQuery) pageDetails.search_query = searchQuery;
+
+    const visibleSkus = this._readContextStringListField('visible_skus');
+    if (visibleSkus?.length) pageDetails.visible_skus = visibleSkus;
+
+    const popularSearches = this._readContextStringListField('popular_searches');
+    if (popularSearches?.length) pageDetails.popular_searches = popularSearches;
+
+    const categoryPath = this.config.pageContext?.categoryTree ?? this._readContextStringListField('category_path');
+    if (categoryPath?.length) pageDetails.category_path = categoryPath;
+
+    return Object.keys(pageDetails).length > 0 ? pageDetails : undefined;
+  }
+
+  private _shouldPrimeContextualOpening(contextKey = this._resolveOpeningContextKey()): boolean {
+    if (this._messages.length !== 0 || this._entryContextPrimed || this._pdpPrimingInFlight) return false;
+    if (contextKey === 'product') return false;
+    return Boolean(
+      this.config.openingMessagesByContext ||
+      this.config.openingGuidanceByContext ||
+      this.config.welcomeActionsByContext,
+    );
+  }
+
+  private _maybePrimeEntryContextOpening(): void {
+    const contextKey = this._resolveOpeningContextKey();
+    if (!this._shouldPrimeContextualOpening(contextKey)) return;
+
+    this._entryContextPrimed = true;
+
+    const payload: Record<string, unknown> = {
+      text: '',
+      is_entry_context_opening: 1,
+      opening_context_key: contextKey,
+    };
+
+    const pageDetails = this._buildEntryOpeningPageDetails();
+    if (pageDetails) payload.page_details = pageDetails;
+
+    const openingMessage = this._resolveContextualOpeningMessage(contextKey);
+    if (openingMessage) payload.opening_message = openingMessage;
+
+    const openingGuidance = this._resolveContextualOpeningGuidance(contextKey);
+    if (openingGuidance) payload.opening_guidance = openingGuidance;
+
+    this._sendAction(
+      {
+        title: '',
+        type: 'user_message',
+        payload,
+      },
+      { silent: true, preservePills: true },
+    );
   }
 
   private _hideDrawer(): void {
@@ -978,10 +1192,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
-  private _sendAction(
-    action: ActionPayload,
-    options?: { silent?: boolean; attachment?: File; preservePanel?: boolean; isPdpPrime?: boolean },
-  ): void {
+  private _sendAction(action: ActionPayload, options?: SendActionOptions): void {
     // Cancel any running typewriter animation and TTS playback
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
@@ -1039,7 +1250,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Clear previous suggestion pills and input chips
-    this._drawer?.setPills([]);
+    if (!options?.preservePills) {
+      this._drawer?.setPills([]);
+    }
     this._drawer?.clearInputAreaChips();
 
     // Notify host that assistant is responding
