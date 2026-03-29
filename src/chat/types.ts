@@ -251,6 +251,8 @@ export interface ChatI18n {
   aiBrowseCategoriesTitle: string;
 }
 
+export type OpeningContextKey = 'home' | 'listing' | 'product' | 'default';
+
 export interface ChatActionChip {
   title: string;
   icon?: string;

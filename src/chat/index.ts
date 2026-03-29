@@ -53,6 +53,7 @@ import {
 } from './components/ChoicePrompter.js';
 import type {
   ChatActionChip,
+  OpeningContextKey,
   ChatWidgetConfig,
   ChatMessage,
   ChatI18n,
@@ -79,7 +80,6 @@ import {
 import chatStyles from './components/chat.css?inline';
 import * as ga from '../common/ga-datalayer.js';
 
-type OpeningContextKey = 'home' | 'listing' | 'product' | 'default';
 type SendActionOptions = {
   silent?: boolean;
   attachment?: File;
@@ -1036,9 +1036,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _buildEntryOpeningPageDetails(): Record<string, unknown> | undefined {
     const pageDetails: Record<string, unknown> = {};
 
-    if (this.config.pageContext?.url ?? window.location.href) {
-      pageDetails.url = this.config.pageContext?.url ?? window.location.href;
-    }
+    pageDetails.url = this.config.pageContext?.url ?? window.location.href;
 
     const pageTitle = this._readContextStringField('page_title');
     if (pageTitle) pageDetails.page_title = pageTitle;
