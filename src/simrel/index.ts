@@ -164,6 +164,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     this._abortController = null;
   }
 
+  private _isSuperseded(signal: AbortSignal): boolean {
+    return this._abortController?.signal !== signal;
+  }
+
   private async _fetchAndRender(sku: string): Promise<void> {
     this._abort();
     this._abortController = new AbortController();
@@ -223,6 +227,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       if (products.length > 0) {
         try {
           const skus = products.map((p) => p.sku);
+          const productsBySku = new Map(products.map((product) => [product.sku, product] as const));
           const groups = await fetchProductGroupings(
             {
               account_id: this.config.accountId,
@@ -233,9 +238,28 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
             transport,
             signal,
           );
+          const usableGroups = groups
+            .map((group) => ({
+              ...group,
+              products: group.products
+                .map((groupProduct) => {
+                  const fallbackProduct = productsBySku.get(groupProduct.sku);
+                  return {
+                    ...fallbackProduct,
+                    ...groupProduct,
+                  };
+                })
+                .filter(
+                  (groupProduct) =>
+                    typeof groupProduct.sku === 'string' &&
+                    typeof groupProduct.name === 'string' &&
+                    typeof groupProduct.url === 'string',
+                ),
+            }))
+            .filter((group) => group.products.length > 0);
 
-          if (groups.length > 0 && this._contentEl) {
-            const groupsSpec = this._buildGroupsSpec(groups);
+          if (usableGroups.length > 0 && this._contentEl) {
+            const groupsSpec = this._buildGroupsSpec(usableGroups);
             const renderedGroups = this._renderUISpec(groupsSpec);
             this._contentEl.appendChild(renderedGroups);
 
@@ -244,13 +268,13 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
               streamDoneEvent(this.analyticsContext(), {
                 request_id: requestId,
                 latency_ms: Date.now() - fetchStart,
-                chunk_count: groups.reduce((n, g) => n + g.products.length, 0),
+                chunk_count: usableGroups.reduce((n, g) => n + g.products.length, 0),
                 widget: 'simrel',
               }),
             );
             this.track(
               widgetHistorySnapshotEvent(this.analyticsContext(), {
-                message_count: groups.reduce((n, g) => n + g.products.length, 0),
+                message_count: usableGroups.reduce((n, g) => n + g.products.length, 0),
                 history_ref: requestId,
                 redaction_level: 'none',
                 widget: 'simrel',
@@ -263,8 +287,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         }
       }
 
-      // If aborted (new SKU fetch started), bail out — new invocation owns _contentEl
-      if (signal.aborted) return;
+      // Only bail out when a newer request superseded this one. If the optional
+      // grouping call timed out, still render the flat-grid fallback from the
+      // already-fetched similar products.
+      if (this._isSuperseded(signal)) return;
 
       // Flat grid (no groupings or groupings failed)
       if (this._contentEl) {
@@ -295,7 +321,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         }),
       );
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (err instanceof DOMException && err.name === 'AbortError' && this._isSuperseded(signal)) return;
 
       dispatch('gengage:global:error', {
         source: 'simrel',

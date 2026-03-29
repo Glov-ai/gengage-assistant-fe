@@ -105,6 +105,12 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   welcomeMessage?: string;
   /** Starter action pills shown with welcome message. */
   welcomeActions?: string[];
+  /** Context-specific starter action pills for blank/home/listing/PDP entry states. */
+  welcomeActionsByContext?: ChatWelcomeActionsByContext;
+  /** Context-specific opening copy that is forwarded to the backend entry-opening flow. */
+  openingMessagesByContext?: ChatContextualCopyByContext;
+  /** Context-specific steering notes forwarded to the backend entry-opening flow. */
+  openingGuidanceByContext?: ChatContextualCopyByContext;
 
   // -------------------------------------------------------------------------
   // Demo / feature flags
@@ -243,6 +249,25 @@ export interface ChatI18n {
   aiAnalysisAnalyzingLabel: string;
   /** Section heading above AI grouping cards (panel browse categories). */
   aiBrowseCategoriesTitle: string;
+}
+
+export interface ChatActionChip {
+  title: string;
+  icon?: string;
+}
+
+export interface ChatWelcomeActionsByContext {
+  home?: ChatActionChip[];
+  listing?: ChatActionChip[];
+  product?: ChatActionChip[];
+  default?: ChatActionChip[];
+}
+
+export interface ChatContextualCopyByContext {
+  home?: string;
+  listing?: string;
+  product?: string;
+  default?: string;
 }
 
 export interface ChatUISpecRenderContext {
