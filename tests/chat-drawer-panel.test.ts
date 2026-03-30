@@ -119,6 +119,34 @@ describe('ChatDrawer panel collapse/expand', () => {
     expect(drawer.isPanelCollapsed()).toBe(true);
     expect(panel?.classList.contains('gengage-chat-panel--collapsed')).toBe(true);
   });
+
+  it('shows blurred divider preview when collapsed and thumbnails exist', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+    drawer.setThumbnails([
+      { sku: 'SKU-1', imageUrl: 'https://example.com/1.jpg', threadId: 't1' },
+      { sku: 'SKU-2', imageUrl: 'https://example.com/2.jpg', threadId: 't2' },
+      { sku: 'SKU-3', imageUrl: 'https://example.com/3.jpg', threadId: 't3' },
+    ]);
+
+    drawer.togglePanel();
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    expect(divider.classList.contains('gengage-chat-panel-divider--preview-active')).toBe(true);
+    expect(divider.querySelectorAll('.gengage-chat-panel-divider-preview-thumb')).toHaveLength(3);
+  });
+
+  it('removes divider preview when the panel is expanded again', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+    drawer.setThumbnails([{ sku: 'SKU-1', imageUrl: 'https://example.com/1.jpg', threadId: 't1' }]);
+
+    drawer.togglePanel();
+    drawer.togglePanel();
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    expect(divider.classList.contains('gengage-chat-panel-divider--preview-active')).toBe(false);
+  });
 });
 
 describe('Panel sessionStorage persistence', () => {

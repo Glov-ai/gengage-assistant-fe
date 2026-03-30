@@ -104,22 +104,37 @@ describe('adaptBackendEvent', () => {
     const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
-    const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
+    const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
     expect(uiSpec.spec.elements['root']!.type).toBe('ProductGrid');
+    expect(uiSpec.spec.elements['product-0']!.props?.['action']).toEqual({
+      title: 'B1 Product 1',
+      type: 'launchSingleProduct',
+      payload: { sku: 'P1' },
+    });
   });
 
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
     const raw = {
       type: 'productDetails',
       payload: {
-        productDetails: { sku: 'P1', name: 'Detail Product', price: 200, url: 'https://example.com' },
+        productDetails: {
+          sku: 'P1',
+          name: 'Detail Product',
+          price: 200,
+          url: 'https://example.com',
+          description: 'Long form description',
+          specifications: { Color: 'Black' },
+        },
       },
     };
     const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
-    const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
+    const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
     expect(uiSpec.spec.elements['root']!.type).toBe('ProductDetailsPanel');
+    const product = uiSpec.spec.elements['root']!.props?.['product'] as Record<string, unknown>;
+    expect(product['description']).toBe('Long form description');
+    expect(product['specifications']).toEqual({ Color: 'Black' });
   });
 
   it('adapts productDetailsSimilars to chat panel ui_spec', () => {

@@ -2786,6 +2786,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const ctx: ChatUISpecRenderContext = {
       onAction: (action) => {
         ga.trackSuggestedQuestion(action.title, action.type);
+        if (action.type === 'launchSingleProduct') {
+          const sku =
+            typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload
+              ? String((action.payload as Record<string, unknown>).sku)
+              : '';
+          if (sku) ga.trackProductDetail(sku, action.title);
+        }
         if (action.type === 'findSimilar') {
           const sku =
             typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload

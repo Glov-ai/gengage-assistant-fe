@@ -751,6 +751,57 @@
   color: #334155;
 }
 
+.gengage-chat-panel-divider-preview {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 38px;
+  height: 192px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.18)), rgba(148, 163, 184, 0.18);
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.18),
+    0 2px 10px rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1;
+}
+
+.gengage-chat-panel-divider-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(15, 23, 42, 0.08)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.gengage-chat-panel-divider-preview-thumb {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.gengage-chat-panel-divider-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.55) saturate(0.8) brightness(0.92);
+  transform: scale(1.14);
+  opacity: 0.9;
+}
+
 /* Collapsed panel — compound selector for specificity over .gengage-chat-panel--visible */
 .gengage-chat-panel.gengage-chat-panel--collapsed {
   flex: 0 0 0px;
@@ -769,8 +820,16 @@
 }
 
 .gengage-chat-panel--collapsed ~ .gengage-chat-panel-divider .gengage-chat-panel-divider-toggle {
-  left: 0;
-  transform: translate(0, -50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gengage-chat-panel--collapsed
+  ~ .gengage-chat-panel-divider.gengage-chat-panel-divider--preview-active
+  .gengage-chat-panel-divider-preview {
+  display: flex;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* Conversation (right) — always visible */
@@ -851,6 +910,10 @@
 .gengage-chat-drawer--with-panel .gengage-chat-panel-divider-toggle:hover {
   background: var(--gengage-primary-hover, #9a0d23);
   color: #fff;
+}
+
+.gengage-chat-drawer--with-panel .gengage-chat-panel-divider--preview-active .gengage-chat-panel-divider-toggle:hover {
+  background: var(--gengage-primary-hover, #9a0d23);
 }
 
 .gengage-chat-drawer--with-panel .gengage-chat-conversation {
