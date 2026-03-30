@@ -120,6 +120,42 @@ describe('renderUISpec', () => {
       const name = result.querySelector('.gengage-chat-product-card-name')!;
       expect(name.textContent).toBe('Direct Props Product');
     });
+
+    it('dispatches launchSingleProduct action when product card action is provided', () => {
+      const onAction = vi.fn();
+      const onProductSelect = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-3',
+                name: 'Action Product',
+                price: '50.00',
+              },
+              action: {
+                title: 'Action Product',
+                type: 'launchSingleProduct',
+                payload: { sku: 'SKU-3' },
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onAction, onProductSelect }));
+      const card = result.querySelector('.gengage-chat-product-card') as HTMLElement;
+      card.click();
+
+      expect(onAction).toHaveBeenCalledWith({
+        title: 'Action Product',
+        type: 'launchSingleProduct',
+        payload: { sku: 'SKU-3' },
+      });
+      expect(onProductSelect).not.toHaveBeenCalled();
+    });
   });
 
   describe('Divider', () => {

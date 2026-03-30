@@ -1333,6 +1333,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             ? this._buildFavoritesPageEl()
             : this._renderUISpec(prePanelSource.spec, ctx);
         this._drawer.setPanelContent(el);
+        this._drawer.setDividerPreviewEnabled(this._shouldUseDividerPreviewForSource(prePanelSource));
         this._currentPanelSource = prePanelSource;
       } else {
         this._drawer.clearPanel();
@@ -1643,6 +1644,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._currentPanelSource = { kind: 'spec', spec: panelSpec };
               this._panel.currentType = componentType;
             }
+            this._drawer?.setDividerPreviewEnabled((this._panel.currentType ?? componentType) === 'ProductGrid');
 
             if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
               this._clearUnavailableProductContext();
@@ -2625,6 +2627,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const el =
         prev.source.kind === 'favorites' ? this._buildFavoritesPageEl() : this._renderUISpec(prev.source.spec, ctx);
       this._drawer?.setPanelContent(el);
+      this._drawer?.setDividerPreviewEnabled(this._shouldUseDividerPreviewForSource(prev.source));
       this._currentPanelSource = prev.source;
       const canBack = this._localPanelHistory.length > 0 || (this._panel?.threads.length ?? 0) > 1;
       this._drawer?.updatePanelTopBar(canBack, false, prev.title);
@@ -2637,6 +2640,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       return;
     }
     this._panel?.navigateBack();
+  }
+
+  private _shouldUseDividerPreviewForSpec(spec: UISpec): boolean {
+    return spec.elements[spec.root]?.type === 'ProductGrid';
+  }
+
+  private _shouldUseDividerPreviewForSource(
+    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' } | null,
+  ): boolean {
+    return source?.kind === 'spec' ? this._shouldUseDividerPreviewForSpec(source.spec) : false;
   }
 
   private _toggleComparisonSku(sku: string): void {
@@ -2786,6 +2799,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const ctx: ChatUISpecRenderContext = {
       onAction: (action) => {
         ga.trackSuggestedQuestion(action.title, action.type);
+        if (action.type === 'launchSingleProduct') {
+          this._drawer?.setDividerPreviewEnabled(false);
+          const sku =
+            typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload
+              ? String((action.payload as Record<string, unknown>).sku)
+              : '';
+          if (sku) ga.trackProductDetail(sku, action.title);
+        }
         if (action.type === 'findSimilar') {
           const sku =
             typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload
@@ -2870,6 +2891,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           },
         };
         this._drawer?.setPanelContent(this._renderUISpec(detailSpec, ctx));
+        this._drawer?.setDividerPreviewEnabled(false);
         this._currentPanelSource = { kind: 'spec', spec: detailSpec };
         this._drawer?.updatePanelTopBar(true, false, this._i18n.panelTitleProductDetails);
       },
@@ -2926,6 +2948,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     this._drawer.setPanelContent(this._buildFavoritesPageEl());
+    this._drawer.setDividerPreviewEnabled(false);
     this._currentPanelSource = { kind: 'favorites' };
     this._drawer.updatePanelTopBar(true, false, this._i18n.favoritesPageTitle);
   }

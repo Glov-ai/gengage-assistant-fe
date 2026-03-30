@@ -588,6 +588,11 @@ function adaptProductDetails(event: V1ProductDetails): StreamEventUISpec {
   if (!product) {
     return buildEmptyUISpec('chat');
   }
+  const normalized = productToNormalized(product) as unknown as Record<string, unknown>;
+  const detailProduct = {
+    ...(product as unknown as Record<string, unknown>),
+    ...normalized,
+  };
   return {
     type: 'ui_spec',
     widget: 'chat',
@@ -596,7 +601,7 @@ function adaptProductDetails(event: V1ProductDetails): StreamEventUISpec {
       elements: {
         root: {
           type: 'ProductDetailsPanel',
-          props: { product: productToNormalized(product) },
+          props: { product: detailProduct },
         },
       },
     },
@@ -1486,11 +1491,20 @@ function buildProductGridUISpec(products: V1Product[], widget: WidgetName): Stre
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
     if (!product) continue;
+    const normalized = productToNormalized(product);
     const id = `product-${i}`;
     childIds.push(id);
+    const props: Record<string, unknown> = { product: normalized, index: i };
+    if (normalized.sku) {
+      props['action'] = {
+        title: normalized.name,
+        type: 'launchSingleProduct',
+        payload: { sku: normalized.sku },
+      };
+    }
     elements[id] = {
       type: 'ProductCard',
-      props: { product: productToNormalized(product), index: i },
+      props,
     };
   }
 

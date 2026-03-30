@@ -100,7 +100,9 @@ export class ChatDrawer {
   private _panelEl: HTMLElement;
   private _panelVisible = false;
   private _panelCollapsed = false;
+  private _dividerPreviewEnabled = false;
   private _dividerEl: HTMLElement;
+  private _dividerPreviewEl: HTMLElement;
   private _onPanelToggle: (() => void) | undefined = undefined;
   private _pendingAttachment: File | null = null;
   private _fileInput: HTMLInputElement;
@@ -427,6 +429,10 @@ export class ChatDrawer {
     this._dividerEl.setAttribute('role', 'separator');
     this._dividerEl.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
     this._dividerEl.setAttribute('title', this.i18n.togglePanelAriaLabel);
+    this._dividerPreviewEl = document.createElement('div');
+    this._dividerPreviewEl.className = 'gengage-chat-panel-divider-preview';
+    this._dividerPreviewEl.setAttribute('aria-hidden', 'true');
+    this._dividerEl.appendChild(this._dividerPreviewEl);
     const chevron = document.createElement('button');
     chevron.className = 'gengage-chat-panel-divider-toggle';
     chevron.type = 'button';
@@ -1271,6 +1277,7 @@ export class ChatDrawer {
     if (this._panelCollapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
     }
+    this._syncDividerPreview();
     requestAnimationFrame(() => {
       this._panelEl.classList.remove('gengage-chat-panel--transitioning');
       this._updateScrollAffordance();
@@ -1290,6 +1297,7 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--visible');
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
+    this._syncDividerPreview();
   }
 
   /** Return the panel element's content child (after topbar), or null. */
@@ -1389,6 +1397,7 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--visible');
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
+    this._syncDividerPreview();
   }
 
   /** Update the panel top bar navigation state. */
@@ -1430,6 +1439,8 @@ export class ChatDrawer {
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+    this._dividerPreviewEnabled = false;
+    this._syncDividerPreview();
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
 
@@ -1460,6 +1471,7 @@ export class ChatDrawer {
       this._panelEl.classList.add('gengage-chat-panel--visible');
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
+    this._syncDividerPreview();
   }
 
   /**
@@ -1476,6 +1488,7 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
+    this._syncDividerPreview();
   }
 
   /** Update scroll affordance (bottom fade gradient) on the panel. */
@@ -1541,6 +1554,12 @@ export class ChatDrawer {
     if (chevronBtn) {
       chevronBtn.textContent = collapsed ? '\u00AB' : '\u00BB'; // « (expand left) or » (collapse right)
     }
+    this._syncDividerPreview();
+  }
+
+  setDividerPreviewEnabled(enabled: boolean): void {
+    this._dividerPreviewEnabled = enabled;
+    this._syncDividerPreview();
   }
 
   /** Save panel collapsed state to sessionStorage. */
@@ -1825,10 +1844,52 @@ export class ChatDrawer {
     } else {
       this._thumbnailsColumn.hide();
     }
+    this._renderDividerPreview(entries);
+    this._syncDividerPreview();
   }
 
   hideThumbnails(): void {
     this._thumbnailsColumn.hide();
+    this._renderDividerPreview([]);
+    this._syncDividerPreview();
+  }
+
+  private _renderDividerPreview(entries: ThumbnailEntry[]): void {
+    this._dividerPreviewEl.innerHTML = '';
+
+    const seen = new Set<string>();
+    const previewEntries: ThumbnailEntry[] = [];
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (!entry || seen.has(entry.sku) || !isSafeImageUrl(entry.imageUrl)) continue;
+      seen.add(entry.sku);
+      previewEntries.push(entry);
+      if (previewEntries.length >= 3) break;
+    }
+    previewEntries.reverse();
+
+    for (const entry of previewEntries) {
+      const thumb = document.createElement('span');
+      thumb.className = 'gengage-chat-panel-divider-preview-thumb';
+      const img = document.createElement('img');
+      img.className = 'gengage-chat-panel-divider-preview-img';
+      img.src = entry.imageUrl;
+      img.alt = '';
+      img.width = 48;
+      img.height = 48;
+      thumb.appendChild(img);
+      this._dividerPreviewEl.appendChild(thumb);
+    }
+  }
+
+  private _syncDividerPreview(): void {
+    const hasPreview = this._dividerPreviewEl.childElementCount > 0;
+    const isActive =
+      this._dividerPreviewEnabled &&
+      hasPreview &&
+      this._panelCollapsed &&
+      !this._dividerEl.classList.contains('gengage-chat-panel-divider--hidden');
+    this._dividerEl.classList.toggle('gengage-chat-panel-divider--preview-active', isActive);
   }
 
   /** Activate focus trap — Tab/Shift+Tab cycles within the drawer. */
