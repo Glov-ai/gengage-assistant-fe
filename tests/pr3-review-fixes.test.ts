@@ -196,6 +196,7 @@ describe('PanelManager rebuild function', () => {
         setPanelContentArg = el;
       },
       updatePanelTopBar: vi.fn(),
+      setDividerPreviewEnabled: vi.fn(),
     };
 
     const shadow = document.createElement('div');
@@ -231,6 +232,7 @@ describe('PanelManager rebuild function', () => {
         setPanelContentArg = el;
       },
       updatePanelTopBar: vi.fn(),
+      setDividerPreviewEnabled: vi.fn(),
     };
 
     const shadow = document.createElement('div');
