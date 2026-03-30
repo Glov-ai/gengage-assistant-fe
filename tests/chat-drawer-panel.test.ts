@@ -128,6 +128,7 @@ describe('ChatDrawer panel collapse/expand', () => {
       { sku: 'SKU-2', imageUrl: 'https://example.com/2.jpg', threadId: 't2' },
       { sku: 'SKU-3', imageUrl: 'https://example.com/3.jpg', threadId: 't3' },
     ]);
+    drawer.setDividerPreviewEnabled(true);
 
     drawer.togglePanel();
 
@@ -140,8 +141,20 @@ describe('ChatDrawer panel collapse/expand', () => {
     const content = document.createElement('div');
     drawer.setPanelContent(content);
     drawer.setThumbnails([{ sku: 'SKU-1', imageUrl: 'https://example.com/1.jpg', threadId: 't1' }]);
+    drawer.setDividerPreviewEnabled(true);
 
     drawer.togglePanel();
+    drawer.togglePanel();
+
+    const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;
+    expect(divider.classList.contains('gengage-chat-panel-divider--preview-active')).toBe(false);
+  });
+
+  it('keeps divider preview hidden when thumbnails exist but preview mode is disabled', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+    drawer.setThumbnails([{ sku: 'SKU-1', imageUrl: 'https://example.com/1.jpg', threadId: 't1' }]);
+
     drawer.togglePanel();
 
     const divider = container.querySelector('.gengage-chat-panel-divider') as HTMLElement;

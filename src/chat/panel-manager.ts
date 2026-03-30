@@ -107,6 +107,7 @@ export class PanelManager {
 
     // Restore component type and topbar
     const snapshotType = this.snapshotTypes.get(messageId);
+    drawer?.setDividerPreviewEnabled(snapshotType === 'ProductGrid');
     if (snapshotType) {
       this.currentType = snapshotType;
       this.updateTopBar(snapshotType);

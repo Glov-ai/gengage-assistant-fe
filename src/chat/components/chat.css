@@ -853,6 +853,7 @@
   width: auto;
   background: transparent;
   box-shadow: none;
+  overflow: visible;
 }
 
 /* Header flows naturally inside conversation column in panel mode */
@@ -868,6 +869,7 @@
   gap: 0;
   padding: 0;
   align-items: stretch;
+  overflow: visible;
 }
 
 /* Panel: attached to conversation, rounded only on the left side */

@@ -100,6 +100,7 @@ export class ChatDrawer {
   private _panelEl: HTMLElement;
   private _panelVisible = false;
   private _panelCollapsed = false;
+  private _dividerPreviewEnabled = false;
   private _dividerEl: HTMLElement;
   private _dividerPreviewEl: HTMLElement;
   private _onPanelToggle: (() => void) | undefined = undefined;
@@ -1438,6 +1439,7 @@ export class ChatDrawer {
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
     this._dividerEl.classList.add('gengage-chat-panel-divider--hidden');
+    this._dividerPreviewEnabled = false;
     this._syncDividerPreview();
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
   }
@@ -1552,6 +1554,11 @@ export class ChatDrawer {
     if (chevronBtn) {
       chevronBtn.textContent = collapsed ? '\u00AB' : '\u00BB'; // « (expand left) or » (collapse right)
     }
+    this._syncDividerPreview();
+  }
+
+  setDividerPreviewEnabled(enabled: boolean): void {
+    this._dividerPreviewEnabled = enabled;
     this._syncDividerPreview();
   }
 
@@ -1878,7 +1885,10 @@ export class ChatDrawer {
   private _syncDividerPreview(): void {
     const hasPreview = this._dividerPreviewEl.childElementCount > 0;
     const isActive =
-      hasPreview && this._panelCollapsed && !this._dividerEl.classList.contains('gengage-chat-panel-divider--hidden');
+      this._dividerPreviewEnabled &&
+      hasPreview &&
+      this._panelCollapsed &&
+      !this._dividerEl.classList.contains('gengage-chat-panel-divider--hidden');
     this._dividerEl.classList.toggle('gengage-chat-panel-divider--preview-active', isActive);
   }
 
