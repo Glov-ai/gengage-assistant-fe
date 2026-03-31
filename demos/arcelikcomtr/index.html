@@ -481,8 +481,10 @@
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
+      const launcherUrl = new URL('./glov-arcelikcomtr-launcher.svg', import.meta.url).href;
+
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const sku = params.get('sku') ?? '7296520186';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
@@ -528,9 +530,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Çelik'e Sor",
-          launcherSvg:
-            '<img src="/demos/arcelikcomtr/glov-arcelikcomtr-mobile-launcher.svg" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border-radius:50%">',
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-arcelikcomtr-logo.png',
+          launcherImageUrl: launcherUrl,
+          headerAvatarUrl: launcherUrl,
           i18n: {
             inputPlaceholder: 'Arçelik asistanına sorun...',
             poweredBy: 'Arçelik AI Asistan',

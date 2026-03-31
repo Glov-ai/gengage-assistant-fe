@@ -166,9 +166,17 @@ function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRe
   card.appendChild(body);
 
   // Click → show product details
-  if (ctx.onProductSelect) {
+  if (ctx.onProductSelect || ctx.onAction) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
+      if (product.sku) {
+        ctx.onAction({
+          title: product.name,
+          type: 'launchSingleProduct',
+          payload: { sku: product.sku },
+        });
+        return;
+      }
       ctx.onProductSelect?.(product as unknown as Record<string, unknown>);
     });
   }

@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
-    <title>Gengage Dev — yatasbeddingcomtr</title>
+    <title>Gengage Dev — flormarcomtr</title>
     <style>
       :root {
-        --brand-primary: #4097ca;
-        --brand-secondary: #17a8ff;
-        --brand-bg: #f0f0f0;
+        --brand-primary: #e45a80;
+        --brand-secondary: #f44a7e;
+        --brand-bg: #f9f9f9;
         --brand-surface: #ffffff;
-        --brand-text: #222222;
-        --brand-muted: #6b7280;
-        --brand-border: #d2d2d2;
-        --brand-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        --brand-text: #0f0f0f;
+        --brand-muted: #58585a;
+        --brand-border: #dddddd;
+        --brand-font: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
       }
 
       *,
@@ -93,15 +93,14 @@
         gap: 10px;
         font-weight: 700;
         color: var(--brand-primary);
-        font-size: 18px;
+        font-size: 22px;
+        letter-spacing: 0.04em;
       }
 
-      .host-topbar__dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: linear-gradient(145deg, var(--brand-primary), var(--brand-secondary));
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 22%, white);
+      .host-topbar__logo {
+        height: 30px;
+        width: auto;
+        display: block;
       }
 
       .host-nav {
@@ -252,6 +251,12 @@
         text-decoration: line-through;
       }
 
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
       .cta-row {
         display: flex;
         gap: 10px;
@@ -285,6 +290,26 @@
         font-size: 13px;
         display: grid;
         gap: 6px;
+      }
+
+      .shade-selector {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .shade-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .shade-dot:first-child {
+        border-color: var(--brand-primary);
+        outline: 2px solid color-mix(in srgb, var(--brand-primary) 30%, white);
+        outline-offset: 2px;
       }
 
       /* ── Content card ── */
@@ -375,10 +400,10 @@
   <body>
     <!-- Dev header -->
     <div class="dev-header">
-      <p class="dev-header__title">Gengage Dev — yatasbeddingcomtr</p>
+      <p class="dev-header__title">Gengage Dev — flormarcomtr</p>
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
-        <span class="dev-header__item"><strong>account:</strong> <span>yatasbeddingcomtr</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>flormarcomtr</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -387,19 +412,38 @@
       <!-- Store topbar -->
       <section class="host-topbar">
         <div class="host-topbar__brand">
-          <span class="host-topbar__dot"></span>
-          <span>Yataş Bedding</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="125"
+            height="30"
+            viewBox="0 0 125 30"
+            fill="#E45A80"
+            class="host-topbar__logo"
+            aria-label="Flormar"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M12.4306 11.5912C10.9012 11.5912 9.66101 12.8314 9.66101 14.3602C9.66101 15.8884 10.9012 17.128 12.4306 17.128C13.9594 17.128 15.199 15.8884 15.199 14.3602C15.199 12.8314 13.9594 11.5912 12.4306 11.5912Z"
+            />
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M13.0418 0.0770416C8.03661 0.115442 3.97581 4.19784 3.97581 9.21144V12.4532H0.932007V16.3202L3.97581 16.3196V28.4846H7.84281V9.21144C7.84281 6.32964 10.169 3.98244 13.0418 3.94404V0.0770416Z"
+            />
+          </svg>
         </div>
         <nav class="host-nav" aria-label="Main navigation">
-          <span>Ürünler</span>
-          <span>Kampanyalar</span>
-          <span>Yeni Gelenler</span>
-          <span>Markalar</span>
-          <span>Destek</span>
+          <span>Yüz Makyajı</span>
+          <span>Dudak</span>
+          <span>Göz</span>
+          <span>Tırnak</span>
+          <span>Cilt Bakımı</span>
+          <span>Kampanya</span>
         </nav>
       </section>
 
-      <p class="host-breadcrumb">Anasayfa / Kategori / Alt Kategori / <strong id="breadcrumb-sku">—</strong></p>
+      <p class="host-breadcrumb">Ana Sayfa / Yüz Makyajı / Fondöten / <strong id="breadcrumb-sku">—</strong></p>
 
       <!-- Product hero -->
       <section class="pdp-layout">
@@ -419,28 +463,42 @@
         </article>
 
         <article class="summary-card">
-          <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <div class="badge-chip">%30 İndirim</div>
+          <h1 class="summary-title">Perfect Coverage Foundation SPF 20 — Mat Bitişli Fondöten</h1>
           <div class="summary-meta">
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
-            <span>0.0 / 5 (0 değerlendirme)</span>
+            <span>4.7 / 5 (312 değerlendirme)</span>
+          </div>
+
+          <div style="margin-bottom: 4px">
+            <div style="font-size: 13px; font-weight: 600; color: var(--brand-text); margin-bottom: 6px">Renk Tonu</div>
+            <div class="shade-selector">
+              <div class="shade-dot" style="background: #f5cba7" title="01 Ivory"></div>
+              <div class="shade-dot" style="background: #e8b88a" title="02 Beige"></div>
+              <div class="shade-dot" style="background: #d4956a" title="03 Natural"></div>
+              <div class="shade-dot" style="background: #c07850" title="04 Warm Beige"></div>
+              <div class="shade-dot" style="background: #9a6040" title="05 Caramel"></div>
+            </div>
           </div>
 
           <div class="price-wrap">
-            <div class="price-main">XXX TL</div>
-            <div class="price-old">XXX TL</div>
+            <div class="price-old">₺449,99</div>
+            <div class="price-main">₺314,99</div>
+            <div class="price-discount">%30</div>
           </div>
 
           <div class="cta-row">
             <button class="btn btn--primary" type="button">Sepete Ekle</button>
-            <button class="btn btn--ghost" type="button">Favorilere Ekle</button>
+            <button class="btn btn--ghost" type="button">Favorilerime Ekle</button>
           </div>
 
           <ul class="feature-list">
-            <li>Lorem ipsum dolor sit amet</li>
-            <li>Consectetur adipiscing elit</li>
-            <li>Sed do eiusmod tempor incididunt</li>
+            <li>SPF 20 güneş koruması</li>
+            <li>Mat, uzun süre kalıcı formül</li>
+            <li>Tam kapatıcı kapsam, hafif his</li>
+            <li>Vegan & Cruelty-Free</li>
+            <li>30 gün içinde iade ve değişim</li>
           </ul>
         </article>
       </section>
@@ -449,90 +507,85 @@
       <section class="content-card">
         <div class="tabs">
           <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
-          <span class="tab-pill">Teknik Özellikler</span>
-          <span class="tab-pill">Kargo ve İade</span>
+          <span class="tab-pill">İçerik</span>
+          <span class="tab-pill">Nasıl Kullanılır</span>
+          <span class="tab-pill">Değerlendirmeler</span>
         </div>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Bu alan yer tutucu içerik olarak kullanılmaktadır. Widget verileri bu sayfadaki içerikten
-          bağımsız olarak backend tarafından sağlanır.
+          Perfect Coverage Foundation, mat ve pürüzsüz bir görünüm sunarken cildinizdeki kusurları ve ton
+          farklılıklarını mükemmel şekilde kapatır. SPF 20 içeriğiyle güneşten koruma sağlayan formül, gün boyunca
+          kalıcılığıyla dikkat çeker. Widget verileri bu sayfadaki içerikten bağımsız olarak backend tarafından
+          sağlanır.
         </p>
       </section>
 
       <!-- QNA widget mount point -->
-      <div id="yatas-qna-section" class="qna-section"></div>
+      <div id="flormar-qna-section" class="qna-section"></div>
 
       <!-- SimRel widget mount point -->
       <section class="simrel-card">
         <h2 class="section-title">Benzer Ürünler</h2>
-        <div id="yatas-similar-products" class="simrel-mount"></div>
+        <div id="flormar-similar-products" class="simrel-mount"></div>
       </section>
     </main>
 
-    <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { renderYatasSimRelCard, renderYatasChatProductCard, renderYatasCardElement } from './yatas-cards.ts';
-      import yatasCardsCss from './yatas-cards.css?inline';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const sku = params.get('sku') ?? '8682536017985';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-
-      const launcherUrl = new URL('./glov-yatasbeddingcomtr-launcher.svg', import.meta.url).href;
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
 
+      const avatarUrl = new URL('./flormar-avatar.svg', import.meta.url).href;
+
       const controller = await initOverlayWidgets({
-        accountId: 'yatasbeddingcomtr',
+        accountId: 'flormarcomtr',
         middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
-          primaryColor: '#4097ca',
+          primaryColor: '#E45A80',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#222222',
-          borderRadius: '6px',
-          fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+          foregroundColor: '#0f0f0f',
+          borderRadius: '5px',
+          fontFamily: '"Montserrat", "Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--color-client-primary': '#4097c8',
-          '--color-client-saturated': '#075b8b',
-          '--root-background': '#F6F6F6',
-          '--root-background-mobile': '#F6F6F6',
-          '--client-message-bubble': '#4097c8',
-          '--client-card': '#e5e5e5',
-          '--client-background': '#515151',
-          '--client-foreground': '#e9ecf2',
-          '--client-border': '#cccccc',
-          '--client-text': '#222',
-          '--client-primary-color': '#4097ca',
-          '--root-wrapper-background-color': '#f0f0f0',
-          '--root-wrapper-border-color': '#d2d2d2',
+          '--color-client-primary': '#E45A80',
+          '--color-client-saturated': '#F44A7E',
+          '--root-background': '#ffffff',
+          '--root-background-mobile': '#ffffff',
+          '--client-message-bubble': '#FCEEF2',
+          '--client-card': '#ffffff',
+          '--client-background': '#2a2a2d',
+          '--client-foreground': '#fafafa',
+          '--client-border': '#dddddd',
+          '--client-text': '#323e48',
+          '--client-primary-color': '#E45A80',
+          '--root-wrapper-background-color': '#f9f9f9',
+          '--root-wrapper-border-color': '#dddddd',
+          '--gengage-chat-launcher-size': '80px',
         },
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: "Yataş'a Sor",
-          launcherImageUrl: launcherUrl,
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
+          headerTitle: "Flormar'a Sor",
+          launcherImageUrl: avatarUrl,
+          headerAvatarUrl: avatarUrl,
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
-            poweredBy: 'Yataş Bedding AI Asistan',
-          },
-          renderer: {
-            registry: {
-              ProductCard: renderYatasChatProductCard,
-            },
+            poweredBy: 'Flormar AI Asistan',
           },
         },
         qna: {
-          mountTarget: '#yatas-qna-section',
+          mountTarget: '#flormar-qna-section',
           hideButtonRowCta: true,
           inputPlaceholder: true,
           i18n: {
@@ -540,17 +593,16 @@
           },
         },
         simrel: {
-          mountTarget: '#yatas-similar-products',
+          mountTarget: '#flormar-similar-products',
           discountType: 'badge',
-          renderCardElement: renderYatasCardElement,
-          renderer: {
-            registry: {
-              ProductCard: renderYatasSimRelCard,
-            },
-          },
+        },
+        kvkk: {
+          message: 'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
+          linkUrl: 'https://www.flormar.com.tr/kisisel-verilerin-korunmasi',
+          linkText: 'KVKK Aydınlatma Metni',
         },
         onAddToCart: (p) => {
-          console.log('[yatas] add-to-cart', p);
+          console.log('[flormar] add-to-cart', p);
           alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
         },
         onProductNavigate: (url, prodSku, sid) => {
@@ -560,17 +612,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      // Inject Yataş card CSS into chat Shadow DOM (Shadow DOM isolates styles)
-      requestAnimationFrame(() => {
-        for (const el of document.querySelectorAll('*')) {
-          if (el.shadowRoot) {
-            const style = document.createElement('style');
-            style.textContent = yatasCardsCss;
-            el.shadowRoot.appendChild(style);
-          }
-        }
-      });
     </script>
   </body>
 </html>

@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
-    <title>Gengage Dev — yatasbeddingcomtr</title>
+    <title>Gengage Dev — saatvesaatcomtr</title>
     <style>
       :root {
-        --brand-primary: #4097ca;
-        --brand-secondary: #17a8ff;
-        --brand-bg: #f0f0f0;
+        --brand-primary: #590e2b;
+        --brand-secondary: #7a1040;
+        --brand-bg: #f9f2f3;
         --brand-surface: #ffffff;
-        --brand-text: #222222;
-        --brand-muted: #6b7280;
-        --brand-border: #d2d2d2;
-        --brand-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        --brand-text: #1a1a1a;
+        --brand-muted: #58585a;
+        --brand-border: #e0d0d4;
+        --brand-font: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
       }
 
       *,
@@ -93,15 +93,14 @@
         gap: 10px;
         font-weight: 700;
         color: var(--brand-primary);
-        font-size: 18px;
+        font-size: 22px;
+        letter-spacing: 0.04em;
       }
 
-      .host-topbar__dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: linear-gradient(145deg, var(--brand-primary), var(--brand-secondary));
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 22%, white);
+      .host-topbar__logo {
+        height: 30px;
+        width: auto;
+        display: block;
       }
 
       .host-nav {
@@ -252,6 +251,12 @@
         text-decoration: line-through;
       }
 
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
       .cta-row {
         display: flex;
         gap: 10px;
@@ -260,7 +265,7 @@
 
       .btn {
         border: 1px solid transparent;
-        border-radius: 999px;
+        border-radius: 4px;
         font-size: 14px;
         font-weight: 700;
         padding: 10px 16px;
@@ -285,6 +290,26 @@
         font-size: 13px;
         display: grid;
         gap: 6px;
+      }
+
+      .shade-selector {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .shade-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .shade-dot:first-child {
+        border-color: var(--brand-primary);
+        outline: 2px solid color-mix(in srgb, var(--brand-primary) 30%, white);
+        outline-offset: 2px;
       }
 
       /* ── Content card ── */
@@ -375,10 +400,10 @@
   <body>
     <!-- Dev header -->
     <div class="dev-header">
-      <p class="dev-header__title">Gengage Dev — yatasbeddingcomtr</p>
+      <p class="dev-header__title">Gengage Dev — saatvesaatcomtr</p>
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
-        <span class="dev-header__item"><strong>account:</strong> <span>yatasbeddingcomtr</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>saatvesaatcomtr</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -387,19 +412,23 @@
       <!-- Store topbar -->
       <section class="host-topbar">
         <div class="host-topbar__brand">
-          <span class="host-topbar__dot"></span>
-          <span>Yataş Bedding</span>
+          <img
+            src="./saatvesaat-avatar.svg"
+            alt="Saat & Saat"
+            class="host-topbar__logo"
+            style="height: 36px; width: auto"
+          />
         </div>
         <nav class="host-nav" aria-label="Main navigation">
-          <span>Ürünler</span>
-          <span>Kampanyalar</span>
-          <span>Yeni Gelenler</span>
-          <span>Markalar</span>
-          <span>Destek</span>
+          <span>Kadın Saat</span>
+          <span>Erkek Saat</span>
+          <span>Akıllı Saat</span>
+          <span>Takı</span>
+          <span>Aksesuar</span>
         </nav>
       </section>
 
-      <p class="host-breadcrumb">Anasayfa / Kategori / Alt Kategori / <strong id="breadcrumb-sku">—</strong></p>
+      <p class="host-breadcrumb">Ana Sayfa / Erkek Saat / Guess / <strong id="breadcrumb-sku">—</strong></p>
 
       <!-- Product hero -->
       <section class="pdp-layout">
@@ -419,28 +448,46 @@
         </article>
 
         <article class="summary-card">
-          <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <div class="badge-chip">%37 İndirim</div>
+          <h1 class="summary-title">GUU1461L2M Erkek Kol Saati — Harley Serisi</h1>
           <div class="summary-meta">
+            <span>Marka: Guess</span>
+            <span>&bull;</span>
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
-            <span>0.0 / 5 (0 değerlendirme)</span>
+            <span>4.8 / 5 (187 değerlendirme)</span>
+          </div>
+
+          <div style="margin-bottom: 4px">
+            <div style="font-size: 13px; font-weight: 600; color: var(--brand-text); margin-bottom: 6px">
+              Renk / Kayış
+            </div>
+            <div class="shade-selector">
+              <div class="shade-dot" style="background: #c9a84c" title="Altın"></div>
+              <div class="shade-dot" style="background: #c0c0c0" title="Gümüş"></div>
+              <div class="shade-dot" style="background: #1a1a1a" title="Siyah"></div>
+              <div class="shade-dot" style="background: #b76e79" title="Rose Gold"></div>
+              <div class="shade-dot" style="background: #8c6a3e" title="Bronz"></div>
+            </div>
           </div>
 
           <div class="price-wrap">
-            <div class="price-main">XXX TL</div>
-            <div class="price-old">XXX TL</div>
+            <div class="price-old">₺7.088,60</div>
+            <div class="price-main">₺4.469,00</div>
+            <div class="price-discount">%37</div>
           </div>
 
           <div class="cta-row">
             <button class="btn btn--primary" type="button">Sepete Ekle</button>
-            <button class="btn btn--ghost" type="button">Favorilere Ekle</button>
+            <button class="btn btn--ghost" type="button">Favorilerime Ekle</button>
           </div>
 
           <ul class="feature-list">
-            <li>Lorem ipsum dolor sit amet</li>
-            <li>Consectetur adipiscing elit</li>
-            <li>Sed do eiusmod tempor incididunt</li>
+            <li>Su Geçirmezlik: 3 ATM</li>
+            <li>Mekanizma: Quartz</li>
+            <li>Kasa: Çelik, 40mm çap</li>
+            <li>Garanti: 2 Yıl</li>
+            <li>30 gün içinde iade ve değişim</li>
           </ul>
         </article>
       </section>
@@ -450,89 +497,83 @@
         <div class="tabs">
           <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
           <span class="tab-pill">Teknik Özellikler</span>
-          <span class="tab-pill">Kargo ve İade</span>
+          <span class="tab-pill">Garanti & İade</span>
+          <span class="tab-pill">Değerlendirmeler</span>
         </div>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Bu alan yer tutucu içerik olarak kullanılmaktadır. Widget verileri bu sayfadaki içerikten
-          bağımsız olarak backend tarafından sağlanır.
+          Guess Harley Serisi erkek kol saati, şık çelik kasası ve kaliteli quartz mekanizmasıyla dikkat çeken bir
+          tasarıma sahiptir. 40mm kasa çapı ve 3 ATM su geçirmezlik özelliğiyle günlük kullanıma uygundur. Widget
+          verileri bu sayfadaki içerikten bağımsız olarak backend tarafından sağlanır.
         </p>
       </section>
 
       <!-- QNA widget mount point -->
-      <div id="yatas-qna-section" class="qna-section"></div>
+      <div id="saatvesaat-qna-section" class="qna-section"></div>
 
       <!-- SimRel widget mount point -->
       <section class="simrel-card">
         <h2 class="section-title">Benzer Ürünler</h2>
-        <div id="yatas-similar-products" class="simrel-mount"></div>
+        <div id="saatvesaat-similar-products" class="simrel-mount"></div>
       </section>
     </main>
 
-    <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { renderYatasSimRelCard, renderYatasChatProductCard, renderYatasCardElement } from './yatas-cards.ts';
-      import yatasCardsCss from './yatas-cards.css?inline';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const sku = params.get('sku') ?? 'GUU1461L2M';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-
-      const launcherUrl = new URL('./glov-yatasbeddingcomtr-launcher.svg', import.meta.url).href;
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
 
+      const avatarUrl = new URL('./saatvesaat-avatar.svg', import.meta.url).href;
+
       const controller = await initOverlayWidgets({
-        accountId: 'yatasbeddingcomtr',
+        accountId: 'saatvesaatcomtr',
         middlewareUrl,
         locale: 'tr',
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
-          primaryColor: '#4097ca',
+          primaryColor: '#590e2b',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#222222',
-          borderRadius: '6px',
-          fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+          foregroundColor: '#1a1a1a',
+          borderRadius: '4px',
+          fontFamily: '"Roboto", "Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--color-client-primary': '#4097c8',
-          '--color-client-saturated': '#075b8b',
-          '--root-background': '#F6F6F6',
-          '--root-background-mobile': '#F6F6F6',
-          '--client-message-bubble': '#4097c8',
-          '--client-card': '#e5e5e5',
-          '--client-background': '#515151',
-          '--client-foreground': '#e9ecf2',
-          '--client-border': '#cccccc',
-          '--client-text': '#222',
-          '--client-primary-color': '#4097ca',
-          '--root-wrapper-background-color': '#f0f0f0',
-          '--root-wrapper-border-color': '#d2d2d2',
+          '--color-client-primary': '#590e2b',
+          '--color-client-saturated': '#7a1040',
+          '--root-background': '#ffffff',
+          '--root-background-mobile': '#ffffff',
+          '--client-message-bubble': '#f5e6ea',
+          '--client-card': '#ffffff',
+          '--client-background': '#2a1520',
+          '--client-foreground': '#fafafa',
+          '--client-border': '#e0d0d4',
+          '--client-text': '#2a1520',
+          '--client-primary-color': '#590e2b',
+          '--root-wrapper-background-color': '#f9f2f3',
+          '--root-wrapper-border-color': '#e0d0d4',
+          '--gengage-chat-launcher-size': '80px',
         },
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: "Yataş'a Sor",
-          launcherImageUrl: launcherUrl,
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
+          headerTitle: "Saat & Saat'e Sor",
+          launcherImageUrl: avatarUrl,
+          headerAvatarUrl: avatarUrl,
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
-            poweredBy: 'Yataş Bedding AI Asistan',
-          },
-          renderer: {
-            registry: {
-              ProductCard: renderYatasChatProductCard,
-            },
+            poweredBy: 'Saat & Saat AI Asistan',
           },
         },
         qna: {
-          mountTarget: '#yatas-qna-section',
+          mountTarget: '#saatvesaat-qna-section',
           hideButtonRowCta: true,
           inputPlaceholder: true,
           i18n: {
@@ -540,17 +581,16 @@
           },
         },
         simrel: {
-          mountTarget: '#yatas-similar-products',
+          mountTarget: '#saatvesaat-similar-products',
           discountType: 'badge',
-          renderCardElement: renderYatasCardElement,
-          renderer: {
-            registry: {
-              ProductCard: renderYatasSimRelCard,
-            },
-          },
+        },
+        kvkk: {
+          message: 'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
+          linkUrl: 'https://www.saatvesaat.com.tr/gizlilik-politikasi',
+          linkText: 'KVKK Aydınlatma Metni',
         },
         onAddToCart: (p) => {
-          console.log('[yatas] add-to-cart', p);
+          console.log('[saatvesaat] add-to-cart', p);
           alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
         },
         onProductNavigate: (url, prodSku, sid) => {
@@ -560,17 +600,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      // Inject Yataş card CSS into chat Shadow DOM (Shadow DOM isolates styles)
-      requestAnimationFrame(() => {
-        for (const el of document.querySelectorAll('*')) {
-          if (el.shadowRoot) {
-            const style = document.createElement('style');
-            style.textContent = yatasCardsCss;
-            el.shadowRoot.appendChild(style);
-          }
-        }
-      });
     </script>
   </body>
 </html>

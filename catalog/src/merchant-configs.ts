@@ -236,6 +236,42 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
   },
 
+  flormarcomtr: {
+    accountId: 'flormarcomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#E45A80',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#0f0f0f',
+      borderRadius: '5px',
+      fontFamily: '"Montserrat", "Helvetica Neue", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Makyaj ürünleri ara veya soru sor',
+      poweredBy: 'Flormar AI Asistan',
+    },
+  },
+
+  saatvesaatcomtr: {
+    accountId: 'saatvesaatcomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#590e2b',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#1a1a1a',
+      borderRadius: '4px',
+      fontFamily: '"Roboto", "Helvetica Neue", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Saat ve takı ara veya soru sor',
+      poweredBy: 'Saat & Saat AI Asistan',
+    },
+  },
+
   penticom: {
     accountId: 'penticom',
     locale: 'tr',

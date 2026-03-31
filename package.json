@@ -1,6 +1,6 @@
 {
   "name": "@gengage/assistant-fe",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "description": "Source-available frontend widgets for Gengage AI Assistant — chat, Q&A, and similar-products. Backend is SaaS (gengage.ai).",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -79,7 +79,7 @@
     "build:lib": "tsc && vite build",
     "build:iife": "tsx scripts/build-iife.ts",
     "build:demos": "vite build --config vite.config.demos.ts",
-    "dev": "tsx scripts/dev.ts",
+    "dev": "node --env-file=.env --import=tsx/esm scripts/dev.ts",
     "kill": "tsx scripts/kill.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:catalog": "tsc --noEmit -p catalog/tsconfig.json",
