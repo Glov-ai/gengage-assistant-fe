@@ -125,6 +125,7 @@ export function createNoopQnaContext(): QNAUISpecRenderContext {
       sendQuestionAriaLabel: 'Soruyu gönder',
       defaultCtaText: 'Başka bir şey sor',
       redirectingToChat: 'Sohbete yönlendiriliyor...',
+      productContextQuickPillLabel: 'Bu ürün hakkında ne bilmeliyim?',
     },
   };
 }
