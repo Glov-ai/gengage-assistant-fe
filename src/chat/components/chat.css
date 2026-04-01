@@ -1762,6 +1762,18 @@
   background: var(--_gengage-surface-muted);
 }
 
+button.gengage-chat-product-card-cta {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
 /*
  * ProductSummaryCard — compact horizontal card for inline chat-pane rendering.
  * Mirrors production's LaunchSingleProduct: image left, info right.

@@ -106,11 +106,7 @@ describe('adaptBackendEvent', () => {
     expect((result as { panelHint?: string }).panelHint).toBe('panel');
     const uiSpec = result as { spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
     expect(uiSpec.spec.elements['root']!.type).toBe('ProductGrid');
-    expect(uiSpec.spec.elements['product-0']!.props?.['action']).toEqual({
-      title: 'B1 Product 1',
-      type: 'launchSingleProduct',
-      payload: { sku: 'P1' },
-    });
+    expect(uiSpec.spec.elements['product-0']!.props?.['action']).toBeUndefined();
   });
 
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {

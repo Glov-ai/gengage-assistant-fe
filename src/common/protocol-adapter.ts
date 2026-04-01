@@ -1494,17 +1494,9 @@ function buildProductGridUISpec(products: V1Product[], widget: WidgetName): Stre
     const normalized = productToNormalized(product);
     const id = `product-${i}`;
     childIds.push(id);
-    const props: Record<string, unknown> = { product: normalized, index: i };
-    if (normalized.sku) {
-      props['action'] = {
-        title: normalized.name,
-        type: 'launchSingleProduct',
-        payload: { sku: normalized.sku },
-      };
-    }
     elements[id] = {
       type: 'ProductCard',
-      props,
+      props: { product: normalized, index: i },
     };
   }
 
