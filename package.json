@@ -69,7 +69,9 @@
     "./chat.iife": "./dist/chat.iife.js",
     "./qna.iife": "./dist/qna.iife.js",
     "./simrel.iife": "./dist/simrel.iife.js",
-    "./native.iife": "./dist/native.iife.js"
+    "./native.iife": "./dist/native.iife.js",
+    "./qna/style.css": "./dist/qna.css",
+    "./simrel/style.css": "./dist/simrel.css"
   },
   "types": "./dist/index.d.ts",
   "scripts": {

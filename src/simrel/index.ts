@@ -29,19 +29,8 @@ import {
 import type { SimRelWidgetConfig, SimilarProduct, SimRelI18n, SimRelUISpecRenderContext } from './types.js';
 import { SIMREL_I18N_TR, resolveSimRelLocale } from './locales/index.js';
 import * as ga from '../common/ga-datalayer.js';
-import simrelStyles from './components/simrel.css?inline';
 
-const SIMREL_STYLE_ELEMENT_ID = 'gengage-simrel-styles';
-
-function ensureSimRelStylesInjected(): void {
-  if (typeof document === 'undefined' || document.getElementById(SIMREL_STYLE_ELEMENT_ID)) {
-    return;
-  }
-  const style = document.createElement('style');
-  style.id = SIMREL_STYLE_ELEMENT_ID;
-  style.textContent = simrelStyles;
-  document.head.appendChild(style);
-}
+import './components/simrel.css';
 
 /**
  * Similar / related products widget for product pages.
@@ -73,7 +62,6 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
   protected async onInit(config: SimRelWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
-    ensureSimRelStylesInjected();
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-simrel-container';
