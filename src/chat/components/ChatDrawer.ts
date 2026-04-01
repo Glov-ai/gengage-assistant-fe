@@ -1544,8 +1544,7 @@ export class ChatDrawer {
         const rec = document.createElement('div');
         rec.className = 'gengage-chat-comparison-recommended';
         const recLabel = document.createElement('div');
-        recLabel.className =
-          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-label';
+        recLabel.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-label';
         rec.appendChild(recLabel);
         const recBody = document.createElement('div');
         recBody.className = 'gengage-chat-comparison-recommended-body';
@@ -1561,8 +1560,7 @@ export class ChatDrawer {
           recInfo.appendChild(t);
         }
         const recPrice = document.createElement('div');
-        recPrice.className =
-          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-price';
+        recPrice.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-price';
         recInfo.appendChild(recPrice);
         recBody.appendChild(recImg);
         recBody.appendChild(recInfo);
@@ -1570,8 +1568,7 @@ export class ChatDrawer {
         const hl = document.createElement('div');
         hl.className = 'gengage-chat-comparison-highlights';
         const hlLab = document.createElement('div');
-        hlLab.className =
-          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-label';
+        hlLab.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-label';
         hl.appendChild(hlLab);
         const hlUl = document.createElement('ul');
         hlUl.className = 'gengage-chat-comparison-skeleton-hl-list';
@@ -1592,8 +1589,7 @@ export class ChatDrawer {
         const kd = document.createElement('div');
         kd.className = 'gengage-chat-comparison-key-differences';
         const kdH = document.createElement('div');
-        kdH.className =
-          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-heading';
+        kdH.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-heading';
         kd.appendChild(kdH);
         const kdContent = document.createElement('div');
         kdContent.className = 'gengage-chat-comparison-key-differences-content';
@@ -1626,11 +1622,9 @@ export class ChatDrawer {
           const col = document.createElement('div');
           col.className = 'gengage-chat-comparison-skeleton-table-col';
           const thImg = document.createElement('div');
-          thImg.className =
-            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-img';
+          thImg.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-img';
           const thName = document.createElement('div');
-          thName.className =
-            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-name';
+          thName.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-name';
           const thPrice = document.createElement('div');
           thPrice.className =
             'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-price';
@@ -1644,13 +1638,11 @@ export class ChatDrawer {
           const row = document.createElement('div');
           row.className = 'gengage-chat-comparison-skeleton-table-row';
           const labelCell = document.createElement('div');
-          labelCell.className =
-            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-label';
+          labelCell.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-label';
           row.appendChild(labelCell);
           for (let c = 0; c < 3; c++) {
             const cell = document.createElement('div');
-            cell.className =
-              'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-cell';
+            cell.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-cell';
             row.appendChild(cell);
           }
           tableWrap.appendChild(row);
@@ -1781,8 +1773,7 @@ export class ChatDrawer {
   private _smoothScrollPanelListToTop(): void {
     const panel = this._panelEl;
     const reduceMotion =
-      typeof window !== 'undefined' &&
-      (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
+      typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
 
     if (reduceMotion) {
       panel.scrollTop = 0;

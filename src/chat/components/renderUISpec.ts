@@ -399,8 +399,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
     const productName = (product['name'] as string | undefined) ?? sku;
     const hintText =
-      ctx.i18n?.comparisonSelectCardHint ??
-      'Tap anywhere on the card to add or remove it from comparison.';
+      ctx.i18n?.comparisonSelectCardHint ?? 'Tap anywhere on the card to add or remove it from comparison.';
     wrapper.setAttribute('role', 'group');
     wrapper.setAttribute('aria-label', `${String(productName)}. ${hintText}`);
 

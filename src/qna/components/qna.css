@@ -289,7 +289,8 @@
     width: 100%;
     min-height: 48px;
     border-left: none;
-    border-top: 1px solid color-mix(in srgb, var(--gengage-primary-color, #b7102a) 22%, var(--_gengage-border-color) 78%);
+    border-top: 1px solid
+      color-mix(in srgb, var(--gengage-primary-color, #b7102a) 22%, var(--_gengage-border-color) 78%);
     font-size: 15px;
   }
 }

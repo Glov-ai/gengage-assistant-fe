@@ -238,7 +238,9 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
       const fallbackSpec = this._buildFallbackActionsSpec(result.actions);
       const specsToRender =
-        result.uiSpecs.length > 0 ? mergeStandaloneFindSimilarIntoQuickPills(result.uiSpecs, this._i18n) : [fallbackSpec];
+        result.uiSpecs.length > 0
+          ? mergeStandaloneFindSimilarIntoQuickPills(result.uiSpecs, this._i18n)
+          : [fallbackSpec];
       const nonEmptySpecs = specsToRender.filter((spec) => Object.keys(spec.elements).length > 0);
 
       for (const spec of nonEmptySpecs) {

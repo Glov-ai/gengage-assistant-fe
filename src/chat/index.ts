@@ -2719,9 +2719,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return spec.elements[spec.root]?.type === 'ProductGrid';
   }
 
-  private _shouldUseDividerPreviewForSource(
-    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' } | null,
-  ): boolean {
+  private _shouldUseDividerPreviewForSource(source: PanelSource | null): boolean {
     return source?.kind === 'spec' ? this._shouldUseDividerPreviewForSpec(source.spec) : false;
   }
 
