@@ -6,6 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type { UISpec } from '../src/common/types.js';
 import { renderUISpec } from '../src/chat/components/renderUISpec.js';
 import type { UISpecRenderContext } from '../src/chat/components/renderUISpec.js';
+import { CHAT_I18N_TR } from '../src/chat/locales/index.js';
 
 function makeContext(overrides: Partial<UISpecRenderContext> = {}): UISpecRenderContext {
   return {
@@ -121,39 +122,54 @@ describe('renderUISpec', () => {
       expect(name.textContent).toBe('Direct Props Product');
     });
 
-    it('dispatches launchSingleProduct action when product card action is provided', () => {
+    it('opens panel on card click when action CTA is present (CTA uses i18n label)', () => {
       const onAction = vi.fn();
       const onProductSelect = vi.fn();
+      const product = {
+        sku: 'SKU-3',
+        name: 'Action Product',
+        price: '50.00',
+      };
+      const action = {
+        title: 'Action Product',
+        type: 'launchSingleProduct',
+        payload: { sku: 'SKU-3' },
+      };
       const spec: UISpec = {
         root: 'root',
         elements: {
           root: {
             type: 'ProductCard',
             props: {
-              product: {
-                sku: 'SKU-3',
-                name: 'Action Product',
-                price: '50.00',
-              },
-              action: {
-                title: 'Action Product',
-                type: 'launchSingleProduct',
-                payload: { sku: 'SKU-3' },
-              },
+              product,
+              action,
             },
           },
         },
       };
 
-      const result = renderUISpec(spec, makeContext({ onAction, onProductSelect }));
+      const result = renderUISpec(
+        spec,
+        makeContext({
+          onAction,
+          onProductSelect,
+          i18n: { ...CHAT_I18N_TR, productCtaLabel: 'Ürünü gör' },
+        }),
+      );
       const card = result.querySelector('.gengage-chat-product-card') as HTMLElement;
-      card.click();
+      const cta = card.querySelector('.gengage-chat-product-card-cta') as HTMLButtonElement;
 
-      expect(onAction).toHaveBeenCalledWith({
-        title: 'Action Product',
-        type: 'launchSingleProduct',
-        payload: { sku: 'SKU-3' },
-      });
+      expect(cta.tagName).toBe('BUTTON');
+      expect(cta.textContent).toBe('Ürünü gör');
+
+      card.click();
+      expect(onProductSelect).toHaveBeenCalledWith(product);
+      expect(onAction).not.toHaveBeenCalled();
+
+      onAction.mockClear();
+      onProductSelect.mockClear();
+      cta.click();
+      expect(onAction).toHaveBeenCalledWith(action);
       expect(onProductSelect).not.toHaveBeenCalled();
     });
   });

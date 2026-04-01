@@ -32,9 +32,19 @@ import {
 import { mergeStandaloneFindSimilarIntoQuickPills } from './normalize-ui-specs.js';
 import type { QNAWidgetConfig, QNAI18n, QNAUISpecRenderContext } from './types.js';
 import { QNA_I18N_TR, resolveQnaLocale } from './locales/index.js';
+import qnaStyles from './components/qna.css?inline';
 
-// Inline CSS import marker - Vite will bundle this
-import './components/qna.css';
+const QNA_STYLE_ELEMENT_ID = 'gengage-qna-styles';
+
+function ensureQnaStylesInjected(): void {
+  if (typeof document === 'undefined' || document.getElementById(QNA_STYLE_ELEMENT_ID)) {
+    return;
+  }
+  const style = document.createElement('style');
+  style.id = QNA_STYLE_ELEMENT_ID;
+  style.textContent = qnaStyles;
+  document.head.appendChild(style);
+}
 
 /**
  * Contextual Q&A action buttons for product pages.
@@ -64,6 +74,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
   protected async onInit(config: QNAWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
+    ensureQnaStylesInjected();
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-qna-container';

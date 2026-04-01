@@ -147,20 +147,15 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   // Store SKU as data attribute for comparison mode DOM refresh
   const productSku = product['sku'] as string | undefined;
   if (productSku) card.dataset['sku'] = productSku;
-  const action = element.props?.['action'] as ActionPayload | undefined;
 
   // Make card clickable to show detail in panel (disabled in comparison select mode)
-  if (ctx.onProductSelect || action) {
+  if (ctx.onProductSelect) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', (e) => {
       // Check live DOM: if card is inside a comparison wrapper, mode is active
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-product-card-atc')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-product-card-cta')) return;
-      if (action) {
-        ctx.onAction(action);
-        return;
-      }
       ctx.onProductSelect?.(product);
     });
   }
@@ -337,12 +332,13 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
   const url = product['url'] as string | undefined;
   const sku = product['sku'] as string | undefined;
+  const action = element.props?.['action'] as ActionPayload | undefined;
 
   if (action) {
     const cta = document.createElement('button');
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
-    cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
+    cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
     cta.addEventListener('click', (e) => {
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
         e.stopPropagation();

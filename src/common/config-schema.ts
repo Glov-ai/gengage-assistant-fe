@@ -48,13 +48,13 @@ const ActionHandlingSchema = z.object({
 });
 
 export const AccountRuntimeConfigSchema = z.object({
-  version: z.literal('1', { error: 'version must be "1"' }),
+  version: z.literal('1', { message: 'version must be "1"' }),
   accountId: z
-    .string({ error: 'accountId must be a non-empty string' })
-    .min(1, { error: 'accountId must be a non-empty string' }),
+    .string({ message: 'accountId must be a non-empty string' })
+    .min(1, { message: 'accountId must be a non-empty string' }),
   middlewareUrl: z
-    .string({ error: 'middlewareUrl must be a valid URL (e.g. "https://your-backend.example.com")' })
-    .url({ error: 'middlewareUrl must be a valid URL (e.g. "https://your-backend.example.com")' }),
+    .string({ message: 'middlewareUrl must be a valid URL (e.g. "https://your-backend.example.com")' })
+    .url({ message: 'middlewareUrl must be a valid URL (e.g. "https://your-backend.example.com")' }),
   locale: z.string().optional(),
   widgets: z.object({
     chat: WidgetToggleSchema.default({ enabled: true }),
