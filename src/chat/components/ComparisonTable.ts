@@ -238,6 +238,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       if (product.sku === recommended?.sku) {
         th.className = 'gengage-chat-comparison-selected';
       }
+      const headerCell = document.createElement('div');
+      headerCell.className = 'gengage-chat-comparison-table-header-cell';
       if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
         const img = document.createElement('img');
         img.src = product.imageUrl;
@@ -250,15 +252,22 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
           },
           { once: true },
         );
-        th.appendChild(img);
+        headerCell.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'gengage-chat-comparison-table-header-img-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        headerCell.appendChild(placeholder);
       }
       const name = document.createElement('div');
+      name.className = 'gengage-chat-comparison-table-product-name';
       name.textContent = product.name;
-      th.appendChild(name);
+      headerCell.appendChild(name);
       const prc = document.createElement('div');
       prc.className = 'gengage-chat-comparison-table-price';
       prc.textContent = formatPrice(product.price, options.pricing);
-      th.appendChild(prc);
+      headerCell.appendChild(prc);
+      th.appendChild(headerCell);
       headerRow.appendChild(th);
     }
     thead.appendChild(headerRow);

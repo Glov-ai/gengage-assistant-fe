@@ -8,4 +8,5 @@ export const QNA_I18N_EN: QNAI18n = {
   sendQuestionAriaLabel: 'Send question',
   defaultCtaText: 'Ask something else',
   redirectingToChat: 'Redirecting to chat...',
+  productContextQuickPillLabel: 'What should I know about this product?',
 };

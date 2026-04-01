@@ -80,6 +80,15 @@ import {
 import chatStyles from './components/chat.css?inline';
 import * as ga from '../common/ga-datalayer.js';
 
+/**
+ * Panel rebuild source for local drilldown history and stream-end snapshots.
+ * `productDetailsWithSimilars` keeps PDP + appended similar grid in sync when
+ * similars arrive in a second stream chunk (DOM append does not update `spec` alone).
+ */
+type PanelSource =
+  | { kind: 'spec'; spec: UISpec }
+  | { kind: 'productDetailsWithSimilars'; pdpSpec: UISpec; similarsSpec: UISpec }
+  | { kind: 'favorites' };
 type SendActionOptions = {
   silent?: boolean;
   attachment?: File;
@@ -120,6 +129,8 @@ function isActionLike(value: unknown): value is ActionPayload {
 export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _shadow: ShadowRoot | null = null;
   private _rootEl: HTMLElement | null = null;
+  /** Full-viewport scrim when drawer is open (floating/overlay); not used for inline. */
+  private _backdropEl: HTMLElement | null = null;
   private _launcher: LauncherElements | null = null;
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
@@ -186,15 +197,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    *  Stores rebuild info (UISpec or kind) instead of DOM clones so back navigation
    *  produces fresh elements with live event listeners. */
   private _localPanelHistory: Array<{
-    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' };
+    source: PanelSource;
     title: string;
   }> = [];
   private static readonly _MAX_PANEL_HISTORY = 10;
   /** Tracks how the current panel content was produced, for history/error-recovery rebuild. */
-  private _currentPanelSource:
-    | { kind: 'spec'; spec: import('../common/types.js').UISpec }
-    | { kind: 'favorites' }
-    | null = null;
+  private _currentPanelSource: PanelSource | null = null;
   /** IndexedDB session persistence manager. */
   private _session: SessionPersistence | null = null;
   /** Transcript focus, pin-to-bottom, and scroll request coordination. */
@@ -247,8 +255,29 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._rootEl = rootEl;
     this._shadow.appendChild(rootEl);
 
-    // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     const variant = config.variant ?? 'floating';
+    if (variant === 'inline') {
+      rootEl.classList.add('gengage-chat--inline');
+    }
+
+    // Dim page + click outside to close (not for inline — drawer is embedded)
+    if (variant !== 'inline') {
+      const backdropEl = document.createElement('div');
+      backdropEl.className = 'gengage-chat-backdrop';
+      backdropEl.setAttribute('aria-hidden', 'true');
+      backdropEl.setAttribute('role', 'button');
+      backdropEl.setAttribute('tabindex', '-1');
+      backdropEl.setAttribute('aria-label', this._i18n.closeAriaLabel);
+      backdropEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.close();
+      });
+      this._backdropEl = backdropEl;
+      rootEl.prepend(backdropEl);
+    }
+
+    // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     if (variant === 'floating') {
       const launcherOpts: import('./components/Launcher.js').LauncherOptions = {
         onClick: () => this.open(),
@@ -1144,6 +1173,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._rootEl.classList.toggle('gengage-chat-root--open', this._drawerVisible);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-half', mobileHalf);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-full', mobileFull);
+    if (this._backdropEl) {
+      this._backdropEl.setAttribute('aria-hidden', this._drawerVisible ? 'false' : 'true');
+    }
   }
 
   private _handleAttachment(file: File): void {
@@ -1315,6 +1347,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Preserve panel during the request — don't clear or show loading skeleton
     // until the backend explicitly signals new panel content (panelLoading event).
+    // Exception: getComparisonTable shows the panel skeleton immediately (desktop + mobile)
+    // so users see progress while the table streams in.
     // Captures the panel source (UISpec/kind) so it can be re-rendered with fresh
     // event listeners if the backend fails to deliver new panel content.
     let prePanelSource = this._currentPanelSource;
@@ -1328,10 +1362,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       if (!this._drawer?.isPanelLoading()) return;
       if (prePanelSource) {
         const ctx = this._buildRenderContext();
-        const el =
-          prePanelSource.kind === 'favorites'
-            ? this._buildFavoritesPageEl()
-            : this._renderUISpec(prePanelSource.spec, ctx);
+        const el = this._renderPanelFromSource(prePanelSource, ctx);
         this._drawer.setPanelContent(el);
         this._drawer.setDividerPreviewEnabled(this._shouldUseDividerPreviewForSource(prePanelSource));
         this._currentPanelSource = prePanelSource;
@@ -1341,6 +1372,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
       prePanelSource = null;
     };
+
+    if (action.type === 'getComparisonTable') {
+      this._drawer?.showPanelLoading('comparisonTable');
+      this._panel?.updateTopBarForLoading('comparisonTable');
+    }
 
     // Show typing indicator
     this._drawer?.showTypingIndicator();
@@ -2215,9 +2251,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             panelSource
               ? () => {
                   const ctx = this._buildRenderContext();
-                  return panelSource.kind === 'favorites'
-                    ? this._buildFavoritesPageEl()
-                    : this._renderUISpec(panelSource.spec, ctx);
+                  return this._renderPanelFromSource(panelSource, ctx);
                 }
               : undefined,
           );
@@ -2295,6 +2329,46 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const grid = this._renderUISpec(spec, ctx);
     grid.classList.add('gengage-chat-product-details-similars');
     panelEl.appendChild(grid);
+    this._mergePanelSourceWithSimilars(spec);
+  }
+
+  /** After similars grid is appended, extend panel source so back/history/snapshot rebuild includes it. */
+  private _mergePanelSourceWithSimilars(similarsSpec: UISpec): void {
+    const prev = this._currentPanelSource;
+    if (prev?.kind === 'spec' && this._panel?.currentType === 'ProductDetailsPanel') {
+      this._currentPanelSource = {
+        kind: 'productDetailsWithSimilars',
+        pdpSpec: prev.spec,
+        similarsSpec,
+      };
+    }
+  }
+
+  /** Re-render PDP plus similar-products block (matches `_appendSimilarsToPanel` structure). */
+  private _renderProductDetailsWithSimilars(
+    pdpSpec: UISpec,
+    similarsSpec: UISpec,
+    ctx: ChatUISpecRenderContext,
+  ): HTMLElement {
+    const panelEl = this._renderUISpec(pdpSpec, ctx);
+    const heading = document.createElement('h3');
+    heading.className = 'gengage-chat-product-details-similars-heading';
+    heading.textContent = this._i18n.similarProductsLabel ?? 'Similar Products';
+    panelEl.appendChild(heading);
+    const grid = this._renderUISpec(similarsSpec, ctx);
+    grid.classList.add('gengage-chat-product-details-similars');
+    panelEl.appendChild(grid);
+    return panelEl;
+  }
+
+  private _renderPanelFromSource(source: PanelSource, ctx: ChatUISpecRenderContext): HTMLElement {
+    if (source.kind === 'favorites') {
+      return this._buildFavoritesPageEl();
+    }
+    if (source.kind === 'productDetailsWithSimilars') {
+      return this._renderProductDetailsWithSimilars(source.pdpSpec, source.similarsSpec, ctx);
+    }
+    return this._renderUISpec(source.spec, ctx);
   }
 
   private _handleRollback(messageId: string): void {
@@ -2624,8 +2698,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const prev = this._localPanelHistory.pop();
     if (prev) {
       const ctx = this._buildRenderContext();
-      const el =
-        prev.source.kind === 'favorites' ? this._buildFavoritesPageEl() : this._renderUISpec(prev.source.spec, ctx);
+      const el = this._renderPanelFromSource(prev.source, ctx);
       this._drawer?.setPanelContent(el);
       this._drawer?.setDividerPreviewEnabled(this._shouldUseDividerPreviewForSource(prev.source));
       this._currentPanelSource = prev.source;
@@ -2646,9 +2719,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return spec.elements[spec.root]?.type === 'ProductGrid';
   }
 
-  private _shouldUseDividerPreviewForSource(
-    source: { kind: 'spec'; spec: import('../common/types.js').UISpec } | { kind: 'favorites' } | null,
-  ): boolean {
+  private _shouldUseDividerPreviewForSource(source: PanelSource | null): boolean {
     return source?.kind === 'spec' ? this._shouldUseDividerPreviewForSpec(source.spec) : false;
   }
 
@@ -2773,11 +2844,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             cancelAnimationFrame(this._comparisonRefreshRafId);
             this._comparisonRefreshRafId = null;
           }
-          // On mobile the ComparisonTable renders exclusively in the panel.
-          // Keep the panel visible and show a loading skeleton so the user
-          // gets immediate feedback, rather than hiding the panel and leaving
-          // them staring at a blank conversation.
-          if (this._isMobileViewport) this._drawer?.showPanelLoading();
           this._sendAction({
             title: label,
             type: 'getComparisonTable',

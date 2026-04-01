@@ -165,6 +165,12 @@ export interface ChatI18n {
   /** CTA label in the product details panel when navigating to the product URL (distinct from the card "İncele" CTA). */
   viewOnSiteLabel: string;
   attachImageButton: string;
+  /** Image attach popup: pick from device. */
+  attachMenuSelectPhoto: string;
+  /** Image attach popup: paste from clipboard. */
+  attachMenuPaste: string;
+  /** When clipboard has no image (paste menu or unsupported API). */
+  clipboardNoImageMessage: string;
   removeAttachmentButton: string;
   invalidFileType: string;
   fileTooLarge: string;
@@ -182,6 +188,10 @@ export interface ChatI18n {
   sortToolbarAriaLabel: string;
   compareSelected: string;
   compareMinHint: string;
+  /** Shown on product cards while comparison mode is on — whole card toggles selection. */
+  comparisonSelectCardHint: string;
+  /** Shown on the main panel while the comparison table is being generated. */
+  comparisonPreparingLabel: string;
   panelTitleProductDetails: string;
   panelTitleSimilarProducts: string;
   panelTitleComparisonResults: string;
@@ -190,6 +200,9 @@ export interface ChatI18n {
   inStockLabel: string;
   outOfStockLabel: string;
   findSimilarLabel: string;
+  /** Product details gallery: previous / next image controls */
+  galleryPrevAriaLabel: string;
+  galleryNextAriaLabel: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -295,6 +308,7 @@ export interface ChatUISpecRenderContext {
     | 'sortPriceDesc'
     | 'sortToolbarAriaLabel'
     | 'compareSelected'
+    | 'comparisonSelectCardHint'
     | 'panelTitleProductDetails'
     | 'panelTitleSimilarProducts'
     | 'panelTitleComparisonResults'
@@ -303,6 +317,8 @@ export interface ChatUISpecRenderContext {
     | 'inStockLabel'
     | 'outOfStockLabel'
     | 'findSimilarLabel'
+    | 'galleryPrevAriaLabel'
+    | 'galleryNextAriaLabel'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'

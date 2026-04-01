@@ -397,6 +397,12 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const wrapper = document.createElement('div');
     wrapper.className = 'gengage-chat-comparison-select-wrapper';
 
+    const productName = (product['name'] as string | undefined) ?? sku;
+    const hintText =
+      ctx.i18n?.comparisonSelectCardHint ?? 'Tap anywhere on the card to add or remove it from comparison.';
+    wrapper.setAttribute('role', 'group');
+    wrapper.setAttribute('aria-label', `${String(productName)}. ${hintText}`);
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'gengage-chat-comparison-checkbox';
@@ -404,6 +410,11 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     checkbox.addEventListener('change', () => {
       ctx.onToggleComparisonSku?.(sku);
     });
+
+    const hint = document.createElement('div');
+    hint.className = 'gengage-chat-comparison-card-hint';
+    hint.setAttribute('aria-hidden', 'true');
+    hint.textContent = hintText;
 
     // Clicking anywhere on the card toggles comparison selection — no product detail navigation.
     // Do NOT manually flip checkbox.checked here: onToggleComparisonSku triggers
@@ -415,6 +426,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     });
 
     wrapper.appendChild(checkbox);
+    wrapper.appendChild(hint);
     wrapper.appendChild(card);
     return wrapper;
   }
@@ -439,7 +451,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const detailsSku = product['sku'] as string | undefined;
 
   if (images && images.length > 1) {
-    // Gallery with thumbnails
+    // Gallery with thumbnails + prev/next arrows
     const media = document.createElement('div');
     media.className =
       'gengage-chat-product-details-media gengage-chat-product-details-gallery gengage-chat-product-details-img-wrap';
@@ -458,8 +470,54 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const MAX_VISIBLE_THUMBNAILS = 6;
     const safeImages = images.filter((u): u is string => !!u && isSafeUrl(u));
+    /** First gallery URL only — findSimilar payload never follows the currently displayed slide. */
+    const findSimilarImageUrl = safeImages[0];
     let activeThumb: HTMLElement | null = null;
     let activeThumbIdx = 0;
+
+    const i18n = ctx.i18n;
+    const prevLabel = i18n?.galleryPrevAriaLabel ?? 'Previous image';
+    const nextLabel = i18n?.galleryNextAriaLabel ?? 'Next image';
+
+    const navSvg = (dir: 'prev' | 'next') =>
+      dir === 'prev'
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--prev';
+    prevBtn.setAttribute('aria-label', prevLabel);
+    prevBtn.innerHTML = navSvg('prev');
+
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--next';
+    nextBtn.setAttribute('aria-label', nextLabel);
+    nextBtn.innerHTML = navSvg('next');
+
+    const updateNavDisabled = (): void => {
+      prevBtn.disabled = activeThumbIdx <= 0;
+      nextBtn.disabled = activeThumbIdx >= safeImages.length - 1;
+    };
+
+    const gotoIndex = (nextIdx: number): void => {
+      if (nextIdx < 0 || nextIdx >= safeImages.length || nextIdx === activeThumbIdx) return;
+      const nextUrl = safeImages[nextIdx];
+      if (!nextUrl) return;
+      safeSetAttribute(mainImg, 'src', nextUrl);
+      const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
+      if (activeThumb) activeThumb.classList.remove('gengage-chat-product-gallery-thumb--active');
+      if (nextIdx < MAX_VISIBLE_THUMBNAILS && thumbEls[nextIdx]) {
+        (thumbEls[nextIdx] as HTMLElement).classList.add('gengage-chat-product-gallery-thumb--active');
+        activeThumb = thumbEls[nextIdx] as HTMLElement;
+      } else {
+        activeThumb = null;
+      }
+      activeThumbIdx = nextIdx;
+      updateNavDisabled();
+    };
+
     for (let i = 0; i < safeImages.length; i++) {
       const imgUrl = safeImages[i]!;
       if (i >= MAX_VISIBLE_THUMBNAILS) break;
@@ -475,11 +533,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       thumb.height = 48;
       addImageErrorHandler(thumb);
       thumb.addEventListener('click', () => {
-        safeSetAttribute(mainImg, 'src', imgUrl);
-        if (activeThumb) activeThumb.classList.remove('gengage-chat-product-gallery-thumb--active');
-        thumb.classList.add('gengage-chat-product-gallery-thumb--active');
-        activeThumb = thumb;
-        activeThumbIdx = i;
+        gotoIndex(i);
       });
       thumbStrip.appendChild(thumb);
     }
@@ -491,6 +545,16 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       more.textContent = `+${safeImages.length - MAX_VISIBLE_THUMBNAILS}`;
       thumbStrip.appendChild(more);
     }
+
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      gotoIndex(activeThumbIdx - 1);
+    });
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      gotoIndex(activeThumbIdx + 1);
+    });
+    updateNavDisabled();
 
     // Touch swipe gesture for gallery navigation
     let touchStartX = 0;
@@ -514,27 +578,14 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
           ? Math.min(activeThumbIdx + 1, safeImages.length - 1) // swipe left → next
           : Math.max(activeThumbIdx - 1, 0); // swipe right → prev
 
-      if (nextIdx !== activeThumbIdx) {
-        const nextUrl = safeImages[nextIdx];
-        if (nextUrl) {
-          safeSetAttribute(mainImg, 'src', nextUrl);
-          // Update active thumb highlight if within visible range
-          const thumbEls = thumbStrip.querySelectorAll('.gengage-chat-product-gallery-thumb');
-          if (activeThumb) activeThumb.classList.remove('gengage-chat-product-gallery-thumb--active');
-          if (nextIdx < MAX_VISIBLE_THUMBNAILS && thumbEls[nextIdx]) {
-            (thumbEls[nextIdx] as HTMLElement).classList.add('gengage-chat-product-gallery-thumb--active');
-            activeThumb = thumbEls[nextIdx] as HTMLElement;
-          } else {
-            activeThumb = null;
-          }
-          activeThumbIdx = nextIdx;
-        }
-      }
+      gotoIndex(nextIdx);
     });
 
+    media.appendChild(prevBtn);
+    media.appendChild(nextBtn);
     media.appendChild(thumbStrip);
 
-    // "Find Similar" hover pill on gallery image
+    // "Find Similar" — button always visible; search uses first image only (not mainImg src).
     if (detailsSku) {
       const pill = document.createElement('button');
       pill.className = 'gengage-chat-find-similar-pill';
@@ -544,7 +595,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
         ctx.onAction({
           title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
           type: 'findSimilar',
-          payload: { sku: detailsSku, ...(firstSafe ? { image_url: firstSafe } : {}) },
+          payload: { sku: detailsSku, ...(findSimilarImageUrl ? { image_url: findSimilarImageUrl } : {}) },
         });
       });
       media.appendChild(pill);

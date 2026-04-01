@@ -29,6 +29,7 @@ import {
   defaultQnaUnknownUISpecRenderer,
   renderQnaUISpec,
 } from './components/renderUISpec.js';
+import { mergeStandaloneFindSimilarIntoQuickPills } from './normalize-ui-specs.js';
 import type { QNAWidgetConfig, QNAI18n, QNAUISpecRenderContext } from './types.js';
 import { QNA_I18N_TR, resolveQnaLocale } from './locales/index.js';
 
@@ -197,6 +198,10 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (!this._contentEl) return;
       this._contentEl.innerHTML = '';
 
+      const panel = document.createElement('div');
+      panel.className = 'gengage-qna-panel';
+      this._contentEl.appendChild(panel);
+
       const hasQuestionHeading = this._specIncludesType(result.uiSpecs, 'QuestionHeading');
 
       // Render heading if configured and backend didn't provide one
@@ -204,7 +209,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
         const heading = document.createElement('h3');
         heading.className = 'gengage-qna-heading';
         heading.textContent = this.config.staticQuestionText;
-        this._contentEl.appendChild(heading);
+        panel.appendChild(heading);
       }
 
       const cfgPlaceholders = this.config.inputPlaceholder;
@@ -232,12 +237,15 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (effectivePlaceholders !== undefined) renderContext.inputPlaceholder = effectivePlaceholders;
 
       const fallbackSpec = this._buildFallbackActionsSpec(result.actions);
-      const specsToRender = result.uiSpecs.length > 0 ? result.uiSpecs : [fallbackSpec];
+      const specsToRender =
+        result.uiSpecs.length > 0
+          ? mergeStandaloneFindSimilarIntoQuickPills(result.uiSpecs, this._i18n)
+          : [fallbackSpec];
       const nonEmptySpecs = specsToRender.filter((spec) => Object.keys(spec.elements).length > 0);
 
       for (const spec of nonEmptySpecs) {
         const rendered = this._renderUISpec(spec, renderContext);
-        this._contentEl.appendChild(rendered);
+        panel.appendChild(rendered);
       }
 
       if (nonEmptySpecs.length > 0) {
@@ -246,7 +254,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
       const shouldRenderStandaloneInput = !this._specIncludesType(nonEmptySpecs, 'TextInput');
       if (shouldRenderStandaloneInput) {
-        this._appendStandaloneInput(renderContext, effectivePlaceholders);
+        this._appendStandaloneInput(renderContext, effectivePlaceholders, panel);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -270,6 +278,9 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (this._contentEl) {
         this._cleanupTextInputTimers();
         this._contentEl.innerHTML = '';
+        const errPanel = document.createElement('div');
+        errPanel.className = 'gengage-qna-panel';
+        this._contentEl.appendChild(errPanel);
         const fallbackPlaceholders =
           this.config.inputPlaceholder === true
             ? this._i18n.defaultInputPlaceholder
@@ -280,7 +291,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
           onOpenChat: this._openChatHandler,
         };
         if (this.config.ctaText !== undefined) fallbackContext.ctaText = this.config.ctaText;
-        this._appendStandaloneInput(fallbackContext, fallbackPlaceholders);
+        this._appendStandaloneInput(fallbackContext, fallbackPlaceholders, errPanel);
       }
 
       if (import.meta.env?.DEV) {
@@ -369,7 +380,11 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     };
   }
 
-  private _appendStandaloneInput(context: QNAUISpecRenderContext, placeholder?: string | string[]): void {
+  private _appendStandaloneInput(
+    context: QNAUISpecRenderContext,
+    placeholder?: string | string[],
+    parent?: HTMLElement,
+  ): void {
     if (!this._contentEl) return;
     const inputSpec: UISpec = {
       root: 'root',
@@ -383,7 +398,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       },
     };
     const renderedInput = this._renderUISpec(inputSpec, context);
-    this._contentEl.appendChild(renderedInput);
+    (parent ?? this._contentEl).appendChild(renderedInput);
   }
 
   private _handleAction(action: ActionPayload): void {
@@ -412,7 +427,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     const indicator = document.createElement('div');
     indicator.className = 'gengage-qna-transition-indicator';
     indicator.textContent = msg;
-    this._contentEl.appendChild(indicator);
+    const panel = this._contentEl.querySelector('.gengage-qna-panel');
+    (panel ?? this._contentEl).appendChild(indicator);
     setTimeout(() => {
       this._contentEl?.classList.remove('gengage-qna--transitioning');
       indicator.remove();

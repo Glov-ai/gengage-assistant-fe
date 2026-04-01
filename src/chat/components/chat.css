@@ -70,6 +70,31 @@
   --_gengage-qty-btn-size-compact: var(--gengage-qty-btn-size-compact, 24px);
 }
 
+/* Full-viewport scrim: slight dim outside chat; click closes (see index.ts) */
+.gengage-chat-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--gengage-chat-float-backdrop, rgba(0, 0, 0, 0.22));
+  pointer-events: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gengage-chat-root--open:not(.gengage-chat--inline) .gengage-chat-backdrop {
+  display: block;
+  pointer-events: auto;
+}
+
+.gengage-chat--overlay .gengage-chat-backdrop {
+  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
+}
+
 /* Launcher container — fixed-positioned wrapper for button + content areas */
 .gengage-chat-launcher-container {
   position: fixed;
@@ -290,16 +315,6 @@
   height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-}
-
-/* Subtle backdrop behind mobile half-sheet to separate from PDP */
-.gengage-chat-root--mobile.gengage-chat-root--open::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.12);
-  z-index: -1;
   pointer-events: none;
 }
 
@@ -1402,6 +1417,9 @@
   padding: 8px 12px;
   border-top: 1px solid var(--_gengage-border-color);
   background: var(--gengage-background-color, #ffffff);
+  /* Yukarı taşan ek menüsü mesaj listesinin altında kalmaması için */
+  position: relative;
+  z-index: 2;
 }
 
 .gengage-chat-input-pill {
@@ -1415,7 +1433,8 @@
   border: 1px solid var(--_gengage-border-color);
   border-radius: 30px;
   padding: 2px 8px 2px 8px;
-  overflow: hidden;
+  /* overflow:visible — attach menüsü yukarı taşar; hidden menüyü keserdi */
+  overflow: visible;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -2190,14 +2209,6 @@
   animation: gengage-chat-overlay-in 0.24s cubic-bezier(0.2, 0.72, 0.2, 1);
 }
 
-.gengage-chat--overlay::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: var(--gengage-chat-overlay-backdrop, rgba(0, 0, 0, 0.45));
-  z-index: -1;
-}
-
 @keyframes gengage-chat-overlay-in {
   from {
     opacity: 0;
@@ -2267,7 +2278,247 @@
   border-radius: 8px;
 }
 
-/* Skeleton variant: comparison table */
+/* Skeleton variant: comparison — panel wrapper (içerik .gengage-chat-comparison ile aynı ölçü) */
+.gengage-chat-panel-skeleton--comparison {
+  padding: 0;
+  gap: 0;
+}
+
+.gengage-chat-comparison--skeleton {
+  pointer-events: none;
+}
+
+.gengage-chat-comparison--skeleton .gengage-chat-comparison-loading-header {
+  padding: 0;
+  margin: 0 0 16px;
+  animation: gengage-chat-overlay-in 0.4s ease-out;
+}
+
+.gengage-chat-comparison-loading-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 2px 10px;
+  animation: gengage-chat-overlay-in 0.4s ease-out;
+}
+
+.gengage-chat-comparison-loading-spinner {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid var(--_gengage-border-color);
+  border-top-color: var(--gengage-primary-color, #b7102a);
+  animation: gengage-comparison-spin 0.72s linear infinite;
+}
+
+@keyframes gengage-comparison-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gengage-chat-comparison-loading-label {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--_gengage-text-primary);
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+/* Shimmer — .gengage-chat-panel-skeleton-block ile aynı animasyon */
+.gengage-chat-comparison-skeleton-shimmer {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: gengage-panel-shimmer 1.4s infinite;
+}
+
+.gengage-chat-comparison-skeleton-rec-label {
+  height: 12px;
+  width: 132px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.gengage-chat-comparison-skeleton-rec-img {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.gengage-chat-comparison-skeleton-rec-title {
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  max-width: 100%;
+}
+
+.gengage-chat-comparison-skeleton-rec-title--short {
+  width: 72%;
+  margin-bottom: 8px;
+}
+
+.gengage-chat-comparison-skeleton-rec-price {
+  height: 18px;
+  width: 112px;
+  border-radius: 4px;
+}
+
+.gengage-chat-comparison-skeleton-hl-label {
+  height: 12px;
+  width: 96px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.gengage-chat-comparison-skeleton-hl-list {
+  margin: 0;
+  padding-left: 18px;
+  list-style: none;
+}
+
+.gengage-chat-comparison-skeleton-hl-list li {
+  margin-bottom: 8px;
+}
+
+.gengage-chat-comparison-skeleton-hl-list li:last-child {
+  margin-bottom: 0;
+}
+
+.gengage-chat-comparison-skeleton-hl-line {
+  height: 13px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.gengage-chat-comparison-skeleton-hl-line--medium {
+  width: 92%;
+}
+
+.gengage-chat-comparison-skeleton-hl-line--short {
+  width: 78%;
+}
+
+.gengage-chat-comparison-skeleton-kd-heading {
+  height: 14px;
+  width: 42%;
+  border-radius: 4px;
+  margin: 0 0 8px;
+}
+
+.gengage-chat-comparison-skeleton-kd-line {
+  height: 13px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  max-width: 100%;
+}
+
+.gengage-chat-comparison-skeleton-kd-line:last-child {
+  margin-bottom: 0;
+}
+
+.gengage-chat-comparison-skeleton-kd-line:nth-child(odd) {
+  width: 100%;
+}
+
+.gengage-chat-comparison-skeleton-kd-line:nth-child(even) {
+  width: 90%;
+}
+
+.gengage-chat-comparison-special--skeleton {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: default;
+}
+
+.gengage-chat-comparison-skeleton-special-line {
+  height: 14px;
+  width: 56%;
+  max-width: 280px;
+  border-radius: 4px;
+}
+
+.gengage-chat-comparison-skeleton-table-wrap {
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--_gengage-border-color);
+  background: #fff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gengage-chat-comparison-skeleton-table-head,
+.gengage-chat-comparison-skeleton-table-row {
+  display: grid;
+  grid-template-columns: 72px repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+  padding: 10px 12px;
+}
+
+.gengage-chat-comparison-skeleton-table-head {
+  border-bottom: 1px solid var(--_gengage-surface-muted);
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-chat-comparison-skeleton-table-corner {
+  min-height: 92px;
+}
+
+.gengage-chat-comparison-skeleton-table-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gengage-chat-comparison-skeleton-table-th-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.gengage-chat-comparison-skeleton-table-th-name {
+  height: 11px;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 3px;
+}
+
+.gengage-chat-comparison-skeleton-table-th-price {
+  height: 13px;
+  width: 64%;
+  border-radius: 3px;
+}
+
+.gengage-chat-comparison-skeleton-table-row {
+  border-bottom: 1px solid var(--_gengage-surface-muted);
+}
+
+.gengage-chat-comparison-skeleton-table-row:last-child {
+  border-bottom: none;
+}
+
+.gengage-chat-comparison-skeleton-table-label {
+  height: 12px;
+  width: 100%;
+  max-width: 56px;
+  border-radius: 3px;
+  align-self: center;
+}
+
+.gengage-chat-comparison-skeleton-table-cell {
+  height: 14px;
+  width: 100%;
+  border-radius: 3px;
+}
+
 .gengage-chat-panel-skeleton-block--row {
   height: 32px;
   border-radius: 4px;
@@ -2751,6 +3002,74 @@
 .gengage-chat-attach-btn svg {
   width: 20px;
   height: 20px;
+}
+
+.gengage-chat-attach-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-attach-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 196px;
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+  background: #f9fafb;
+  border: 1px solid var(--_gengage-border-color, #edeeef);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.12),
+    0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-attach-menu[hidden] {
+  display: none !important;
+}
+
+.gengage-chat-attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--_gengage-text-primary, #0f172a);
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.gengage-chat-attach-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.gengage-chat-attach-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.gengage-chat-attach-menu-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.gengage-chat-attach-menu-sep {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--_gengage-border-color, #edeeef);
 }
 
 /* Voice input mic button */
@@ -3240,18 +3559,56 @@
   color: #334155;
 }
 
-.gengage-chat-comparison-table th img {
+/*
+ * th üzerinde display:grid kullanılmaz — table-cell bozulur, sütunlar dikey yığılır.
+ * Grid yalnızca iç sarmalayıcıda; fiyatlar satır boyunca aynı yatay hizada kalır.
+ */
+.gengage-chat-comparison-table thead th:not(:first-child) {
+  vertical-align: top;
+}
+
+.gengage-chat-comparison-table-header-cell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  justify-items: center;
+  gap: 6px;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.gengage-chat-comparison-table-header-cell img {
   width: 60px;
   height: 60px;
   object-fit: contain;
   border-radius: 6px;
   background: var(--_gengage-surface-muted);
-  margin-bottom: 6px;
+}
+
+.gengage-chat-comparison-table-header-img-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  background: var(--_gengage-surface-muted);
+}
+
+.gengage-chat-comparison-table-product-name {
+  width: 100%;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.35;
+  text-align: center;
+  align-self: start;
 }
 
 .gengage-chat-comparison-table-price {
   font-weight: 700;
   color: #0f172a;
+  width: 100%;
+  text-align: center;
 }
 
 .gengage-chat-comparison-label {
@@ -4168,6 +4525,52 @@
   touch-action: pan-y;
 }
 
+.gengage-chat-product-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+  padding: 0;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gengage-chat-product-gallery-nav:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.gengage-chat-product-gallery-nav:focus-visible {
+  outline: 2px solid var(--gengage-primary-color, #b7102a);
+  outline-offset: 2px;
+}
+
+.gengage-chat-product-gallery-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.gengage-chat-product-gallery-nav--prev {
+  left: 8px;
+}
+
+.gengage-chat-product-gallery-nav--next {
+  right: 8px;
+}
+
 .gengage-chat-product-gallery-thumbs {
   display: flex;
   gap: 8px;
@@ -4339,6 +4742,36 @@
 /* Comparison select wrapper (checkbox overlay on product cards) */
 .gengage-chat-comparison-select-wrapper {
   position: relative;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.gengage-chat-comparison-select-wrapper:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gengage-primary-color, #b7102a) 38%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gengage-chat-comparison-select-wrapper {
+    transition: none;
+  }
+}
+
+/* Pass clicks to wrapper so CTA / favorite / find-similar / stepper do not activate */
+.gengage-chat-comparison-select-wrapper > .gengage-chat-product-card {
+  pointer-events: none;
+}
+
+.gengage-chat-comparison-card-hint {
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--gengage-text-secondary, #64748b);
+  background: color-mix(in srgb, var(--gengage-primary-color, #b7102a) 10%, transparent);
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .gengage-chat-comparison-checkbox {
@@ -4351,6 +4784,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
+  pointer-events: auto;
   accent-color: var(--gengage-primary-color, #b7102a);
   background: #fff;
   border-radius: 4px;
@@ -5380,6 +5814,7 @@
 .gengage-chat-find-similar-pill:focus-visible,
 .gengage-chat-favorite-btn:focus-visible,
 .gengage-chat-attach-btn:focus-visible,
+.gengage-chat-attach-menu-item:focus-visible,
 .gengage-chat-mic-btn:focus-visible,
 .gengage-chat-attachment-remove:focus-visible,
 .gengage-chat-kvkk-dismiss:focus-visible,

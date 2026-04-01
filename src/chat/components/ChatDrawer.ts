@@ -1,6 +1,7 @@
 import type { ChatI18n, ChatMessage } from '../types.js';
 import { registerChatScrollElement, CHAT_SCROLL_ELEMENT_ID } from '../utils/get-chat-scroll-element.js';
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
+import { dispatch } from '../../common/events.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
 import { createKvkkBanner } from './KvkkBanner.js';
@@ -90,6 +91,28 @@ export interface ChatDrawerOptions {
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
 
+/** Clipboard API (async read) — Chrome/Edge; Safari may require permission. */
+async function readClipboardImageAsFile(): Promise<File | null> {
+  try {
+    if (navigator.clipboard?.read) {
+      const items = await navigator.clipboard.read();
+      for (const clipItem of items) {
+        for (const type of clipItem.types) {
+          if (type.startsWith('image/')) {
+            const blob = await clipItem.getType(type);
+            const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg';
+            const name = `paste-${Date.now()}.${ext}`;
+            return new File([blob], name, { type: type || blob.type || 'image/png' });
+          }
+        }
+      }
+    }
+  } catch {
+    /* unsupported or permission denied */
+  }
+  return null;
+}
+
 export class ChatDrawer {
   private root: HTMLElement;
   private messagesEl: HTMLElement;
@@ -129,6 +152,8 @@ export class ChatDrawer {
   private _voiceEnabled = false;
   private _voiceLang = 'tr-TR';
   private _ignoreNextDividerClick = false;
+  /** Cancels in-flight panel list scroll-to-top tween when a new one starts. */
+  private _panelListScrollAnimToken = 0;
   private readonly _cleanups: Array<() => void> = [];
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
@@ -145,6 +170,10 @@ export class ChatDrawer {
   private _presentationUserInteracting = false;
   private _resizeRafId: number | null = null;
   private _cartBtn: HTMLButtonElement | null = null;
+  private _attachWrapEl: HTMLElement | null = null;
+  private _attachMenuEl: HTMLElement | null = null;
+  private _attachBtn: HTMLButtonElement | null = null;
+  private _attachMenuCleanup: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -707,18 +736,27 @@ export class ChatDrawer {
     });
 
     this.inputEl.addEventListener('paste', (e) => {
-      const file = e.clipboardData?.files[0];
-      if (file && file.type.startsWith('image/')) {
-        e.preventDefault();
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
+      const cd = e.clipboardData;
+      if (!cd) return;
+      let file: File | null = null;
+      const f0 = cd.files?.[0];
+      if (f0 && f0.type.startsWith('image/')) {
+        file = f0;
+      } else if (cd.items?.length) {
+        for (let i = 0; i < cd.items.length; i++) {
+          const item = cd.items[i];
+          if (item?.kind === 'file' && item.type.startsWith('image/')) {
+            const f = item.getAsFile();
+            if (f) {
+              file = f;
+              break;
+            }
           }
-        } else {
-          this.stageAttachment(file);
         }
+      }
+      if (file) {
+        e.preventDefault();
+        this._routeAttachmentFile(file);
       }
     });
 
@@ -730,26 +768,77 @@ export class ChatDrawer {
     this._fileInput.addEventListener('change', () => {
       const file = this._fileInput.files?.[0];
       if (file) {
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
-          }
-        } else {
-          this.stageAttachment(file);
-        }
+        this._routeAttachmentFile(file);
       }
       this._fileInput.value = '';
     });
 
-    // Attach button with camera SVG
+    // Attach: camera button + popup (fotoğraf seç / panodan yapıştır)
+    const attachWrap = document.createElement('div');
+    attachWrap.className = 'gengage-chat-attach-wrap';
+    this._attachWrapEl = attachWrap;
+
     const attachBtn = document.createElement('button');
+    this._attachBtn = attachBtn;
     attachBtn.className = 'gengage-chat-attach-btn';
     attachBtn.type = 'button';
     attachBtn.setAttribute('aria-label', this.i18n.attachImageButton);
+    attachBtn.setAttribute('aria-haspopup', 'menu');
+    attachBtn.setAttribute('aria-expanded', 'false');
     attachBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-    attachBtn.addEventListener('click', () => this._fileInput.click());
+    attachBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      this._toggleAttachMenu();
+    });
+
+    const attachMenu = document.createElement('div');
+    this._attachMenuEl = attachMenu;
+    attachMenu.className = 'gengage-chat-attach-menu';
+    attachMenu.setAttribute('role', 'menu');
+    attachMenu.setAttribute('hidden', '');
+
+    const selectPhotoBtn = document.createElement('button');
+    selectPhotoBtn.type = 'button';
+    selectPhotoBtn.className = 'gengage-chat-attach-menu-item';
+    selectPhotoBtn.setAttribute('role', 'menuitem');
+    selectPhotoBtn.innerHTML =
+      '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>' +
+      `<span class="gengage-chat-attach-menu-label">${this.i18n.attachMenuSelectPhoto}</span>`;
+    selectPhotoBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      this._closeAttachMenu();
+      this._fileInput.click();
+    });
+
+    const sep = document.createElement('div');
+    sep.className = 'gengage-chat-attach-menu-sep';
+    sep.setAttribute('aria-hidden', 'true');
+
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'gengage-chat-attach-menu-item';
+    pasteBtn.setAttribute('role', 'menuitem');
+    pasteBtn.innerHTML =
+      '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M15 2H9a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z"/>' +
+      '<path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>' +
+      '<path d="M16 4h2a2 2 0 0 1 2 2v4"/>' +
+      '<path d="M21 14H11"/>' +
+      '<path d="m15 10-4 4 4 4"/>' +
+      '</svg></span>' +
+      `<span class="gengage-chat-attach-menu-label">${this.i18n.attachMenuPaste}</span>`;
+    pasteBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      void this._pasteImageFromClipboardMenu();
+    });
+
+    attachMenu.appendChild(selectPhotoBtn);
+    attachMenu.appendChild(sep);
+    attachMenu.appendChild(pasteBtn);
+    attachWrap.appendChild(attachBtn);
+    attachWrap.appendChild(attachMenu);
 
     // Attachment preview strip (hidden by default)
     this._previewStrip = document.createElement('div');
@@ -790,22 +879,14 @@ export class ChatDrawer {
       inputArea.classList.remove('gengage-chat-input-area--dragover');
       const file = e.dataTransfer?.files[0];
       if (file) {
-        if (this._onAttachment) {
-          try {
-            this._onAttachment(file);
-          } catch (err) {
-            console.error('[gengage:chat] Attachment callback error:', err);
-          }
-        } else {
-          this.stageAttachment(file);
-        }
+        this._routeAttachmentFile(file);
       }
     });
 
     // Build pill container: [camera] [input] [mic?] [send]
     const pill = document.createElement('div');
     pill.className = 'gengage-chat-input-pill';
-    pill.appendChild(attachBtn);
+    pill.appendChild(attachWrap);
     pill.appendChild(this.inputEl);
 
     // Voice input mic button (Web Speech API STT)
@@ -1206,6 +1287,75 @@ export class ChatDrawer {
     this._updateSendEnabled();
   }
 
+  private _routeAttachmentFile(file: File): void {
+    if (this._onAttachment) {
+      try {
+        this._onAttachment(file);
+      } catch (err) {
+        console.error('[gengage:chat] Attachment callback error:', err);
+      }
+    } else {
+      this.stageAttachment(file);
+    }
+  }
+
+  private _closeAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    this._attachMenuEl.setAttribute('hidden', '');
+    this._attachBtn?.setAttribute('aria-expanded', 'false');
+    if (this._attachMenuCleanup) {
+      this._attachMenuCleanup();
+      this._attachMenuCleanup = null;
+    }
+  }
+
+  private _openAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    this._attachMenuEl.removeAttribute('hidden');
+    this._attachBtn?.setAttribute('aria-expanded', 'true');
+    const onDocCapture = (e: MouseEvent): void => {
+      if (this._attachWrapEl?.contains(e.target as Node)) return;
+      this._closeAttachMenu();
+    };
+    const onEsc = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        this._closeAttachMenu();
+      }
+    };
+    window.setTimeout(() => {
+      document.addEventListener('click', onDocCapture, true);
+    }, 0);
+    document.addEventListener('keydown', onEsc, true);
+    this._attachMenuCleanup = () => {
+      document.removeEventListener('click', onDocCapture, true);
+      document.removeEventListener('keydown', onEsc, true);
+    };
+  }
+
+  private _toggleAttachMenu(): void {
+    if (!this._attachMenuEl) return;
+    if (this._attachMenuEl.hasAttribute('hidden')) {
+      this._openAttachMenu();
+    } else {
+      this._closeAttachMenu();
+    }
+  }
+
+  private async _pasteImageFromClipboardMenu(): Promise<void> {
+    const file = await readClipboardImageAsFile();
+    if (file) {
+      this._routeAttachmentFile(file);
+      this._closeAttachMenu();
+      return;
+    }
+    dispatch('gengage:global:error', {
+      message: this.i18n.clipboardNoImageMessage,
+      source: 'chat' as const,
+    });
+    this._closeAttachMenu();
+  }
+
   /** Get the currently staged attachment file, or null. */
   getPendingAttachment(): File | null {
     return this._pendingAttachment;
@@ -1281,6 +1431,7 @@ export class ChatDrawer {
     requestAnimationFrame(() => {
       this._panelEl.classList.remove('gengage-chat-panel--transitioning');
       this._updateScrollAffordance();
+      this._smoothScrollPanelListToTop();
     });
     // New content always reopens the panel — hide the reopen button
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
@@ -1370,12 +1521,135 @@ export class ChatDrawer {
         break;
       }
       case 'comparisonTable': {
-        // Table-like rows
-        for (let i = 0; i < 4; i++) {
-          const row = document.createElement('div');
-          row.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--row';
-          skeleton.appendChild(row);
+        skeleton.classList.add('gengage-chat-panel-skeleton--comparison');
+        const root = document.createElement('div');
+        root.className = 'gengage-chat-comparison gengage-chat-comparison--skeleton';
+        root.setAttribute('aria-busy', 'true');
+
+        const status = document.createElement('div');
+        status.className = 'gengage-chat-comparison-loading-header';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        const spinner = document.createElement('div');
+        spinner.className = 'gengage-chat-comparison-loading-spinner';
+        spinner.setAttribute('aria-hidden', 'true');
+        const statusLabel = document.createElement('p');
+        statusLabel.className = 'gengage-chat-comparison-loading-label';
+        statusLabel.textContent = this.i18n.comparisonPreparingLabel;
+        status.appendChild(spinner);
+        status.appendChild(statusLabel);
+        root.appendChild(status);
+
+        // Önerilen seçim kartı — gerçek .gengage-chat-comparison-recommended ile aynı kutu
+        const rec = document.createElement('div');
+        rec.className = 'gengage-chat-comparison-recommended';
+        const recLabel = document.createElement('div');
+        recLabel.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-label';
+        rec.appendChild(recLabel);
+        const recBody = document.createElement('div');
+        recBody.className = 'gengage-chat-comparison-recommended-body';
+        const recImg = document.createElement('div');
+        recImg.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-img';
+        recImg.setAttribute('aria-hidden', 'true');
+        const recInfo = document.createElement('div');
+        recInfo.className = 'gengage-chat-comparison-recommended-info';
+        for (let i = 0; i < 2; i++) {
+          const t = document.createElement('div');
+          t.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-title';
+          if (i === 1) t.classList.add('gengage-chat-comparison-skeleton-rec-title--short');
+          recInfo.appendChild(t);
         }
+        const recPrice = document.createElement('div');
+        recPrice.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-rec-price';
+        recInfo.appendChild(recPrice);
+        recBody.appendChild(recImg);
+        recBody.appendChild(recInfo);
+        rec.appendChild(recBody);
+        const hl = document.createElement('div');
+        hl.className = 'gengage-chat-comparison-highlights';
+        const hlLab = document.createElement('div');
+        hlLab.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-label';
+        hl.appendChild(hlLab);
+        const hlUl = document.createElement('ul');
+        hlUl.className = 'gengage-chat-comparison-skeleton-hl-list';
+        for (let i = 0; i < 3; i++) {
+          const li = document.createElement('li');
+          const line = document.createElement('div');
+          line.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-hl-line';
+          if (i === 1) line.classList.add('gengage-chat-comparison-skeleton-hl-line--medium');
+          if (i === 2) line.classList.add('gengage-chat-comparison-skeleton-hl-line--short');
+          li.appendChild(line);
+          hlUl.appendChild(li);
+        }
+        hl.appendChild(hlUl);
+        rec.appendChild(hl);
+        root.appendChild(rec);
+
+        // Temel farklar — .gengage-chat-comparison-key-differences
+        const kd = document.createElement('div');
+        kd.className = 'gengage-chat-comparison-key-differences';
+        const kdH = document.createElement('div');
+        kdH.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-heading';
+        kd.appendChild(kdH);
+        const kdContent = document.createElement('div');
+        kdContent.className = 'gengage-chat-comparison-key-differences-content';
+        for (let i = 0; i < 4; i++) {
+          const line = document.createElement('div');
+          line.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-kd-line';
+          kdContent.appendChild(line);
+        }
+        kd.appendChild(kdContent);
+        root.appendChild(kd);
+
+        // Özel durumlar çubuğu — gerçek special ile aynı dolgu/kenar
+        const special = document.createElement('div');
+        special.className = 'gengage-chat-comparison-special gengage-chat-comparison-special--skeleton';
+        const specialInner = document.createElement('div');
+        specialInner.className =
+          'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-special-line';
+        special.appendChild(specialInner);
+        root.appendChild(special);
+
+        // Tablo özeti — thead (görsel + isim + fiyat) + birkaç attribute satırı
+        const tableWrap = document.createElement('div');
+        tableWrap.className = 'gengage-chat-comparison-skeleton-table-wrap';
+        const thead = document.createElement('div');
+        thead.className = 'gengage-chat-comparison-skeleton-table-head';
+        const corner = document.createElement('div');
+        corner.className = 'gengage-chat-comparison-skeleton-table-corner';
+        thead.appendChild(corner);
+        for (let c = 0; c < 3; c++) {
+          const col = document.createElement('div');
+          col.className = 'gengage-chat-comparison-skeleton-table-col';
+          const thImg = document.createElement('div');
+          thImg.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-img';
+          const thName = document.createElement('div');
+          thName.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-name';
+          const thPrice = document.createElement('div');
+          thPrice.className =
+            'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-th-price';
+          col.appendChild(thImg);
+          col.appendChild(thName);
+          col.appendChild(thPrice);
+          thead.appendChild(col);
+        }
+        tableWrap.appendChild(thead);
+        for (let r = 0; r < 3; r++) {
+          const row = document.createElement('div');
+          row.className = 'gengage-chat-comparison-skeleton-table-row';
+          const labelCell = document.createElement('div');
+          labelCell.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-label';
+          row.appendChild(labelCell);
+          for (let c = 0; c < 3; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'gengage-chat-comparison-skeleton-shimmer gengage-chat-comparison-skeleton-table-cell';
+            row.appendChild(cell);
+          }
+          tableWrap.appendChild(row);
+        }
+        root.appendChild(tableWrap);
+
+        skeleton.appendChild(root);
         break;
       }
       default: {
@@ -1489,6 +1763,53 @@ export class ChatDrawer {
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._syncDividerPreview();
+  }
+
+  /**
+   * After new list/grid content is mounted, scroll the left panel toward the top smoothly.
+   * InnerHTML resets scrollTop to 0, so we nudge down first; a rAF tween (ease-out quint) replaces
+   * native smooth scroll for a softer deceleration.
+   */
+  private _smoothScrollPanelListToTop(): void {
+    const panel = this._panelEl;
+    const reduceMotion =
+      typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
+
+    if (reduceMotion) {
+      panel.scrollTop = 0;
+      return;
+    }
+
+    this._panelListScrollAnimToken += 1;
+    const token = this._panelListScrollAnimToken;
+
+    requestAnimationFrame(() => {
+      if (token !== this._panelListScrollAnimToken) return;
+      const maxScroll = Math.max(0, panel.scrollHeight - panel.clientHeight);
+      if (maxScroll <= 0) return;
+
+      const startTop = Math.min(160, Math.max(48, maxScroll * 0.28));
+      panel.scrollTop = startTop;
+
+      const durationMs = Math.min(720, Math.max(380, 320 + Math.sqrt(startTop) * 28));
+      const t0 = performance.now();
+
+      const easeOutQuint = (t: number) => 1 - (1 - t) ** 5;
+
+      const step = (now: number) => {
+        if (token !== this._panelListScrollAnimToken) return;
+        const elapsed = now - t0;
+        const linear = Math.min(1, elapsed / durationMs);
+        const eased = easeOutQuint(linear);
+        panel.scrollTop = startTop * (1 - eased);
+        if (linear < 1) {
+          requestAnimationFrame(step);
+        } else {
+          panel.scrollTop = 0;
+        }
+      };
+      requestAnimationFrame(step);
+    });
   }
 
   /** Update scroll affordance (bottom fade gradient) on the panel. */
