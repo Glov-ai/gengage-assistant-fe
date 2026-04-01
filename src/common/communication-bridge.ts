@@ -47,7 +47,7 @@ export class CommunicationBridge {
     this._allowedOrigins = options.allowedOrigins ?? [location.origin];
     this._onMessage = options.onMessage;
 
-    if (this._allowedOrigins.includes('*') && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    if (this._allowedOrigins.includes('*') && _isDevMode()) {
       console.warn('[gengage] postMessage bridge using wildcard origin. Set allowedOrigins for production security.');
     }
 
@@ -152,4 +152,17 @@ function isValidBridgeData(data: unknown): data is { gengage: string; type: stri
   if (typeof data !== 'object' || data === null) return false;
   const obj = data as Record<string, unknown>;
   return typeof obj['gengage'] === 'string' && typeof obj['type'] === 'string';
+}
+
+/**
+ * Returns true when running in a development build.
+ * Uses process.env.NODE_ENV (injected by Vite/bundlers for all output formats)
+ * instead of import.meta.env which is ESM-only and triggers CJS build warnings.
+ */
+function _isDevMode(): boolean {
+  try {
+    return typeof process !== 'undefined' && process.env?.['NODE_ENV'] !== 'production';
+  } catch {
+    return false;
+  }
 }
