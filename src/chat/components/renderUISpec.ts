@@ -342,7 +342,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const cta = document.createElement('button');
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
-    cta.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
+    cta.textContent =
+      action.type === 'launchSingleProduct'
+        ? (ctx.i18n?.productCtaLabel ?? 'View')
+        : action.title || ctx.i18n?.productCtaLabel || 'View';
     cta.addEventListener('click', (e) => {
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
         e.stopPropagation();

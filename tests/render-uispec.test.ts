@@ -156,6 +156,36 @@ describe('renderUISpec', () => {
       });
       expect(onProductSelect).not.toHaveBeenCalled();
     });
+
+    it('uses i18n productCtaLabel instead of action.title for launchSingleProduct CTA', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-CTA',
+                name: 'CTA Label Product',
+                price: '99.00',
+              },
+              action: {
+                title: 'CTA Label Product',
+                type: 'launchSingleProduct',
+                payload: { sku: 'SKU-CTA' },
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(
+        spec,
+        makeContext({ i18n: { productCtaLabel: 'Ürünü İncele' } as UISpecRenderContext['i18n'] }),
+      );
+      const cta = result.querySelector('.gengage-chat-product-card-cta') as HTMLButtonElement;
+      expect(cta.textContent).toBe('Ürünü İncele');
+    });
   });
 
   describe('Divider', () => {

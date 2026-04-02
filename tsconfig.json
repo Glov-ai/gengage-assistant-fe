@@ -18,19 +18,18 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": ".",
     "paths": {
       "@gengage/common": [
-        "src/common/index.ts"
+        "./src/common/index.ts"
       ],
       "@gengage/chat": [
-        "src/chat/index.ts"
+        "./src/chat/index.ts"
       ],
       "@gengage/qna": [
-        "src/qna/index.ts"
+        "./src/qna/index.ts"
       ],
       "@gengage/simrel": [
-        "src/simrel/index.ts"
+        "./src/simrel/index.ts"
       ]
     },
     "skipLibCheck": true
