@@ -5198,10 +5198,17 @@ button.gengage-chat-product-card-cta {
 }
 
 /* ── Panel floating overlay: sticky zero-height anchor at the bottom of the scroll area.
-   Children (e.g. ChoicePrompter) use position:absolute and stay fixed to the visible area. ── */
+   Children (e.g. ChoicePrompter) use position:absolute and stay fixed to the visible area.
+   margin-top:auto: when the grid is shorter than the panel (few products), consume flex free
+   space so the anchor sits at the bottom of the pane; sticky+bottom keeps it there on scroll. ── */
 .gengage-chat-panel-float {
   position: sticky;
   bottom: 0;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: auto;
+  flex-shrink: 0;
   height: 0;
   overflow: visible;
   pointer-events: none;
