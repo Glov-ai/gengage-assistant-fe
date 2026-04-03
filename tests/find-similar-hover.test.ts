@@ -152,7 +152,7 @@ describe('Find Similar Hover Pill', () => {
     expect(result.querySelector('.gengage-chat-product-card-find-similar')).toBeNull();
   });
 
-  it('renders hover pill on product details panel with single image', () => {
+  it('ProductDetailsPanel does not render find similar pill (single image)', () => {
     const spec: UISpec = {
       root: 'details',
       elements: {
@@ -171,15 +171,13 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    const pill = result.querySelector('.gengage-chat-find-similar-pill');
-    expect(pill).not.toBeNull();
-    expect(pill!.textContent).toContain('Find Similar');
+    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
 
     const wrap = result.querySelector('.gengage-chat-product-details-img-wrap');
     expect(wrap).not.toBeNull();
   });
 
-  it('renders hover pill on product details panel with gallery', () => {
+  it('ProductDetailsPanel does not render find similar pill (gallery)', () => {
     const spec: UISpec = {
       root: 'details',
       elements: {
@@ -198,41 +196,10 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    const pill = result.querySelector('.gengage-chat-find-similar-pill');
-    expect(pill).not.toBeNull();
+    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
 
     const wrap = result.querySelector('.gengage-chat-product-details-img-wrap');
     expect(wrap).not.toBeNull();
-  });
-
-  it('details pill click dispatches findSimilar with sku and image_url', () => {
-    const onAction = vi.fn();
-    const spec: UISpec = {
-      root: 'details',
-      elements: {
-        details: {
-          type: 'ProductDetailsPanel',
-          props: {
-            sku: 'SKU2',
-            name: 'Detail Product',
-            url: 'https://example.com/p2',
-            imageUrl: 'https://img/2.jpg',
-            price: '200',
-          },
-        },
-      },
-      widget: 'chat',
-    };
-
-    const result = renderUISpec(spec, makeContext({ onAction }));
-    const pill = result.querySelector('.gengage-chat-find-similar-pill') as HTMLButtonElement;
-    pill.click();
-
-    expect(onAction).toHaveBeenCalledWith({
-      title: expect.any(String),
-      type: 'findSimilar',
-      payload: { sku: 'SKU2', image_url: 'https://img/2.jpg' },
-    });
   });
 
   it('old details find-similar button is no longer rendered', () => {

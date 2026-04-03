@@ -35,6 +35,7 @@ export type {
   OverlayChatOptions,
   OverlayQNAOptions,
   OverlaySimRelOptions,
+  OverlaySimButOptions,
 } from './overlay.js';
 export {
   detectNativeEnvironment,

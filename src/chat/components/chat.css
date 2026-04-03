@@ -5870,6 +5870,7 @@ button.gengage-chat-product-card-cta {
   white-space: nowrap;
 }
 
+.gengage-chat-product-card-img-wrapper:hover .gengage-chat-find-similar-pill,
 .gengage-chat-product-details-img-wrap:hover .gengage-chat-find-similar-pill {
   opacity: 1;
   pointer-events: auto;

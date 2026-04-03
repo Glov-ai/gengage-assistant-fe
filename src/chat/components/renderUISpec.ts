@@ -692,8 +692,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const images = product['images'] as string[] | undefined;
   const imageUrl = product['imageUrl'] as string | undefined;
 
-  const detailsSku = product['sku'] as string | undefined;
-
   if (images && images.length > 1) {
     // Gallery with thumbnails + prev/next arrows
     const media = document.createElement('div');
@@ -714,8 +712,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const MAX_VISIBLE_THUMBNAILS = 6;
     const safeImages = images.filter((u): u is string => !!u && isSafeUrl(u));
-    /** First gallery URL only — findSimilar payload never follows the currently displayed slide. */
-    const findSimilarImageUrl = safeImages[0];
     let activeThumb: HTMLElement | null = null;
     let activeThumbIdx = 0;
 
@@ -829,22 +825,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     media.appendChild(nextBtn);
     media.appendChild(thumbStrip);
 
-    // "Find Similar" — button always visible; search uses first image only (not mainImg src).
-    if (detailsSku) {
-      const pill = document.createElement('button');
-      pill.className = 'gengage-chat-find-similar-pill';
-      pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
-      pill.addEventListener('click', () => {
-        ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
-          type: 'findSimilar',
-          payload: { sku: detailsSku, ...(findSimilarImageUrl ? { image_url: findSimilarImageUrl } : {}) },
-        });
-      });
-      media.appendChild(pill);
-    }
-
     panel.appendChild(media);
   } else if (imageUrl && isSafeUrl(imageUrl)) {
     // Single image fallback
@@ -858,22 +838,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const name = product['name'] as string | undefined;
     if (name) img.alt = name;
     media.appendChild(img);
-
-    // "Find Similar" hover pill on single image
-    if (detailsSku) {
-      const pill = document.createElement('button');
-      pill.className = 'gengage-chat-find-similar-pill';
-      pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
-      pill.addEventListener('click', () => {
-        ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
-          type: 'findSimilar',
-          payload: { sku: detailsSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
-        });
-      });
-      media.appendChild(pill);
-    }
 
     panel.appendChild(media);
   }

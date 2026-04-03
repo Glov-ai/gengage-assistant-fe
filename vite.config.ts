@@ -17,11 +17,19 @@ export default defineConfig({
       '@gengage/chat': resolve(__dirname, 'src/chat/index.ts'),
       '@gengage/qna': resolve(__dirname, 'src/qna/index.ts'),
       '@gengage/simrel': resolve(__dirname, 'src/simrel/index.ts'),
+      '@gengage/simbut': resolve(__dirname, 'src/simbut/index.ts'),
     },
   },
   server: {
     warmup: {
-      clientFiles: ['demos/koctascomtr/index.html', 'src/index.ts', 'src/chat/index.ts', 'src/qna/index.ts', 'src/simrel/index.ts'],
+      clientFiles: [
+        'demos/koctascomtr/index.html',
+        'src/index.ts',
+        'src/chat/index.ts',
+        'src/qna/index.ts',
+        'src/simrel/index.ts',
+        'src/simbut/index.ts',
+      ],
     },
   },
   optimizeDeps: {
@@ -37,6 +45,7 @@ export default defineConfig({
         chat: resolve(__dirname, 'src/chat/index.ts'),
         qna: resolve(__dirname, 'src/qna/index.ts'),
         simrel: resolve(__dirname, 'src/simrel/index.ts'),
+        simbut: resolve(__dirname, 'src/simbut/index.ts'),
         common: resolve(__dirname, 'src/common/index.ts'),
         native: resolve(__dirname, 'src/native/index.ts'),
       },
