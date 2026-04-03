@@ -2810,7 +2810,7 @@ button.gengage-chat-product-card-cta {
   transform: translateY(1px);
 }
 
-/* (Find Similar is now a hover pill on the image — see .gengage-chat-find-similar-pill) */
+/* Product card: Find Similar = circular icon (see .gengage-chat-find-similar-btn); SimBut PDP uses .gengage-chat-find-similar-pill */
 
 /* Product detail tabs (Product Info / Tech Specs) */
 .gengage-chat-product-detail-tabs {
@@ -5092,7 +5092,56 @@ button.gengage-chat-product-card-cta {
   color: #dc2626;
 }
 
-/* ── Find Similar hover pill (floats on product images) ── */
+/* ── Find Similar (product card): circular icon, same shell as favorite ── */
+.gengage-chat-find-similar-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--gengage-text-secondary, #64748b);
+  cursor: pointer;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-product-card-img-wrapper:has(.gengage-chat-favorite-btn) .gengage-chat-find-similar-btn {
+  right: 44px; /* 8 + 28 + 8 — sits left of the heart */
+}
+
+.gengage-chat-find-similar-btn:hover {
+  color: var(--gengage-primary-color, #b7102a);
+}
+
+.gengage-chat-product-card-img-wrapper:hover .gengage-chat-find-similar-btn,
+.gengage-chat-product-card-img-wrapper:focus-within .gengage-chat-find-similar-btn,
+.gengage-chat-product-card-img-wrapper:hover .gengage-chat-favorite-btn,
+.gengage-chat-product-card-img-wrapper:focus-within .gengage-chat-favorite-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .gengage-chat-product-card-img-wrapper .gengage-chat-find-similar-btn,
+  .gengage-chat-product-card-img-wrapper .gengage-chat-favorite-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* SimBut / legacy text pill (not used on product cards) */
 .gengage-chat-find-similar-pill {
   position: absolute;
   top: 40px;
@@ -5113,12 +5162,7 @@ button.gengage-chat-product-card-cta {
   z-index: 2;
 }
 
-.gengage-chat-product-card-img-wrapper:hover .gengage-chat-find-similar-pill {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ── Favorite heart button ── */
+/* ── Favorite heart button (ürün kartı: görsel hover / focus ile find-similar gibi) ── */
 .gengage-chat-favorite-btn {
   position: absolute;
   top: 8px;
@@ -5134,8 +5178,13 @@ button.gengage-chat-product-card-cta {
   cursor: pointer;
   color: var(--gengage-text-secondary, #64748b);
   z-index: 3;
-  transition: color 0.2s;
   padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
 }
 
 .gengage-chat-favorite-btn:hover {
@@ -5822,6 +5871,7 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-product-variant-btn:focus-visible,
 .gengage-chat-product-gallery-thumb:focus-visible,
 .gengage-chat-thumbnail-btn:focus-visible,
+.gengage-chat-find-similar-btn:focus-visible,
 .gengage-chat-find-similar-pill:focus-visible,
 .gengage-chat-favorite-btn:focus-visible,
 .gengage-chat-attach-btn:focus-visible,

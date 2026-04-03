@@ -706,9 +706,9 @@ describe('renderUISpec', () => {
       };
 
       const result = renderUISpec(spec, makeContext({ onAction }));
-      const pill = result.querySelector('.gengage-chat-find-similar-pill') as HTMLButtonElement;
+      const pill = result.querySelector('.gengage-chat-find-similar-btn') as HTMLButtonElement;
       expect(pill).not.toBeNull();
-      expect(pill.textContent).toBe('Find Similar');
+      expect(pill.getAttribute('aria-label')).toBe('Find Similar');
       pill.click();
       expect(onAction).toHaveBeenCalledWith({
         title: 'Find Similar',
@@ -754,8 +754,8 @@ describe('renderUISpec', () => {
       const stock = result.querySelector('.gengage-chat-product-card-stock');
       expect(stock!.textContent).toBe('In Stock');
 
-      const findSimilar = result.querySelector('.gengage-chat-find-similar-pill');
-      expect(findSimilar!.textContent).toBe('Find Similar');
+      const findSimilar = result.querySelector('.gengage-chat-find-similar-btn');
+      expect(findSimilar!.getAttribute('aria-label')).toBe('Find Similar');
     });
   });
 

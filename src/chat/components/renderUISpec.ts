@@ -188,25 +188,28 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       imgWrapper.appendChild(badge);
     }
 
-    // "Find Similar" hover pill on image
+    // "Find Similar" — circular icon (left of heart when both); overlapping rects = benzer ürünler
     const findSimilarSku = product['sku'] as string | undefined;
     if (findSimilarSku) {
-      const pill = document.createElement('button');
-      pill.className = 'gengage-chat-find-similar-pill';
-      pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
-      pill.addEventListener('click', (e) => {
+      const findSimLabel = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
+      const simBtn = document.createElement('button');
+      simBtn.className = 'gengage-chat-find-similar-btn';
+      simBtn.type = 'button';
+      simBtn.setAttribute('aria-label', findSimLabel);
+      simBtn.title = findSimLabel;
+      simBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+      simBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
+          title: findSimLabel,
           type: 'findSimilar',
           payload: { sku: findSimilarSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
         });
       });
-      imgWrapper.appendChild(pill);
+      imgWrapper.appendChild(simBtn);
     }
 
-    // Favorite heart toggle
+    // Favorite heart toggle (rightmost when both actions show)
     const favSku = product['sku'] as string | undefined;
     if (favSku && ctx.onFavoriteToggle) {
       const heart = document.createElement('button');
@@ -216,7 +219,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const isFav = ctx.favoritedSkus?.has(favSku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');
       const svgFill = isFav ? 'currentColor' : 'none';
-      heart.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${svgFill}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+      heart.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${svgFill}" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
       heart.addEventListener('click', (e) => {
         e.stopPropagation();
         heart.classList.toggle('gengage-chat-favorite-btn--active');

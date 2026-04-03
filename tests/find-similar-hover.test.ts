@@ -27,9 +27,9 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    const pill = result.querySelector('.gengage-chat-find-similar-pill');
-    expect(pill).not.toBeNull();
-    expect(pill!.textContent).toContain('Find Similar');
+    const btn = result.querySelector('.gengage-chat-find-similar-btn');
+    expect(btn).not.toBeNull();
+    expect(btn!.getAttribute('aria-label')).toContain('Find Similar');
   });
 
   it('pill click dispatches findSimilar with sku and image_url', () => {
@@ -52,7 +52,7 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext({ onAction }));
-    const pill = result.querySelector('.gengage-chat-find-similar-pill') as HTMLButtonElement;
+    const pill = result.querySelector('.gengage-chat-find-similar-btn') as HTMLButtonElement;
     pill.click();
 
     expect(onAction).toHaveBeenCalledWith({
@@ -84,7 +84,7 @@ describe('Find Similar Hover Pill', () => {
     const wrap = result.querySelector('.gengage-chat-product-card-img-wrapper');
     expect(wrap).not.toBeNull();
     expect(wrap!.querySelector('img')).not.toBeNull();
-    expect(wrap!.querySelector('.gengage-chat-find-similar-pill')).not.toBeNull();
+    expect(wrap!.querySelector('.gengage-chat-find-similar-btn')).not.toBeNull();
   });
 
   it('no pill when no sku', () => {
@@ -105,7 +105,7 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
+    expect(result.querySelector('.gengage-chat-find-similar-btn')).toBeNull();
   });
 
   it('no pill when no image', () => {
@@ -126,8 +126,8 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    // No image wrapper means no pill
-    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
+    // No image wrapper means no find-similar control
+    expect(result.querySelector('.gengage-chat-find-similar-btn')).toBeNull();
   });
 
   it('old text find-similar button is no longer rendered', () => {
@@ -171,7 +171,7 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
+    expect(result.querySelector('.gengage-chat-find-similar-btn')).toBeNull();
 
     const wrap = result.querySelector('.gengage-chat-product-details-img-wrap');
     expect(wrap).not.toBeNull();
@@ -196,7 +196,7 @@ describe('Find Similar Hover Pill', () => {
     };
 
     const result = renderUISpec(spec, makeContext());
-    expect(result.querySelector('.gengage-chat-find-similar-pill')).toBeNull();
+    expect(result.querySelector('.gengage-chat-find-similar-btn')).toBeNull();
 
     const wrap = result.querySelector('.gengage-chat-product-details-img-wrap');
     expect(wrap).not.toBeNull();
