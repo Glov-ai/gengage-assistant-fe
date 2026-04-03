@@ -475,7 +475,7 @@ describe('renderUISpec', () => {
       btn.click();
 
       expect(onAction).toHaveBeenCalledWith({
-        title: 'Small',
+        title: 'Action Variant (Small)',
         type: 'launchVariant',
         payload: { sku: 'V2-SM' },
       });
@@ -519,7 +519,7 @@ describe('renderUISpec', () => {
       // Action title should also use value
       (buttons[0] as HTMLElement).click();
       expect(onAction).toHaveBeenCalledWith({
-        title: 'Red',
+        title: 'Variant Value Product (Red)',
         type: 'launchVariant',
         payload: { sku: 'SKU-RED' },
       });

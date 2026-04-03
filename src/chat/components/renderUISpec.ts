@@ -764,9 +764,22 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       }
 
       if (variantSku) {
+        const productName = (product['name'] as string | undefined)?.trim() ?? '';
+        const variantHuman =
+          (typeof variant['value'] === 'string' ? variant['value'].trim() : '') ||
+          (typeof variant['name'] === 'string' ? variant['name'].trim() : '') ||
+          (typeof variant['variant_name'] === 'string' ? variant['variant_name'].trim() : '') ||
+          '';
+        const launchTitle =
+          productName.length > 0
+            ? variantHuman.length > 0 && variantHuman !== productName
+              ? `${productName} (${variantHuman})`
+              : productName
+            : labelText;
+
         btn.addEventListener('click', () => {
           ctx.onAction({
-            title: labelText,
+            title: launchTitle,
             type: 'launchVariant',
             payload: { sku: variantSku },
           });
