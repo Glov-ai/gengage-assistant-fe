@@ -4,6 +4,8 @@ import { GengageQNA } from '../qna/index.js';
 import type { QNAWidgetConfig } from '../qna/types.js';
 import { GengageSimRel } from '../simrel/index.js';
 import type { SimRelWidgetConfig } from '../simrel/types.js';
+import { GengageSimBut } from '../simbut/index.js';
+import type { SimButWidgetConfig } from '../simbut/types.js';
 import { DEFAULT_IDEMPOTENCY_KEY } from './config-schema.js';
 import { resolveSession } from './context.js';
 import { wireQNAToChat } from './events.js';
@@ -13,6 +15,7 @@ import type { PageContext, SessionContext, WidgetTheme } from './types.js';
 const DEFAULT_OVERLAY_KEY_PREFIX = `${DEFAULT_IDEMPOTENCY_KEY}_overlay_`;
 const DEFAULT_QNA_MOUNT = '#gengage-qna';
 const DEFAULT_SIMREL_MOUNT = '#gengage-simrel';
+const DEFAULT_SIMBUT_MOUNT = '#gengage-simbut';
 
 interface OverlayRegistryState {
   instances: Record<string, OverlayWidgetsRuntime>;
@@ -116,6 +119,16 @@ export interface OverlaySimRelOptions {
   renderer?: SimRelWidgetConfig['renderer'];
 }
 
+export interface OverlaySimButOptions {
+  enabled?: boolean;
+  mountTarget?: HTMLElement | string;
+  /** `findSimilar` yüküne eklenecek ürün görseli URL’si. */
+  imageUrl?: string;
+  i18n?: SimButWidgetConfig['i18n'];
+  /** Chat kapalıyken veya özel davranış için; tanımlıysa tıklamada `chat` yerine bu çağrılır. */
+  onFindSimilar?: SimButWidgetConfig['onFindSimilar'];
+}
+
 export interface OverlayWidgetsOptions {
   accountId: string;
   middlewareUrl: string;
@@ -131,6 +144,7 @@ export interface OverlayWidgetsOptions {
   chat?: OverlayChatOptions;
   qna?: OverlayQNAOptions;
   simrel?: OverlaySimRelOptions;
+  simbut?: OverlaySimButOptions;
   onAddToCart?: SimRelWidgetConfig['onAddToCart'];
   onProductNavigate?: SimRelWidgetConfig['onProductNavigate'];
   onScriptCall?: ChatWidgetConfig['onScriptCall'];
@@ -142,6 +156,7 @@ export interface OverlayWidgetsController {
   readonly chat: GengageChat | null;
   readonly qna: GengageQNA | null;
   readonly simrel: GengageSimRel | null;
+  readonly simbut: GengageSimBut | null;
   /** Shared analytics client for custom event tracking (null if not configured). */
   readonly analyticsClient: import('./analytics.js').AnalyticsClient | null;
   openChat(options?: { state?: 'half' | 'full' }): void;
@@ -155,6 +170,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
   private _chat: GengageChat | null = null;
   private _qna: GengageQNA | null = null;
   private _simrel: GengageSimRel | null = null;
+  private _simbut: GengageSimBut | null = null;
   private _analyticsClient: import('./analytics.js').AnalyticsClient | null = null;
   private _offQnaWire: (() => void) | null = null;
   private _pageContext: PageContext;
@@ -162,6 +178,8 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
   private _queue: Promise<void> = Promise.resolve();
   private _warnedQnaMountMissing = false;
   private _warnedSimRelMountMissing = false;
+  private _warnedSimButMountMissing = false;
+  private _warnedSimButNoChat = false;
 
   readonly idempotencyKey: string;
   readonly session: SessionContext;
@@ -185,6 +203,10 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
 
   get simrel(): GengageSimRel | null {
     return this._simrel;
+  }
+
+  get simbut(): GengageSimBut | null {
+    return this._simbut;
   }
 
   get analyticsClient(): import('./analytics.js').AnalyticsClient | null {
@@ -226,6 +248,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       this._chat?.update(patch);
       this._qna?.update(patch);
       this._simrel?.update(patch);
+      this._simbut?.update(patch);
       await this._syncPdpWidgets();
     });
   }
@@ -244,10 +267,12 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     this._chat?.destroy();
     this._qna?.destroy();
     this._simrel?.destroy();
+    this._simbut?.destroy();
 
     this._chat = null;
     this._qna = null;
     this._simrel = null;
+    this._simbut = null;
 
     if (window.gengage?.overlay === this) {
       delete window.gengage.overlay;
@@ -317,6 +342,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       // Widgets are re-shown and updated when navigation returns to a PDP page.
       this._qna?.hide();
       this._simrel?.hide();
+      this._simbut?.hide();
       return;
     }
 
@@ -424,13 +450,66 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       this._simrel?.destroy();
       this._simrel = null;
     }
+
+    if (this.options.simbut && this.options.simbut.enabled !== false) {
+      const simButTarget = this.options.simbut.mountTarget ?? DEFAULT_SIMBUT_MOUNT;
+      const mountTarget = resolveMountTarget(simButTarget);
+      const chatOrHandler = this._chat ?? this.options.simbut.onFindSimilar;
+
+      if (mountTarget && chatOrHandler) {
+        this._warnedSimButMountMissing = false;
+        this._warnedSimButNoChat = false;
+        if (!this._simbut) {
+          const simbut = new GengageSimBut();
+          const simButConfig: SimButWidgetConfig = {
+            accountId: this.options.accountId,
+            middlewareUrl,
+            session: this.session,
+            pageContext: {
+              pageType: 'pdp',
+              sku,
+            },
+            mountTarget,
+            chat: this._chat,
+          };
+          if (this.options.theme !== undefined) simButConfig.theme = this.options.theme;
+          if (this.options.locale !== undefined) simButConfig.locale = this.options.locale;
+          if (this.options.simbut.imageUrl !== undefined) simButConfig.imageUrl = this.options.simbut.imageUrl;
+          if (this.options.simbut.i18n !== undefined) simButConfig.i18n = this.options.simbut.i18n;
+          if (this.options.simbut.onFindSimilar !== undefined) {
+            simButConfig.onFindSimilar = this.options.simbut.onFindSimilar;
+          }
+          await simbut.init(simButConfig);
+          this._simbut = simbut;
+        } else {
+          this._simbut.show();
+          this._simbut.setChat(this._chat);
+          this._simbut.update({ pageType: 'pdp', sku });
+        }
+      } else {
+        this._simbut?.destroy();
+        this._simbut = null;
+        if (!mountTarget && !this._warnedSimButMountMissing) {
+          console.warn(`[gengage] SimBut mount target not found: ${simButTarget}`);
+          this._warnedSimButMountMissing = true;
+        } else if (!chatOrHandler && !this._warnedSimButNoChat) {
+          console.warn('[gengage] SimBut requires chat to be enabled or simbut.onFindSimilar');
+          this._warnedSimButNoChat = true;
+        }
+      }
+    } else {
+      this._simbut?.destroy();
+      this._simbut = null;
+    }
   }
 
   private _destroyPdpWidgets(): void {
     this._qna?.destroy();
     this._simrel?.destroy();
+    this._simbut?.destroy();
     this._qna = null;
     this._simrel = null;
+    this._simbut = null;
   }
 
   private _enqueue(fn: () => Promise<void>): Promise<void> {
@@ -445,7 +524,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
 }
 
 /**
- * Initialize all three widgets (chat, QNA, SimRel) in a single call.
+ * Initialize chat, QNA, SimRel, and optional SimBut (PDP image “find similar” pill) in one call.
  * Idempotent — safe to call multiple times from GTM; deduplicates by account + SKU key.
  *
  * @example
@@ -460,6 +539,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
  *   chat: { variant: 'floating' },
  *   qna: { mountTarget: '#qna-section' },
  *   simrel: { mountTarget: '#similar-products' },
+ *   simbut: { mountTarget: '#pdp-image-wrap' },
  * });
  * ```
  */

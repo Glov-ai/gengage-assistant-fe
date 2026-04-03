@@ -8,6 +8,7 @@ export default defineConfig({
       '@gengage/chat': resolve(__dirname, 'src/chat/index.ts'),
       '@gengage/qna': resolve(__dirname, 'src/qna/index.ts'),
       '@gengage/simrel': resolve(__dirname, 'src/simrel/index.ts'),
+      '@gengage/simbut': resolve(__dirname, 'src/simbut/index.ts'),
     },
   },
   test: {

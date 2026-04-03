@@ -10,7 +10,7 @@
 
 import { execSync } from 'child_process';
 
-const widgets = ['chat', 'qna', 'simrel', 'native'] as const;
+const widgets = ['chat', 'qna', 'simrel', 'simbut', 'native'] as const;
 
 for (const widget of widgets) {
   console.log(`\n  Building IIFE: ${widget}...\n`);
