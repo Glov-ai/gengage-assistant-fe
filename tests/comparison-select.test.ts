@@ -101,15 +101,16 @@ describe('Comparison Selection Mode', () => {
       expect(onToggle).toHaveBeenCalledWith('');
     });
 
-    it('renders separator between sort buttons and toggle', () => {
+    it('renders sort dropdown and compare toggle side by side in toolbar', () => {
       const spec = makeSpec([
         { sku: 'A', name: 'A', price: '100' },
         { sku: 'B', name: 'B', price: '200' },
       ]);
       const ctx = makeContext();
       const dom = renderUISpec(spec, ctx);
-      const separator = dom.querySelector('.gengage-chat-product-sort-separator');
-      expect(separator).not.toBeNull();
+      const toolbar = dom.querySelector('.gengage-chat-product-sort-toolbar');
+      expect(toolbar?.querySelector('.gengage-chat-product-sort-dropdown')).not.toBeNull();
+      expect(toolbar?.querySelector('.gengage-chat-comparison-toggle-btn')).not.toBeNull();
     });
   });
 

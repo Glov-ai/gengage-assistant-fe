@@ -47,9 +47,10 @@ import { linkProductMentions } from './components/productMentionLinker.js';
 import { isInputAreaAction } from './components/actionClassifier.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
 import {
+  clearChoicePrompterDismissState,
   createChoicePrompter,
   isChoicePrompterDismissed,
-  isChoicePrompterGloballyDismissed,
+  recordChoicePrompterDismissedForThread,
 } from './components/ChoicePrompter.js';
 import type {
   ChatActionChip,
@@ -1245,6 +1246,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Remove ChoicePrompter on new action
     this._choicePrompterEl?.remove();
     this._choicePrompterEl = null;
+    // Fresh user request: reset ChoicePrompter dismiss so it can show again on the next grid
+    if (!options?.preservePanel) {
+      clearChoicePrompterDismissState();
+    }
 
     // Clear comparison mode when starting a new request (unless preservePanel).
     // Exception: getComparisonTable actions keep comparison state visible during
@@ -1665,6 +1670,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               isFirstPanelContentInStream,
             });
 
+            renderContext.panelProductListHeading = undefined;
+            if (componentType === 'ProductGrid') {
+              if (panelAction === 'appendSimilars') {
+                renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
+              } else {
+                this._applyPanelListHeadingToContext(renderContext, { kind: 'spec', spec: panelSpec });
+              }
+            }
+
             if (panelAction === 'appendSimilars') {
               this._appendSimilarsToPanel(panelSpec, renderContext);
             } else if (panelAction === 'append') {
@@ -1694,7 +1708,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             // Backend-provided panelTitle (e.g. search results title) takes precedence.
             const titleType = this._panel.currentType ?? componentType;
             const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
-            this._panel.updateTopBar(titleType, backendTitle);
+            const blankTopbarForInlineGridTitle =
+              componentType === 'ProductGrid' &&
+              panelAction === 'replace' &&
+              (rootElement?.children?.length ?? 0) > 0;
+            this._panel.updateTopBar(
+              titleType,
+              backendTitle,
+              blankTopbarForInlineGridTitle ? '' : undefined,
+            );
             this._panel.updateExtendedMode(componentType);
 
             // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
@@ -1825,14 +1847,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
-          // Show ChoicePrompter when ProductGrid in panel, comparison mode is not active,
-          // the user has viewed 2+ products, and hasn't dismissed for this thread
+          // ChoicePrompter: panel ProductGrid with 2+ products, comparison mode off
+          const productGridChildCount = rootElement?.children?.length ?? 0;
           if (
             componentType === 'ProductGrid' &&
             panelHint === 'panel' &&
-            this._viewedProductSkus.size >= 2 &&
+            productGridChildCount > 1 &&
             !this._comparisonSelectMode &&
-            !isChoicePrompterGloballyDismissed() &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
             this._choicePrompterEl?.remove();
@@ -2322,10 +2343,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!this._drawer) return;
     const panelEl = this._drawer.getPanelContentElement();
     if (!panelEl) return;
-    const heading = document.createElement('h3');
-    heading.className = 'gengage-chat-product-details-similars-heading';
-    heading.textContent = this._i18n.similarProductsLabel ?? 'Similar Products';
-    panelEl.appendChild(heading);
+    ctx.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
     const grid = this._renderUISpec(spec, ctx);
     grid.classList.add('gengage-chat-product-details-similars');
     panelEl.appendChild(grid);
@@ -2350,18 +2368,43 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     similarsSpec: UISpec,
     ctx: ChatUISpecRenderContext,
   ): HTMLElement {
+    this._applyPanelListHeadingToContext(ctx, {
+      kind: 'productDetailsWithSimilars',
+      pdpSpec,
+      similarsSpec,
+    });
     const panelEl = this._renderUISpec(pdpSpec, ctx);
-    const heading = document.createElement('h3');
-    heading.className = 'gengage-chat-product-details-similars-heading';
-    heading.textContent = this._i18n.similarProductsLabel ?? 'Similar Products';
-    panelEl.appendChild(heading);
     const grid = this._renderUISpec(similarsSpec, ctx);
     grid.classList.add('gengage-chat-product-details-similars');
     panelEl.appendChild(grid);
     return panelEl;
   }
 
+  /** Sets ctx.panelProductListHeading for ProductGrid / PDP+similars rebuilds. */
+  private _applyPanelListHeadingToContext(ctx: ChatUISpecRenderContext, source: PanelSource): void {
+    ctx.panelProductListHeading = undefined;
+    if (!this._panel) return;
+    if (source.kind === 'spec') {
+      const root = source.spec.elements[source.spec.root];
+      if (root?.type === 'ProductGrid') {
+        const n = root.children?.length ?? 0;
+        if (n > 0) {
+          ctx.panelProductListHeading = this._panel.titleForComponent(
+            'ProductGrid',
+            (root.props?.['panelTitle'] as string | undefined) ?? undefined,
+          );
+        }
+      }
+    } else if (source.kind === 'productDetailsWithSimilars') {
+      const simRoot = source.similarsSpec.elements[source.similarsSpec.root];
+      if (simRoot?.type === 'ProductGrid' && (simRoot.children?.length ?? 0) > 0) {
+        ctx.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
+      }
+    }
+  }
+
   private _renderPanelFromSource(source: PanelSource, ctx: ChatUISpecRenderContext): HTMLElement {
+    this._applyPanelListHeadingToContext(ctx, source);
     if (source.kind === 'favorites') {
       return this._buildFavoritesPageEl();
     }
@@ -2741,6 +2784,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _toggleComparisonSku(sku: string): void {
     if (sku === '') {
       this._comparisonSelectMode = !this._comparisonSelectMode;
+      if (this._comparisonSelectMode) {
+        recordChoicePrompterDismissedForThread(this._currentThreadId ?? '');
+        this._choicePrompterEl?.remove();
+        this._choicePrompterEl = null;
+        this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+      }
       if (!this._comparisonSelectMode) {
         this._comparisonSelectedSkus = [];
         ga.trackCompareClear();

@@ -219,12 +219,12 @@ test.describe('Widget completeness — chat sort toolbar', () => {
     const toolbar = page.locator('.gengage-chat-product-sort-toolbar');
     await expect(toolbar).toBeAttached({ timeout: 10000 });
 
-    // Verify the 3 sort buttons exist
-    const sortBtns = toolbar.locator('.gengage-chat-product-sort-btn');
-    await expect(sortBtns).toHaveCount(3);
+    // Verify the 3 sort menu options exist (in dropdown, may be hidden until opened)
+    const sortOptions = toolbar.locator('.gengage-chat-product-sort-option');
+    await expect(sortOptions).toHaveCount(3);
 
-    // Verify button labels
-    const texts = await sortBtns.allTextContents();
+    // Verify option labels
+    const texts = await sortOptions.allTextContents();
     expect(texts.some((t) => t.includes('nerilen'))).toBe(true); // "Önerilen"
     expect(texts.some((t) => t.includes('Fiyat'))).toBe(true); // "Fiyat ↑" or "Fiyat ↓"
   });

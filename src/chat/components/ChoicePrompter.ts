@@ -6,7 +6,8 @@
  */
 
 const SESSION_STORAGE_KEY = 'gengage_choice_prompter_dismissed';
-const GLOBAL_DISMISS_KEY = 'gengage_choice_prompter_dismissed_global';
+/** Eski sürümler — clearChoicePrompterDismissState kaldırır. */
+const LEGACY_GLOBAL_DISMISS_KEY = 'gengage_choice_prompter_dismissed_global';
 
 export interface ChoicePrompterOptions {
   heading: string;
@@ -38,11 +39,6 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try {
-      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
-    } catch {
-      /* */
-    }
     card.remove();
     options.onCtaClick();
   });
@@ -55,11 +51,6 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try {
-      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
-    } catch {
-      /* */
-    }
     card.remove();
     options.onDismiss?.();
   });
@@ -68,11 +59,13 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   return card;
 }
 
-export function isChoicePrompterGloballyDismissed(): boolean {
+/** Yeni kullanıcı araması başlarken çağrılır — kart tekrar gösterilebilir. */
+export function clearChoicePrompterDismissState(): void {
   try {
-    return sessionStorage.getItem(GLOBAL_DISMISS_KEY) === '1';
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(LEGACY_GLOBAL_DISMISS_KEY);
   } catch {
-    return false;
+    /* */
   }
 }
 
@@ -98,4 +91,10 @@ function markDismissed(threadId: string): void {
   } catch {
     // sessionStorage unavailable — silently ignore
   }
+}
+
+/** Toolbar “Karşılaştır” gibi dış aksiyonlarda CTA ile aynı dismiss kaydı. */
+export function recordChoicePrompterDismissedForThread(threadId: string): void {
+  if (!threadId) return;
+  markDismissed(threadId);
 }

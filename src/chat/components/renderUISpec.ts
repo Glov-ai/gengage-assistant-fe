@@ -1240,6 +1240,43 @@ function renderProductDetailTabs(
   return container;
 }
 
+/** Lucide-style stroke icons (matches ChatDrawer / header SVGs). */
+type ProductSortIconKind = 'related' | 'priceAsc' | 'priceDesc';
+
+function productSortIconSvgHtml(kind: ProductSortIconKind): string {
+  const a =
+    'width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  switch (kind) {
+    case 'related':
+      return `<svg ${a} aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+    case 'priceAsc':
+      return `<svg ${a} aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`;
+    case 'priceDesc':
+      return `<svg ${a} aria-hidden="true"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>`;
+    default:
+      return '';
+  }
+}
+
+function productSortChevronSvgHtml(): string {
+  return `<svg class="gengage-chat-product-sort-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
+}
+
+function productSortCheckSvgHtml(): string {
+  return `<svg class="gengage-chat-product-sort-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+}
+
+/** Left-right arrows (compare / swap), Lucide arrow-left-right style. */
+function comparisonToggleIconSvgHtml(): string {
+  const a =
+    'width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  return `<svg ${a} aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M16 21l4-4-4-4"/><path d="M4 7h16"/><path d="M20 17H4"/></svg>`;
+}
+
+function productSortStatesEqual(a: ProductSortState, b: ProductSortState): boolean {
+  return a.type === b.type && a.direction === b.direction;
+}
+
 function getSortedChildIds(childIds: string[], spec: UISpec, sort?: ProductSortState): string[] {
   if (!sort || sort.type === 'related') return childIds;
 
@@ -1285,70 +1322,220 @@ function renderProductGrid(
   wrapper.className = 'gengage-chat-product-grid-wrapper';
 
   const childIds = element.children ?? [];
+  const grid = document.createElement('div');
+  grid.className = 'gengage-chat-product-grid';
 
-  // Sort toolbar (only when >1 children and context has sort support)
-  if (childIds.length > 1 && ctx?.onSortChange) {
+  const inlineHead = ctx?.panelProductListHeading;
+  const hasSortToolbar = childIds.length > 1 && ctx?.onSortChange;
+
+  // Sort + compare toolbar (only when >1 children and context has sort support)
+  if (hasSortToolbar) {
     const toolbar = document.createElement('div');
     toolbar.className = 'gengage-chat-product-sort-toolbar';
     toolbar.setAttribute('role', 'toolbar');
     toolbar.setAttribute('aria-label', ctx.i18n?.sortToolbarAriaLabel ?? 'Sort products');
 
-    const sort = ctx.productSort ?? { type: 'related' as const };
+    let currentSort: ProductSortState = ctx.productSort ?? { type: 'related' };
 
-    const buttons: Array<{ label: string; sortState: ProductSortState }> = [
-      { label: ctx.i18n?.sortRelated ?? 'Related', sortState: { type: 'related' } },
-      { label: ctx.i18n?.sortPriceAsc ?? 'Price ↑', sortState: { type: 'price', direction: 'asc' } },
-      { label: ctx.i18n?.sortPriceDesc ?? 'Price ↓', sortState: { type: 'price', direction: 'desc' } },
+    const sortOptions: Array<{ label: string; sortState: ProductSortState; icon: ProductSortIconKind }> = [
+      { label: ctx.i18n?.sortRelated ?? 'Related', sortState: { type: 'related' }, icon: 'related' },
+      {
+        label: ctx.i18n?.sortPriceAsc ?? 'Price ↑',
+        sortState: { type: 'price', direction: 'asc' },
+        icon: 'priceAsc',
+      },
+      {
+        label: ctx.i18n?.sortPriceDesc ?? 'Price ↓',
+        sortState: { type: 'price', direction: 'desc' },
+        icon: 'priceDesc',
+      },
     ];
 
-    for (const btn of buttons) {
-      const button = document.createElement('button');
-      button.className = 'gengage-chat-product-sort-btn';
-      button.type = 'button';
-      const isActive = sort.type === btn.sortState.type && sort.direction === btn.sortState.direction;
-      if (isActive) button.classList.add('gengage-chat-product-sort-btn--active');
-      button.textContent = btn.label;
-      button.addEventListener('click', () => {
-        ctx.onSortChange?.(btn.sortState);
-        resortGrid(grid, childIds, spec, btn.sortState);
-        toolbar
-          .querySelectorAll('.gengage-chat-product-sort-btn')
-          .forEach((b) => b.classList.remove('gengage-chat-product-sort-btn--active'));
-        button.classList.add('gengage-chat-product-sort-btn--active');
+    const dropdown = document.createElement('div');
+    dropdown.className = 'gengage-chat-product-sort-dropdown';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'gengage-chat-product-sort-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    const sortAria = ctx.i18n?.sortToolbarAriaLabel ?? 'Sort products';
+    trigger.setAttribute('aria-label', sortAria);
+
+    const triggerIcon = document.createElement('span');
+    triggerIcon.className = 'gengage-chat-product-sort-trigger-icon';
+    const triggerLabel = document.createElement('span');
+    triggerLabel.className = 'gengage-chat-product-sort-trigger-label';
+
+    const syncTriggerFromSort = (s: ProductSortState): void => {
+      const opt =
+        sortOptions.find((o) => productSortStatesEqual(o.sortState, s)) ?? sortOptions[0]!;
+      triggerLabel.textContent = opt.label;
+      triggerIcon.innerHTML = productSortIconSvgHtml(opt.icon);
+      dropdown.dataset['sortIcon'] = opt.icon;
+    };
+    syncTriggerFromSort(currentSort);
+
+    const chevWrap = document.createElement('span');
+    chevWrap.className = 'gengage-chat-product-sort-trigger-chevron';
+    chevWrap.innerHTML = productSortChevronSvgHtml();
+
+    trigger.appendChild(triggerIcon);
+    trigger.appendChild(triggerLabel);
+    trigger.appendChild(chevWrap);
+
+    const menu = document.createElement('div');
+    menu.className = 'gengage-chat-product-sort-menu';
+    menu.hidden = true;
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-label', sortAria);
+
+    const doc = toolbar.ownerDocument;
+    let menuOverlayAbort: AbortController | null = null;
+
+    const closeSortMenu = (): void => {
+      menu.hidden = true;
+      dropdown.classList.remove('gengage-chat-product-sort-dropdown--open');
+      trigger.setAttribute('aria-expanded', 'false');
+      menuOverlayAbort?.abort();
+      menuOverlayAbort = null;
+    };
+
+    /** Bubble-phase click avoids fighting trigger mousedown/pointerdown (menu kapanıp tekrar açılması). */
+    const onSortMenuOutsideClick = (e: MouseEvent): void => {
+      if (!dropdown.classList.contains('gengage-chat-product-sort-dropdown--open')) return;
+      if (dropdown.contains(e.target as Node)) return;
+      closeSortMenu();
+    };
+
+    const onSortMenuEscape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeSortMenu();
+      }
+    };
+
+    const openSortMenu = (): void => {
+      menu.hidden = false;
+      dropdown.classList.add('gengage-chat-product-sort-dropdown--open');
+      trigger.setAttribute('aria-expanded', 'true');
+      menuOverlayAbort = new AbortController();
+      const { signal } = menuOverlayAbort;
+      doc.addEventListener('click', onSortMenuOutsideClick, { signal });
+      doc.addEventListener('keydown', onSortMenuEscape, { capture: true, signal });
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dropdown.classList.contains('gengage-chat-product-sort-dropdown--open')) {
+        closeSortMenu();
+      } else {
+        openSortMenu();
+      }
+    });
+
+    for (const opt of sortOptions) {
+      const optionBtn = document.createElement('button');
+      optionBtn.type = 'button';
+      optionBtn.className = 'gengage-chat-product-sort-option';
+      optionBtn.setAttribute('role', 'option');
+      const isActive = productSortStatesEqual(currentSort, opt.sortState);
+      optionBtn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive) optionBtn.classList.add('gengage-chat-product-sort-option--active');
+      const sortKey =
+        opt.sortState.type === 'related' ? 'related' : `price-${opt.sortState.direction ?? ''}`;
+      optionBtn.dataset['sortKey'] = sortKey;
+
+      const oIcon = document.createElement('span');
+      oIcon.className = 'gengage-chat-product-sort-option-icon';
+      oIcon.innerHTML = productSortIconSvgHtml(opt.icon);
+
+      const oLabel = document.createElement('span');
+      oLabel.className = 'gengage-chat-product-sort-option-label';
+      oLabel.textContent = opt.label;
+
+      const oCheck = document.createElement('span');
+      oCheck.className = 'gengage-chat-product-sort-option-check';
+      oCheck.innerHTML = productSortCheckSvgHtml();
+      oCheck.setAttribute('aria-hidden', 'true');
+      if (!isActive) oCheck.classList.add('gengage-chat-product-sort-option-check--hidden');
+
+      optionBtn.appendChild(oIcon);
+      optionBtn.appendChild(oLabel);
+      optionBtn.appendChild(oCheck);
+
+      optionBtn.addEventListener('click', () => {
+        currentSort = opt.sortState;
+        ctx.onSortChange?.(opt.sortState);
+        resortGrid(grid, childIds, spec, opt.sortState);
+        menu.querySelectorAll('.gengage-chat-product-sort-option').forEach((el) => {
+          const btn = el as HTMLButtonElement;
+          const active = btn.dataset['sortKey'] === sortKey;
+          btn.classList.toggle('gengage-chat-product-sort-option--active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          const check = btn.querySelector('.gengage-chat-product-sort-option-check');
+          check?.classList.toggle('gengage-chat-product-sort-option-check--hidden', !active);
+        });
+        syncTriggerFromSort(opt.sortState);
+        closeSortMenu();
       });
-      toolbar.appendChild(button);
+
+      menu.appendChild(optionBtn);
     }
 
-    // Comparison toggle button (only if onToggleComparisonSku is provided)
-    if (ctx.onToggleComparisonSku) {
-      const separator = document.createElement('div');
-      separator.className = 'gengage-chat-product-sort-separator';
-      toolbar.appendChild(separator);
+    dropdown.appendChild(trigger);
+    dropdown.appendChild(menu);
+    toolbar.appendChild(dropdown);
 
+    if (ctx.onToggleComparisonSku) {
       const compareBtn = document.createElement('button');
       compareBtn.className = 'gengage-chat-comparison-toggle-btn';
       compareBtn.type = 'button';
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
       }
-      // Hide compare button during streaming — revealed on stream end with fade-in
       if (ctx.isStreaming) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--hidden');
       }
-      compareBtn.textContent = ctx.i18n?.compareSelected ?? 'Compare';
+      const compareIcon = document.createElement('span');
+      compareIcon.className = 'gengage-chat-comparison-toggle-icon';
+      compareIcon.innerHTML = comparisonToggleIconSvgHtml();
+      const compareLabel = document.createElement('span');
+      compareLabel.className = 'gengage-chat-comparison-toggle-label';
+      compareLabel.textContent = ctx.i18n?.compareSelected ?? 'Compare';
+      compareBtn.appendChild(compareIcon);
+      compareBtn.appendChild(compareLabel);
       compareBtn.addEventListener('click', () => {
-        // Toggle is handled by the parent — dispatched via onToggleComparisonSku with empty string
-        // to signal mode toggle (convention: empty sku = toggle mode)
         ctx.onToggleComparisonSku?.('');
       });
       toolbar.appendChild(compareBtn);
     }
 
+    if (inlineHead) {
+      toolbar.classList.add('gengage-chat-product-sort-toolbar--inline');
+      const head = document.createElement('div');
+      head.className = 'gengage-chat-product-grid-head';
+      const titleEl = document.createElement('span');
+      titleEl.className = 'gengage-chat-product-grid-head-title';
+      titleEl.textContent = inlineHead;
+      head.appendChild(titleEl);
+      const actions = document.createElement('div');
+      actions.className = 'gengage-chat-product-grid-head-actions';
+      actions.appendChild(toolbar);
+      head.appendChild(actions);
+      wrapper.appendChild(head);
+    } else {
     wrapper.appendChild(toolbar);
+    }
+  } else if (inlineHead) {
+    const head = document.createElement('div');
+    head.className = 'gengage-chat-product-grid-head';
+    const titleEl = document.createElement('span');
+    titleEl.className = 'gengage-chat-product-grid-head-title';
+    titleEl.textContent = inlineHead;
+    head.appendChild(titleEl);
+    wrapper.appendChild(head);
   }
-
-  const grid = document.createElement('div');
-  grid.className = 'gengage-chat-product-grid';
 
   const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
   for (const childId of sortedIds) {

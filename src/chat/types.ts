@@ -355,6 +355,8 @@ export interface ChatUISpecRenderContext {
   isStreaming?: boolean | undefined;
   /** True when the widget is displayed in mobile viewport. Replaces hardcoded 768px check. */
   isMobile?: boolean | undefined;
+  /** ProductGrid: heading on the same row as sort/compare (panel list / Benzer Ürünler). */
+  panelProductListHeading?: string | undefined;
 }
 
 export interface ProductSortState {
