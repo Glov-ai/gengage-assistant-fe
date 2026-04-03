@@ -331,6 +331,7 @@ export interface ChatUISpecRenderContext {
     | 'specialCasesLabel'
     | 'emptyReviewsMessage'
     | 'closeAriaLabel'
+    | 'dismissAriaLabel'
     | 'startChatLabel'
     | 'handoffHeading'
     | 'customerReviewsTitle'

@@ -25,12 +25,74 @@ import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
 import { createQuantityStepper } from '../../common/quantity-stepper.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
-import {
-  clampRating,
-  clampDiscount,
-  addImageErrorHandler,
-  createStarRatingElement,
-} from '../../common/product-utils.js';
+import { clampRating, clampDiscount, addImageErrorHandler } from '../../common/product-utils.js';
+
+/** Buy popover is portaled here while open so it is not clipped by the card (overflow/transform). */
+function getBuyPopoverPortalHost(card: HTMLElement): ParentNode {
+  const chatRoot = card.closest('.gengage-chat-root');
+  if (chatRoot) return chatRoot;
+  const rn = card.getRootNode();
+  if (rn instanceof ShadowRoot) return rn;
+  return card.ownerDocument?.body ?? document.body;
+}
+
+const BUY_POPOVER_VIEWPORT_PAD = 8;
+const BUY_POPOVER_GAP = 6;
+
+/** Anchor the popover panel to the card trigger (not viewport-centered). */
+function positionBuyPopoverPanel(trigger: HTMLElement, panel: HTMLElement, card: HTMLElement, doc: Document): void {
+  const win = doc.defaultView;
+  const vw = win?.innerWidth ?? 800;
+  const vh = win?.innerHeight ?? 600;
+
+  const tr = trigger.getBoundingClientRect();
+  const cardR = card.getBoundingClientRect();
+
+  panel.style.position = 'fixed';
+  panel.style.transform = 'none';
+  panel.style.right = 'auto';
+  panel.style.bottom = 'auto';
+
+  let rect = panel.getBoundingClientRect();
+  let panelW = rect.width;
+  let panelH = rect.height;
+  if (panelW < 4 || panelH < 4) {
+    panel.style.left = '-10000px';
+    panel.style.top = '0px';
+    void panel.offsetWidth;
+    rect = panel.getBoundingClientRect();
+    panelW = Math.max(rect.width, 200);
+    panelH = Math.max(rect.height, 88);
+  }
+
+  let left = tr.left + tr.width / 2 - panelW / 2;
+  left = Math.max(BUY_POPOVER_VIEWPORT_PAD, Math.min(left, vw - panelW - BUY_POPOVER_VIEWPORT_PAD));
+  if (cardR.width > 0) {
+    const cardPad = 4;
+    if (panelW <= cardR.width - 2 * cardPad) {
+      left = Math.max(cardR.left + cardPad, Math.min(left, cardR.right - panelW - cardPad));
+    }
+  }
+
+  let top = tr.bottom + BUY_POPOVER_GAP;
+  if (top + panelH > vh - BUY_POPOVER_VIEWPORT_PAD) {
+    const above = tr.top - BUY_POPOVER_GAP - panelH;
+    if (above >= BUY_POPOVER_VIEWPORT_PAD) top = above;
+    else top = Math.max(BUY_POPOVER_VIEWPORT_PAD, vh - panelH - BUY_POPOVER_VIEWPORT_PAD);
+  }
+
+  panel.style.left = `${Math.round(left)}px`;
+  panel.style.top = `${Math.round(top)}px`;
+}
+
+function clearBuyPopoverPanelPosition(panel: HTMLElement): void {
+  panel.style.position = '';
+  panel.style.left = '';
+  panel.style.top = '';
+  panel.style.right = '';
+  panel.style.bottom = '';
+  panel.style.transform = '';
+}
 
 export type UISpecRenderContext = ChatUISpecRenderContext;
 
@@ -188,25 +250,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       imgWrapper.appendChild(badge);
     }
 
-    // "Find Similar" hover pill on image
-    const findSimilarSku = product['sku'] as string | undefined;
-    if (findSimilarSku) {
-      const pill = document.createElement('button');
-      pill.className = 'gengage-chat-find-similar-pill';
-      pill.type = 'button';
-      pill.textContent = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
-      pill.addEventListener('click', (e) => {
-        e.stopPropagation();
-        ctx.onAction({
-          title: ctx.i18n?.findSimilarLabel ?? 'Find Similar',
-          type: 'findSimilar',
-          payload: { sku: findSimilarSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
-        });
-      });
-      imgWrapper.appendChild(pill);
-    }
+    const imgActions = document.createElement('div');
+    imgActions.className = 'gengage-chat-product-card-img-actions';
 
-    // Favorite heart toggle
+    // Favorite (top of action stack — matches retail card reference)
     const favSku = product['sku'] as string | undefined;
     if (favSku && ctx.onFavoriteToggle) {
       const heart = document.createElement('button');
@@ -216,7 +263,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const isFav = ctx.favoritedSkus?.has(favSku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');
       const svgFill = isFav ? 'currentColor' : 'none';
-      heart.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${svgFill}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+      heart.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${svgFill}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
       heart.addEventListener('click', (e) => {
         e.stopPropagation();
         heart.classList.toggle('gengage-chat-favorite-btn--active');
@@ -229,7 +276,40 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
         }
         ctx.onFavoriteToggle!(favSku, product);
       });
-      imgWrapper.appendChild(heart);
+      imgActions.appendChild(heart);
+    }
+
+    // Find similar — icon button + visually hidden label (panel: always visible stack)
+    const findSimilarSku = product['sku'] as string | undefined;
+    const findSimilarLabel = ctx.i18n?.findSimilarLabel ?? 'Find Similar';
+    if (findSimilarSku) {
+      const pill = document.createElement('button');
+      pill.className = 'gengage-chat-find-similar-pill';
+      pill.type = 'button';
+      pill.setAttribute('aria-label', findSimilarLabel);
+      pill.innerHTML =
+        `<span class="gengage-chat-find-similar-pill-icon" aria-hidden="true">` +
+        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">` +
+        `<circle cx="10.5" cy="10.5" r="6.5"/>` +
+        `<path d="M16 16l5.5 5.5"/>` +
+        `</svg></span>`;
+      const pillText = document.createElement('span');
+      pillText.className = 'gengage-chat-find-similar-pill-text';
+      pillText.textContent = findSimilarLabel;
+      pill.appendChild(pillText);
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        ctx.onAction({
+          title: findSimilarLabel,
+          type: 'findSimilar',
+          payload: { sku: findSimilarSku, ...(imageUrl ? { image_url: imageUrl } : {}) },
+        });
+      });
+      imgActions.appendChild(pill);
+    }
+
+    if (imgActions.childElementCount > 0) {
+      imgWrapper.appendChild(imgActions);
     }
 
     card.appendChild(imgWrapper);
@@ -246,6 +326,93 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     body.appendChild(brandEl);
   }
 
+  const rating = product['rating'];
+  const reviewCount = product['reviewCount'];
+  const price = product['price'] as string | undefined;
+  const originalPrice = product['originalPrice'] as string | undefined;
+  const priceAsync = product['price_async'] as boolean | undefined;
+
+  const hasNumericRating = typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
+  const metaRow = document.createElement('div');
+  metaRow.className = 'gengage-chat-product-card-meta-row';
+
+  const priceBlock = document.createElement('div');
+  // Keep .gengage-chat-product-card-price for tests and legacy selectors
+  priceBlock.className = 'gengage-chat-product-card-price gengage-chat-product-card-price-block';
+
+  if (priceAsync === true) {
+    const skeleton = document.createElement('span');
+    skeleton.className = 'gengage-chat-price-skeleton';
+    priceBlock.appendChild(skeleton);
+    setTimeout(() => {
+      if (!skeleton.parentElement) return;
+      if (price && parseFloat(price) > 0) {
+        const op = product['originalPrice'] as string | undefined;
+        if (op && op !== price) {
+          const cur = document.createElement('span');
+          cur.className = 'gengage-chat-product-card-current-price';
+          cur.textContent = formatPrice(price, ctx.pricing);
+          const origEl = document.createElement('span');
+          origEl.className = 'gengage-chat-product-card-original-price';
+          origEl.textContent = formatPrice(op, ctx.pricing);
+          const frag = document.createDocumentFragment();
+          frag.appendChild(cur);
+          frag.appendChild(document.createTextNode(' '));
+          frag.appendChild(origEl);
+          skeleton.replaceWith(frag);
+        } else {
+          const cur = document.createElement('span');
+          cur.className = 'gengage-chat-product-card-current-price';
+          cur.textContent = formatPrice(price, ctx.pricing);
+          skeleton.replaceWith(cur);
+        }
+      } else {
+        skeleton.remove();
+      }
+    }, 300);
+  } else if (price && parseFloat(price) > 0) {
+    const current = document.createElement('span');
+    current.className = 'gengage-chat-product-card-current-price';
+    current.textContent = formatPrice(price, ctx.pricing);
+    priceBlock.appendChild(current);
+    if (originalPrice && originalPrice !== price) {
+      priceBlock.appendChild(document.createTextNode(' '));
+      const orig = document.createElement('span');
+      orig.className = 'gengage-chat-product-card-original-price';
+      orig.textContent = formatPrice(originalPrice, ctx.pricing);
+      priceBlock.appendChild(orig);
+    }
+  }
+
+  if (priceBlock.childElementCount > 0 || priceAsync === true) {
+    metaRow.appendChild(priceBlock);
+  }
+
+  if (hasNumericRating) {
+    const ratingCompact = document.createElement('div');
+    ratingCompact.className = 'gengage-chat-product-card-rating-compact';
+    const rc = clampRating(rating);
+    const labelParts = [`${rc.toFixed(1)}`, 'out of 5 stars'];
+    if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
+      labelParts.push(`(${reviewCount} reviews)`);
+    }
+    ratingCompact.setAttribute('aria-label', labelParts.join(' '));
+    const starEl = document.createElement('span');
+    starEl.className = 'gengage-chat-product-card-rating-compact-star';
+    starEl.setAttribute('aria-hidden', 'true');
+    starEl.textContent = '\u2605';
+    const valEl = document.createElement('span');
+    valEl.className = 'gengage-chat-product-card-rating-compact-value';
+    valEl.textContent = rc.toFixed(1);
+    ratingCompact.appendChild(starEl);
+    ratingCompact.appendChild(valEl);
+    metaRow.appendChild(ratingCompact);
+  }
+
+  if (metaRow.childElementCount > 0) {
+    body.appendChild(metaRow);
+  }
+
   const name = product['name'] as string | undefined;
   if (name) {
     const nameEl = document.createElement('div');
@@ -253,57 +420,6 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     nameEl.textContent = name;
     nameEl.title = name;
     body.appendChild(nameEl);
-  }
-
-  const rating = product['rating'];
-  const reviewCount = product['reviewCount'];
-  if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
-    const ratingRow = document.createElement('div');
-    ratingRow.className = 'gengage-chat-product-card-rating';
-    ratingRow.appendChild(createStarRatingElement(rating));
-    if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
-      const count = document.createElement('span');
-      count.className = 'gengage-chat-product-card-review-count';
-      count.textContent = ` (${reviewCount})`;
-      ratingRow.appendChild(count);
-    }
-    body.appendChild(ratingRow);
-  }
-
-  const price = product['price'] as string | undefined;
-  const originalPrice = product['originalPrice'] as string | undefined;
-  const priceAsync = product['price_async'] as boolean | undefined;
-
-  if (priceAsync === true) {
-    const priceRow = document.createElement('div');
-    priceRow.className = 'gengage-chat-product-card-price';
-    const skeleton = document.createElement('span');
-    skeleton.className = 'gengage-chat-price-skeleton';
-    priceRow.appendChild(skeleton);
-    body.appendChild(priceRow);
-    // Replace skeleton with actual price after delay
-    setTimeout(() => {
-      if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price && parseFloat(price) > 0) {
-        skeleton.replaceWith(document.createTextNode(formatPrice(price, ctx.pricing)));
-      } else {
-        skeleton.remove();
-      }
-    }, 300);
-  } else if (price && parseFloat(price) > 0) {
-    const priceRow = document.createElement('div');
-    priceRow.className = 'gengage-chat-product-card-price';
-    if (originalPrice && originalPrice !== price) {
-      const orig = document.createElement('span');
-      orig.className = 'gengage-chat-product-card-original-price';
-      orig.textContent = formatPrice(originalPrice, ctx.pricing);
-      priceRow.appendChild(orig);
-      priceRow.appendChild(document.createTextNode(' '));
-    }
-    const current = document.createElement('span');
-    current.textContent = formatPrice(price, ctx.pricing);
-    priceRow.appendChild(current);
-    body.appendChild(priceRow);
   }
 
   // Stock indicator
@@ -337,15 +453,160 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
   const url = product['url'] as string | undefined;
   const sku = product['sku'] as string | undefined;
+  const cartCode = product['cartCode'] as string | undefined;
 
-  if (action) {
+  const hasCart = !!(cartCode && sku && inStock !== false);
+  const hasUrl = !!(url && isSafeUrl(url));
+  /** Popover: quantity stepper only (same visual as panel `.gengage-qty-stepper`). URL-only cards use inline CTA. */
+  const opensBuyPopover = hasCart;
+  const ctaLabel = ctx.i18n?.productCtaLabel ?? 'View';
+
+  if (opensBuyPopover) {
+    card.classList.add('gengage-chat-product-card--buy-popover');
+    const buyFooter = document.createElement('div');
+    buyFooter.className = 'gengage-chat-product-card-buy-footer';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'gengage-chat-product-card-buy-trigger';
+    trigger.textContent = ctaLabel;
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-haspopup', 'dialog');
+
+    const popover = document.createElement('div');
+    popover.className = 'gengage-chat-product-card-buy-popover';
+    popover.setAttribute('role', 'dialog');
+    popover.setAttribute('aria-modal', 'false');
+    popover.hidden = true;
+
+    const backdrop = document.createElement('button');
+    backdrop.type = 'button';
+    backdrop.className = 'gengage-chat-product-card-buy-popover-backdrop';
+    backdrop.setAttribute('aria-label', ctx.i18n?.dismissAriaLabel ?? 'Close');
+
+    const popPanel = document.createElement('div');
+    popPanel.className =
+      'gengage-chat-product-card-buy-popover-panel gengage-chat-product-card-buy-popover-panel--anchored gengage-chat-buy-popover-panel--panel-atc-look';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'gengage-chat-product-card-buy-popover-close';
+    closeBtn.setAttribute('aria-label', ctx.i18n?.closeAriaLabel ?? 'Close');
+    closeBtn.textContent = '\u00D7';
+
+    let keyAbort: AbortController | null = null;
+    const closePopover = (): void => {
+      popover.hidden = true;
+      popover.classList.remove('gengage-chat-product-card-buy-popover--layer');
+      clearBuyPopoverPanelPosition(popPanel);
+      if (popover.parentElement !== buyFooter) {
+        buyFooter.appendChild(popover);
+      }
+      trigger.setAttribute('aria-expanded', 'false');
+      keyAbort?.abort();
+      keyAbort = null;
+      trigger.focus();
+    };
+    const openPopover = (): void => {
+      const host = getBuyPopoverPortalHost(card);
+      const doc = card.ownerDocument ?? document;
+      popover.classList.add('gengage-chat-product-card-buy-popover--layer');
+      if (popover.parentElement !== host) {
+        host.appendChild(popover);
+      }
+      popover.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      keyAbort = new AbortController();
+      const onKey = (e: KeyboardEvent): void => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          closePopover();
+        }
+      };
+      const onPointerDownOutside = (e: PointerEvent): void => {
+        if (popover.hidden) return;
+        const t = e.target as Node;
+        if (popPanel.contains(t) || trigger.contains(t)) return;
+        closePopover();
+      };
+      const signal = keyAbort.signal;
+      doc.addEventListener('keydown', onKey, { capture: true, signal });
+      doc.addEventListener('pointerdown', onPointerDownOutside, { capture: true, signal });
+
+      // Sol panel (ve içindeki AI bölgesi) kaydırılınca kapat — scroll bubble etmez, hedeflere ayrı dinleyici.
+      const onLeftPanelScroll = (): void => {
+        if (!popover.hidden) closePopover();
+      };
+      const panelRoot = card.closest('.gengage-chat-panel');
+      if (panelRoot instanceof HTMLElement) {
+        panelRoot.addEventListener('scroll', onLeftPanelScroll, { passive: true, signal });
+      }
+      const panelAiZone = card.closest('.gengage-chat-panel-ai-zone');
+      if (panelAiZone instanceof HTMLElement && panelAiZone !== panelRoot) {
+        panelAiZone.addEventListener('scroll', onLeftPanelScroll, { passive: true, signal });
+      }
+
+      const reposition = (): void => {
+        positionBuyPopoverPanel(trigger, popPanel, card, doc);
+      };
+      const win = doc.defaultView;
+      if (win) {
+        win.addEventListener('resize', reposition, { signal });
+        win.addEventListener('scroll', reposition, { capture: true, signal });
+        win.visualViewport?.addEventListener('resize', reposition, { signal });
+        win.visualViewport?.addEventListener('scroll', reposition, { signal });
+      }
+      doc.addEventListener('scroll', reposition, { capture: true, signal });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(reposition);
+      });
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (popover.hidden) openPopover();
+      else closePopover();
+    });
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closePopover();
+    });
+    popPanel.addEventListener('click', (e) => e.stopPropagation());
+    popPanel.appendChild(closeBtn);
+
+    if (hasCart) {
+      const stepper = createQuantityStepper({
+        compact: true,
+        compactShowLabel: false,
+        label: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+        decreaseLabel: ctx.i18n?.decreaseLabel,
+        increaseLabel: ctx.i18n?.increaseLabel,
+        onSubmit: (quantity) => {
+          ctx.onAction({
+            title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+            type: 'addToCart',
+            payload: { sku: sku!, cartCode: cartCode!, quantity },
+          });
+          closePopover();
+        },
+      });
+      stepper.classList.add('gengage-chat-product-card-atc', 'gengage-chat-product-card-atc--buy-popover');
+      popPanel.appendChild(stepper);
+    }
+
+    popover.appendChild(backdrop);
+    popover.appendChild(popPanel);
+    buyFooter.appendChild(trigger);
+    buyFooter.appendChild(popover);
+    card.appendChild(buyFooter);
+  } else if (action) {
     const cta = document.createElement('button');
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
     cta.textContent =
-      action.type === 'launchSingleProduct'
-        ? (ctx.i18n?.productCtaLabel ?? 'View')
-        : action.title || ctx.i18n?.productCtaLabel || 'View';
+      action.type === 'launchSingleProduct' ? ctaLabel : action.title || ctaLabel;
     cta.addEventListener('click', (e) => {
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
         e.stopPropagation();
@@ -360,7 +621,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     safeSetAttribute(cta, 'href', url);
     safeSetAttribute(cta, 'target', '_blank');
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-    cta.textContent = ctx.i18n?.productCtaLabel ?? 'View';
+    cta.textContent = ctaLabel;
     cta.addEventListener('click', (e) => {
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
         e.preventDefault();
@@ -373,26 +634,6 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       }
     });
     card.appendChild(cta);
-  }
-
-  // Add to cart stepper (shown on search result cards when cartCode is available and in stock)
-  const cartCode = product['cartCode'] as string | undefined;
-  if (cartCode && sku && inStock !== false) {
-    const stepper = createQuantityStepper({
-      compact: true,
-      label: ctx.i18n?.addToCartButton ?? 'Add to Cart',
-      decreaseLabel: ctx.i18n?.decreaseLabel,
-      increaseLabel: ctx.i18n?.increaseLabel,
-      onSubmit: (quantity) => {
-        ctx.onAction({
-          title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
-          type: 'addToCart',
-          payload: { sku, cartCode, quantity },
-        });
-      },
-    });
-    stepper.classList.add('gengage-chat-product-card-atc');
-    card.appendChild(stepper);
   }
 
   // Wrap with checkbox overlay when comparison select mode is active

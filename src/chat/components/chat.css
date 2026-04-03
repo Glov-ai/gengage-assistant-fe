@@ -1695,15 +1695,22 @@
   font-size: 10px;
 }
 
-.gengage-chat-product-card-price {
+.gengage-chat-product-card-price,
+.gengage-chat-product-card-price-block {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
-  gap: 2px 4px;
+  gap: 2px 6px;
   font-size: 16px;
   font-weight: 800;
   color: #0f172a;
+}
+
+.gengage-chat-product-card-current-price {
+  font: inherit;
+  font-weight: 800;
+  color: inherit;
 }
 
 .gengage-chat-product-card-original-price {
@@ -1711,7 +1718,63 @@
   color: var(--_gengage-text-secondary);
   font-weight: 400;
   font-size: 11px;
-  margin-right: 2px;
+  margin-right: 0;
+}
+
+/* Price row + compact rating (★ 4.5) */
+.gengage-chat-product-card-meta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.gengage-chat-product-card-rating-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--_gengage-text-primary, #0f172a);
+  line-height: 1.2;
+}
+
+.gengage-chat-product-card-rating-compact-star {
+  color: #fbbf24;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.gengage-chat-product-card-rating-compact-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Image corner actions (fav + find similar) */
+.gengage-chat-product-card-img-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.gengage-chat-product-card-img-actions > * {
+  pointer-events: auto;
+}
+
+.gengage-chat-product-card-img-actions .gengage-chat-favorite-btn {
+  position: static;
+}
+
+.gengage-chat-product-card-img-actions .gengage-chat-find-similar-pill {
+  position: static;
 }
 
 /* Async pricing skeleton */
@@ -2537,24 +2600,63 @@ button.gengage-chat-product-card-cta {
   margin-bottom: 4px;
 }
 
-/* Panel content: product cards in panel as proper e-commerce cards */
+/* Panel content: retail-style product cards (e-commerce reference layout) */
 .gengage-chat-panel .gengage-chat-product-card {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
-  border: 1px solid var(--_gengage-border-color);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 4px 20px rgba(15, 23, 42, 0.08),
+    0 1px 3px rgba(15, 23, 42, 0.06);
   overflow: hidden;
   padding: 0;
+  background: #fff;
 }
 
 .gengage-chat-panel .gengage-chat-product-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.12),
+    0 2px 6px rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.gengage-chat-panel .gengage-chat-product-card-img-actions {
+  top: 10px;
+  right: 10px;
+  gap: 6px;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-img-actions .gengage-chat-favorite-btn,
+.gengage-chat-panel .gengage-chat-product-card-img-actions .gengage-chat-find-similar-pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-discount-badge {
+  top: 10px;
+  left: 10px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: #f97316;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+}
+
+.gengage-chat-panel .gengage-chat-product-card-brand {
+  display: none;
 }
 
 .gengage-chat-panel .gengage-chat-product-grid {
@@ -2567,45 +2669,372 @@ button.gengage-chat-product-card-cta {
   padding: 4px 0;
 }
 
-.gengage-chat-panel .gengage-chat-product-card-img {
+.gengage-chat-panel .gengage-chat-product-card-img-wrapper {
+  position: relative;
   width: 100%;
-  height: 160px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  background: #f3f4f6;
   border-radius: 0;
-  object-fit: contain;
-  background: #fafafa;
-  padding: 12px;
+  overflow: hidden;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center;
+  background: transparent;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .gengage-chat-panel .gengage-chat-product-card-body {
-  padding: 10px 12px 12px;
+  padding: 12px 14px 10px;
   text-align: left;
-  gap: 4px;
+  gap: 8px;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-meta-row {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-price,
+.gengage-chat-panel .gengage-chat-product-card-price-block {
+  justify-content: flex-start;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--_gengage-text-primary, #0f172a);
+}
+
+.gengage-chat-panel .gengage-chat-product-card-current-price {
+  color: var(--gengage-primary-color, #c2410c);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-original-price {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-rating-compact {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-rating-compact-star {
+  font-size: 12px;
 }
 
 .gengage-chat-panel .gengage-chat-product-card-name {
   min-height: 0;
-  margin-bottom: 2px;
-  font-size: 13px;
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--_gengage-text-primary, #0f172a);
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
 
-.gengage-chat-panel .gengage-chat-product-card-price {
-  justify-content: flex-start;
-  font-size: 15px;
+/* Primary “Satın Al” opens popover; inline CTA only on action-only cards */
+.gengage-chat-panel .gengage-chat-product-card-buy-footer {
+  position: relative;
+  margin-top: auto;
+  padding: 0 14px 14px;
 }
 
-.gengage-chat-panel .gengage-chat-product-card-cta {
-  display: block;
-  padding: 10px 12px;
-  text-align: center;
-  border-top: 1px solid var(--_gengage-surface-muted);
-  border-radius: 0;
-  background: transparent;
-  color: var(--gengage-primary-color, #b7102a);
-  font-weight: 700;
+.gengage-chat-panel .gengage-chat-product-card-buy-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--gengage-primary-color, #c2410c);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--gengage-primary-color, #c2410c);
+  font-weight: 600;
   font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-buy-trigger:hover {
+  background: color-mix(in srgb, var(--gengage-primary-color, #c2410c) 6%, #fff);
+}
+
+.gengage-chat-panel .gengage-chat-product-card-buy-popover[hidden] {
+  display: none !important;
+}
+
+.gengage-chat-panel .gengage-chat-product-card-buy-popover:not([hidden]) {
+  display: block;
+}
+
+.gengage-chat-product-card-buy-popover {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  border-radius: inherit;
+}
+
+/* Portaled under .gengage-chat-root or shadow root — full-viewport overlay (not clipped by card).
+   Must stack above .gengage-chat-drawer, which uses the same --gengage-z-index as the widget. */
+.gengage-chat-product-card-buy-popover--layer:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--gengage-z-index, 2147483647) + 10);
+  border-radius: 0;
+  /* Let wheel/touch scroll reach chat + panel beneath; hit-testing only on panel (pointer-events: auto). */
+  pointer-events: none;
+}
+
+.gengage-chat-product-card-buy-popover-backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+  cursor: default;
+}
+
+.gengage-chat-product-card-buy-popover--layer .gengage-chat-product-card-buy-popover-backdrop {
+  border-radius: 0;
+  z-index: 1;
+}
+
+.gengage-chat-product-card-buy-popover-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 28px);
+  max-width: 300px;
+  padding: 14px 14px 12px;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.22);
+  z-index: 1;
+}
+
+/* Portaled: no white “card” — only controls + compact close; hug content width. */
+.gengage-chat-product-card-buy-popover--layer .gengage-chat-product-card-buy-popover-panel--anchored {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.gengage-chat-product-card-buy-popover-panel--anchored .gengage-chat-product-card-atc {
+  order: 1;
+}
+
+.gengage-chat-product-card-buy-popover-panel--anchored .gengage-chat-product-card-buy-popover-close {
+  order: 2;
+}
+
+/* Footer (closed / non-layer): keep classic close placement inside tiny hit area */
+.gengage-chat-product-card-buy-popover-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gengage-chat-product-card-buy-popover-panel--anchored .gengage-chat-product-card-buy-popover-close {
+  position: static;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.gengage-chat-product-card-buy-popover-close:hover {
+  background: var(--_gengage-surface-secondary, #f1f5f9);
+  color: var(--_gengage-text-primary, #0f172a);
+}
+
+.gengage-chat-product-card-buy-popover-panel--anchored .gengage-chat-product-card-buy-popover-close:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+}
+
+.gengage-chat-product-card-buy-popover-panel .gengage-chat-product-card-atc {
+  position: relative;
+  opacity: 1;
+  bottom: auto;
+  right: auto;
+  margin: 0;
+  width: 100%;
+  /* Neutralize touch / mobile “strip” flex on the wrapper — row lives on .gengage-qty-stepper */
+  display: block !important;
+  flex-direction: unset !important;
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-chat-product-card-atc {
+  width: max-content !important;
+  max-width: 100%;
+}
+
+/* Match panel stepper chrome; width hugs content — no stretched green tail. */
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  width: max-content !important;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0;
+  box-sizing: border-box;
+  height: var(--_gengage-qty-btn-size-compact);
+  min-height: var(--_gengage-qty-btn-size-compact);
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper button,
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-value {
+  border: none;
+  border-right: 1px solid var(--_gengage-border-color);
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-submit {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: 40px;
+  height: var(--_gengage-qty-btn-size-compact);
+  min-height: var(--_gengage-qty-btn-size-compact);
+  padding: 0 10px;
+  margin: 0;
+  line-height: 1 !important;
+  border-right: none;
+  border-left: none;
+  background: #fff !important;
+  color: var(--gengage-primary-color, #c2410c) !important;
+  filter: none;
+  box-sizing: border-box;
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-submit svg {
+  stroke: currentColor;
+  color: inherit;
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-submit:hover:not(:disabled) {
+  filter: none;
+  background: var(--_gengage-surface-secondary, #f1f5f9) !important;
+  color: var(--gengage-primary-color, #c2410c) !important;
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-submit.gengage-qty-submit--success {
+  background: #fff !important;
+  color: var(--gengage-primary-color, #c2410c) !important;
+}
+
+.gengage-chat-buy-popover-panel--panel-atc-look .gengage-qty-stepper .gengage-qty-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  min-width: 1.75rem;
+  height: var(--_gengage-qty-btn-size-compact);
+  min-height: var(--_gengage-qty-btn-size-compact);
+  max-height: var(--_gengage-qty-btn-size-compact);
+  padding: 0 8px;
+  margin: 0;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Panel: action-only cards still use full-width outline CTA (no popover) */
+.gengage-chat-panel .gengage-chat-product-card:not(.gengage-chat-product-card--buy-popover) .gengage-chat-product-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 14px 14px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gengage-primary-color, #c2410c);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--gengage-primary-color, #c2410c);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.gengage-chat-panel .gengage-chat-product-card:not(.gengage-chat-product-card--buy-popover) .gengage-chat-product-card-cta:hover {
+  background: color-mix(in srgb, var(--gengage-primary-color, #c2410c) 6%, #fff);
+}
+
+/* Narrow in-chat cards: hide long ATC label */
+.gengage-qty-submit-text {
+  display: none;
+}
+
+/* Icon-only cart in buy popover — label lives on button title / i18n from TS */
+.gengage-chat-product-card-buy-popover-panel .gengage-qty-submit-text {
+  display: none;
 }
 
 /* Selected card highlight state */
@@ -3270,13 +3699,17 @@ button.gengage-chat-product-card-cta {
   grid-template-columns: 84px 1fr;
 }
 
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-buy-footer {
+  grid-column: 1 / -1;
+}
+
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-cta {
   grid-column: 1 / -1;
   width: 100%;
 }
 
-/* ATC strip: full-width, flush to card edges, no floating stepper appearance */
-.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-atc {
+/* ATC strip: only when stepper is a direct grid child of the card (not inside buy popover). */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card > .gengage-chat-product-card-atc {
   grid-column: 1 / -1;
   width: 100%;
   border-radius: 0;
@@ -3287,9 +3720,52 @@ button.gengage-chat-product-card-cta {
 }
 
 /* Submit fills remaining width; override compact variant's rounded right corner */
-.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-atc .gengage-qty-submit {
+.gengage-chat-root--mobile
+  .gengage-chat-panel
+  .gengage-chat-product-card
+  > .gengage-chat-product-card-atc
+  .gengage-qty-submit {
   flex: 1;
   border-radius: 0;
+}
+
+/* Buy popover ATC (often portaled — not under .gengage-chat-panel): panel-like stepper, no card grid strip */
+.gengage-chat-root--mobile .gengage-chat-product-card-atc--buy-popover {
+  grid-column: unset;
+  border-top: none;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-card-atc--buy-popover .gengage-qty-stepper {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-card-atc--buy-popover .gengage-qty-submit {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: 48px;
+  height: var(--_gengage-qty-btn-size-compact);
+  min-height: var(--_gengage-qty-btn-size-compact);
+  line-height: 1 !important;
+  border-radius: 0;
+}
+
+.gengage-chat-root--mobile
+  .gengage-chat-product-card-atc--buy-popover
+  .gengage-qty-stepper
+  .gengage-qty-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: var(--_gengage-qty-btn-size-compact);
+  min-height: var(--_gengage-qty-btn-size-compact);
+  max-height: var(--_gengage-qty-btn-size-compact);
+  line-height: 1 !important;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-panel {
@@ -5087,41 +5563,123 @@ button.gengage-chat-product-card-cta {
   color: #dc2626;
 }
 
-/* ── Find Similar hover pill (floats on product images) ── */
+/* ── Find Similar (icon in action stack; details panel keeps hover pill) ── */
 .gengage-chat-find-similar-pill {
-  position: absolute;
-  top: 40px;
-  right: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   font-size: 11px;
   font-weight: 500;
   font-family: inherit;
   border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--_gengage-text-primary, #334155);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+  z-index: 2;
+  transition:
+    opacity 0.2s ease,
+    box-shadow 0.15s ease;
+}
+
+.gengage-chat-find-similar-pill:hover {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+}
+
+.gengage-chat-find-similar-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gengage-chat-find-similar-pill-icon svg {
+  display: block;
+}
+
+/* Screen-reader label; visible text mode only in wide / panel contexts */
+.gengage-chat-find-similar-pill-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fine pointer: tuck actions until hover on narrow cards; touch always shows */
+.gengage-chat-product-card-img-wrapper .gengage-chat-product-card-img-actions {
+  transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gengage-chat-product-card-img-wrapper:not(:hover) .gengage-chat-product-card-img-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .gengage-chat-product-card-img-wrapper:hover .gengage-chat-product-card-img-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .gengage-chat-product-card-img-wrapper .gengage-chat-product-card-img-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Product details: legacy dark hover pill (not using img-actions stack) */
+.gengage-chat-product-details-img-wrap .gengage-chat-find-similar-pill {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  width: auto;
+  height: auto;
+  padding: 4px 10px;
   border-radius: 12px;
   background: var(--gengage-chat-pill-bg, rgba(0, 0, 0, 0.7));
   color: var(--gengage-chat-pill-text, #fff);
-  cursor: pointer;
-  white-space: nowrap;
-  z-index: 2;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.gengage-chat-product-card-img-wrapper:hover .gengage-chat-find-similar-pill,
+.gengage-chat-product-details-img-wrap .gengage-chat-find-similar-pill-icon {
+  display: none;
+}
+
+.gengage-chat-product-details-img-wrap .gengage-chat-find-similar-pill-text {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: nowrap;
+}
+
 .gengage-chat-product-details-img-wrap:hover .gengage-chat-find-similar-pill {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* ── Favorite heart button ── */
+/* ── Favorite (stacked with find-similar on product cards) ── */
 .gengage-chat-favorite-btn {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.96);
   border: none;
-  border-radius: 50%;
+  border-radius: 8px;
   width: 28px;
   height: 28px;
   display: flex;
@@ -5129,12 +5687,16 @@ button.gengage-chat-product-card-cta {
   justify-content: center;
   cursor: pointer;
   color: var(--gengage-text-secondary, #64748b);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
   z-index: 3;
-  transition: color 0.2s;
+  transition:
+    color 0.2s,
+    box-shadow 0.15s ease;
   padding: 0;
 }
 
 .gengage-chat-favorite-btn:hover {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
   color: var(--gengage-accent-primary, #ef4444);
 }
 
@@ -5665,6 +6227,13 @@ button.gengage-chat-product-card-cta {
   padding: 4px 8px;
   font-size: 13px;
   /* No border-radius — parent's overflow:hidden + border-radius handles corner clipping */
+}
+
+.gengage-qty-submit--compact-labeled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 /* Panel qty-stepper borders — clean border grouping */

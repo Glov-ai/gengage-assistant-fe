@@ -11,7 +11,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   errorMessage: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   retryButton: 'Tekrar Dene',
   loadingMessage: 'Düşünüyorum...',
-  productCtaLabel: 'İncele',
+  productCtaLabel: 'Satın Al',
   viewOnSiteLabel: 'Sitede Gör',
   attachImageButton: 'Resim ekle',
   attachMenuSelectPhoto: 'Fotoğraf Seç',

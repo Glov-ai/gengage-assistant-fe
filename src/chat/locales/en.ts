@@ -11,7 +11,7 @@ export const CHAT_I18N_EN: ChatI18n = {
   errorMessage: 'Something went wrong. Please try again.',
   retryButton: 'Retry',
   loadingMessage: 'Thinking...',
-  productCtaLabel: 'View',
+  productCtaLabel: 'Buy',
   viewOnSiteLabel: 'View on Site',
   attachImageButton: 'Attach image',
   attachMenuSelectPhoto: 'Choose photo',

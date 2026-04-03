@@ -12,6 +12,8 @@ export interface QuantityStepperOptions {
   increaseSymbol?: string | undefined;
   /** Icon HTML for compact mode submit button (default: cart SVG icon). */
   submitIcon?: string | undefined;
+  /** In compact mode, show `label` text beside the cart icon (e.g. retail panel cards). */
+  compactShowLabel?: boolean | undefined;
   onSubmit: (quantity: number) => void;
 }
 
@@ -59,7 +61,16 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
 
   if (compact) {
-    submitBtn.innerHTML = options.submitIcon ?? defaultCartSvg;
+    if (options.compactShowLabel && options.label) {
+      submitBtn.classList.add('gengage-qty-submit--compact-labeled');
+      submitBtn.innerHTML = options.submitIcon ?? defaultCartSvg;
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'gengage-qty-submit-text';
+      labelSpan.textContent = options.label;
+      submitBtn.appendChild(labelSpan);
+    } else {
+      submitBtn.innerHTML = options.submitIcon ?? defaultCartSvg;
+    }
     submitBtn.title = options.label ?? 'Add to Cart';
   } else {
     submitBtn.textContent = options.label ?? 'Add to Cart';
@@ -92,12 +103,14 @@ export function createQuantityStepper(options: QuantityStepperOptions): HTMLElem
     e.stopPropagation();
     options.onSubmit(quantity);
     // Brief visual feedback: show checkmark then revert
-    const original = submitBtn.innerHTML;
+    const originalHtml = submitBtn.innerHTML;
+    const hadCompactLabel = submitBtn.classList.contains('gengage-qty-submit--compact-labeled');
     submitBtn.textContent = '\u2713'; // checkmark
     submitBtn.classList.add('gengage-qty-submit--success');
     submitBtn.disabled = true;
     setTimeout(() => {
-      submitBtn.innerHTML = original;
+      submitBtn.innerHTML = originalHtml;
+      if (hadCompactLabel) submitBtn.classList.add('gengage-qty-submit--compact-labeled');
       submitBtn.classList.remove('gengage-qty-submit--success');
       submitBtn.disabled = false;
     }, 1200);
