@@ -2567,11 +2567,6 @@ button.gengage-chat-product-card-cta {
   padding: 4px 0;
 }
 
-/* ChoicePrompter bottom right — do not overlap the last row of grid */
-.gengage-chat-panel:has(.gengage-chat-choice-prompter) .gengage-chat-product-grid {
-  padding-bottom: 120px;
-}
-
 .gengage-chat-panel .gengage-chat-product-card-img {
   width: 100%;
   height: 160px;
