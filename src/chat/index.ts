@@ -2388,8 +2388,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._currentThreadId = threadId;
     this._extendedModeManager?.setHiddenByUser(false);
-    this._presentation.setFocusedThreadId(threadId);
-    this._drawer?.setPresentationFocus(threadId);
+
+    // Presentation collapse (single-thread focus) only at the conversation tip.
+    // When navigating back to an older panel thread, show the full transcript up to
+    // this thread — same effect as "show earlier messages" without an extra tap.
+    // Forward navigation to the tip restores collapse + scroll-to-reveal UX.
+    const atConversationTip = this._lastThreadId != null && threadId === this._lastThreadId;
+    if (atConversationTip) {
+      this._presentation.setFocusedThreadId(threadId);
+      this._drawer?.setPresentationFocus(threadId);
+    } else {
+      this._presentation.releaseFocusedThread();
+      this._drawer?.setPresentationFocus(null);
+    }
     this._drawer?.setFormerMessagesButtonVisible(false);
 
     // Toggle visibility of messages after the cutoff
@@ -2430,6 +2441,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Clear suggestion pills (they belong to the latest thread)
     this._drawer?.setPills([]);
+
+    requestAnimationFrame(() => {
+      this._drawer?.scrollThreadIntoView(threadId, 'auto');
+    });
 
     // Load context from IndexedDB for the target thread so the next request
     // sends the correct historical context, then prune future entries.
