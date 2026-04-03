@@ -1129,12 +1129,13 @@ function renderProductGrid(
   // "View More" button (only when endOfList is not true)
   const endOfList = element.props?.['endOfList'] as boolean | undefined;
   if (endOfList !== true && childIds.length > 0) {
+    const viewMoreTitle = ctx?.i18n?.viewMoreLabel ?? 'Show More';
     const viewMoreBtn = document.createElement('button');
     viewMoreBtn.className = 'gengage-chat-product-grid-view-more';
     viewMoreBtn.type = 'button';
-    viewMoreBtn.textContent = ctx?.i18n?.viewMoreLabel ?? 'Show More';
+    viewMoreBtn.textContent = viewMoreTitle;
     viewMoreBtn.addEventListener('click', () => {
-      ctx?.onAction({ title: 'More', type: 'moreProductList', payload: {} });
+      ctx?.onAction({ title: viewMoreTitle, type: 'moreProductList', payload: {} });
     });
     wrapper.appendChild(viewMoreBtn);
   }
