@@ -1,0 +1,54 @@
+:where(.gds-card) {
+  background: var(--ds-card-bg);
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-card-radius);
+  box-shadow: var(--ds-card-shadow);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+:where(.gds-card-interactive) {
+  cursor: pointer;
+}
+
+:where(.gds-clickable) {
+  cursor: pointer;
+}
+
+:where(.gds-card-interactive:hover) {
+  background: var(--ds-card-bg-hover);
+  border-color: var(--ds-card-border-hover);
+  box-shadow: var(--ds-card-shadow-hover);
+}
+
+:where(.gds-card-soft) {
+  background: var(--ds-card-bg-soft);
+}
+
+:where(.gds-product-card) {
+  border-radius: 16px;
+}
+
+:where(.gds-evidence-card) {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-1);
+}
+
+:where(.gds-evidence-card-success) {
+  background: color-mix(in srgb, var(--success) 10%, white);
+  border-color: color-mix(in srgb, var(--success) 22%, var(--border-default));
+}
+
+:where(.gds-evidence-card-danger) {
+  background: color-mix(in srgb, var(--error) 8%, white);
+  border-color: color-mix(in srgb, var(--error) 20%, var(--border-default));
+}
+
+:where(.gds-evidence-card-warning) {
+  background: color-mix(in srgb, var(--warning) 10%, white);
+  border-color: color-mix(in srgb, var(--warning) 22%, var(--border-default));
+}

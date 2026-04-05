@@ -1,0 +1,24 @@
+:where(.gds-shell-header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--ds-header-bg);
+  color: var(--ds-header-fg);
+  border-bottom: 1px solid var(--ds-header-border);
+  box-shadow: none;
+}
+
+:where(.gds-shell-header [data-gengage-part='chat-header-powered-by']) {
+  color: var(--ds-header-muted);
+}
+
+:where(.gds-icon-btn) {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-radius: var(--radius-control);
+}

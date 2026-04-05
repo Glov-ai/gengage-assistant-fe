@@ -71,7 +71,7 @@ export function renderReviewHighlights(
 
   // --- Sentiment filter tabs ---
   const tabBar = document.createElement('div');
-  tabBar.className = 'gengage-chat-review-tabs';
+  tabBar.className = 'gengage-chat-review-tabs gds-toolbar';
 
   const allLabel = options?.reviewFilterAll ?? 'All';
   const positiveLabel = options?.reviewFilterPositive ?? 'Positive';
@@ -133,15 +133,20 @@ export function renderReviewHighlights(
 
   for (const f of sentimentFilters) {
     const tab = document.createElement('button');
-    tab.className = 'gengage-chat-review-tab';
+    tab.className = 'gengage-chat-review-tab gds-tab';
     tab.type = 'button';
     tab.textContent = f.label;
-    if (f.filter === activeSentiment) tab.classList.add('gengage-chat-review-tab--active');
+    const isActive = f.filter === activeSentiment;
+    tab.setAttribute('aria-selected', String(isActive));
+    if (isActive) tab.classList.add('gengage-chat-review-tab--active', 'is-active');
 
     tab.addEventListener('click', () => {
       activeSentiment = f.filter;
-      for (const t of tabBar.querySelectorAll('.gengage-chat-review-tab')) {
-        t.classList.toggle('gengage-chat-review-tab--active', t === tab);
+      for (const t of tabBar.querySelectorAll<HTMLElement>('.gengage-chat-review-tab')) {
+        const active = t === tab;
+        t.classList.toggle('gengage-chat-review-tab--active', active);
+        t.classList.toggle('is-active', active);
+        t.setAttribute('aria-selected', String(active));
       }
       renderItems();
     });
@@ -153,15 +158,15 @@ export function renderReviewHighlights(
   // --- Tag pills (clickable filters) ---
   if (tagCounts.size > 0) {
     const pillsRow = document.createElement('div');
-    pillsRow.className = 'gengage-chat-review-pills';
+    pillsRow.className = 'gengage-chat-review-pills gds-toolbar';
 
     for (const [tag, data] of tagCounts) {
       const pill = document.createElement('button');
       pill.type = 'button';
-      pill.className = 'gengage-chat-review-pill';
+      pill.className = 'gengage-chat-review-pill gds-chip';
       pill.dataset['tone'] = data.sentiment;
       pill.dataset['tag'] = tag;
-      if (tag === activeTag) pill.classList.add('gengage-chat-review-pill--active');
+      if (tag === activeTag) pill.classList.add('gengage-chat-review-pill--active', 'gds-chip-active');
 
       const icon = document.createElement('span');
       icon.className = 'gengage-chat-review-pill-icon';
@@ -185,6 +190,7 @@ export function renderReviewHighlights(
         for (const p of pillsRow.querySelectorAll('.gengage-chat-review-pill')) {
           const isActive = activeTag !== null && (p as HTMLElement).dataset['tag'] === activeTag;
           p.classList.toggle('gengage-chat-review-pill--active', isActive);
+          p.classList.toggle('gds-chip-active', isActive);
         }
         renderItems();
       });

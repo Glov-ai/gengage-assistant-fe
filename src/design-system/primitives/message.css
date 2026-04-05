@@ -1,0 +1,36 @@
+:where(.gds-message) {
+  max-width: 85%;
+  padding: 14px 16px;
+  border-radius: calc(var(--radius-control) + 4px);
+  border: 1px solid transparent;
+  line-height: 1.55;
+  font-size: 14px;
+  font-weight: 400;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  animation: gengage-chat-msg-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:where(.gds-message-user) {
+  align-self: flex-end;
+  background: var(--ds-message-user-bg);
+  color: var(--ds-message-user-fg);
+  border-color: var(--ds-message-user-border);
+  border-bottom-right-radius: 6px;
+  box-shadow: var(--ds-message-user-shadow);
+}
+
+:where(.gds-message-assistant) {
+  align-self: flex-start;
+  background: var(--ds-message-assistant-bg);
+  color: var(--ds-message-assistant-fg);
+  border-color: var(--ds-message-assistant-border);
+  border-bottom-left-radius: 6px;
+  box-shadow: var(--ds-message-assistant-shadow);
+  min-width: 120px;
+}
+
+:where(.gds-message-active) {
+  outline: 2px solid var(--ds-message-active-outline);
+  outline-offset: -2px;
+}

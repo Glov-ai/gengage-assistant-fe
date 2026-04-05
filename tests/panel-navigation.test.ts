@@ -12,7 +12,8 @@ describe('PanelTopBar', () => {
       onForward: vi.fn(),
     });
     const el = topBar.getElement();
-    expect(el.className).toBe('gengage-chat-panel-topbar');
+    expect(el.classList.contains('gengage-chat-panel-topbar')).toBe(true);
+    expect(el.classList.contains('gds-toolbar')).toBe(true);
 
     const back = el.querySelector('.gengage-chat-panel-topbar-back') as HTMLButtonElement;
     expect(back).not.toBeNull();

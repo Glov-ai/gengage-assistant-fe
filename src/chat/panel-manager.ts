@@ -71,7 +71,7 @@ export class PanelManager {
     const shadow = this.deps.shadow();
     const bubble = shadow?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
-    (bubble as HTMLElement).style.cursor = 'pointer';
+    (bubble as HTMLElement).classList.add('gds-clickable');
     bubble.addEventListener('click', () => this.restoreForMessage(messageId));
   }
 

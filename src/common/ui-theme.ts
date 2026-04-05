@@ -21,6 +21,15 @@ export const DEFAULT_WIDGET_THEME_TOKENS: WidgetTheme = {
   '--gengage-qna-input-radius': '0.75rem' /* md roundedness */,
 
   '--gengage-simrel-card-radius': '0.75rem' /* md roundedness */,
+
+  '--radius-control': '12px',
+  '--radius-card': '16px',
+  '--radius-panel': '24px',
+  '--radius-pill': '999px',
+  '--surface-card-muted': '#f8fafc',
+  '--text-secondary': '#4b5563',
+  '--text-muted': '#6b7280',
+  '--border-default': 'rgba(17, 24, 39, 0.10)',
 };
 
 export function withDefaultWidgetTheme(theme?: WidgetTheme): WidgetTheme {

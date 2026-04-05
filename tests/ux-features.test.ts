@@ -137,8 +137,8 @@ describe('ChatDrawer offline bar', () => {
   });
 });
 
-describe('ChatDrawer still working message', () => {
-  it('shows "still working" text after 10s of typing with no text chunks', async () => {
+describe('ChatDrawer typing indicator', () => {
+  it('does not show the removed "still working" hint after extended typing', async () => {
     vi.useFakeTimers();
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
@@ -151,24 +151,19 @@ describe('ChatDrawer still working message', () => {
 
     drawer.showTypingIndicator();
 
-    // Before 10s — no hint
     vi.advanceTimersByTime(9000);
     expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
-    // After 10s — hint appears
-    vi.advanceTimersByTime(1500);
-    const hint = drawer.getElement().querySelector('.gengage-chat-still-working');
-    expect(hint).not.toBeNull();
-    expect(hint!.textContent).toContain('Still working');
+    vi.advanceTimersByTime(4000);
+    expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
-    // removeTypingIndicator clears it
     drawer.removeTypingIndicator();
     expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
     vi.useRealTimers();
   });
 
-  it('does not show hint if typing indicator is removed within 10s', async () => {
+  it('clears typing indicator cleanly if removed within 10s', async () => {
     vi.useFakeTimers();
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');

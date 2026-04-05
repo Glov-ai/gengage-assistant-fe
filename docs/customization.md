@@ -6,6 +6,58 @@ This repo is designed to be forked. Customers own the visual layer; Gengage owns
 
 ## Three Levels of Customization
 
+## Recommended Public Styling Surface
+
+Clients should treat the SDK styling API as:
+
+1. `theme` tokens first
+2. stable `data-gengage-part` selectors second
+3. full renderer overrides only when structure or behavior must change
+
+The SDK is gradually adopting an internal shared primitive layer (`.gds-*` classes),
+but those classes are **not** the preferred client-facing API. They may evolve as the
+SDK converges internally.
+
+### Use tokens first
+
+Prefer overriding semantic/client tokens like:
+
+```js
+theme: {
+  '--client-primary': '#e12629',
+  '--surface-card': '#ffffff',
+  '--surface-card-soft': '#f7f8fc',
+  '--text-primary': '#182033',
+  '--text-secondary': '#5a6578',
+  '--border-default': 'rgba(24, 32, 51, 0.12)',
+  '--radius-control': '14px',
+  '--radius-card': '20px',
+}
+```
+
+### Use stable part selectors when tokens are not enough
+
+The SDK is adding supported part hooks such as:
+
+```css
+[data-gengage-part='product-summary-card'] { ... }
+[data-gengage-part='comparison-view-button'] { ... }
+[data-gengage-part='qna-quick-question'] { ... }
+[data-gengage-part='simrel-product-card'] { ... }
+```
+
+These selectors are intended to remain stable even if internal DOM/class composition changes.
+
+### Avoid targeting internal implementation details
+
+Avoid building customer themes around:
+
+- `.gds-*` primitive classes
+- deep widget-local classes inside `src/chat/components/chat.css`
+- exact internal DOM nesting
+
+Those layers are implementation details and may continue to evolve as the shared design system lands.
+
 ### Level 1 — Theme tokens (CSS custom properties)
 
 No fork required. Pass a `theme` object to any widget's `init()`:

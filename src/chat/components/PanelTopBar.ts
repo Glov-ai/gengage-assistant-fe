@@ -27,10 +27,12 @@ export class PanelTopBar {
 
   constructor(options: PanelTopBarOptions) {
     this._el = document.createElement('div');
-    this._el.className = 'gengage-chat-panel-topbar';
+    this._el.className = 'gengage-chat-panel-topbar gds-toolbar';
+    this._el.dataset['gengagePart'] = 'panel-topbar';
 
     this._backBtn = document.createElement('button');
     this._backBtn.className = 'gengage-chat-panel-topbar-back';
+    this._backBtn.dataset['gengagePart'] = 'panel-topbar-back';
     this._backBtn.type = 'button';
     this._backBtn.disabled = true;
     this._backBtn.setAttribute('aria-label', options.backAriaLabel ?? 'Back');
@@ -40,9 +42,11 @@ export class PanelTopBar {
 
     this._titleEl = document.createElement('span');
     this._titleEl.className = 'gengage-chat-panel-topbar-title';
+    this._titleEl.dataset['gengagePart'] = 'panel-topbar-title';
 
     this._forwardBtn = document.createElement('button');
     this._forwardBtn.className = 'gengage-chat-panel-topbar-forward';
+    this._forwardBtn.dataset['gengagePart'] = 'panel-topbar-forward';
     this._forwardBtn.type = 'button';
     this._forwardBtn.disabled = true;
     this._forwardBtn.setAttribute('aria-label', options.forwardAriaLabel ?? 'Forward');
@@ -54,6 +58,7 @@ export class PanelTopBar {
     // Dismisses all panel layers and returns to the base conversation.
     this._closeBtn = document.createElement('button');
     this._closeBtn.className = 'gengage-chat-panel-topbar-close';
+    this._closeBtn.dataset['gengagePart'] = 'panel-topbar-close';
     this._closeBtn.type = 'button';
     this._closeBtn.setAttribute('aria-label', options.closePanelAriaLabel ?? 'Close panel');
     this._closeBtn.title = options.closePanelAriaLabel ?? 'Close panel';

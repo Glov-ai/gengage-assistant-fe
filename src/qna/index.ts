@@ -67,6 +67,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-qna-container';
+    this._contentEl.dataset['gengagePart'] = 'qna-container';
     this.root.appendChild(this._contentEl);
 
     const sku = config.pageContext?.sku;
@@ -199,7 +200,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       this._contentEl.innerHTML = '';
 
       const panel = document.createElement('div');
-      panel.className = 'gengage-qna-panel';
+      panel.className = 'gengage-qna-panel gds-panel';
+      panel.dataset['gengagePart'] = 'qna-panel';
       this._contentEl.appendChild(panel);
 
       const hasQuestionHeading = this._specIncludesType(result.uiSpecs, 'QuestionHeading');

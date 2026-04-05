@@ -1,0 +1,66 @@
+:where(.gds-btn) {
+  border: 0;
+  outline: none;
+  border-radius: var(--radius-control);
+  min-height: 46px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition:
+    box-shadow 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+:where(.gds-btn:hover) {
+  transform: none;
+}
+
+:where(.gds-btn:focus-visible) {
+  outline: 2px solid var(--client-focus-ring);
+  outline-offset: 2px;
+}
+
+:where(.gds-btn:disabled) {
+  cursor: not-allowed;
+  opacity: 0.56;
+  box-shadow: none;
+}
+
+:where(.gds-btn-primary) {
+  background: var(--ds-button-primary-bg);
+  color: var(--ds-button-primary-fg);
+  border: 1px solid var(--ds-button-primary-border);
+}
+
+:where(.gds-btn-primary:hover) {
+  background: var(--ds-button-primary-bg-hover);
+}
+
+:where(.gds-btn-secondary) {
+  background: var(--ds-button-secondary-bg);
+  color: var(--ds-button-secondary-fg);
+  border: 1px solid var(--ds-button-secondary-border);
+}
+
+:where(.gds-btn-secondary:hover) {
+  background: var(--ds-button-secondary-bg-hover);
+}
+
+:where(.gds-btn-ghost) {
+  background: var(--ds-button-ghost-bg);
+  color: var(--ds-button-ghost-fg);
+  border: 1px solid var(--ds-button-ghost-border);
+}
+
+:where(.gds-btn-ghost:hover) {
+  background: var(--ds-button-ghost-bg-hover);
+  border-color: var(--ds-button-ghost-border-hover);
+  color: var(--ds-button-ghost-fg-hover);
+}

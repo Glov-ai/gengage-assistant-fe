@@ -1,5 +1,6 @@
 import type { GengageEventDetailMap } from './types.js';
 import { listen } from './events.js';
+import { BASE_WIDGET_THEME } from './theme-utils.js';
 
 const ROOT_ID = 'gengage-global-toast-root';
 const STYLE_ID = 'gengage-global-toast-style';
@@ -7,6 +8,21 @@ const ROOT_VISIBLE_CLASS = 'gengage-global-toast-root--visible';
 const DEFAULT_DURATION_MS = 4200;
 const MIN_DURATION_MS = 1500;
 const MAX_DURATION_MS = 15000;
+const THEME_SYNC_VARS = [
+  '--gengage-font-family',
+  '--surface-card',
+  '--text-primary',
+  '--text-muted',
+  '--border-default',
+  '--radius-card',
+  '--shadow-3',
+  '--error',
+  '--ds-toast-error-bg',
+  '--ds-toast-error-border',
+  '--ds-toast-error-accent',
+  '--ds-toast-error-fg',
+  '--ds-toast-error-shadow',
+] as const;
 
 let listenerRegistered = false;
 let dismissTimer: ReturnType<typeof setTimeout> | null = null;
@@ -36,6 +52,7 @@ export function showGlobalErrorToast(detail: GengageEventDetailMap['gengage:glob
 
   ensureStyles();
   const root = ensureRoot();
+  syncRootThemeVars(root);
   root.innerHTML = '';
 
   const toast = document.createElement('section');
@@ -104,6 +121,23 @@ function ensureRoot(): HTMLElement {
   return root;
 }
 
+function syncRootThemeVars(root: HTMLElement): void {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  const source = document.querySelector<HTMLElement>(
+    '.gengage-chat-root, .gengage-qna-container, .gengage-simrel-container, .gengage-simbut-root',
+  );
+  if (!source) return;
+  const computed = window.getComputedStyle(source);
+  for (const name of THEME_SYNC_VARS) {
+    const value = computed.getPropertyValue(name).trim();
+    if (value) {
+      root.style.setProperty(name, value);
+    } else {
+      root.style.removeProperty(name);
+    }
+  }
+}
+
 function clampDuration(durationMs?: number): number {
   if (typeof durationMs !== 'number' || !Number.isFinite(durationMs)) {
     return DEFAULT_DURATION_MS;
@@ -116,6 +150,13 @@ function ensureStyles(): void {
 
   const style = document.createElement('style');
   style.id = STYLE_ID;
+  const surfaceCard = BASE_WIDGET_THEME['--surface-card'] ?? BASE_WIDGET_THEME.backgroundColor ?? '#ffffff';
+  const textPrimary = BASE_WIDGET_THEME['--text-primary'] ?? BASE_WIDGET_THEME.foregroundColor ?? '#111827';
+  const borderDefault = BASE_WIDGET_THEME['--border-default'] ?? 'rgba(17, 24, 39, 0.10)';
+  const error = BASE_WIDGET_THEME['--error'] ?? '#dc2626';
+  const shadow3 = BASE_WIDGET_THEME['--shadow-3'] ?? '0 10px 24px rgba(16, 24, 40, 0.12)';
+  const radiusCard = BASE_WIDGET_THEME['--radius-card'] ?? '16px';
+  const textMuted = BASE_WIDGET_THEME['--text-muted'] ?? '#6b7280';
   style.textContent = `
 #${ROOT_ID} {
   position: fixed;
@@ -130,14 +171,14 @@ function ensureStyles(): void {
 #${ROOT_ID} .gengage-global-toast {
   min-width: 260px;
   max-width: min(92vw, 420px);
-  border-radius: 12px;
-  border: 1px solid #f5c2c7;
-  border-left: 4px solid #d93025;
-  background: #fff9f9;
-  color: #4a1f21;
-  box-shadow: 0 10px 30px rgba(38, 18, 18, 0.18);
+  border-radius: var(--radius-card, ${radiusCard});
+  border: 1px solid var(--ds-toast-error-border, color-mix(in srgb, var(--error, ${error}) 18%, var(--border-default, ${borderDefault})));
+  border-left: 4px solid var(--ds-toast-error-accent, var(--error, ${error}));
+  background: var(--ds-toast-error-bg, color-mix(in srgb, var(--error, ${error}) 5%, var(--surface-card, ${surfaceCard})));
+  color: var(--ds-toast-error-fg, color-mix(in srgb, var(--error, ${error}) 22%, var(--text-primary, ${textPrimary})));
+  box-shadow: var(--ds-toast-error-shadow, var(--shadow-3, ${shadow3}));
   padding: 10px 12px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--gengage-font-family, ${JSON.stringify(BASE_WIDGET_THEME.fontFamily ?? '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif')});
   font-size: 13px;
   line-height: 1.4;
   animation: gengage-global-toast-in 180ms ease-out forwards;
@@ -146,6 +187,7 @@ function ensureStyles(): void {
   margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
+  color: var(--text-muted, ${textMuted});
 }
 #${ROOT_ID} .gengage-global-toast-message {
   margin: 0;

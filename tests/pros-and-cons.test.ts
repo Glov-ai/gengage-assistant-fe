@@ -6,7 +6,8 @@ describe('renderProsAndCons', () => {
     const el = renderProsAndCons({
       props: { productName: 'Bosch Matkap', pros: ['Güçlü'], cons: ['Ağır'] },
     });
-    expect(el.className).toBe('gengage-chat-pros-cons');
+    expect(el.classList.contains('gengage-chat-pros-cons')).toBe(true);
+    expect(el.classList.contains('gds-card-soft')).toBe(true);
     const heading = el.querySelector('.gengage-chat-pros-cons-heading');
     expect(heading).not.toBeNull();
     expect(heading!.textContent).toBe('Bosch Matkap');
@@ -66,7 +67,8 @@ describe('renderProsAndCons', () => {
 
   it('renders with no props', () => {
     const el = renderProsAndCons({});
-    expect(el.className).toBe('gengage-chat-pros-cons');
+    expect(el.classList.contains('gengage-chat-pros-cons')).toBe(true);
+    expect(el.classList.contains('gds-card-soft')).toBe(true);
     expect(el.children).toHaveLength(0);
   });
 

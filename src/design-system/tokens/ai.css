@@ -1,0 +1,15 @@
+:where(
+  :root,
+  .gengage-chat-root,
+  .gengage-qna-container,
+  .gengage-simrel-container,
+  .gengage-simbut-root
+) {
+  --ai-accent-start: #0b24d6;
+  --ai-accent-end: #f768f2;
+  --ai-accent-soft: linear-gradient(
+    135deg,
+    rgba(11, 36, 214, 0.08),
+    rgba(247, 104, 242, 0.08)
+  );
+}

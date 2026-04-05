@@ -2070,9 +2070,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
 
             // Thinking step messages — accumulate as checklist in typing indicator
-            if (event.meta.loading && typeof event.meta.loadingText === 'string') {
-              this._drawer?.addThinkingStep(event.meta.loadingText);
-              this._bridge?.send('loadingMessage', { text: event.meta.loadingText });
+            if (event.meta.loading) {
+              const thinkingMessages = Array.isArray(event.meta.thinkingMessages)
+                ? event.meta.thinkingMessages.filter((item): item is string => typeof item === 'string')
+                : [];
+              if (thinkingMessages.length > 0) {
+                this._drawer?.setThinkingSteps(thinkingMessages);
+              }
+              if (typeof event.meta.loadingText === 'string') {
+                this._drawer?.addThinkingStep(event.meta.loadingText);
+                this._bridge?.send('loadingMessage', { text: event.meta.loadingText });
+              }
             }
 
             // Forward visitor engagement data to host page
@@ -2857,7 +2865,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         wrapper.appendChild(checkbox);
         wrapper.appendChild(card);
         // Allow clicking anywhere on the card (not just the tiny checkbox) to toggle selection
-        wrapper.style.cursor = 'pointer';
+        wrapper.classList.add('gds-clickable');
         wrapper.addEventListener('click', (e) => {
           // Use .closest() rather than strict target equality — on mobile touch the
           // event target can be the checkbox's inner pseudo-element or the label

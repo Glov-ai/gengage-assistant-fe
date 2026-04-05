@@ -1,0 +1,20 @@
+:where(.gds-input-shell) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--ds-input-radius);
+  border: 1px solid var(--ds-input-border);
+  background: var(--ds-input-bg);
+  box-shadow: var(--ds-input-highlight);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+:where(.gds-input-shell:focus-within) {
+  border-color: var(--ds-input-focus-border);
+  box-shadow: var(--ds-input-focus-ring);
+}

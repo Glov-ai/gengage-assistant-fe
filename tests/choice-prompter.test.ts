@@ -27,7 +27,8 @@ describe('createChoicePrompter', () => {
       onCtaClick: vi.fn(),
     });
 
-    expect(el.className).toBe('gengage-chat-choice-prompter');
+    expect(el.classList.contains('gengage-chat-choice-prompter')).toBe(true);
+    expect(el.classList.contains('gds-card')).toBe(true);
     expect(el.querySelector('.gengage-chat-choice-prompter-heading')?.textContent).toBe('Kararsız mı kaldın?');
     expect(el.querySelector('.gengage-chat-choice-prompter-suggestion')?.textContent).toBe(
       'Ürünleri seçip karşılaştırabilirsin',

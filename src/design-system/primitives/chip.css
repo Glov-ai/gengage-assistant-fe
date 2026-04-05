@@ -1,0 +1,33 @@
+:where(.gds-chip) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ds-chip-border);
+  background: var(--ds-chip-bg);
+  color: var(--ds-chip-fg);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+:where(.gds-chip:hover) {
+  background: var(--ds-chip-bg-hover);
+  border-color: color-mix(in srgb, var(--client-primary) 16%, var(--ds-chip-border));
+}
+
+:where(.gds-chip:focus-visible) {
+  outline: 2px solid var(--client-focus-ring);
+  outline-offset: 2px;
+}
+
+:where(.gds-chip-active) {
+  border-color: var(--ds-chip-border-active);
+  background: var(--ds-chip-bg-active);
+  color: var(--ds-chip-fg-active);
+}

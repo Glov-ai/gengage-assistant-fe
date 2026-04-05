@@ -21,7 +21,8 @@ export interface ChoicePrompterOptions {
 
 export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'gengage-chat-choice-prompter';
+  card.className = 'gengage-chat-choice-prompter gds-card';
+  card.dataset['gengagePart'] = 'choice-prompter';
 
   const headingEl = document.createElement('div');
   headingEl.className = 'gengage-chat-choice-prompter-heading';
@@ -35,7 +36,8 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
 
   const cta = document.createElement('button');
   cta.type = 'button';
-  cta.className = 'gengage-chat-choice-prompter-cta';
+  cta.className = 'gengage-chat-choice-prompter-cta gds-btn gds-btn-primary';
+  cta.dataset['gengagePart'] = 'choice-prompter-cta';
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
@@ -47,6 +49,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   const dismiss = document.createElement('button');
   dismiss.type = 'button';
   dismiss.className = 'gengage-chat-choice-prompter-dismiss';
+  dismiss.dataset['gengagePart'] = 'choice-prompter-dismiss';
   dismiss.textContent = '\u00D7'; // × close
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {

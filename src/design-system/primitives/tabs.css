@@ -1,0 +1,31 @@
+:where(.gds-tab) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ds-tab-border);
+  background: var(--ds-tab-bg);
+  color: var(--ds-tab-fg);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+:where(.gds-tab:hover) {
+  background: var(--ds-tab-bg-hover);
+}
+
+:where(.gds-tab:focus-visible) {
+  outline: 2px solid var(--client-focus-ring);
+  outline-offset: 2px;
+}
+
+:where(.gds-tab[aria-selected='true'], .gds-tab.is-active) {
+  color: var(--ds-tab-fg-active);
+  border-color: var(--ds-tab-border-active);
+  background: var(--ds-tab-bg-active);
+}

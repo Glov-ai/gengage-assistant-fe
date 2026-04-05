@@ -161,6 +161,9 @@ export interface ChatI18n {
   errorMessage: string;
   retryButton: string;
   loadingMessage: string;
+  loadingSequenceGeneric: string[];
+  loadingSequencePanel: string[];
+  loadingSequenceComparison: string[];
   productCtaLabel: string;
   /** CTA label in the product details panel when navigating to the product URL (distinct from the card "İncele" CTA). */
   viewOnSiteLabel: string;
@@ -229,7 +232,6 @@ export interface ChatI18n {
   productNotFoundMessage: string;
   stopGenerating: string;
   offlineMessage: string;
-  stillWorkingMessage: string;
   cartAriaLabel: string;
   favoritesAriaLabel: string;
   showPanelAriaLabel: string;

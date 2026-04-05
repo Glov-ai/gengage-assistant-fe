@@ -1,0 +1,43 @@
+:where(.gds-menu) {
+  padding: 4px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-default);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-3);
+}
+
+:where(.gds-menu-option) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 4px);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+:where(.gds-menu-option:hover) {
+  background: var(--surface-card-muted);
+}
+
+:where(.gds-menu-option:focus-visible) {
+  outline: 2px solid var(--client-focus-ring);
+  outline-offset: 2px;
+}
+
+:where(.gds-menu-option-active) {
+  background: var(--client-primary-subtle);
+  color: var(--client-primary);
+  font-weight: 600;
+}

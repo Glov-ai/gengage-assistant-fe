@@ -31,12 +31,14 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
 
   const container = document.createElement('div');
   container.className = 'gengage-chat-categories';
+  container.dataset['gengagePart'] = 'categories-container';
 
   if (groups.length === 0) return container;
 
   // Tab bar — WAI-ARIA tablist pattern
   const tabBar = document.createElement('div');
-  tabBar.className = 'gengage-chat-categories-tabs';
+  tabBar.className = 'gengage-chat-categories-tabs gds-toolbar';
+  tabBar.dataset['gengagePart'] = 'categories-tab-bar';
   tabBar.setAttribute('role', 'tablist');
 
   const tabs: HTMLButtonElement[] = [];
@@ -46,6 +48,7 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
     for (let j = 0; j < tabs.length; j++) {
       const isActive = j === index;
       tabs[j]!.classList.toggle('gengage-chat-categories-tab--active', isActive);
+      tabs[j]!.classList.toggle('is-active', isActive);
       tabs[j]!.setAttribute('aria-selected', String(isActive));
       tabs[j]!.tabIndex = isActive ? 0 : -1;
       panels[j]!.style.display = isActive ? '' : 'none';
@@ -59,14 +62,15 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
 
     // Tab button
     const tab = document.createElement('button');
-    tab.className = 'gengage-chat-categories-tab';
+    tab.className = 'gengage-chat-categories-tab gds-tab';
     tab.type = 'button';
+    tab.dataset['gengagePart'] = 'categories-tab';
     tab.id = tabId;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', panelId);
     tab.setAttribute('aria-selected', String(i === 0));
     tab.tabIndex = i === 0 ? 0 : -1;
-    if (i === 0) tab.classList.add('gengage-chat-categories-tab--active');
+    if (i === 0) tab.classList.add('gengage-chat-categories-tab--active', 'is-active');
     tab.textContent = group.groupName;
 
     tab.addEventListener('click', () => activateTab(i));
@@ -94,6 +98,7 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
     // Product grid panel
     const panel = document.createElement('div');
     panel.className = 'gengage-chat-categories-grid';
+    panel.dataset['gengagePart'] = 'categories-panel';
     panel.id = panelId;
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', tabId);
@@ -113,12 +118,14 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
   // Filter tags
   if (filterTags.length > 0) {
     const tagsContainer = document.createElement('div');
-    tagsContainer.className = 'gengage-chat-categories-filter-tags';
+    tagsContainer.className = 'gengage-chat-categories-filter-tags gds-toolbar';
+    tagsContainer.dataset['gengagePart'] = 'categories-filter-tags';
 
     for (const tag of filterTags) {
       const tagBtn = document.createElement('button');
-      tagBtn.className = 'gengage-chat-categories-filter-tag';
+      tagBtn.className = 'gengage-chat-categories-filter-tag gds-chip';
       tagBtn.type = 'button';
+      tagBtn.dataset['gengagePart'] = 'categories-filter-tag';
       tagBtn.textContent = tag.title;
       if (tag.action) {
         tagBtn.addEventListener('click', () => {
@@ -136,7 +143,8 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
 
 function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRenderContext): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'gengage-chat-product-card';
+  card.className = 'gengage-chat-product-card gds-card gds-product-card gds-card-interactive';
+  card.dataset['gengagePart'] = 'categories-product-card';
 
   if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
     const img = document.createElement('img');
@@ -167,7 +175,7 @@ function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRe
 
   // Click → show product details
   if (ctx.onProductSelect || ctx.onAction) {
-    card.style.cursor = 'pointer';
+    card.classList.add('gds-clickable');
     card.addEventListener('click', () => {
       if (product.sku) {
         ctx.onAction({

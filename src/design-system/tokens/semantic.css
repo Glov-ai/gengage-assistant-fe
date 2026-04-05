@@ -1,0 +1,40 @@
+:where(
+  :root,
+  .gengage-chat-root,
+  .gengage-qna-container,
+  .gengage-simrel-container,
+  .gengage-simbut-root
+) {
+  --surface-page: var(--gengage-page-bg, var(--ds-neutral-50));
+  --surface-shell: var(--gengage-shell-bg, #10131a);
+  --surface-card: var(--gengage-background-color, var(--ds-neutral-0));
+  --surface-card-muted: var(--gengage-surface-soft, #f8fafc);
+  --surface-card-soft: var(--surface-card-muted);
+  --surface-elevated: var(--gengage-surface-elevated, var(--ds-neutral-0));
+  --surface-input: var(--gengage-input-bg, var(--ds-neutral-0));
+  --surface-overlay: var(--gengage-overlay-bg, rgba(16, 19, 26, 0.52));
+
+  --text-primary: var(--gengage-foreground-color, var(--ds-neutral-900));
+  --text-secondary: var(--gengage-text-secondary, #4b5563);
+  --text-muted: var(--gengage-text-muted, #6b7280);
+  --text-inverse: var(--gengage-text-inverse, #f9fafb);
+
+  --border-subtle: var(--gengage-border-subtle, rgba(17, 24, 39, 0.06));
+  --border-default: var(--gengage-border-color, rgba(17, 24, 39, 0.10));
+  --border-strong: var(--gengage-border-strong, rgba(17, 24, 39, 0.18));
+
+  --shadow-1: var(--gengage-shadow-1, var(--ds-shadow-1));
+  --shadow-2: var(--gengage-shadow-2, var(--ds-shadow-2));
+  --shadow-3: var(--gengage-shadow-3, var(--ds-shadow-3));
+
+  --radius-control: var(--gengage-control-radius, var(--ds-radius-3));
+  --radius-card: var(--gengage-card-radius, var(--ds-radius-4));
+  --radius-panel: var(--gengage-panel-radius, var(--ds-radius-6));
+  --radius-pill: var(--gengage-pill-radius, var(--ds-radius-pill));
+
+  --success: var(--gengage-success-color, #16a34a);
+  --warning: var(--gengage-warning-color, #d97706);
+  --error: var(--gengage-error-color, #dc2626);
+  --info: var(--gengage-info-color, #2563eb);
+  --rating: var(--gengage-rating-color, #f5b301);
+}

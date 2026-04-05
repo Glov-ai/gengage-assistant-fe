@@ -5,6 +5,8 @@
  *
  * Yerleşim: Pill `position: absolute`; kök `pointer-events: none`, yalnızca düğme tıklanır.
  */
+@import '../design-system/index.css';
+
 .gengage-simbut-root {
   box-sizing: border-box;
   margin: 0;
@@ -23,22 +25,20 @@
   justify-content: center;
   min-height: 32px;
   padding: 6px 12px;
-  border: none;
-  border-radius: var(--gengage-qna-pill-radius, 999px);
-  background: var(--gengage-primary-color, #b7102a);
-  color: var(--gengage-primary-foreground, #fff);
+  border: 1px solid var(--ds-button-primary-border);
+  border-radius: var(--radius-pill, var(--gengage-qna-pill-radius, 999px));
+  background: var(--ds-button-primary-bg);
+  color: var(--ds-button-primary-fg);
   font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25;
   letter-spacing: 0.01em;
   white-space: nowrap;
   cursor: pointer;
   opacity: 1;
   pointer-events: auto;
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--gengage-foreground-color, #191c1d) 12%, transparent),
-    0 1px 4px color-mix(in srgb, var(--gengage-primary-color, #b7102a) 28%, transparent);
+  box-shadow: var(--shadow-1);
   transition:
     filter 0.14s ease,
     transform 0.12s ease,
@@ -47,11 +47,9 @@
 }
 
 .gengage-simbut-root .gengage-chat-find-similar-pill:not(:disabled):hover {
-  filter: brightness(1.06);
+  background: var(--ds-button-primary-bg-hover);
   transform: translateY(-1px);
-  box-shadow:
-    0 2px 4px color-mix(in srgb, var(--gengage-foreground-color, #191c1d) 14%, transparent),
-    0 2px 8px color-mix(in srgb, var(--gengage-primary-color, #b7102a) 32%, transparent);
+  box-shadow: var(--shadow-2);
 }
 
 .gengage-simbut-root .gengage-chat-find-similar-pill:not(:disabled):active {
@@ -60,7 +58,7 @@
 }
 
 .gengage-simbut-root .gengage-chat-find-similar-pill:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #b7102a);
+  outline: 2px solid var(--client-primary);
   outline-offset: 2px;
 }
 

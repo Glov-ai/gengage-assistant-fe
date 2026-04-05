@@ -41,7 +41,8 @@ describe('ProductSummaryCard', () => {
   it('returns empty card when props is undefined', () => {
     const el: UIElement = { type: 'ProductSummaryCard' };
     const card = renderProductSummaryCard(el, makeContext());
-    expect(card.className).toBe('gengage-chat-product-summary');
+    expect(card.classList.contains('gengage-chat-product-summary')).toBe(true);
+    expect(card.classList.contains('gds-card')).toBe(true);
     expect(card.children.length).toBe(0);
   });
 

@@ -200,7 +200,7 @@ function renderActionButton(element: UIElement, ctx: UISpecRenderContext): HTMLE
 
 function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'gengage-chat-product-card';
+  card.className = 'gengage-chat-product-card gds-card gds-product-card gds-card-interactive';
 
   // Product data may be nested under `product` prop (adapter) or flat in props
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
@@ -213,7 +213,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
   // Make card clickable to show detail in panel (disabled in comparison select mode)
   if (ctx.onProductSelect || action) {
-    card.style.cursor = 'pointer';
+    card.classList.add('gds-clickable');
     card.addEventListener('click', (e) => {
       // Check live DOM: if card is inside a comparison wrapper, mode is active
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) return;
@@ -390,7 +390,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 
   if (hasNumericRating) {
     const ratingCompact = document.createElement('div');
-    ratingCompact.className = 'gengage-chat-product-card-rating-compact';
+    ratingCompact.className = 'gengage-chat-product-card-rating gengage-chat-product-card-rating-compact';
     const rc = clampRating(rating);
     const labelParts = [`${rc.toFixed(1)}`, 'out of 5 stars'];
     if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
@@ -726,13 +726,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const prevBtn = document.createElement('button');
     prevBtn.type = 'button';
-    prevBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--prev';
+    prevBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--prev gds-btn gds-btn-ghost gds-icon-btn';
     prevBtn.setAttribute('aria-label', prevLabel);
     prevBtn.innerHTML = navSvg('prev');
 
     const nextBtn = document.createElement('button');
     nextBtn.type = 'button';
-    nextBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--next';
+    nextBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--next gds-btn gds-btn-ghost gds-icon-btn';
     nextBtn.setAttribute('aria-label', nextLabel);
     nextBtn.innerHTML = navSvg('next');
 
@@ -957,7 +957,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       if (!variantName && !variantSku) continue;
 
       const btn = document.createElement('button');
-      btn.className = 'gengage-chat-product-variant-btn';
+      btn.className = 'gengage-chat-product-variant-btn gds-chip';
       btn.type = 'button';
 
       const labelText = variantName ?? variantSku ?? '';
@@ -1006,7 +1006,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const action = element.props?.['action'] as ActionPayload | undefined;
   if (action) {
     const actionBtn = document.createElement('button');
-    actionBtn.className = 'gengage-chat-product-details-cta';
+    actionBtn.className = 'gengage-chat-product-details-cta gds-btn gds-btn-primary';
     actionBtn.type = 'button';
     actionBtn.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
     actionBtn.addEventListener('click', () => ctx.onAction(action));
@@ -1015,7 +1015,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     const url = product['url'] as string | undefined;
     if (url && isSafeUrl(url)) {
       const cta = document.createElement('a');
-      cta.className = 'gengage-chat-product-details-cta';
+      cta.className = 'gengage-chat-product-details-cta gds-btn gds-btn-primary';
       safeSetAttribute(cta, 'href', url);
       safeSetAttribute(cta, 'target', '_blank');
       safeSetAttribute(cta, 'rel', 'noopener noreferrer');
@@ -1053,7 +1053,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const shareUrl = product['url'] as string | undefined;
   if (shareUrl && isSafeUrl(shareUrl)) {
     const shareBtn = document.createElement('button');
-    shareBtn.className = 'gengage-chat-product-details-share';
+    shareBtn.className = 'gengage-chat-product-details-share gds-btn gds-btn-ghost gds-icon-btn';
     shareBtn.type = 'button';
     const shareLabel = ctx.i18n?.shareButton ?? 'Share';
     shareBtn.title = shareLabel;
@@ -1134,15 +1134,16 @@ function renderProductDetailTabs(
   container.className = 'gengage-chat-product-detail-tabs';
 
   const tabBar = document.createElement('div');
-  tabBar.className = 'gengage-chat-product-detail-tab-bar';
+  tabBar.className = 'gengage-chat-product-detail-tab-bar gds-toolbar';
 
   const tabPanels: HTMLElement[] = [];
 
   // Product Info tab
   if (description) {
     const tab = document.createElement('button');
-    tab.className = 'gengage-chat-product-detail-tab gengage-chat-product-detail-tab--active';
+    tab.className = 'gengage-chat-product-detail-tab gds-tab gengage-chat-product-detail-tab--active is-active';
     tab.type = 'button';
+    tab.setAttribute('aria-selected', 'true');
     tab.textContent = ctx.i18n?.productInfoTab ?? 'Product Info';
     tabBar.appendChild(tab);
 
@@ -1155,8 +1156,9 @@ function renderProductDetailTabs(
   // Specifications tab
   if (specifications) {
     const tab = document.createElement('button');
-    tab.className = `gengage-chat-product-detail-tab${!description ? ' gengage-chat-product-detail-tab--active' : ''}`;
+    tab.className = `gengage-chat-product-detail-tab gds-tab${!description ? ' gengage-chat-product-detail-tab--active is-active' : ''}`;
     tab.type = 'button';
+    tab.setAttribute('aria-selected', description ? 'false' : 'true');
     tab.textContent = ctx.i18n?.specificationsTab ?? 'Specifications';
     tabBar.appendChild(tab);
 
@@ -1191,8 +1193,12 @@ function renderProductDetailTabs(
   const tabs = tabBar.querySelectorAll('.gengage-chat-product-detail-tab');
   tabs.forEach((tabEl, idx) => {
     tabEl.addEventListener('click', () => {
-      tabs.forEach((t) => t.classList.remove('gengage-chat-product-detail-tab--active'));
-      tabEl.classList.add('gengage-chat-product-detail-tab--active');
+      tabs.forEach((t) => {
+        t.classList.remove('gengage-chat-product-detail-tab--active', 'is-active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tabEl.classList.add('gengage-chat-product-detail-tab--active', 'is-active');
+      tabEl.setAttribute('aria-selected', 'true');
       tabPanels.forEach((p, pIdx) => {
         p.style.display = pIdx === idx ? '' : 'none';
       });
@@ -1320,7 +1326,7 @@ function renderProductGrid(
 
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'gengage-chat-product-sort-trigger';
+    trigger.className = 'gengage-chat-product-sort-trigger gds-btn gds-btn-ghost';
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
     const sortAria = ctx.i18n?.sortToolbarAriaLabel ?? 'Sort products';
@@ -1349,7 +1355,7 @@ function renderProductGrid(
     trigger.appendChild(chevWrap);
 
     const menu = document.createElement('div');
-    menu.className = 'gengage-chat-product-sort-menu';
+    menu.className = 'gengage-chat-product-sort-menu gds-menu';
     menu.hidden = true;
     menu.setAttribute('role', 'listbox');
     menu.setAttribute('aria-label', sortAria);
@@ -1401,11 +1407,11 @@ function renderProductGrid(
     for (const opt of sortOptions) {
       const optionBtn = document.createElement('button');
       optionBtn.type = 'button';
-      optionBtn.className = 'gengage-chat-product-sort-option';
+      optionBtn.className = 'gengage-chat-product-sort-option gds-menu-option';
       optionBtn.setAttribute('role', 'option');
       const isActive = productSortStatesEqual(currentSort, opt.sortState);
       optionBtn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      if (isActive) optionBtn.classList.add('gengage-chat-product-sort-option--active');
+      if (isActive) optionBtn.classList.add('gengage-chat-product-sort-option--active', 'gds-menu-option-active');
       const sortKey =
         opt.sortState.type === 'related' ? 'related' : `price-${opt.sortState.direction ?? ''}`;
       optionBtn.dataset['sortKey'] = sortKey;
@@ -1436,6 +1442,7 @@ function renderProductGrid(
           const btn = el as HTMLButtonElement;
           const active = btn.dataset['sortKey'] === sortKey;
           btn.classList.toggle('gengage-chat-product-sort-option--active', active);
+          btn.classList.toggle('gds-menu-option-active', active);
           btn.setAttribute('aria-selected', active ? 'true' : 'false');
           const check = btn.querySelector('.gengage-chat-product-sort-option-check');
           check?.classList.toggle('gengage-chat-product-sort-option-check--hidden', !active);
@@ -1453,7 +1460,7 @@ function renderProductGrid(
 
     if (ctx.onToggleComparisonSku) {
       const compareBtn = document.createElement('button');
-      compareBtn.className = 'gengage-chat-comparison-toggle-btn';
+      compareBtn.className = 'gengage-chat-comparison-toggle-btn gds-btn gds-btn-ghost';
       compareBtn.type = 'button';
       if (ctx.comparisonSelectMode) {
         compareBtn.classList.add('gengage-chat-comparison-toggle-btn--active');
