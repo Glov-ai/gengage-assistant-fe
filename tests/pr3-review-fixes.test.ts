@@ -102,7 +102,7 @@ describe('Comparison card wrapper click', () => {
     expect(onToggle).toHaveBeenCalledWith('SKU-1');
   });
 
-  it('does not manually flip checkbox.checked (leaves it to external sync)', () => {
+  it('does not manually flip comparison button pressed state (leaves it to external sync)', () => {
     const onToggle = vi.fn();
     const spec = makeGridSpec([{ sku: 'SKU-1', name: 'Product', price: '100' }]);
     const ctx = makeContext({
@@ -111,15 +111,15 @@ describe('Comparison card wrapper click', () => {
       onToggleComparisonSku: onToggle,
     });
     const dom = renderUISpec(spec, ctx);
-    const checkbox = dom.querySelector('.gengage-chat-comparison-checkbox') as HTMLInputElement;
-    expect(checkbox.checked).toBe(false);
+    const checkbox = dom.querySelector('.gengage-chat-comparison-checkbox') as HTMLButtonElement;
+    expect(checkbox.getAttribute('aria-pressed')).toBe('false');
 
     // Click the wrapper — checkbox should NOT be flipped manually
     const wrapper = dom.querySelector('.gengage-chat-comparison-select-wrapper') as HTMLElement;
     wrapper.click();
 
-    // Checkbox remains unchecked because external sync (refreshComparisonUI) handles it
-    expect(checkbox.checked).toBe(false);
+    // Pressed state remains unchanged because external sync (refreshComparisonUI) handles it
+    expect(checkbox.getAttribute('aria-pressed')).toBe('false');
   });
 });
 

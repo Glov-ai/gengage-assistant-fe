@@ -115,16 +115,16 @@ describe('Comparison Selection Mode', () => {
   });
 
   describe('ProductCard checkbox overlay', () => {
-    it('wraps product card with checkbox when comparisonSelectMode is true', () => {
+    it('wraps product card with compare selector button when comparisonSelectMode is true', () => {
       const spec = makeSpec([{ sku: 'A', name: 'A', price: '100' }]);
       const ctx = makeContext({ comparisonSelectMode: true, comparisonSelectedSkus: [] });
       const dom = renderUISpec(spec, ctx);
       const wrappers = dom.querySelectorAll('.gengage-chat-comparison-select-wrapper');
       expect(wrappers).toHaveLength(1);
-      const checkbox = wrappers[0]!.querySelector('.gengage-chat-comparison-checkbox') as HTMLInputElement;
+      const checkbox = wrappers[0]!.querySelector('.gengage-chat-comparison-checkbox') as HTMLButtonElement;
       expect(checkbox).not.toBeNull();
-      expect(checkbox.type).toBe('checkbox');
-      expect(checkbox.checked).toBe(false);
+      expect(checkbox.type).toBe('button');
+      expect(checkbox.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('does not wrap product card with checkbox when comparisonSelectMode is false', () => {
@@ -135,7 +135,7 @@ describe('Comparison Selection Mode', () => {
       expect(wrappers).toHaveLength(0);
     });
 
-    it('checks checkbox when sku is in comparisonSelectedSkus', () => {
+    it('marks selector as pressed when sku is in comparisonSelectedSkus', () => {
       const spec = makeSpec([
         { sku: 'A', name: 'A', price: '100' },
         { sku: 'B', name: 'B', price: '200' },
@@ -145,13 +145,13 @@ describe('Comparison Selection Mode', () => {
         comparisonSelectedSkus: ['A'],
       });
       const dom = renderUISpec(spec, ctx);
-      const checkboxes = dom.querySelectorAll('.gengage-chat-comparison-checkbox') as NodeListOf<HTMLInputElement>;
+      const checkboxes = dom.querySelectorAll('.gengage-chat-comparison-checkbox') as NodeListOf<HTMLButtonElement>;
       expect(checkboxes).toHaveLength(2);
-      expect(checkboxes[0]!.checked).toBe(true); // sku A is selected
-      expect(checkboxes[1]!.checked).toBe(false); // sku B is not selected
+      expect(checkboxes[0]!.getAttribute('aria-pressed')).toBe('true');
+      expect(checkboxes[1]!.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('calls onToggleComparisonSku with sku when checkbox changes', () => {
+    it('calls onToggleComparisonSku with sku when selector is clicked', () => {
       const onToggle = vi.fn();
       const spec = makeSpec([{ sku: 'SKU-1', name: 'Product 1', price: '100' }]);
       const ctx = makeContext({
@@ -160,18 +160,22 @@ describe('Comparison Selection Mode', () => {
         onToggleComparisonSku: onToggle,
       });
       const dom = renderUISpec(spec, ctx);
-      const checkbox = dom.querySelector('.gengage-chat-comparison-checkbox') as HTMLInputElement;
-      checkbox.dispatchEvent(new Event('change'));
+      const checkbox = dom.querySelector('.gengage-chat-comparison-checkbox') as HTMLButtonElement;
+      checkbox.click();
       expect(onToggle).toHaveBeenCalledWith('SKU-1');
     });
   });
 
   describe('FloatingComparisonButton', () => {
-    it('renders button with count when 2+ skus selected', () => {
+    it('renders dock with count and action label when 2+ skus selected', () => {
       const ctx = makeContext();
       const btn = renderFloatingComparisonButton(['A', 'B'], ctx);
       expect(btn.className).toBe('gengage-chat-comparison-floating-btn');
-      expect(btn.textContent).toBe('Compare (2)');
+      expect(btn.querySelector('.gengage-chat-comparison-floating-count')?.textContent).toBe('2');
+      expect(btn.querySelector('.gengage-chat-comparison-floating-title')?.textContent).toBe('Compare (2)');
+      expect((btn.querySelector('.gengage-chat-comparison-floating-action') as HTMLButtonElement).textContent).toBe(
+        'Compare',
+      );
     });
 
     it('renders button with i18n label', () => {
@@ -182,14 +186,14 @@ describe('Comparison Selection Mode', () => {
         },
       });
       const btn = renderFloatingComparisonButton(['X', 'Y', 'Z'], ctx);
-      expect(btn.textContent).toBe('Karşılaştır (3)');
+      expect(btn.querySelector('.gengage-chat-comparison-floating-title')?.textContent).toBe('Karşılaştır (3)');
     });
 
-    it('dispatches getComparisonTable action on click', () => {
+    it('dispatches getComparisonTable action on action button click', () => {
       const onAction = vi.fn();
       const ctx = makeContext({ onAction });
       const btn = renderFloatingComparisonButton(['SKU-A', 'SKU-B'], ctx);
-      btn.click();
+      (btn.querySelector('.gengage-chat-comparison-floating-action') as HTMLButtonElement).click();
       expect(onAction).toHaveBeenCalledWith({
         title: 'Compare',
         type: 'getComparisonTable',
@@ -197,7 +201,7 @@ describe('Comparison Selection Mode', () => {
       });
     });
 
-    it('does not render floating button in grid when fewer than 2 skus selected', () => {
+    it('renders disabled floating dock in grid when fewer than 2 skus selected', () => {
       const spec = makeSpec([
         { sku: 'A', name: 'A', price: '100' },
         { sku: 'B', name: 'B', price: '200' },
@@ -208,10 +212,16 @@ describe('Comparison Selection Mode', () => {
       });
       const dom = renderUISpec(spec, ctx);
       const floatingBtn = dom.querySelector('.gengage-chat-comparison-floating-btn');
-      expect(floatingBtn).toBeNull();
+      expect(floatingBtn).not.toBeNull();
+      expect(
+        floatingBtn?.querySelector('.gengage-chat-comparison-floating-title')?.textContent,
+      ).toContain('Select at least 2 products');
+      expect(
+        (floatingBtn?.querySelector('.gengage-chat-comparison-floating-action') as HTMLButtonElement).disabled,
+      ).toBe(true);
     });
 
-    it('renders floating button in grid when 2+ skus selected', () => {
+    it('renders floating dock in grid when 2+ skus selected', () => {
       const spec = makeSpec([
         { sku: 'A', name: 'A', price: '100' },
         { sku: 'B', name: 'B', price: '200' },
@@ -223,7 +233,7 @@ describe('Comparison Selection Mode', () => {
       const dom = renderUISpec(spec, ctx);
       const floatingBtn = dom.querySelector('.gengage-chat-comparison-floating-btn');
       expect(floatingBtn).not.toBeNull();
-      expect(floatingBtn!.textContent).toBe('Compare (2)');
+      expect(floatingBtn!.querySelector('.gengage-chat-comparison-floating-title')?.textContent).toBe('Compare (2)');
     });
   });
 });

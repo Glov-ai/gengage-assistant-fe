@@ -7,7 +7,7 @@ describe('AIGroupingCards labels rendering', () => {
     onAction: () => {},
   };
 
-  it('renders first 3 labels joined with dot separator', () => {
+  it('renders the first 2 labels as separate chips', () => {
     const el = {
       type: 'AIGroupingCards' as const,
       props: {
@@ -22,12 +22,13 @@ describe('AIGroupingCards labels rendering', () => {
     };
 
     const result = renderAIGroupingCards(el, ctx);
-    const labelsEl = result.querySelector('.gengage-chat-grouping-card-labels');
-    expect(labelsEl).not.toBeNull();
-    expect(labelsEl!.textContent).toBe('Under 10K \u00B7 Student \u00B7 Light Use');
+    const labels = result.querySelectorAll('.gengage-chat-grouping-card-label');
+    expect(labels).toHaveLength(2);
+    expect(labels[0]!.textContent).toBe('Under 10K');
+    expect(labels[1]!.textContent).toBe('Student');
   });
 
-  it('renders all labels when 3 or fewer', () => {
+  it('renders all labels when 2 or fewer', () => {
     const el = {
       type: 'AIGroupingCards' as const,
       props: {
@@ -42,9 +43,10 @@ describe('AIGroupingCards labels rendering', () => {
     };
 
     const result = renderAIGroupingCards(el, ctx);
-    const labelsEl = result.querySelector('.gengage-chat-grouping-card-labels');
-    expect(labelsEl).not.toBeNull();
-    expect(labelsEl!.textContent).toBe('High FPS \u00B7 RGB');
+    const labels = result.querySelectorAll('.gengage-chat-grouping-card-label');
+    expect(labels).toHaveLength(2);
+    expect(labels[0]!.textContent).toBe('High FPS');
+    expect(labels[1]!.textContent).toBe('RGB');
   });
 
   it('omits labels element when no labels array', () => {

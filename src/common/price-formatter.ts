@@ -32,7 +32,7 @@ const TURKISH_DEFAULTS: Required<PriceFormatConfig> = {
  *
  * Examples (default Turkish):
  *   "17990"   → "17.990 TL"
- *   "17990.5" → "17.991 TL"
+ *   "17990.5" → "17.990,50 TL"
  *
  * Examples (GBP prefix):
  *   "17990" with { currencySymbol: '£', currencyPosition: 'prefix', thousandsSeparator: ',', decimalSeparator: '.' }
@@ -46,9 +46,9 @@ export function formatPrice(raw: string, config?: PriceFormatConfig): string {
 
   const resolved = { ...TURKISH_DEFAULTS, ...config };
 
-  const rounded = resolved.alwaysShowDecimals ? num : Math.round(num);
-  const hasDecimals = rounded % 1 !== 0;
-  const fixed = hasDecimals || resolved.alwaysShowDecimals ? rounded.toFixed(2) : rounded.toFixed(0);
+  const isWholeAmount = Math.abs(num % 1) < Number.EPSILON;
+  const shouldShowDecimals = resolved.alwaysShowDecimals || !isWholeAmount;
+  const fixed = shouldShowDecimals ? num.toFixed(2) : num.toFixed(0);
   const dotIdx = fixed.indexOf('.');
   const intPart = dotIdx === -1 ? fixed : fixed.slice(0, dotIdx);
   const decPart = dotIdx === -1 ? undefined : fixed.slice(dotIdx + 1);

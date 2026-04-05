@@ -78,9 +78,7 @@ describe('renderSimRelUISpec', () => {
     };
 
     const result = renderSimRelUISpec(spec, makeContext({ onAddToCart }));
-    const stepper = result.querySelector('.gengage-simrel-atc') as HTMLElement;
-    expect(stepper).toBeTruthy();
-    const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
+    const submitBtn = result.querySelector('.gengage-simrel-atc') as HTMLButtonElement;
     expect(submitBtn).toBeTruthy();
     submitBtn.click();
     expect(onAddToCart).toHaveBeenCalledWith({

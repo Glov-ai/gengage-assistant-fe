@@ -7,7 +7,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   closeButton: 'Kapat',
   openButton: 'Sohbeti aç',
   newChatButton: 'Yeni sohbet',
-  poweredBy: 'Powered by Gengage',
+  poweredBy: 'Gengage ile',
   errorMessage: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   retryButton: 'Tekrar Dene',
   loadingMessage: 'Düşünüyorum...',

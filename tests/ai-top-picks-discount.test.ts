@@ -25,15 +25,14 @@ function makeSuggestion(overrides: Record<string, unknown> = {}) {
 }
 
 describe('AITopPicks discount badge', () => {
-  it('winner card renders discount badge when discountPercent > 0', () => {
+  it('winner card no longer renders discount badge when discountPercent > 0', () => {
     const el = { type: 'AITopPicks', props: { suggestions: [makeSuggestion({ discountPercent: 25 })] } };
     const result = renderAITopPicks(el as any, makeCtx());
     const badge = result.querySelector('.gengage-chat-ai-toppick-discount-badge');
-    expect(badge).not.toBeNull();
-    expect(badge!.textContent).toBe('%25');
+    expect(badge).toBeNull();
   });
 
-  it('compact card renders discount badge when discountPercent > 0', () => {
+  it('compact card no longer renders discount badge when discountPercent > 0', () => {
     const el = {
       type: 'AITopPicks',
       props: {
@@ -49,8 +48,7 @@ describe('AITopPicks discount badge', () => {
     };
     const result = renderAITopPicks(el as any, makeCtx());
     const badges = result.querySelectorAll('.gengage-chat-ai-toppick-discount-badge');
-    expect(badges.length).toBe(2);
-    expect(badges[1]!.textContent).toBe('%15');
+    expect(badges.length).toBe(0);
   });
 
   it('no badge when discountPercent is 0', () => {

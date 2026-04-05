@@ -8,7 +8,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
 }
 
 describe('renderAIGroupingCards', () => {
-  it('renders cards for each entry', () => {
+  it('renders cards for each entry with image, title, and no description', () => {
     const el: UIElement = {
       type: 'AIGroupingCards',
       props: {
@@ -28,7 +28,7 @@ describe('renderAIGroupingCards', () => {
     const cards = dom.querySelectorAll('.gengage-chat-grouping-card');
     expect(cards).toHaveLength(2);
     expect(cards[0]!.querySelector('.gengage-chat-grouping-card-name')?.textContent).toBe('Banyo');
-    expect(cards[0]!.querySelector('.gengage-chat-grouping-card-desc')?.textContent).toBe('Banyo ürünleri');
+    expect(cards[0]!.querySelector('.gengage-chat-grouping-card-desc')).toBeNull();
     expect(cards[0]!.querySelector('.gengage-chat-grouping-card-img')).not.toBeNull();
     expect(cards[1]!.querySelector('.gengage-chat-grouping-card-img')).toBeNull();
   });

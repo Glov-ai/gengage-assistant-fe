@@ -1063,6 +1063,7 @@
 
 .gengage-chat-bubble--assistant {
   max-width: 85%;
+  margin-left: 2px;
 }
 
 /* Active message highlight (clicked to show its panel content) */
@@ -5322,10 +5323,11 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-comparison-select-wrapper--selected > .gengage-chat-product-card {
-  border-color: color-mix(in srgb, var(--client-primary) 26%, white);
-  outline: 2px solid color-mix(in srgb, var(--client-primary) 26%, white);
-  outline-offset: 0;
-  box-shadow: var(--shadow-1);
+  border-color: transparent;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--client-primary) 26%, white),
+    var(--shadow-1);
   filter: saturate(1.02);
 }
 

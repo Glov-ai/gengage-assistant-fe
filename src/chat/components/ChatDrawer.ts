@@ -186,14 +186,6 @@ export class ChatDrawer {
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
 
-  private _getSharedInputPlaceholder(): string {
-    return 'Ürün ara, soru sor';
-  }
-
-  private _getSharedBylineText(): string {
-    return 'Gengage ile';
-  }
-
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
@@ -300,7 +292,7 @@ export class ChatDrawer {
       `<path d="M15 5.88941C12.2201 5.88941 9.72762 7.14107 8.05571 9.11059H0C2.77991 9.11059 5.27238 7.85893 6.94429 5.88941H15Z" fill="currentColor"/>` +
       `<path d="M9.10964 0C9.10964 2.24394 8.29524 4.30038 6.94429 5.88941C5.27238 7.85962 2.77922 9.11059 0 9.11059V5.88941C3.24802 5.88941 5.89036 3.2465 5.89036 0H9.10964Z" fill="currentColor" fill-opacity="0.68"/>` +
       `<path d="M15 5.88941V9.11059C11.752 9.11059 9.10964 11.7535 9.10964 15H5.89036C5.89036 12.7561 6.70476 10.6996 8.05571 9.11059C9.72762 7.14038 12.2208 5.88941 15 5.88941Z" fill="currentColor" fill-opacity="0.68"/>` +
-      `</svg>${this._getSharedBylineText()}`;
+      `</svg>${this.i18n.poweredBy}`;
     headerInfo.appendChild(powered);
 
     headerLeft.appendChild(headerInfo);
@@ -770,7 +762,7 @@ export class ChatDrawer {
     this.inputEl.className = 'gengage-chat-input';
     this.inputEl.dataset['gengagePart'] = 'chat-input';
     this.inputEl.rows = 1;
-    this.inputEl.placeholder = this._getSharedInputPlaceholder();
+    this.inputEl.placeholder = this.i18n.inputPlaceholder;
 
     // Auto-expand on desktop as user types (capped at 120px)
     this.inputEl.addEventListener('input', () => {
@@ -1042,7 +1034,7 @@ export class ChatDrawer {
     const footer = document.createElement('div');
     footer.className = 'gengage-chat-footer';
     footer.dataset['gengagePart'] = 'chat-footer';
-    footer.textContent = this._getSharedBylineText();
+    footer.textContent = this.i18n.poweredBy;
     this.root.appendChild(footer);
 
     // Escape key to close drawer

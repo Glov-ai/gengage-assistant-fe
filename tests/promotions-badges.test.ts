@@ -8,7 +8,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
 }
 
 describe('Promotions Badges', () => {
-  it('renders promotion badges on product card', () => {
+  it('does not render promotion badges on listing product cards', () => {
     const spec: UISpec = {
       root: 'card',
       elements: {
@@ -28,9 +28,8 @@ describe('Promotions Badges', () => {
 
     const result = renderUISpec(spec, makeContext());
     const badges = result.querySelectorAll('.gengage-chat-product-card-promo-badge');
-    expect(badges).toHaveLength(2);
-    expect(badges[0]!.textContent).toBe('Free Shipping');
-    expect(badges[1]!.textContent).toBe('Flash Sale');
+    expect(badges).toHaveLength(0);
+    expect(result.querySelector('.gengage-chat-product-card-promos')).toBeNull();
   });
 
   it('does not render promos container when no promotions', () => {

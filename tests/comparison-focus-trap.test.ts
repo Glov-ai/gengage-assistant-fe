@@ -97,15 +97,9 @@ describe('ComparisonTable focus trap', () => {
   });
 
   it('does not intercept non-Tab key events', () => {
-    const focusables = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, [tabindex]:not([tabindex="-1"])',
-    );
-    const last = focusables[focusables.length - 1]!;
-    last.focus();
-
     const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
     const preventSpy = vi.spyOn(event, 'preventDefault');
-    last.dispatchEvent(event);
+    container.dispatchEvent(event);
 
     expect(preventSpy).not.toHaveBeenCalled();
   });

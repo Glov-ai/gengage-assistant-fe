@@ -23,7 +23,7 @@ describe('ATC success feedback', () => {
 });
 
 describe('ChatDrawer stop button', () => {
-  it('showStopButton creates and hideStopButton removes the stop button', async () => {
+  it('showStopButton reuses the send button in stop mode and hideStopButton restores it', async () => {
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
     const drawer = new ChatDrawer(container, {
@@ -36,19 +36,20 @@ describe('ChatDrawer stop button', () => {
     const stopFn = vi.fn();
     drawer.showStopButton(stopFn);
 
-    const btn = drawer.getElement().querySelector('.gengage-chat-stop-btn') as HTMLButtonElement;
+    const btn = drawer.getElement().querySelector('.gengage-chat-send') as HTMLButtonElement;
     expect(btn).not.toBeNull();
-    expect(btn.textContent).toContain('Stop generating');
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(true);
+    expect(btn.getAttribute('aria-label')).toContain('Stop generating');
 
     btn.click();
     expect(stopFn).toHaveBeenCalledOnce();
 
-    // After click, button should be removed
-    const afterClick = drawer.getElement().querySelector('.gengage-chat-stop-btn');
-    expect(afterClick).toBeNull();
+    drawer.hideStopButton();
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(false);
+    expect(btn.getAttribute('aria-label')).toContain('Send');
   });
 
-  it('removeTypingIndicator also removes stop button', async () => {
+  it('removeTypingIndicator also restores send button from stop mode', async () => {
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
     const drawer = new ChatDrawer(container, {
@@ -60,10 +61,11 @@ describe('ChatDrawer stop button', () => {
 
     drawer.showTypingIndicator();
     drawer.showStopButton(vi.fn());
-    expect(drawer.getElement().querySelector('.gengage-chat-stop-btn')).not.toBeNull();
+    const btn = drawer.getElement().querySelector('.gengage-chat-send') as HTMLButtonElement;
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(true);
 
     drawer.removeTypingIndicator();
-    expect(drawer.getElement().querySelector('.gengage-chat-stop-btn')).toBeNull();
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(false);
   });
 });
 

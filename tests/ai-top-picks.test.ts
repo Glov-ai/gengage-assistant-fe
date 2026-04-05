@@ -161,7 +161,7 @@ describe('renderAITopPicks', () => {
     expect(score?.textContent).toBe('8.5/10');
   });
 
-  it('renders review highlight as blockquote', () => {
+  it('renders review highlight in the winner evidence area', () => {
     const el = makeElement([
       { product: { sku: '1', name: 'Product A' }, role: 'winner', reviewHighlight: 'Great quality!' },
     ]);
@@ -170,7 +170,7 @@ describe('renderAITopPicks', () => {
 
     const review = dom.querySelector('.gengage-chat-ai-toppick-review');
     expect(review?.textContent).toBe('Great quality!');
-    expect(review?.tagName).toBe('BLOCKQUOTE');
+    expect(review?.tagName).toBe('DIV');
   });
 
   it('handles empty suggestions without crashing', () => {
@@ -204,7 +204,7 @@ describe('renderAITopPicks', () => {
     expect(price?.textContent).toContain('not-a-number');
   });
 
-  it('renders price with Turkish formatting', () => {
+  it('renders price with compact Turkish formatting', () => {
     const el = makeElement([
       { product: { sku: '1', name: 'Product A', price: '17990', originalPrice: '19990' }, role: 'winner' },
     ]);
@@ -212,9 +212,9 @@ describe('renderAITopPicks', () => {
     const dom = renderAITopPicks(el, ctx);
 
     const price = dom.querySelector('.gengage-chat-ai-toppick-price');
-    expect(price?.textContent).toContain('17.990,00 TL');
+    expect(price?.textContent).toContain('17.990 TL');
 
     const orig = dom.querySelector('.gengage-chat-ai-toppick-original-price');
-    expect(orig?.textContent).toBe('19.990,00 TL');
+    expect(orig?.textContent).toBe('19.990 TL');
   });
 });
