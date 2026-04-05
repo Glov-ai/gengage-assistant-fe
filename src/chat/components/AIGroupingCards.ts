@@ -106,19 +106,16 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
     nameEl.textContent = entry.name;
     body.appendChild(nameEl);
 
-    if (entry.description) {
-      const desc = document.createElement('span');
-      desc.className = 'gengage-chat-grouping-card-desc';
-      desc.dataset['gengagePart'] = 'ai-grouping-card-description';
-      desc.textContent = entry.description;
-      body.appendChild(desc);
-    }
-
     if (entry.labels && entry.labels.length > 0) {
-      const labelsEl = document.createElement('span');
+      const labelsEl = document.createElement('div');
       labelsEl.className = 'gengage-chat-grouping-card-labels';
       labelsEl.dataset['gengagePart'] = 'ai-grouping-card-labels';
-      labelsEl.textContent = entry.labels.slice(0, 3).join(' \u00B7 ');
+      for (const label of entry.labels.slice(0, 2)) {
+        const chip = document.createElement('span');
+        chip.className = 'gengage-chat-grouping-card-label gds-chip';
+        chip.textContent = label;
+        labelsEl.appendChild(chip);
+      }
       body.appendChild(labelsEl);
     }
 

@@ -1,7 +1,8 @@
 /**
  * Configurable price formatting.
  *
- * Defaults to Turkish locale (dot thousands, comma decimal, TL suffix).
+ * Defaults to Turkish locale (dot thousands, comma decimal, TL suffix),
+ * but renders whole TL amounts without kurus for a cleaner retail UI.
  * Configure via widget config `pricing` field for any locale/currency.
  */
 
@@ -14,7 +15,7 @@ export interface PriceFormatConfig {
   thousandsSeparator?: string;
   /** Decimal point character. Default: ',' (Turkish) */
   decimalSeparator?: string;
-  /** Whether to show decimal part for whole numbers. Default: true */
+  /** Whether to show decimal part for whole numbers. Default: false */
   alwaysShowDecimals?: boolean;
 }
 
@@ -23,7 +24,7 @@ const TURKISH_DEFAULTS: Required<PriceFormatConfig> = {
   currencyPosition: 'suffix',
   thousandsSeparator: '.',
   decimalSeparator: ',',
-  alwaysShowDecimals: true,
+  alwaysShowDecimals: false,
 };
 
 /**
@@ -31,7 +32,7 @@ const TURKISH_DEFAULTS: Required<PriceFormatConfig> = {
  *
  * Examples (default Turkish):
  *   "17990"   → "17.990 TL"
- *   "17990.5" → "17.990,50 TL"
+ *   "17990.5" → "17.991 TL"
  *
  * Examples (GBP prefix):
  *   "17990" with { currencySymbol: '£', currencyPosition: 'prefix', thousandsSeparator: ',', decimalSeparator: '.' }
@@ -45,8 +46,9 @@ export function formatPrice(raw: string, config?: PriceFormatConfig): string {
 
   const resolved = { ...TURKISH_DEFAULTS, ...config };
 
-  const hasDecimals = num % 1 !== 0;
-  const fixed = hasDecimals || resolved.alwaysShowDecimals ? num.toFixed(2) : num.toFixed(0);
+  const rounded = resolved.alwaysShowDecimals ? num : Math.round(num);
+  const hasDecimals = rounded % 1 !== 0;
+  const fixed = hasDecimals || resolved.alwaysShowDecimals ? rounded.toFixed(2) : rounded.toFixed(0);
   const dotIdx = fixed.indexOf('.');
   const intPart = dotIdx === -1 ? fixed : fixed.slice(0, dotIdx);
   const decPart = dotIdx === -1 ? undefined : fixed.slice(dotIdx + 1);

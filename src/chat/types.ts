@@ -191,6 +191,9 @@ export interface ChatI18n {
   sortToolbarAriaLabel: string;
   compareSelected: string;
   compareMinHint: string;
+  compareMaxHint: string;
+  comparisonSelectLabel: string;
+  comparisonSelectedLabel: string;
   /** Shown on product cards while comparison mode is on — whole card toggles selection. */
   comparisonSelectCardHint: string;
   /** Shown on the main panel while the comparison table is being generated. */
@@ -310,6 +313,9 @@ export interface ChatUISpecRenderContext {
     | 'sortPriceDesc'
     | 'sortToolbarAriaLabel'
     | 'compareSelected'
+    | 'compareMinHint'
+    | 'comparisonSelectLabel'
+    | 'comparisonSelectedLabel'
     | 'comparisonSelectCardHint'
     | 'panelTitleProductDetails'
     | 'panelTitleSimilarProducts'
@@ -349,6 +355,8 @@ export interface ChatUISpecRenderContext {
   onSortChange?: ((sort: ProductSortState) => void) | undefined;
   comparisonSelectMode?: boolean | undefined;
   comparisonSelectedSkus?: string[] | undefined;
+  comparisonMaxSelection?: number | undefined;
+  comparisonSelectionWarning?: string | null | undefined;
   onToggleComparisonSku?: ((sku: string) => void) | undefined;
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;

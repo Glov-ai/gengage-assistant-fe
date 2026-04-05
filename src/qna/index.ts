@@ -15,6 +15,7 @@ import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
 import { dispatch } from '../common/events.js';
+import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
 import {
   streamStartEvent,
@@ -156,6 +157,10 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
     const requestId = crypto.randomUUID();
     const fetchStart = Date.now();
+    const releaseConnectionWarning = trackConnectionWarningRequest({
+      source: 'qna',
+      locale: this.config.locale,
+    });
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -264,7 +269,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       dispatch('gengage:global:error', {
         source: 'qna',
         code: 'FETCH_ERROR',
-        message: getGlobalErrorMessage(this.config.locale),
+        message: getGlobalErrorMessage(this.config.locale, err),
       });
 
       this.track(
@@ -299,6 +304,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (import.meta.env?.DEV) {
         console.error('[gengage:qna] Failed to fetch launcher actions:', err);
       }
+    } finally {
+      releaseConnectionWarning();
     }
   }
 

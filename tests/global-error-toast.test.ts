@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BaseWidgetConfig, PageContext } from '../src/common/types.js';
 import { BaseWidget } from '../src/common/widget-base.js';
 import { dispatch } from '../src/common/events.js';
+import { getGlobalErrorMessage } from '../src/common/global-error-toast.js';
 
 class TestWidget extends BaseWidget<BaseWidgetConfig> {
   protected async onInit(_config: BaseWidgetConfig): Promise<void> {}
@@ -67,5 +68,14 @@ describe('global error toast', () => {
     expect(toasts).toHaveLength(1);
     expect(toasts[0]?.textContent).toContain('Second warning');
     widget.destroy();
+  });
+
+  it('returns a generic message for non-connectivity failures', () => {
+    expect(getGlobalErrorMessage('en', new Error('HTTP 500'))).toBe('Something went wrong. Please try again.');
+    expect(getGlobalErrorMessage('tr', new Error('HTTP 500'))).toBe('Bir hata oluştu. Lütfen tekrar deneyin.');
+  });
+
+  it('returns a connection warning for likely offline failures', () => {
+    expect(getGlobalErrorMessage('en', new TypeError('Failed to fetch'))).toBe('Connection issue. Please try again.');
   });
 });

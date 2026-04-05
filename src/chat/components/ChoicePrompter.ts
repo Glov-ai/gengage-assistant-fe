@@ -24,15 +24,20 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   card.className = 'gengage-chat-choice-prompter gds-card';
   card.dataset['gengagePart'] = 'choice-prompter';
 
+  const copy = document.createElement('div');
+  copy.className = 'gengage-chat-choice-prompter-copy';
+
   const headingEl = document.createElement('div');
   headingEl.className = 'gengage-chat-choice-prompter-heading';
   headingEl.textContent = options.heading;
-  card.appendChild(headingEl);
+  copy.appendChild(headingEl);
 
   const suggestionEl = document.createElement('div');
   suggestionEl.className = 'gengage-chat-choice-prompter-suggestion';
   suggestionEl.textContent = options.suggestion;
-  card.appendChild(suggestionEl);
+  copy.appendChild(suggestionEl);
+
+  card.appendChild(copy);
 
   const cta = document.createElement('button');
   cta.type = 'button';

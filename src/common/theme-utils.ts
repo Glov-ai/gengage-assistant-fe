@@ -26,10 +26,10 @@ export const BASE_WIDGET_THEME: WidgetTheme = {
 
   '--gengage-chat-width': '400px',
   '--gengage-chat-shell-radius': '1rem' /* lg roundedness */,
-  '--gengage-chat-header-height': '60px',
+  '--gengage-chat-header-height': '72px',
   '--gengage-chat-conversation-width': '396px',
   '--gengage-chat-panel-min-width': '320px',
-  '--gengage-chat-panel-max-width': '860px',
+  '--gengage-chat-panel-max-width': '1200px',
   '--gengage-chat-input-height': '48px',
   '--gengage-qna-pill-radius': '999px' /* roundedness-full */,
   '--gengage-qna-input-radius': '0.75rem' /* md roundedness */,

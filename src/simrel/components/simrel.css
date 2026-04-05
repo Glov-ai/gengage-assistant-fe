@@ -209,6 +209,28 @@
   border-radius: var(--radius-control, 12px);
 }
 
+.gengage-simrel-atc-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 20px);
+  min-height: 44px;
+  margin: 0 10px 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--client-primary);
+  border-radius: var(--radius-control, 12px);
+  background: var(--surface-card);
+  color: var(--client-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.gengage-simrel-atc-button:hover {
+  background: var(--surface-card-soft);
+  color: var(--client-primary-hover);
+}
+
 .gengage-simrel-card .gengage-simrel-atc {
   display: flex;
   align-items: center;

@@ -322,7 +322,7 @@ For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork re
 | `--gengage-chat-header-height` | `60px` | Chat header min-height |
 | `--gengage-chat-conversation-width` | `396px` | Right rail width in panel mode |
 | `--gengage-chat-panel-min-width` | `320px` | Left panel min width in panel mode |
-| `--gengage-chat-panel-max-width` | `860px` | Left panel max width in panel mode |
+| `--gengage-chat-panel-max-width` | `1200px` | Left panel max width in panel mode |
 | `--gengage-chat-input-height` | `48px` | Chat input row control height |
 | `--gengage-qna-pill-radius` | `999px` | QNA quick-action pill radius |
 | `--gengage-qna-input-radius` | `14px` | QNA input + send button radius |

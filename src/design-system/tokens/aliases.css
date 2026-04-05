@@ -78,10 +78,10 @@
   --ds-badge-brand-border: color-mix(in srgb, var(--client-primary) 18%, white);
   --ds-badge-brand-fg: var(--client-primary);
 
-  --ds-message-user-bg: var(--client-primary);
-  --ds-message-user-fg: var(--client-on-primary);
-  --ds-message-user-border: color-mix(in srgb, var(--client-primary) 82%, black 18%);
-  --ds-message-user-shadow: var(--shadow-1);
+  --ds-message-user-bg: color-mix(in srgb, var(--client-primary) 10%, white);
+  --ds-message-user-fg: var(--text-primary);
+  --ds-message-user-border: color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+  --ds-message-user-shadow: none;
 
   --ds-message-assistant-bg: var(--surface-card-soft);
   --ds-message-assistant-fg: var(--text-primary);

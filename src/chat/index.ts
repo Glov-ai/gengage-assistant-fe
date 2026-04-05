@@ -41,6 +41,7 @@ import {
   createDefaultChatUISpecRegistry,
   defaultChatUnknownUISpecRenderer,
 } from './components/renderUISpec.js';
+import { renderFloatingComparisonButton } from './components/FloatingComparisonButton.js';
 import type { TypewriterHandle } from './components/typewriter.js';
 import { typewriteHtml } from './components/typewriter.js';
 import { linkProductMentions } from './components/productMentionLinker.js';
@@ -69,6 +70,7 @@ import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
+import { isLikelyConnectivityIssue } from '../common/global-error-toast.js';
 import {
   containsKvkk,
   isKvkkShown,
@@ -128,6 +130,7 @@ function isActionLike(value: unknown): value is ActionPayload {
  * ```
  */
 export class GengageChat extends BaseWidget<ChatWidgetConfig> {
+  private static readonly _MAX_COMPARISON_SELECTION = 5;
   private _shadow: ShadowRoot | null = null;
   private _rootEl: HTMLElement | null = null;
   /** Full-viewport scrim when drawer is open (floating/overlay); not used for inline. */
@@ -153,6 +156,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _lastSku: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
+  private _comparisonSelectionWarning: string | null = null;
   private _comparisonRefreshRafId: number | null = null;
   /** SKUs of products the user has viewed across panel product grids. */
   private _viewedProductSkus = new Set<string>();
@@ -357,8 +361,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         ? `${config.locale.split('-')[0] ?? 'tr'}-${(config.locale.split('-')[1] ?? config.locale.split('-')[0] ?? 'TR').toUpperCase()}`
         : undefined,
       onNewChat: () => {
-        this._abortControllers.forEach((c) => c.abort());
-        this._abortControllers.clear();
+        this._abortAllActiveRequests();
         this._activeTypewriter?.cancel();
         this._activeTypewriter = null;
         this._activeTtsHandle?.stop();
@@ -574,8 +577,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   protected onDestroy(): void {
-    this._abortControllers.forEach((c) => c.abort());
-    this._abortControllers.clear();
+    this._abortAllActiveRequests();
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
     this._activeTtsHandle?.stop();
@@ -691,14 +693,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   // Private
   // ---------------------------------------------------------------------------
 
+  private _abortAllActiveRequests(): void {
+    for (const controller of this._abortControllers) {
+      controller.abort();
+    }
+    this._abortControllers.clear();
+  }
+
   /** Reset all chat state when navigating to a different SKU/page. */
   private _resetForNewPage(): void {
     // Invalidate any in-flight stream callbacks so they discard themselves
     // via the `threadId !== this._activeRequestThreadId` guard.
     this._activeRequestThreadId = null;
     // Abort in-flight streams
-    this._abortControllers.forEach((c) => c.abort());
-    this._abortControllers.clear();
+    this._abortAllActiveRequests();
     // Cancel active typewriter/TTS
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
@@ -1405,8 +1413,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
-      this._abortControllers.forEach((c) => c.abort());
-      this._abortControllers.clear();
+      this._abortAllActiveRequests();
     }
 
     const transport: ChatTransportConfig = {
@@ -1708,15 +1715,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             // Backend-provided panelTitle (e.g. search results title) takes precedence.
             const titleType = this._panel.currentType ?? componentType;
             const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
-            const blankTopbarForInlineGridTitle =
-              componentType === 'ProductGrid' &&
-              panelAction === 'replace' &&
-              (rootElement?.children?.length ?? 0) > 0;
-            this._panel.updateTopBar(
-              titleType,
-              backendTitle,
-              blankTopbarForInlineGridTitle ? '' : undefined,
-            );
+            this._panel.updateTopBar(titleType, backendTitle);
             this._panel.updateExtendedMode(componentType);
 
             // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
@@ -2156,6 +2155,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // The user is in an active conversation; a toast on top of the
               // chat is confusing and can overlap with prior bot messages.
               this.emit('error', err);
+
+              const shouldSuppressOfflineError =
+                typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
+              if (shouldSuppressOfflineError) {
+                return;
+              }
 
               // Track consecutive identical errors — repeated failures suggest
               // the account is inactive or backend is unreachable.
@@ -2792,6 +2797,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _toggleComparisonSku(sku: string): void {
     if (sku === '') {
       this._comparisonSelectMode = !this._comparisonSelectMode;
+      this._comparisonSelectionWarning = null;
       if (this._comparisonSelectMode) {
         recordChoicePrompterDismissedForThread(this._currentThreadId ?? '');
         this._choicePrompterEl?.remove();
@@ -2800,14 +2806,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
       if (!this._comparisonSelectMode) {
         this._comparisonSelectedSkus = [];
+        this._comparisonSelectionWarning = null;
         ga.trackCompareClear();
       }
     } else {
       const idx = this._comparisonSelectedSkus.indexOf(sku);
       if (idx >= 0) {
         this._comparisonSelectedSkus = this._comparisonSelectedSkus.filter((s) => s !== sku);
+        this._comparisonSelectionWarning = null;
       } else {
+        if (this._comparisonSelectedSkus.length >= GengageChat._MAX_COMPARISON_SELECTION) {
+          this._comparisonSelectionWarning =
+            this._i18n.compareMaxHint ??
+            `You can select up to ${GengageChat._MAX_COMPARISON_SELECTION} products`;
+          if (this._comparisonRefreshRafId !== null) {
+            cancelAnimationFrame(this._comparisonRefreshRafId);
+          }
+          this._comparisonRefreshRafId = requestAnimationFrame(() => {
+            this._comparisonRefreshRafId = null;
+            this._refreshComparisonUI();
+          });
+          return;
+        }
         this._comparisonSelectedSkus = [...this._comparisonSelectedSkus, sku];
+        this._comparisonSelectionWarning = null;
         ga.trackComparePreselection(sku);
       }
     }
@@ -2846,34 +2868,63 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const cards = grid.querySelectorAll<HTMLElement>('.gengage-chat-product-card[data-sku]');
       for (const card of cards) {
         if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
-          // Already wrapped — sync checked state
-          const cb = card.parentElement.querySelector<HTMLInputElement>('.gengage-chat-comparison-checkbox');
-          if (cb) cb.checked = this._comparisonSelectedSkus.includes(card.dataset['sku']!);
+          // Already wrapped — sync selected state
+          const wrapper = card.parentElement;
+          const selected = this._comparisonSelectedSkus.includes(card.dataset['sku']!);
+          wrapper.classList.toggle('gengage-chat-comparison-select-wrapper--selected', selected);
+          const toggle = wrapper.querySelector<HTMLButtonElement>('.gengage-chat-comparison-checkbox');
+          if (toggle) {
+            toggle.dataset['selected'] = selected ? 'true' : 'false';
+            toggle.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            const icon = toggle.querySelector('.gengage-chat-comparison-checkbox-icon');
+            const label = toggle.querySelector('.gengage-chat-comparison-checkbox-label');
+            if (icon) {
+              icon.innerHTML = selected
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+                : '<span class="gengage-chat-comparison-checkbox-dot"></span>';
+            }
+            if (label) {
+              label.textContent = selected
+                ? (this._i18n.comparisonSelectedLabel ?? 'Selected')
+                : (this._i18n.comparisonSelectLabel ?? 'Select to compare');
+            }
+          }
           continue;
         }
         const sku = card.dataset['sku']!;
         const wrapper = document.createElement('div');
         wrapper.className = 'gengage-chat-comparison-select-wrapper';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'gengage-chat-comparison-checkbox';
-        checkbox.checked = this._comparisonSelectedSkus.includes(sku);
-        checkbox.addEventListener('change', () => {
+        const selected = this._comparisonSelectedSkus.includes(sku);
+        if (selected) wrapper.classList.add('gengage-chat-comparison-select-wrapper--selected');
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'gengage-chat-comparison-checkbox';
+        toggle.dataset['selected'] = selected ? 'true' : 'false';
+        toggle.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        const icon = document.createElement('span');
+        icon.className = 'gengage-chat-comparison-checkbox-icon';
+        icon.innerHTML = selected
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+          : '<span class="gengage-chat-comparison-checkbox-dot"></span>';
+        const label = document.createElement('span');
+        label.className = 'gengage-chat-comparison-checkbox-label';
+        label.textContent = selected
+          ? (this._i18n.comparisonSelectedLabel ?? 'Selected')
+          : (this._i18n.comparisonSelectLabel ?? 'Select to compare');
+        toggle.appendChild(icon);
+        toggle.appendChild(label);
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
           this._toggleComparisonSku(sku);
         });
         card.parentNode!.insertBefore(wrapper, card);
-        wrapper.appendChild(checkbox);
+        wrapper.appendChild(toggle);
         wrapper.appendChild(card);
         // Allow clicking anywhere on the card (not just the tiny checkbox) to toggle selection
         wrapper.classList.add('gds-clickable');
         wrapper.addEventListener('click', (e) => {
-          // Use .closest() rather than strict target equality — on mobile touch the
-          // event target can be the checkbox's inner pseudo-element or the label
-          // area, causing the guard to miss and the toggle to fire twice (change +
-          // click).  .closest() is robust to that ambiguity.
           if ((e.target as HTMLElement).closest('.gengage-chat-comparison-checkbox')) return;
           e.stopPropagation();
-          checkbox.checked = !checkbox.checked;
           this._toggleComparisonSku(sku);
         });
       }
@@ -2889,41 +2940,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
-    // 3. Update floating comparison button
+    // 3. Update the slim bottom-docked comparison bar
     const existingFloating = gridWrapper.querySelector('.gengage-chat-comparison-floating-btn');
     if (this._comparisonSelectMode) {
-      const count = this._comparisonSelectedSkus.length;
-      const canCompare = count >= 2;
-      const label = this._i18n.compareSelected ?? 'Compare';
-      const text = canCompare ? `${label} (${count})` : (this._i18n.compareMinHint ?? 'Select at least 2 products');
-      if (existingFloating) {
-        existingFloating.textContent = text;
-        (existingFloating as HTMLButtonElement).disabled = !canCompare;
-        existingFloating.classList.toggle('gengage-chat-comparison-floating-btn--disabled', !canCompare);
-      } else {
-        const btn = document.createElement('button');
-        btn.className = 'gengage-chat-comparison-floating-btn';
-        btn.type = 'button';
-        btn.textContent = text;
-        btn.disabled = !canCompare;
-        if (!canCompare) btn.classList.add('gengage-chat-comparison-floating-btn--disabled');
-        btn.addEventListener('click', () => {
-          if (this._comparisonSelectedSkus.length < 2) return;
-          ga.trackCompareSelected(this._comparisonSelectedSkus);
-          // Cancel any pending rAF refresh so it cannot tear down the floating
-          // button between the click and the panel response arriving.
-          if (this._comparisonRefreshRafId !== null) {
-            cancelAnimationFrame(this._comparisonRefreshRafId);
-            this._comparisonRefreshRafId = null;
-          }
-          this._sendAction({
-            title: label,
-            type: 'getComparisonTable',
-            payload: { sku_list: [...this._comparisonSelectedSkus] },
-          });
-        });
-        gridWrapper.appendChild(btn);
-      }
+      existingFloating?.remove();
+      const dock = renderFloatingComparisonButton(this._comparisonSelectedSkus, this._buildRenderContext());
+      gridWrapper.appendChild(dock);
     } else {
       existingFloating?.remove();
     }
@@ -3041,6 +3063,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       comparisonSelectMode: this._comparisonSelectMode,
       comparisonSelectedSkus: this._comparisonSelectedSkus,
+      comparisonMaxSelection: GengageChat._MAX_COMPARISON_SELECTION,
+      comparisonSelectionWarning: this._comparisonSelectionWarning,
       onToggleComparisonSku: (sku) => {
         this._toggleComparisonSku(sku);
       },

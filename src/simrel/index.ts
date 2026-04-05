@@ -12,6 +12,7 @@ import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
 import { dispatch } from '../common/events.js';
+import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
 import {
   streamStartEvent,
@@ -205,6 +206,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     const requestId = crypto.randomUUID();
     const fetchStart = Date.now();
+    const releaseConnectionWarning = trackConnectionWarningRequest({
+      source: 'simrel',
+      locale: this.config.locale,
+    });
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -333,7 +338,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       dispatch('gengage:global:error', {
         source: 'simrel',
         code: 'FETCH_ERROR',
-        message: getGlobalErrorMessage(this.config.locale),
+        message: getGlobalErrorMessage(this.config.locale, err),
       });
 
       this.track(
@@ -365,6 +370,8 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         errorEl.appendChild(retryBtn);
         this._contentEl.appendChild(errorEl);
       }
+    } finally {
+      releaseConnectionWarning();
     }
   }
 

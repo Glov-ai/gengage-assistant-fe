@@ -27,11 +27,43 @@ const THEME_SYNC_VARS = [
 let listenerRegistered = false;
 let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function getGlobalErrorMessage(locale?: string): string {
-  if (typeof locale === 'string' && locale.toLowerCase().startsWith('tr')) {
-    return 'Bağlantı sorunu oluştu. Lütfen tekrar deneyin.';
+const CONNECTIVITY_ERROR_PATTERNS = [
+  /failed to fetch/i,
+  /networkerror/i,
+  /network request failed/i,
+  /load failed/i,
+  /err_network/i,
+  /fetch failed/i,
+  /network error/i,
+] as const;
+
+function isTurkishLocale(locale?: string): boolean {
+  return typeof locale === 'string' && locale.toLowerCase().startsWith('tr');
+}
+
+export function isLikelyConnectivityIssue(error?: unknown): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return true;
   }
-  return 'Connection issue. Please try again.';
+
+  const message = error instanceof Error ? error.message.trim() : '';
+  if (!message) return false;
+
+  return CONNECTIVITY_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+export function getGlobalErrorMessage(locale?: string, error?: unknown): string {
+  if (isLikelyConnectivityIssue(error)) {
+    if (isTurkishLocale(locale)) {
+      return 'Bağlantı sorunu oluştu. Lütfen tekrar deneyin.';
+    }
+    return 'Connection issue. Please try again.';
+  }
+
+  if (isTurkishLocale(locale)) {
+    return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+  }
+  return 'Something went wrong. Please try again.';
 }
 
 export function registerGlobalErrorToastListener(): void {
@@ -76,6 +108,10 @@ export function showGlobalErrorToast(detail: GengageEventDetailMap['gengage:glob
   if (dismissTimer) {
     clearTimeout(dismissTimer);
     dismissTimer = null;
+  }
+
+  if (detail.sticky === true) {
+    return;
   }
 
   dismissTimer = setTimeout(() => {

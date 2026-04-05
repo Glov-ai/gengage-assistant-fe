@@ -126,6 +126,7 @@ export class ChatDrawer {
   private messagesEl: HTMLElement;
   private inputEl: HTMLTextAreaElement;
   private sendBtn: HTMLButtonElement;
+  private _sendStopHandler: (() => void) | null = null;
   private i18n: ChatI18n;
   private onSend: (text: string, attachment?: File) => void;
   private _panelEl: HTMLElement;
@@ -184,6 +185,14 @@ export class ChatDrawer {
   private _typingLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
+
+  private _getSharedInputPlaceholder(): string {
+    return 'Ürün ara, soru sor';
+  }
+
+  private _getSharedBylineText(): string {
+    return 'Gengage ile';
+  }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -244,9 +253,14 @@ export class ChatDrawer {
     headerLeft.dataset['gengagePart'] = 'chat-header-left';
 
     const avatarUrl = options.headerAvatarUrl ?? options.launcherImageUrl;
+    const useLogoAvatar =
+      typeof options.headerAvatarUrl === 'string' &&
+      options.headerAvatarUrl.length > 0 &&
+      options.headerAvatarUrl !== options.launcherImageUrl;
     if (avatarUrl) {
       const avatar = document.createElement('img');
       avatar.className = 'gengage-chat-header-avatar';
+      if (useLogoAvatar) avatar.classList.add('gengage-chat-header-avatar--logo');
       avatar.dataset['gengagePart'] = 'chat-header-avatar';
       avatar.src = avatarUrl;
       avatar.alt = options.headerTitle ?? 'Assistant';
@@ -281,7 +295,12 @@ export class ChatDrawer {
     powered.href = 'https://gengage.ai/';
     powered.target = '_blank';
     powered.rel = 'noopener noreferrer';
-    powered.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM7 4.5h2v4H7v-4zm0 5h2v2H7v-2z"/></svg>${this.i18n.poweredBy}`;
+    powered.innerHTML =
+      `<svg viewBox="0 0 15 15" fill="none" aria-hidden="true">` +
+      `<path d="M15 5.88941C12.2201 5.88941 9.72762 7.14107 8.05571 9.11059H0C2.77991 9.11059 5.27238 7.85893 6.94429 5.88941H15Z" fill="currentColor"/>` +
+      `<path d="M9.10964 0C9.10964 2.24394 8.29524 4.30038 6.94429 5.88941C5.27238 7.85962 2.77922 9.11059 0 9.11059V5.88941C3.24802 5.88941 5.89036 3.2465 5.89036 0H9.10964Z" fill="currentColor" fill-opacity="0.68"/>` +
+      `<path d="M15 5.88941V9.11059C11.752 9.11059 9.10964 11.7535 9.10964 15H5.89036C5.89036 12.7561 6.70476 10.6996 8.05571 9.11059C9.72762 7.14038 12.2208 5.88941 15 5.88941Z" fill="currentColor" fill-opacity="0.68"/>` +
+      `</svg>${this._getSharedBylineText()}`;
     headerInfo.appendChild(powered);
 
     headerLeft.appendChild(headerInfo);
@@ -751,7 +770,7 @@ export class ChatDrawer {
     this.inputEl.className = 'gengage-chat-input';
     this.inputEl.dataset['gengagePart'] = 'chat-input';
     this.inputEl.rows = 1;
-    this.inputEl.placeholder = this.i18n.inputPlaceholder;
+    this.inputEl.placeholder = this._getSharedInputPlaceholder();
 
     // Auto-expand on desktop as user types (capped at 120px)
     this.inputEl.addEventListener('input', () => {
@@ -918,8 +937,17 @@ export class ChatDrawer {
     this.sendBtn.type = 'button';
     this.sendBtn.disabled = true;
     this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
-    this.sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
-    this.sendBtn.addEventListener('click', () => this._submit());
+    this.sendBtn.dataset['tooltip'] = this.i18n.sendButton;
+    this._renderSendButtonIcon('send');
+    this.sendBtn.addEventListener('click', () => {
+      if (this._sendStopHandler) {
+        const onStop = this._sendStopHandler;
+        this.hideStopButton();
+        onStop();
+        return;
+      }
+      this._submit();
+    });
 
     // Drag-and-drop on input area
     inputArea.addEventListener('dragover', (e) => {
@@ -1014,7 +1042,7 @@ export class ChatDrawer {
     const footer = document.createElement('div');
     footer.className = 'gengage-chat-footer';
     footer.dataset['gengagePart'] = 'chat-footer';
-    footer.textContent = this.i18n.poweredBy;
+    footer.textContent = this._getSharedBylineText();
     this.root.appendChild(footer);
 
     // Escape key to close drawer
@@ -1169,31 +1197,24 @@ export class ChatDrawer {
 
   /** Show a "Stop generating" button below the typing indicator. */
   showStopButton(onStop: () => void): void {
-    this.hideStopButton();
-    const btn = document.createElement('button');
-    btn.className = 'gengage-chat-stop-btn gds-btn gds-btn-secondary';
-    btn.type = 'button';
-    btn.setAttribute('aria-label', this.i18n.stopGenerating);
-    // Square stop icon + label
-    const icon = document.createElement('span');
-    icon.className = 'gengage-chat-stop-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    btn.appendChild(icon);
-    const label = document.createElement('span');
-    label.textContent = this.i18n.stopGenerating;
-    btn.appendChild(label);
-    btn.addEventListener('click', () => {
-      this.hideStopButton();
-      onStop();
-    });
-    this.messagesEl.appendChild(btn);
-    this._scrollToBottom(true);
+    this._sendStopHandler = onStop;
+    this.sendBtn.disabled = false;
+    this.sendBtn.classList.add('gengage-chat-send--stop', 'gds-btn-secondary');
+    this.sendBtn.classList.remove('gds-btn-primary');
+    this.sendBtn.setAttribute('aria-label', this.i18n.stopGenerating);
+    this.sendBtn.dataset['tooltip'] = this.i18n.stopGenerating;
+    this._renderSendButtonIcon('stop');
   }
 
   /** Remove the stop-generating button if present. */
   hideStopButton(): void {
-    const existing = this.messagesEl.querySelector('.gengage-chat-stop-btn');
-    existing?.remove();
+    this._sendStopHandler = null;
+    this.sendBtn.classList.remove('gengage-chat-send--stop', 'gds-btn-secondary');
+    this.sendBtn.classList.add('gds-btn-primary');
+    this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
+    this.sendBtn.dataset['tooltip'] = this.i18n.sendButton;
+    this._renderSendButtonIcon('send');
+    this._updateSendEnabled();
   }
 
   showError(message?: string, onRetry?: () => void): void {
@@ -1463,6 +1484,43 @@ export class ChatDrawer {
     this._panelAiZoneEl.setAttribute('hidden', '');
   }
 
+  private _syncPanelTopBarFromContent(contentEl: HTMLElement): void {
+    const gridHead = contentEl.querySelector<HTMLElement>('.gengage-chat-product-grid-head');
+    if (gridHead) {
+      const titleEl = gridHead.querySelector<HTMLElement>('.gengage-chat-product-grid-head-title');
+      const actionsEl = gridHead.querySelector<HTMLElement>('.gengage-chat-product-grid-head-actions');
+      if (titleEl?.textContent?.trim()) {
+        const derivedTitle = titleEl.textContent.trim();
+        contentEl.dataset['gengagePanelDerivedTitle'] = derivedTitle;
+        this._panelTopBar.setTitle(derivedTitle);
+      }
+      if (actionsEl) {
+        actionsEl.classList.add('gengage-chat-panel-topbar-toolbar-host');
+        this._panelTopBar.setActions(actionsEl);
+      } else {
+        this._panelTopBar.setActions(null);
+      }
+      gridHead.remove();
+      return;
+    }
+    this._syncPanelTopBarTitleFromContent(contentEl);
+  }
+
+  private _syncPanelTopBarTitleFromContent(contentEl: HTMLElement): void {
+    const derivedTitle = contentEl.dataset['gengagePanelDerivedTitle'];
+    if (derivedTitle?.trim()) {
+      this._panelTopBar.setTitle(derivedTitle.trim());
+      return;
+    }
+    const titleCandidate = contentEl.querySelector<HTMLElement>(
+      '.gengage-chat-product-details-title, .gengage-chat-product-details-similars-heading, .gengage-chat-ai-top-picks-title',
+    );
+    const titleText = titleCandidate?.textContent?.trim();
+    if (titleText) {
+      this._panelTopBar.setTitle(titleText);
+    }
+  }
+
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
     this._destroyLoadingBinding(this._panelLoadingBinding);
@@ -1479,9 +1537,11 @@ export class ChatDrawer {
     this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(this._panelAiZoneEl);
+    this._panelTopBar.setActions(null);
     this._panelEl.appendChild(el);
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
+    this._syncPanelTopBarFromContent(el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1506,6 +1566,7 @@ export class ChatDrawer {
     const thumb = this._thumbnailsColumn.getElement();
     const ref = thumb.parentElement === this._panelEl ? thumb : this._panelFloatingEl;
     this._panelEl.insertBefore(el, ref);
+    this._syncPanelTopBarFromContent(this.getPanelContentElement() ?? el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1599,10 +1660,10 @@ export class ChatDrawer {
       }
       case 'comparisonTable': {
         skeleton.classList.add('gengage-chat-panel-skeleton--comparison');
+        skeleton.appendChild(panelStatus);
         const root = document.createElement('div');
         root.className = 'gengage-chat-comparison gengage-chat-comparison--skeleton';
         root.setAttribute('aria-busy', 'true');
-        root.appendChild(panelStatus);
 
         // Önerilen seçim kartı — gerçek .gengage-chat-comparison-recommended ile aynı kutu
         const rec = document.createElement('div');
@@ -1744,6 +1805,10 @@ export class ChatDrawer {
     // On mobile the back button always closes the side-panel overlay, so keep it active
     const isMobile = this._options.getMobileViewport?.() ?? false;
     this._panelTopBar.update(isMobile ? true : canBack, canForward, title);
+    const contentEl = this.getPanelContentElement();
+    if (contentEl) {
+      this._syncPanelTopBarTitleFromContent(contentEl);
+    }
   }
 
   getPanelTopBarTitle(): string {
@@ -1778,6 +1843,7 @@ export class ChatDrawer {
     this._panelEl.appendChild(this._panelAiZoneEl);
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
+    this._panelTopBar.setActions(null);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
@@ -1886,6 +1952,7 @@ export class ChatDrawer {
     const panel = this._panelEl;
     const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 10;
     panel.classList.toggle('gengage-chat-panel--has-scroll', !atBottom && panel.scrollHeight > panel.clientHeight);
+    panel.classList.toggle('gengage-chat-panel--scrolled', panel.scrollTop > 88);
   }
 
   /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */
@@ -2054,8 +2121,19 @@ export class ChatDrawer {
   }
 
   private _updateSendEnabled(): void {
+    if (this._sendStopHandler) {
+      this.sendBtn.disabled = false;
+      return;
+    }
     const hasContent = this.inputEl.value.trim().length > 0 || this._pendingAttachment !== null;
     this.sendBtn.disabled = !hasContent;
+  }
+
+  private _renderSendButtonIcon(mode: 'send' | 'stop'): void {
+    this.sendBtn.innerHTML =
+      mode === 'stop'
+        ? '<span class="gengage-chat-send-stop-icon" aria-hidden="true"></span>'
+        : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
   }
 
   private _submit(): void {
