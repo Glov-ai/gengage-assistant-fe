@@ -234,7 +234,9 @@
 .gengage-simrel-card .gengage-simrel-atc {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 100%;
+  margin: 0;
   border-top: 1px solid var(--_gengage-border-color);
   border-left: none;
   border-right: none;

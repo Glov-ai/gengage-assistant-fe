@@ -166,7 +166,8 @@
 
 /* Image-mode launcher — full-size image, no circular bg */
 .gengage-chat-launcher--image-mode {
-  background: none;
+  background: transparent;
+  border: none;
   border-radius: 0;
   box-shadow: none;
   padding: 0;
