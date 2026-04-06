@@ -3160,6 +3160,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           return;
         }
       }
+      // All callbacks succeeded — sync in-memory state so the next click reads the correct direction.
+      // IDB is intentionally skipped: the host owns persistence in callback mode.
+      if (this._session) {
+        if (favorited) {
+          this._session.favoritedSkus.add(sku);
+        } else {
+          this._session.favoritedSkus.delete(sku);
+        }
+        this._drawer?.updateFavoritesBadge(this._session.favoritedSkus.size);
+      }
       return;
     }
 
