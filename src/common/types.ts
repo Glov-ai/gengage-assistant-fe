@@ -208,8 +208,8 @@ export interface StreamEventUISpec {
   spec: UISpec;
   /** Routing hint for two-panel layout: 'panel' = detail/results panel, default = chat thread. */
   panelHint?: 'panel';
-  /** When true, dismiss panel loading / hide the side panel (chat-only PDP). */
-  clearPanel?: boolean;
+  /** When present, dismiss panel loading and hide the side panel (chat-only PDP). */
+  clearPanel?: true;
 }
 
 /** A discrete action the backend instructs the widget to perform. */

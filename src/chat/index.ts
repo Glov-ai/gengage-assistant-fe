@@ -334,8 +334,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       launcherImageUrl: config.launcherImageUrl,
       headerBadge: config.headerBadge,
       headerCartUrl: config.headerCartUrl,
-      showHeaderFavorites:
-        typeof config.onFavoritesClick === 'function' || config.headerFavoritesToggle === true,
+      showHeaderFavorites: typeof config.onFavoritesClick === 'function' || config.headerFavoritesToggle === true,
       onCartClick: () => {
         if (config.headerCartUrl) {
           this._saveSessionAndOpenURL(config.headerCartUrl);
@@ -1772,9 +1771,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 if (botMsg.threadId) {
                   inline.dataset['threadId'] = botMsg.threadId;
                 }
-                const bubble = this._shadow?.querySelector(
-                  `[data-message-id="${botMsg.id}"]`,
-                ) as HTMLElement | null;
+                const bubble = this._shadow?.querySelector(`[data-message-id="${botMsg.id}"]`) as HTMLElement | null;
                 if (bubble && bubble.parentNode === messagesContainer) {
                   bubble.after(inline);
                 } else {
@@ -3100,7 +3097,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       favoritedSkus: this._session?.favoritedSkus ?? new Set(),
       onFavoriteToggle: (sku, product) => {
-        void this._onProductFavoriteToggle(sku, product);
+        void this._toggleProductFavorite(sku, product);
       },
       isMobile: this._isMobileViewport,
     };
@@ -3117,17 +3114,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Revert optimistic heart UI after a failed host favorite callback. */
   private _revertFavoriteHeartUi(sku: string): void {
-    const btn = this._shadow?.querySelector(
-      `[data-gengage-favorite-sku="${CSS.escape(sku)}"]`,
-    ) as HTMLButtonElement | null;
-    if (!btn) return;
-    btn.classList.toggle('gengage-chat-favorite-btn--active');
-    const svg = btn.querySelector('svg');
-    if (svg) {
-      svg.setAttribute(
-        'fill',
-        btn.classList.contains('gengage-chat-favorite-btn--active') ? 'currentColor' : 'none',
-      );
+    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${CSS.escape(sku)}"]`);
+    if (!btns?.length) return;
+    for (const btn of btns) {
+      if (!(btn instanceof HTMLButtonElement)) continue;
+      btn.classList.toggle('gengage-chat-favorite-btn--active');
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('fill', btn.classList.contains('gengage-chat-favorite-btn--active') ? 'currentColor' : 'none');
+      }
     }
   }
 
@@ -3135,22 +3130,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    * Product-card favorite: dispatches window + bridge for the host, then runs `addCallback('gengage-product-favorite')`
    * handlers when registered. If none are registered, falls back to IDB favorites + optional `like` backend action.
    */
-  private async _onProductFavoriteToggle(sku: string, product: Record<string, unknown>): Promise<void> {
+  private async _toggleProductFavorite(sku: string, product: Record<string, unknown>): Promise<void> {
     const wasLiked = this._session?.favoritedSkus.has(sku) ?? false;
     const favorited = !wasLiked;
-    const detail: Record<string, unknown> = {
+    const detail = {
       sku,
       product,
       favorited,
       sessionId: this.config.session?.sessionId ?? null,
     };
 
-    dispatch('gengage:chat:product-favorite', {
-      sku,
-      product,
-      favorited,
-      sessionId: this.config.session?.sessionId ?? null,
-    });
+    dispatch('gengage:chat:product-favorite', detail);
     this._bridge?.send('productFavorite', detail);
 
     const callbacks = this._eventCallbacks.get('gengage-product-favorite');

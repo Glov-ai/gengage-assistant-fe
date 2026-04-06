@@ -1188,7 +1188,7 @@
   margin-bottom: 16px;
 }
 
-/* Mobilde panel yükleme satırı taşmasın; metin tek satır + ellipsis */
+/* Mobile: prevent panel loading status overflow; single line with ellipsis */
 .gengage-chat-root--mobile .gengage-chat-panel-loading-status.gds-progress-loader-panel {
   max-width: 100%;
   min-width: 0;
@@ -5701,7 +5701,7 @@ button.gengage-chat-product-card-cta {
   display: flex;
   gap: 8px;
   padding-right: 34px; /* clear close (top-right) */
-  align-items: center; /* rozet + yazı aynı dikey eksende */
+  align-items: center; /* badge and text on the same vertical axis */
   min-height: 26px;
 }
 
@@ -5749,7 +5749,7 @@ button.gengage-chat-product-card-cta {
   justify-content: center;
 }
 
-/* ✕ — sağ üst, tam kare (.gds-btn min-height ve .gds-icon-btn boyutlarını ezer) */
+/* Close (✕) — top-right, fixed square; overrides gds-btn min-height and gds-icon-btn sizing */
 .gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-close {
   position: absolute;
   top: 9px;
@@ -5758,10 +5758,10 @@ button.gengage-chat-product-card-cta {
   width: 26px;
   height: 26px;
   min-width: 26px;
-  min-height: 26px !important;
+  min-height: 26px;
   max-width: 26px;
   max-height: 26px;
-  padding: 0 !important;
+  padding: 0;
   border-radius: 8px;
   flex: none;
   align-self: unset;
@@ -6602,7 +6602,7 @@ button.gengage-chat-product-card-cta {
   box-shadow: 2px 0 4px color-mix(in srgb, var(--surface-shell) 8%, transparent);
 }
 
-/* İlk sütun: sola hizalı, dar tutulup uzun kriter adları … ile kısaltılır */
+/* First column: left-aligned and narrow — long criterion names truncate with ellipsis */
 .gengage-chat-comparison--mobile .gengage-chat-comparison-table thead th:first-child {
   width: 22ch;
   max-width: 22ch;
@@ -6830,7 +6830,7 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-trigger-label,
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-trigger-chevron,
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-comparison-toggle-label {
-  display: none !important;
+  display: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-dropdown {
@@ -6889,7 +6889,7 @@ button.gengage-chat-product-card-cta {
 
 /* Panel close (✕) — hidden on mobile; use header “reopen panel” / back stack instead */
 .gengage-chat-root--mobile .gengage-chat-panel-topbar-close {
-  display: none !important;
+  display: none;
 }
 
 /* ---------------------------------------------------------------------------
