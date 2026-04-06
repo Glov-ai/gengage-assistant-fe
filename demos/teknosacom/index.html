@@ -489,6 +489,7 @@
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
+      const assistantAvatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
 
       const controller = await initOverlayWidgets({
         accountId: 'teknosacom',
@@ -512,18 +513,18 @@
           '--client-primary-soft': 'color-mix(in srgb, #F58220 20%, white)',
           '--client-on-primary': '#ffffff',
           '--client-focus-ring': 'color-mix(in srgb, #F58220 32%, transparent)',
-          '--gengage-chat-launcher-size': '112px',
+          '--gengage-chat-launcher-size': '64px',
         },
         isDemoWebsite: true,
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: 'Teknosa Asistan',
-          launcherImageUrl: new URL('./teknosa-avatar.svg', import.meta.url).href,
-          headerAvatarUrl: new URL('./teknosa-avatar.svg', import.meta.url).href,
+          headerTitle: "Teknosa'ya Sor",
+          launcherImageUrl: assistantAvatarUrl,
+          headerAvatarUrl: assistantAvatarUrl,
           i18n: {
-            inputPlaceholder: 'Elektronik ürün ara veya soru sor',
-            poweredBy: 'Teknosa AI Asistan',
+            inputPlaceholder: 'Ürün ara, soru sor',
+            poweredBy: 'Gengage ile',
           },
         },
         qna: {
@@ -544,6 +545,123 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      const teknosaLauncherCss = `
+        .gengage-chat-launcher-container {
+          right: 24px;
+          bottom: 24px;
+        }
+
+        .gengage-chat-launcher.gengage-chat-launcher--image-mode {
+          width: 188px;
+          min-width: 188px;
+          max-width: 188px;
+          height: 60px;
+          padding: 6px 7px 6px 22px;
+          display: inline-flex;
+          flex-direction: row-reverse;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          border-radius: 999px;
+          border: 1px solid color-mix(in srgb, var(--brand-secondary) 6%, white);
+          background: #ffffff;
+          box-shadow:
+            0 18px 46px color-mix(in srgb, var(--brand-secondary) 17%, transparent),
+            0 4px 14px color-mix(in srgb, var(--brand-secondary) 8%, transparent);
+        }
+
+        .gengage-chat-launcher.gengage-chat-launcher--image-mode:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 22px 52px color-mix(in srgb, var(--brand-secondary) 22%, transparent),
+            0 6px 18px color-mix(in srgb, var(--brand-secondary) 12%, transparent);
+        }
+
+        .teknosa-launcher-label {
+          color: var(--brand-secondary);
+          font: 500 15px/1.05 var(--brand-font);
+          letter-spacing: -0.02em;
+          white-space: nowrap;
+          flex: 0 0 auto;
+        }
+
+        .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
+          width: 46px;
+          height: 46px;
+          flex: 0 0 46px;
+          border-radius: 999px;
+          object-fit: cover;
+          object-position: center;
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+        }
+
+        .gengage-chat-header-avatar {
+          width: 52px;
+          height: 52px;
+          border: 0;
+          box-shadow: none;
+          background: transparent;
+          object-fit: cover;
+          object-position: center;
+        }
+
+        @media (max-width: 768px) {
+          .gengage-chat-launcher.gengage-chat-launcher--image-mode {
+            width: 174px;
+            min-width: 174px;
+            max-width: 174px;
+            height: 56px;
+            padding-left: 20px;
+            padding-right: 7px;
+          }
+
+          .teknosa-launcher-label {
+            font-size: 14px;
+          }
+
+          .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
+            width: 42px;
+            height: 42px;
+            flex-basis: 42px;
+          }
+        }
+      `;
+
+      const enhanceTeknosaLauncher = () => {
+        const host = document.querySelector('[data-gengage-widget="gengagechat"]');
+        const root = host instanceof HTMLElement ? host.shadowRoot : null;
+        if (!root) return false;
+
+        if (!root.getElementById('teknosa-launcher-style')) {
+          const style = document.createElement('style');
+          style.id = 'teknosa-launcher-style';
+          style.textContent = teknosaLauncherCss;
+          root.appendChild(style);
+        }
+
+        const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
+        if (!(launcher instanceof HTMLButtonElement) || launcher.querySelector('.teknosa-launcher-label')) {
+          return launcher instanceof HTMLButtonElement;
+        }
+        launcher.setAttribute('aria-label', "Teknosa'ya Sor");
+        const label = document.createElement('span');
+        label.className = 'teknosa-launcher-label';
+        label.textContent = "Teknosa'ya Sor";
+        launcher.appendChild(label);
+        return true;
+      };
+      if (!enhanceTeknosaLauncher()) {
+        const launcherObserver = new MutationObserver(() => {
+          if (enhanceTeknosaLauncher()) {
+            launcherObserver.disconnect();
+          }
+        });
+        launcherObserver.observe(document.body, { childList: true, subtree: true });
+        window.setTimeout(() => launcherObserver.disconnect(), 5000);
+      }
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

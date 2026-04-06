@@ -393,8 +393,9 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       fontSize: '14px',
     },
     chatI18n: {
-      inputPlaceholder: 'Elektronik ürün ara veya soru sor',
-      poweredBy: 'Teknosa AI Asistan',
+      inputPlaceholder: 'Ürün ara, soru sor',
+      poweredBy: 'Gengage ile',
+      headerTitle: "Teknosa'ya Sor",
     },
   },
 
