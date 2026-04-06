@@ -502,7 +502,7 @@
   height: 16px;
   border-radius: 999px;
   background: var(--error);
-  color: white;
+  color: var(--text-inverse);
   font-size: 9px;
   font-weight: 700;
   line-height: 16px;
@@ -4008,9 +4008,6 @@ button.gengage-chat-product-card-cta {
   .gengage-chat-ai-toppick-card,
   .gengage-chat-mic-btn--active,
   .gengage-chat-ai-toppick-spinner::after,
-  .gengage-chat-panel-shimmer,
-  .gengage-chat-overlay,
-  .gengage-chat-product-details-skeleton-price,
   .gengage-skeleton-card,
   .gengage-skeleton-line,
   .gengage-skeleton-img,
@@ -5719,7 +5716,7 @@ button.gengage-chat-product-card-cta {
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   background: var(--_gengage-discount-color);
-  color: white;
+  color: var(--text-inverse);
   font-size: 11px;
   font-weight: 700;
   line-height: 1.3;
@@ -6028,17 +6025,6 @@ button.gengage-chat-product-card-cta {
   pointer-events: auto;
   opacity: 1;
   transform: translateY(0);
-}
-
-@keyframes gengage-choice-prompter-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .gengage-chat-choice-prompter-heading {
@@ -6469,7 +6455,6 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-panel-topbar-forward:focus-visible,
 .gengage-chat-rollback-btn:focus-visible,
 .gengage-chat-ai-toppick-cta:focus-visible,
-.gengage-chat-comparison-view-btn:focus-visible,
 .gengage-chat-comparison-toggle-btn:focus-visible,
 .gengage-chat-comparison-floating-btn:focus-visible,
 .gengage-chat-comparison-checkbox:focus-visible,
@@ -6679,7 +6664,7 @@ button.gengage-chat-product-card-cta {
   left: 50%;
   transform: translateX(-50%) translateY(8px);
   background: var(--success);
-  color: white;
+  color: var(--text-inverse);
   font-size: 13px;
   font-weight: 600;
   padding: 8px 18px;
