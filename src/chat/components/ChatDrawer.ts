@@ -182,6 +182,7 @@ export class ChatDrawer {
   private _attachMenuEl: HTMLElement | null = null;
   private _attachBtn: HTMLButtonElement | null = null;
   private _attachMenuCleanup: (() => void) | null = null;
+  private _attachMenuClickTimerId: number | null = null;
   private _typingLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
@@ -1380,6 +1381,10 @@ export class ChatDrawer {
     if (!this._attachMenuEl) return;
     this._attachMenuEl.setAttribute('hidden', '');
     this._attachBtn?.setAttribute('aria-expanded', 'false');
+    if (this._attachMenuClickTimerId !== null) {
+      clearTimeout(this._attachMenuClickTimerId);
+      this._attachMenuClickTimerId = null;
+    }
     if (this._attachMenuCleanup) {
       this._attachMenuCleanup();
       this._attachMenuCleanup = null;
@@ -1400,7 +1405,8 @@ export class ChatDrawer {
         this._closeAttachMenu();
       }
     };
-    window.setTimeout(() => {
+    this._attachMenuClickTimerId = window.setTimeout(() => {
+      this._attachMenuClickTimerId = null;
       document.addEventListener('click', onDocCapture, true);
     }, 0);
     document.addEventListener('keydown', onEsc, true);
@@ -1958,7 +1964,7 @@ export class ChatDrawer {
     let startY = 0;
 
     const onTouchStart = (e: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const t = e.touches[0];
       if (!t) return;
       startX = t.clientX;
@@ -1966,7 +1972,7 @@ export class ChatDrawer {
     };
 
     const onTouchEnd = (e: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const t = e.changedTouches[0];
       if (!t) return;
       const dx = t.clientX - startX;
@@ -2478,6 +2484,13 @@ export class ChatDrawer {
       cancelAnimationFrame(this._resizeRafId);
       this._resizeRafId = null;
     }
+    this._destroyLoadingBinding(this._typingLoadingBinding);
+    this._typingLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelLoadingBinding);
+    this._panelLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
+    this._closeAttachMenu();
     for (const cleanup of this._cleanups) cleanup();
     this._cleanups.length = 0;
     this._voiceInput?.destroy();
