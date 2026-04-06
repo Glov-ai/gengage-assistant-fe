@@ -152,13 +152,12 @@ describe('renderAITopPicks', () => {
     expect(onAction).not.toHaveBeenCalled();
   });
 
-  it('renders expert quality score', () => {
+  it('does not render expert quality score line (redundant with product rating / labels)', () => {
     const el = makeElement([{ product: { sku: '1', name: 'Product A' }, role: 'winner', expertQualityScore: 8.5 }]);
     const ctx = makeContext();
     const dom = renderAITopPicks(el, ctx);
 
-    const score = dom.querySelector('.gengage-chat-ai-toppick-score');
-    expect(score?.textContent).toBe('8.5/10');
+    expect(dom.querySelector('.gengage-chat-ai-toppick-score')).toBeNull();
   });
 
   it('renders review highlight in the winner evidence area', () => {

@@ -97,6 +97,7 @@ function appendTopPickMedia(item: AITopPickItem, alt: string, target: HTMLElemen
       const heart = document.createElement('button');
       heart.className = 'gengage-chat-favorite-btn';
       heart.type = 'button';
+      heart.dataset.gengageFavoriteSku = sku;
       heart.setAttribute('aria-label', ctx.i18n?.addToFavoritesLabel ?? 'Add to favorites');
       const isFav = ctx.favoritedSkus?.has(sku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');
@@ -256,7 +257,7 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
   const ratingRow = renderRatingRow(product);
   if (ratingRow) body.appendChild(ratingRow);
 
-  /* Lean order: price before labels / score */
+  /* Lean order: price before labels */
   appendPriceRow(product, body, ctx);
 
   if (item.labels && item.labels.length > 0) {
@@ -265,21 +266,6 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
 
   if (isWinner) {
     appendWinnerEvidence(item, body);
-  }
-
-  if (isWinner && typeof item.expertQualityScore === 'number') {
-    const score = document.createElement('div');
-    score.className = 'gengage-chat-ai-toppick-score';
-    score.dataset['gengagePart'] = 'ai-top-pick-score';
-    let displayScore = item.expertQualityScore;
-    let maxScale = 10;
-    if (displayScore > 10) {
-      displayScore = Math.round(displayScore) / 10;
-    } else if (displayScore <= 5) {
-      maxScale = 5;
-    }
-    score.textContent = `${displayScore}/${maxScale}`;
-    body.appendChild(score);
   }
 
   card.appendChild(body);

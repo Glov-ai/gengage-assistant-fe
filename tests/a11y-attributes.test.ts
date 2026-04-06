@@ -7,14 +7,14 @@ import { ChatDrawer } from '../src/chat/components/ChatDrawer.js';
 import { CHAT_I18N_TR } from '../src/chat/locales/index.js';
 import { renderComparisonTable } from '../src/chat/components/ComparisonTable.js';
 
-function createDrawer(options?: { headerFavoritesToggle?: boolean; onFavoritesClick?: () => void }) {
+function createDrawer(options?: { showHeaderFavorites?: boolean; onFavoritesClick?: () => void }) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const drawer = new ChatDrawer(container, {
     i18n: CHAT_I18N_TR,
     onSend: () => {},
     onClose: () => {},
-    headerFavoritesToggle: options?.headerFavoritesToggle,
+    showHeaderFavorites: options?.showHeaderFavorites,
     onFavoritesClick: options?.onFavoritesClick,
   });
   return { container, drawer };
@@ -56,26 +56,20 @@ describe('ChatDrawer a11y attributes', () => {
     expect(descSpan?.textContent).toBe('Search for similar products');
   });
 
-  it('favorite button has aria-pressed that toggles on click', () => {
+  it('favorite header button invokes onFavoritesClick', () => {
     const onFav = vi.fn();
     ({ container, drawer } = createDrawer({
-      headerFavoritesToggle: true,
+      showHeaderFavorites: true,
       onFavoritesClick: onFav,
     }));
 
-    // Find the favorites button by aria-label
     const favBtn = container.querySelector(
       `button[aria-label="${CHAT_I18N_TR.favoritesAriaLabel}"]`,
     ) as HTMLButtonElement;
     expect(favBtn).not.toBeNull();
 
-    expect(favBtn.getAttribute('aria-pressed')).toBe('false');
-
     favBtn.click();
-    expect(favBtn.getAttribute('aria-pressed')).toBe('true');
-
-    favBtn.click();
-    expect(favBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(onFav).toHaveBeenCalledTimes(1);
   });
 });
 

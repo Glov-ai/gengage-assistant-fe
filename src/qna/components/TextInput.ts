@@ -52,7 +52,7 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
   sendBtn.setAttribute('aria-label', options.sendQuestionAriaLabel ?? 'Send question');
 
   const combo = document.createElement('div');
-  combo.className = 'gengage-qna-input-combo gds-input-shell';
+  combo.className = 'gengage-qna-input-combo';
   combo.dataset['gengagePart'] = 'qna-input-combo';
 
   const submit = () => {

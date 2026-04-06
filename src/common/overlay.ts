@@ -89,6 +89,8 @@ export interface OverlayChatOptions {
   headerBadge?: string;
   headerCartUrl?: string;
   headerFavoritesToggle?: boolean;
+  /** Opens merchant favorites page (passed to chat `onFavoritesClick`). */
+  onFavoritesClick?: () => void;
   hideMobileLauncher?: boolean;
   mobileBreakpoint?: number;
   mobileInitialState?: 'half' | 'full';
@@ -308,6 +310,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.headerCartUrl !== undefined) config.headerCartUrl = this.options.chat.headerCartUrl;
     if (this.options.chat?.headerFavoritesToggle !== undefined) {
       config.headerFavoritesToggle = this.options.chat.headerFavoritesToggle;
+    }
+    if (this.options.chat?.onFavoritesClick !== undefined) {
+      config.onFavoritesClick = this.options.chat.onFavoritesClick;
     }
     if (this.options.chat?.hideMobileLauncher !== undefined) {
       config.hideMobileLauncher = this.options.chat.hideMobileLauncher;

@@ -208,6 +208,8 @@ export interface StreamEventUISpec {
   spec: UISpec;
   /** Routing hint for two-panel layout: 'panel' = detail/results panel, default = chat thread. */
   panelHint?: 'panel';
+  /** When present, dismiss panel loading and hide the side panel (chat-only PDP). */
+  clearPanel?: true;
 }
 
 /** A discrete action the backend instructs the widget to perform. */
@@ -327,6 +329,7 @@ export type GengageEventName =
   | 'gengage:chat:redirect'
   | 'gengage:chat:script-call'
   | 'gengage:chat:add-to-cart'
+  | 'gengage:chat:product-favorite'
   | 'gengage:qna:action'
   | 'gengage:qna:open-chat'
   | 'gengage:similar:product-click'
@@ -345,6 +348,12 @@ export type GengageEventDetailMap = {
   'gengage:chat:redirect': { target: unknown; payload: unknown };
   'gengage:chat:script-call': { name: string; payload?: Record<string, unknown> };
   'gengage:chat:add-to-cart': { sku: string; cartCode: string; quantity: number; sessionId: string | null };
+  'gengage:chat:product-favorite': {
+    sku: string;
+    product: Record<string, unknown>;
+    favorited: boolean;
+    sessionId: string | null;
+  };
   'gengage:qna:action': ActionPayload;
   'gengage:qna:open-chat': Record<string, never>;
   'gengage:similar:product-click': { sku: string; url: string; sessionId: string | null };

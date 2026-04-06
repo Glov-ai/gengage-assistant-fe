@@ -69,7 +69,9 @@ export function renderFloatingComparisonButton(selectedSkus: string[], ctx: Chat
     close.setAttribute('aria-label', ctx.i18n?.closeAriaLabel ?? 'Close');
     close.innerHTML =
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>';
-    close.addEventListener('click', () => {
+    close.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       ctx.onToggleComparisonSku?.('');
     });
     dock.appendChild(close);

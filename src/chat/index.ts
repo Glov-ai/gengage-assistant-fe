@@ -318,7 +318,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onPanelBack: () => this._navigatePanelBack(),
       onPanelForward: () => this._panel?.navigateForward(),
       onPanelClose: () => {
-        // User tapped ✕ on mobile — clear all panel history and comparison state
+        // Mobile ✕: panel is only hidden (content kept); header reopen stays meaningful.
+        if (this._isMobileViewport) {
+          this._comparisonSelectMode = false;
+          this._comparisonSelectedSkus = [];
+          return;
+        }
         this._localPanelHistory = [];
         this._comparisonSelectMode = false;
         this._comparisonSelectedSkus = [];
@@ -329,7 +334,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       launcherImageUrl: config.launcherImageUrl,
       headerBadge: config.headerBadge,
       headerCartUrl: config.headerCartUrl,
-      headerFavoritesToggle: config.headerFavoritesToggle,
+      showHeaderFavorites: typeof config.onFavoritesClick === 'function' || config.headerFavoritesToggle === true,
       onCartClick: () => {
         if (config.headerCartUrl) {
           this._saveSessionAndOpenURL(config.headerCartUrl);
@@ -339,7 +344,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       onFavoritesClick: () => {
         ga.trackLikeList();
-        config.onFavoritesClick?.();
+        if (typeof config.onFavoritesClick === 'function') {
+          config.onFavoritesClick();
+          return;
+        }
         this._openFavoritesPanel();
       },
       getMobileState: () => this._openState ?? 'full',
@@ -360,34 +368,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       voiceLang: config.locale
         ? `${config.locale.split('-')[0] ?? 'tr'}-${(config.locale.split('-')[1] ?? config.locale.split('-')[0] ?? 'TR').toUpperCase()}`
         : undefined,
-      onNewChat: () => {
-        this._abortAllActiveRequests();
-        this._activeTypewriter?.cancel();
-        this._activeTypewriter = null;
-        this._activeTtsHandle?.stop();
-        this._activeTtsHandle = null;
-        this._messages = [];
-        this._drawer?.clearMessages();
-        this._currentThreadId = uuidv7();
-        this._lastThreadId = this._currentThreadId;
-        this._entryContextPrimed = false;
-        this._choicePrompterEl?.remove();
-        this._choicePrompterEl = null;
-        this._viewedProductSkus.clear();
-        this._drawer?.clearPanel();
-        this._consecutiveErrorCount = 0;
-        this._lastErrorMessage = '';
-        this._thumbnailEntries = [];
-        this._drawer?.setThumbnails([]);
-        this._panel!.snapshots.clear();
-        this._panel!.threads = [];
-        this._presentation.reset();
-        this._drawer?.setPresentationFocus(null);
-        this._drawer?.setFormerMessagesButtonVisible(false);
-        // Re-show welcome if configured
-        this._showWelcomeIfNeeded();
-        this._maybePrimeEntryContextOpening();
-      },
       presentation: {
         onPinnedToBottomChange: (pinned) => {
           this._presentation.pinnedToBottom = pinned;
@@ -668,9 +648,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   /**
-   * Register a callback for a GA4 event name (e.g. 'gengage-cart-add').
+   * Register a callback for integration events (e.g. 'gengage-cart-add', 'gengage-product-favorite').
    * The callback receives the event detail and should return true (success) or false (failure).
    * For add-to-cart, failure triggers an error message in the chat.
+   * For product-favorite, failure reverts the heart on the card and shows an error message.
    * @returns unsubscribe function
    */
   addCallback(
@@ -869,6 +850,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         const payload = msg.payload as Record<string, unknown> | undefined;
         if (payload && 'quantity' in payload && typeof payload.quantity === 'number') {
           this._cartQuantity = payload.quantity;
+        }
+        break;
+      }
+      case 'favoritesCountHandler': {
+        const payload = msg.payload as Record<string, unknown> | undefined;
+        const count = payload?.count;
+        if (typeof count === 'number' && count >= 0) {
+          this._drawer?.updateFavoritesBadge(count);
         }
         break;
       }
@@ -1634,12 +1623,34 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
         },
-        onUISpec: (spec, widget, panelHint) => {
+        onUISpec: (spec, widget, panelHint, clearPanel) => {
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           if (widget !== 'chat') return;
 
+          // productDetails + hide_side_panel → StreamEventUISpec.clearPanel (see protocol-adapter).
+          // Always hide/clear the left panel; do not use restoreOrClearPanel() here — that path
+          // restores the pre-loading snapshot while the skeleton is shown, which breaks chat-only PDP.
+          if (clearPanel) {
+            this._choicePrompterEl?.remove();
+            this._choicePrompterEl = null;
+            this._drawer?.clearPanel();
+            this._currentPanelSource = null;
+            panelLoadingSeen = false;
+            this._thumbnailEntries = [];
+            this._drawer?.setThumbnails([]);
+            this._comparisonSelectMode = false;
+            this._comparisonSelectedSkus = [];
+            if (this._panel) {
+              this._panel.currentType = null;
+              this._panel.updateExtendedMode('');
+              this._panel.updateTopBar('');
+            }
+          }
+
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
+          const effectivePanelHint =
+            componentType === 'ProductDetailsPanel' && panelHint !== 'panel' ? ('panel' as const) : panelHint;
           this.track(
             streamUiSpecEvent(this.analyticsContext(), {
               request_id: requestId,
@@ -1662,9 +1673,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             ga.trackSearch(undefined, childCount);
           }
 
-          const panelSpec = panelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
+          const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
-          if (panelHint === 'panel' && this._panel) {
+          if (effectivePanelHint === 'panel' && this._panel) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
 
@@ -1697,6 +1708,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // Reset comparison state when new panel content replaces the grid
               this._comparisonSelectMode = false;
               this._comparisonSelectedSkus = [];
+              this._comparisonSelectionWarning = null;
+              this._drawer?.setComparisonDockContent(null);
               this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
               this._currentPanelSource = { kind: 'spec', spec: panelSpec };
               this._panel.currentType = componentType;
@@ -1740,7 +1753,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // ProductDetailsPanel goes to the panel, but also render a compact
           // horizontal ProductSummaryCard in chat messages (production parity
           // with the prior engine's LaunchSingleProduct component).
-          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && panelHint === 'panel') {
+          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && effectivePanelHint === 'panel') {
             const product = rootElement?.props?.['product'] as Record<string, unknown> | undefined;
             if (product) {
               const inlineSpec: UISpec = {
@@ -1758,7 +1771,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 if (botMsg.threadId) {
                   inline.dataset['threadId'] = botMsg.threadId;
                 }
-                messagesContainer.appendChild(inline);
+                const bubble = this._shadow?.querySelector(`[data-message-id="${botMsg.id}"]`) as HTMLElement | null;
+                if (bubble && bubble.parentNode === messagesContainer) {
+                  bubble.after(inline);
+                } else {
+                  messagesContainer.appendChild(inline);
+                }
                 inline.scrollIntoView({ behavior: 'auto', block: 'end' });
                 this._drawer?.refreshPresentationCollapsed();
               }
@@ -1783,7 +1801,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const shouldRenderInline =
             !botMsg.silent &&
-            (panelHint !== 'panel' || componentType === 'ProductCard') &&
+            (effectivePanelHint !== 'panel' || componentType === 'ProductCard') &&
             componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
@@ -1850,7 +1868,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const productGridChildCount = rootElement?.children?.length ?? 0;
           if (
             componentType === 'ProductGrid' &&
-            panelHint === 'panel' &&
+            effectivePanelHint === 'panel' &&
             productGridChildCount > 1 &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
@@ -2849,12 +2867,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    */
   private _refreshComparisonUI(): void {
     const panelEl = this._shadow?.querySelector('.gengage-chat-panel');
-    if (!panelEl) return;
+    if (!panelEl) {
+      this._drawer?.setComparisonDockContent(null);
+      return;
+    }
 
     const gridWrapper = panelEl.querySelector('.gengage-chat-product-grid-wrapper');
-    if (!gridWrapper) return;
-    const grid = gridWrapper.querySelector('.gengage-chat-product-grid');
-    if (!grid) return;
+    const grid = gridWrapper?.querySelector('.gengage-chat-product-grid');
+    if (!gridWrapper || !grid) {
+      this._drawer?.setComparisonDockContent(null);
+      return;
+    }
 
     // 1. Toggle comparison button active state
     const toggleBtn = gridWrapper.querySelector('.gengage-chat-comparison-toggle-btn');
@@ -2941,12 +2964,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // 3. Update the slim bottom-docked comparison bar
     const existingFloating = gridWrapper.querySelector('.gengage-chat-comparison-floating-btn');
+    existingFloating?.remove();
     if (this._comparisonSelectMode) {
-      existingFloating?.remove();
       const dock = renderFloatingComparisonButton(this._comparisonSelectedSkus, this._buildRenderContext());
-      gridWrapper.appendChild(dock);
+      if (this._isMobileViewport) {
+        this._drawer?.setComparisonDockContent(dock);
+      } else {
+        this._drawer?.setComparisonDockContent(null);
+        gridWrapper.appendChild(dock);
+      }
     } else {
-      existingFloating?.remove();
+      this._drawer?.setComparisonDockContent(null);
     }
   }
 
@@ -3069,21 +3097,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       favoritedSkus: this._session?.favoritedSkus ?? new Set(),
       onFavoriteToggle: (sku, product) => {
-        const wasLiked = this._session?.favoritedSkus.has(sku) ?? false;
-        void this._toggleFavorite(sku, product);
-        // Only send like action to backend when adding, not when removing
-        if (!wasLiked) {
-          ga.trackLikeProduct(sku);
-          const productName = (product['name'] as string | undefined) ?? sku;
-          this._sendAction(
-            {
-              title: productName,
-              type: 'like',
-              payload: { sku },
-            },
-            { preservePanel: true },
-          );
-        }
+        void this._toggleProductFavorite(sku, product);
       },
       isMobile: this._isMobileViewport,
     };
@@ -3096,6 +3110,82 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const appId = this.config.accountId;
     await this._session.toggleFavorite(userId, appId, sku, product);
     this._drawer?.updateFavoritesBadge(this._session.favoritedSkus.size);
+  }
+
+  /** Revert optimistic heart UI after a failed host favorite callback. */
+  private _revertFavoriteHeartUi(sku: string): void {
+    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${CSS.escape(sku)}"]`);
+    if (!btns?.length) return;
+    for (const btn of btns) {
+      if (!(btn instanceof HTMLButtonElement)) continue;
+      btn.classList.toggle('gengage-chat-favorite-btn--active');
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('fill', btn.classList.contains('gengage-chat-favorite-btn--active') ? 'currentColor' : 'none');
+      }
+    }
+  }
+
+  /**
+   * Product-card favorite: dispatches window + bridge for the host, then runs `addCallback('gengage-product-favorite')`
+   * handlers when registered. If none are registered, falls back to IDB favorites + optional `like` backend action.
+   */
+  private async _toggleProductFavorite(sku: string, product: Record<string, unknown>): Promise<void> {
+    const wasLiked = this._session?.favoritedSkus.has(sku) ?? false;
+    const favorited = !wasLiked;
+    const detail = {
+      sku,
+      product,
+      favorited,
+      sessionId: this.config.session?.sessionId ?? null,
+    };
+
+    dispatch('gengage:chat:product-favorite', detail);
+    this._bridge?.send('productFavorite', detail);
+
+    const callbacks = this._eventCallbacks.get('gengage-product-favorite');
+    if (callbacks && callbacks.size > 0) {
+      for (const cb of callbacks) {
+        try {
+          const result = cb(detail);
+          const success = result instanceof Promise ? await result : result;
+          if (success === false) {
+            this._revertFavoriteHeartUi(sku);
+            this._handleCallbackFailure('gengage-product-favorite', detail);
+            return;
+          }
+        } catch {
+          this._revertFavoriteHeartUi(sku);
+          this._handleCallbackFailure('gengage-product-favorite', detail);
+          return;
+        }
+      }
+      // All callbacks succeeded — sync in-memory state so the next click reads the correct direction.
+      // IDB is intentionally skipped: the host owns persistence in callback mode.
+      if (this._session) {
+        if (favorited) {
+          this._session.favoritedSkus.add(sku);
+        } else {
+          this._session.favoritedSkus.delete(sku);
+        }
+        this._drawer?.updateFavoritesBadge(this._session.favoritedSkus.size);
+      }
+      return;
+    }
+
+    await this._toggleFavorite(sku, product);
+    if (favorited) {
+      ga.trackLikeProduct(sku);
+      const productName = (product['name'] as string | undefined) ?? sku;
+      this._sendAction(
+        {
+          title: productName,
+          type: 'like',
+          payload: { sku },
+        },
+        { preservePanel: true },
+      );
+    }
   }
 
   private _openFavoritesPanel(): void {
@@ -3194,6 +3284,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.addMessage(botMsg);
       // Note: _sendAction is NOT called here — onAddToCart already sent the backend
       // request unconditionally. Sending again would duplicate the cart-add action.
+    }
+    if (eventName === 'gengage-product-favorite') {
+      const errorText = this._i18n.favoriteToggleErrorMessage;
+      const botMsg = this._createMessage('assistant', errorText);
+      if (this._currentThreadId) botMsg.threadId = this._currentThreadId;
+      this._messages.push(botMsg);
+      this._drawer?.addMessage(botMsg);
     }
   }
 

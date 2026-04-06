@@ -137,6 +137,27 @@ describe('adaptBackendEvent', () => {
     expect(product['specifications']).toEqual({ Color: 'Black' });
   });
 
+  it('adapts productDetails with hide_side_panel to ProductSummaryCard and clearPanel', () => {
+    const raw = {
+      type: 'productDetails',
+      payload: {
+        hide_side_panel: true,
+        productDetails: {
+          sku: 'P1',
+          name: 'Detail Product',
+          price: 200,
+          url: 'https://example.com',
+        },
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('ui_spec');
+    expect((result as { panelHint?: string }).panelHint).toBeUndefined();
+    expect((result as { clearPanel?: boolean }).clearPanel).toBe(true);
+    const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
+    expect(uiSpec.spec.elements['root']!.type).toBe('ProductSummaryCard');
+  });
+
   it('adapts productDetailsSimilars to chat panel ui_spec', () => {
     const raw = {
       type: 'productDetailsSimilars',

@@ -191,6 +191,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const heart = document.createElement('button');
       heart.className = 'gengage-chat-favorite-btn';
       heart.type = 'button';
+      heart.dataset.gengageFavoriteSku = favSku;
       heart.setAttribute('aria-label', ctx.i18n?.addToFavoritesLabel ?? 'Add to favorites');
       const isFav = ctx.favoritedSkus?.has(favSku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');
@@ -1140,7 +1141,6 @@ function renderProductGrid(
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
     const sortAria = ctx.i18n?.sortToolbarAriaLabel ?? 'Sort products';
-    trigger.setAttribute('aria-label', sortAria);
 
     const triggerIcon = document.createElement('span');
     triggerIcon.className = 'gengage-chat-product-sort-trigger-icon';
@@ -1152,6 +1152,8 @@ function renderProductGrid(
       triggerLabel.textContent = opt.label;
       triggerIcon.innerHTML = productSortIconSvgHtml(opt.icon);
       dropdown.dataset['sortIcon'] = opt.icon;
+      trigger.setAttribute('aria-label', `${sortAria}: ${opt.label}`);
+      trigger.title = opt.label;
     };
     syncTriggerFromSort(currentSort);
 
@@ -1281,7 +1283,10 @@ function renderProductGrid(
       compareIcon.innerHTML = comparisonToggleIconSvgHtml();
       const compareLabel = document.createElement('span');
       compareLabel.className = 'gengage-chat-comparison-toggle-label';
-      compareLabel.textContent = ctx.i18n?.compareSelected ?? 'Compare';
+      const compareText = ctx.i18n?.compareSelected ?? 'Compare';
+      compareLabel.textContent = compareText;
+      compareBtn.setAttribute('aria-label', compareText);
+      compareBtn.title = compareText;
       compareBtn.appendChild(compareIcon);
       compareBtn.appendChild(compareLabel);
       compareBtn.addEventListener('click', () => {
@@ -1347,8 +1352,9 @@ function renderProductGrid(
     wrapper.appendChild(viewMoreBtn);
   }
 
-  // Floating comparison dock (visible whenever comparison mode is active)
-  if (ctx?.comparisonSelectMode && ctx.comparisonSelectedSkus) {
+  // Floating comparison dock — desktop: inside grid wrapper; mobile: index _refreshComparisonUI mounts into drawer slot
+  const isMobileGrid = ctx?.isMobile ?? isMobileViewport();
+  if (ctx?.comparisonSelectMode && ctx.comparisonSelectedSkus && !isMobileGrid) {
     const floatingBtn = renderFloatingComparisonButton(ctx.comparisonSelectedSkus, ctx);
     wrapper.appendChild(floatingBtn);
   }
