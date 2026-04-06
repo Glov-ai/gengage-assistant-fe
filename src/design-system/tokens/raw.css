@@ -1,10 +1,4 @@
-:where(
-  :root,
-  .gengage-chat-root,
-  .gengage-qna-container,
-  .gengage-simrel-container,
-  .gengage-simbut-root
-) {
+:where(:root, .gengage-chat-root, .gengage-qna-container, .gengage-simrel-container, .gengage-simbut-root) {
   --ds-neutral-0: #ffffff;
   --ds-neutral-25: #fcfcfd;
   --ds-neutral-50: #f6f7fb;

@@ -70,12 +70,7 @@ function renderRatingRow(product: Record<string, unknown>): HTMLElement | null {
 }
 
 /** Image-focused media with the same lightweight hover actions as listing cards. */
-function appendTopPickMedia(
-  item: AITopPickItem,
-  alt: string,
-  target: HTMLElement,
-  ctx: ChatUISpecRenderContext,
-): void {
+function appendTopPickMedia(item: AITopPickItem, alt: string, target: HTMLElement, ctx: ChatUISpecRenderContext): void {
   const media = document.createElement('div');
   media.className = 'gengage-chat-ai-toppick-media';
   media.dataset['gengagePart'] = 'ai-top-pick-media';
@@ -110,10 +105,12 @@ function appendTopPickMedia(
       heart.addEventListener('click', (e) => {
         e.stopPropagation();
         heart.classList.toggle('gengage-chat-favorite-btn--active');
-        heart.querySelector('svg')?.setAttribute(
-          'fill',
-          heart.classList.contains('gengage-chat-favorite-btn--active') ? 'currentColor' : 'none',
-        );
+        heart
+          .querySelector('svg')
+          ?.setAttribute(
+            'fill',
+            heart.classList.contains('gengage-chat-favorite-btn--active') ? 'currentColor' : 'none',
+          );
         ctx.onFavoriteToggle?.(sku, product);
       });
       imgActions.appendChild(heart);
@@ -298,7 +295,9 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
     cta.className = 'gengage-chat-ai-toppick-cta gds-btn gds-btn-primary';
     cta.dataset['gengagePart'] = 'ai-top-pick-cta';
     cta.type = 'button';
-    cta.textContent = hasCart ? (ctx.i18n?.addToCartButton ?? 'Add to Cart') : (ctx.i18n?.viewDetails ?? 'View Details');
+    cta.textContent = hasCart
+      ? (ctx.i18n?.addToCartButton ?? 'Add to Cart')
+      : (ctx.i18n?.viewDetails ?? 'View Details');
     cta.addEventListener('click', (e) => {
       e.stopPropagation();
       if (hasCart) {

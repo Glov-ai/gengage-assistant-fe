@@ -2817,8 +2817,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       } else {
         if (this._comparisonSelectedSkus.length >= GengageChat._MAX_COMPARISON_SELECTION) {
           this._comparisonSelectionWarning =
-            this._i18n.compareMaxHint ??
-            `You can select up to ${GengageChat._MAX_COMPARISON_SELECTION} products`;
+            this._i18n.compareMaxHint ?? `You can select up to ${GengageChat._MAX_COMPARISON_SELECTION} products`;
           if (this._comparisonRefreshRafId !== null) {
             cancelAnimationFrame(this._comparisonRefreshRafId);
           }

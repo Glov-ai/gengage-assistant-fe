@@ -323,8 +323,7 @@
     width: 100%;
     min-height: 48px;
     border-left: none;
-    border-top: 1px solid
-      var(--_gengage-qna-send-divider);
+    border-top: 1px solid var(--_gengage-qna-send-divider);
     font-size: 15px;
   }
 }

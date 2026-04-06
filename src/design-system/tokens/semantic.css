@@ -1,10 +1,4 @@
-:where(
-  :root,
-  .gengage-chat-root,
-  .gengage-qna-container,
-  .gengage-simrel-container,
-  .gengage-simbut-root
-) {
+:where(:root, .gengage-chat-root, .gengage-qna-container, .gengage-simrel-container, .gengage-simbut-root) {
   --surface-page: var(--gengage-page-bg, var(--ds-neutral-50));
   --surface-shell: var(--gengage-shell-bg, #10131a);
   --surface-card: var(--gengage-background-color, var(--ds-neutral-0));
@@ -20,7 +14,7 @@
   --text-inverse: var(--gengage-text-inverse, #f9fafb);
 
   --border-subtle: var(--gengage-border-subtle, rgba(17, 24, 39, 0.06));
-  --border-default: var(--gengage-border-color, rgba(17, 24, 39, 0.10));
+  --border-default: var(--gengage-border-color, rgba(17, 24, 39, 0.1));
   --border-strong: var(--gengage-border-strong, rgba(17, 24, 39, 0.18));
 
   --shadow-1: var(--gengage-shadow-1, var(--ds-shadow-1));

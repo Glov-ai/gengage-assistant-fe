@@ -296,7 +296,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
         th.className = 'gengage-chat-comparison-selected gds-comparison-table-winner-cell';
       }
       const headerCell = document.createElement('div');
-      headerCell.className = 'gengage-chat-comparison-table-header-cell gengage-chat-comparison-table-header-cell--clickable gds-clickable';
+      headerCell.className =
+        'gengage-chat-comparison-table-header-cell gengage-chat-comparison-table-header-cell--clickable gds-clickable';
       headerCell.tabIndex = 0;
       headerCell.setAttribute('role', 'button');
       headerCell.setAttribute('aria-label', product.name);

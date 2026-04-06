@@ -401,8 +401,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     const cta = document.createElement('button');
     cta.className = 'gengage-chat-product-card-cta';
     cta.type = 'button';
-    cta.textContent =
-      action.type === 'launchSingleProduct' ? ctaLabel : action.title || ctaLabel;
+    cta.textContent = action.type === 'launchSingleProduct' ? ctaLabel : action.title || ctaLabel;
     cta.addEventListener('click', (e) => {
       if (card.parentElement?.classList.contains('gengage-chat-comparison-select-wrapper')) {
         e.stopPropagation();
@@ -538,13 +537,15 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const prevBtn = document.createElement('button');
     prevBtn.type = 'button';
-    prevBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--prev gds-btn gds-btn-ghost gds-icon-btn';
+    prevBtn.className =
+      'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--prev gds-btn gds-btn-ghost gds-icon-btn';
     prevBtn.setAttribute('aria-label', prevLabel);
     prevBtn.innerHTML = navSvg('prev');
 
     const nextBtn = document.createElement('button');
     nextBtn.type = 'button';
-    nextBtn.className = 'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--next gds-btn gds-btn-ghost gds-icon-btn';
+    nextBtn.className =
+      'gengage-chat-product-gallery-nav gengage-chat-product-gallery-nav--next gds-btn gds-btn-ghost gds-icon-btn';
     nextBtn.setAttribute('aria-label', nextLabel);
     nextBtn.innerHTML = navSvg('next');
 
@@ -1147,8 +1148,7 @@ function renderProductGrid(
     triggerLabel.className = 'gengage-chat-product-sort-trigger-label';
 
     const syncTriggerFromSort = (s: ProductSortState): void => {
-      const opt =
-        sortOptions.find((o) => productSortStatesEqual(o.sortState, s)) ?? sortOptions[0]!;
+      const opt = sortOptions.find((o) => productSortStatesEqual(o.sortState, s)) ?? sortOptions[0]!;
       triggerLabel.textContent = opt.label;
       triggerIcon.innerHTML = productSortIconSvgHtml(opt.icon);
       dropdown.dataset['sortIcon'] = opt.icon;
@@ -1221,8 +1221,7 @@ function renderProductGrid(
       const isActive = productSortStatesEqual(currentSort, opt.sortState);
       optionBtn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       if (isActive) optionBtn.classList.add('gengage-chat-product-sort-option--active', 'gds-menu-option-active');
-      const sortKey =
-        opt.sortState.type === 'related' ? 'related' : `price-${opt.sortState.direction ?? ''}`;
+      const sortKey = opt.sortState.type === 'related' ? 'related' : `price-${opt.sortState.direction ?? ''}`;
       optionBtn.dataset['sortKey'] = sortKey;
 
       const oIcon = document.createElement('span');
@@ -1305,7 +1304,7 @@ function renderProductGrid(
       head.appendChild(actions);
       wrapper.appendChild(head);
     } else {
-    wrapper.appendChild(toolbar);
+      wrapper.appendChild(toolbar);
     }
   } else if (inlineHead) {
     const head = document.createElement('div');

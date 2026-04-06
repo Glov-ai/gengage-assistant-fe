@@ -31,7 +31,8 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   // Custom card renderer (XSS warning: raw HTML injection)
   if (renderCard) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'gengage-simrel-card gengage-simrel-card--custom gds-card gds-product-card gds-card-interactive';
+    wrapper.className =
+      'gengage-simrel-card gengage-simrel-card--custom gds-card gds-product-card gds-card-interactive';
     wrapper.dataset['gengagePart'] = 'simrel-product-card';
     // Sanitize renderCard output to prevent XSS from user-provided renderers.
     wrapper.innerHTML = sanitizeHtml(renderCard(product, index));

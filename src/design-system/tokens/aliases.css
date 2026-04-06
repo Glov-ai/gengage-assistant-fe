@@ -1,10 +1,4 @@
-:where(
-  :root,
-  .gengage-chat-root,
-  .gengage-qna-container,
-  .gengage-simrel-container,
-  .gengage-simbut-root
-) {
+:where(:root, .gengage-chat-root, .gengage-qna-container, .gengage-simrel-container, .gengage-simbut-root) {
   --gengage-primary: var(--client-primary);
   --gengage-primary-soft: var(--client-primary-soft);
   --gengage-primary-subtle: var(--client-primary-subtle);

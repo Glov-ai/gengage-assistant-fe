@@ -2343,12 +2343,7 @@ button.gengage-chat-product-card-cta {
 
 /* Shimmer — .gengage-chat-panel-skeleton-block ile aynı animasyon */
 .gengage-chat-comparison-skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--ds-neutral-200) 25%,
-    var(--ds-neutral-100) 50%,
-    var(--ds-neutral-200) 75%
-  );
+  background: linear-gradient(90deg, var(--ds-neutral-200) 25%, var(--ds-neutral-100) 50%, var(--ds-neutral-200) 75%);
   background-size: 200% 100%;
   animation: gengage-panel-shimmer 1.4s infinite;
 }
@@ -6829,12 +6824,7 @@ button.gengage-chat-product-card-cta {
   .gengage-skeleton-img,
   .gengage-skeleton-text,
   .gengage-skeleton-price {
-    background: linear-gradient(
-      90deg,
-      var(--ds-neutral-100) 25%,
-      var(--ds-neutral-200) 50%,
-      var(--ds-neutral-100) 75%
-    );
+    background: linear-gradient(90deg, var(--ds-neutral-100) 25%, var(--ds-neutral-200) 50%, var(--ds-neutral-100) 75%);
     background-size: 200% 100%;
     animation: gengage-shimmer 1.5s infinite;
   }

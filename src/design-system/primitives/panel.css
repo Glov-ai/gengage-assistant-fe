@@ -5,6 +5,12 @@
   box-shadow: var(--ds-panel-shadow);
 }
 
-:where(.gengage-qna-panel, .gengage-chat-panel-topbar, .gengage-chat-chat-header, .gengage-chat-panel-ai-zone > .gengage-chat-ai-top-picks, .gengage-chat-grounding-review) {
+:where(
+  .gengage-qna-panel,
+  .gengage-chat-panel-topbar,
+  .gengage-chat-chat-header,
+  .gengage-chat-panel-ai-zone > .gengage-chat-ai-top-picks,
+  .gengage-chat-grounding-review
+) {
   border-color: var(--ds-panel-border);
 }

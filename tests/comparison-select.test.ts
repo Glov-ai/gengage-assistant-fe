@@ -213,9 +213,9 @@ describe('Comparison Selection Mode', () => {
       const dom = renderUISpec(spec, ctx);
       const floatingBtn = dom.querySelector('.gengage-chat-comparison-floating-btn');
       expect(floatingBtn).not.toBeNull();
-      expect(
-        floatingBtn?.querySelector('.gengage-chat-comparison-floating-title')?.textContent,
-      ).toContain('Select at least 2 products');
+      expect(floatingBtn?.querySelector('.gengage-chat-comparison-floating-title')?.textContent).toContain(
+        'Select at least 2 products',
+      );
       expect(
         (floatingBtn?.querySelector('.gengage-chat-comparison-floating-action') as HTMLButtonElement).disabled,
       ).toBe(true);

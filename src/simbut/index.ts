@@ -57,9 +57,7 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
     const refreshDisabled = (): void => {
       const sku = effectiveSku(this.config as SimButWidgetConfig);
       const canFire =
-        !!sku &&
-        (!!(this.config as SimButWidgetConfig).onFindSimilar ||
-          !!(this.config as SimButWidgetConfig).chat);
+        !!sku && (!!(this.config as SimButWidgetConfig).onFindSimilar || !!(this.config as SimButWidgetConfig).chat);
       btn.disabled = !canFire;
     };
 

@@ -111,11 +111,7 @@ describe('createChoicePrompter', () => {
 
 describe('ChoicePrompter grid gating (mirrors GengageChat)', () => {
   /** Widget shows when panel ProductGrid has 2+ children (same as sort/compare toolbar). */
-  function shouldShowPrompter(
-    gridChildCount: number,
-    comparisonActive: boolean,
-    threadId = THREAD_A,
-  ): boolean {
+  function shouldShowPrompter(gridChildCount: number, comparisonActive: boolean, threadId = THREAD_A): boolean {
     return gridChildCount > 1 && !comparisonActive && !isChoicePrompterDismissed(threadId);
   }
 

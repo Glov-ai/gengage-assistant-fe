@@ -306,7 +306,8 @@ export class ChatDrawer {
     {
       const reopenBtn = document.createElement('button');
       reopenBtn.type = 'button';
-      reopenBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel gds-btn gds-btn-ghost gds-icon-btn';
+      reopenBtn.className =
+        'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel gds-btn gds-btn-ghost gds-icon-btn';
       reopenBtn.dataset['gengagePart'] = 'chat-header-reopen-panel';
       reopenBtn.setAttribute('aria-label', this.i18n.showPanelAriaLabel);
       reopenBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
@@ -903,7 +904,8 @@ export class ChatDrawer {
 
     // Attachment preview strip (hidden by default)
     this._previewStrip = document.createElement('div');
-    this._previewStrip.className = 'gengage-chat-attachment-preview gengage-chat-attachment-preview--hidden gds-card-soft';
+    this._previewStrip.className =
+      'gengage-chat-attachment-preview gengage-chat-attachment-preview--hidden gds-card-soft';
     this._previewStrip.dataset['gengagePart'] = 'chat-attachment-preview';
     const previewThumb = document.createElement('img');
     previewThumb.className = 'gengage-chat-attachment-preview-thumb';
@@ -1164,7 +1166,10 @@ export class ChatDrawer {
   }
 
   setThinkingSteps(steps: string[]): void {
-    const normalized = steps.map((step) => step.trim()).filter(Boolean).slice(-3);
+    const normalized = steps
+      .map((step) => step.trim())
+      .filter(Boolean)
+      .slice(-3);
     if (normalized.length === 0) return;
     this._thinkingSteps = normalized;
     if (this._typingLoadingBinding) {
@@ -2079,7 +2084,10 @@ export class ChatDrawer {
   }
 
   private _applyLoadingSteps(binding: LoadingSequenceBinding, steps: string[], forceLatest = false): void {
-    const normalized = steps.map((s) => s.trim()).filter(Boolean).slice(-3);
+    const normalized = steps
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(-3);
     const fallback = [this.i18n.loadingMessage];
     binding.steps = normalized.length > 0 ? normalized : fallback;
     this._clearLoadingBindingInterval(binding);

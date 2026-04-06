@@ -33,13 +33,12 @@
   padding: 8px 14px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--ai-accent-start) 10%, var(--border-default));
-  background:
-    linear-gradient(
-      110deg,
-      var(--surface-card-soft) 8%,
-      color-mix(in srgb, var(--ai-accent-start) 5%, var(--surface-card)) 18%,
-      var(--surface-card-soft) 33%
-    );
+  background: linear-gradient(
+    110deg,
+    var(--surface-card-soft) 8%,
+    color-mix(in srgb, var(--ai-accent-start) 5%, var(--surface-card)) 18%,
+    var(--surface-card-soft) 33%
+  );
   background-size: 220% 100%;
   color: var(--text-secondary);
   animation: gds-progress-shimmer 1.8s linear infinite;
