@@ -200,7 +200,6 @@ in GA dashboards:
 | `gengage:chat:ready` | `gengage-on-init` (widget: chat) |
 | `gengage:chat:open` | `gengage-show` (widget: chat) |
 | `gengage:chat:close` | `gengage-hide` (widget: chat) |
-| `gengage:chat:add-to-cart` | `gengage-cart-add` (sku, quantity) |
 | `gengage:similar:add-to-cart` | `gengage-cart-add` (sku, quantity) |
 | `gengage:similar:product-click` | `gengage-product-detail` (sku) |
 | `gengage:qna:action` | `gengage-suggested-question` (title, type) |
