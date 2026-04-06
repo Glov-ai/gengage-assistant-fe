@@ -7,6 +7,7 @@
  */
 
 export interface PriceFormatConfig {
+  currencyCode?: string;
   /** Currency symbol. Default: 'TL' */
   currencySymbol?: string;
   /** Where to place the symbol. Default: 'suffix' */
@@ -20,6 +21,7 @@ export interface PriceFormatConfig {
 }
 
 const TURKISH_DEFAULTS: Required<PriceFormatConfig> = {
+  currencyCode: 'TRY',
   currencySymbol: 'TL',
   currencyPosition: 'suffix',
   thousandsSeparator: '.',
