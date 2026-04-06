@@ -110,15 +110,13 @@ lives here in a single `initOverlayWidgets()` call:
       zIndex: '1000',
 
       // Additional CSS custom properties (passed through as-is)
-      '--color-client-primary': 'hsl(221, 83%, 53%)',
-      '--root-background': '#F6F6F6',
-      '--client-message-bubble': '#dbeafe',
-      '--client-card': '#fff',
-      '--client-background': '#515151',
-      '--client-foreground': '#e9ecf2',
-      '--client-border': '#cccccc',
-      '--client-text': '#222',
-      '--client-primary-color': '#2563eb',
+      '--client-primary': 'hsl(221, 83%, 53%)',
+      '--surface-page': '#F6F6F6',
+      '--surface-card': '#fff',
+      '--surface-shell': '#515151',
+      '--text-inverse': '#e9ecf2',
+      '--border-default': '#cccccc',
+      '--text-primary': '#222',
     },
 
     // ── Chat widget ──
@@ -193,9 +191,9 @@ lives here in a single `initOverlayWidgets()` call:
 | `zIndex` | `'1000'` | Widget z-index layer |
 
 Any additional keys on the `theme` object are passed through as CSS custom properties
-(e.g. `'--client-primary-color': '#ec6e00'`). See `demos/koctascomtr/index.html` and
+(e.g. `'--client-primary': '#ec6e00'`). See `demos/koctascomtr/index.html` and
 `demos/arcelikcomtr/index.html` for real-world examples of which `--client-*` and
-`--root-*` variables the renderer uses.
+`--surface-*` variables the renderer uses.
 
 ---
 
@@ -413,7 +411,7 @@ Existing account demos to reference:
 |------|-------------|-------|
 | `demos/koctascomtr/` | Orange `#ec6e00` | Best starting template. Turkish locale. |
 | `demos/arcelikcomtr/` | Red `#d93131` | Shows `discountType: 'strike-through'` in SimRel. |
-| `demos/n11com/` | Green | Marketplace layout variant. |
+| `demos/n11com/` | Magenta `#ff44ef` | Marketplace layout variant. |
 | `demos/hepsiburadacom/` | Orange | High-traffic marketplace demo. |
 | `demos/yatasbeddingcomtr/` | Blue | Furniture e-commerce demo. |
 
