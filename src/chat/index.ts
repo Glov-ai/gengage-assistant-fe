@@ -2978,6 +2978,59 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
+  private _parseAddToCartActionPayload(payload: unknown): { sku: string; cartCode: string; quantity: number } | null {
+    if (typeof payload !== 'object' || payload === null) return null;
+    const rec = payload as Record<string, unknown>;
+    const sku = typeof rec['sku'] === 'string' ? rec['sku'] : '';
+    const cartCode =
+      typeof rec['cartCode'] === 'string'
+        ? rec['cartCode']
+        : typeof rec['cart_code'] === 'string'
+          ? rec['cart_code']
+          : '';
+    let quantity = 1;
+    if (typeof rec['quantity'] === 'number' && Number.isFinite(rec['quantity']) && rec['quantity'] > 0) {
+      quantity = Math.floor(rec['quantity']);
+    }
+    if (!sku || !cartCode) return null;
+    return { sku, cartCode, quantity };
+  }
+
+  private _runChatAddToCartFlow(params: { sku: string; cartCode: string; quantity: number }): void {
+    void Promise.resolve(this.config.onAddToCart?.(params)).catch((err) => {
+      console.error('[gengage] onAddToCart', err);
+    });
+    ga.trackCartAdd(params.sku, params.quantity);
+    const detail = {
+      ...params,
+      sessionId: this.config.session?.sessionId ?? null,
+    };
+    dispatch('gengage:chat:add-to-cart', detail);
+    this._bridge?.send('addToCart', params);
+    void this._runEventCallbacks('gengage-cart-add', detail as unknown as Record<string, unknown>);
+    this.track(
+      basketAddEvent(this.analyticsContext(), {
+        attribution_source: 'chat',
+        attribution_action_id: crypto.randomUUID(),
+        cart_value: 0, // Host page should enrich via event listener
+        currency: 'TRY',
+        line_items: params.quantity,
+        sku: params.sku,
+      }),
+    );
+    this._sendAction(
+      {
+        title: this._i18n.addToCartButton ?? 'Add to Cart',
+        type: 'addToCart',
+        payload: { sku: params.sku, cart_code: params.cartCode, quantity: params.quantity },
+      },
+      { preservePanel: true },
+    );
+    const toastMsg = this._i18n.addedToCartToast ?? 'Added to cart';
+    this._drawer?.showCartToast(toastMsg);
+    this._drawer?.flashCartBadge();
+  }
+
   /**
    * Build a ChatUISpecRenderContext with all callbacks wired up.
    * Used both during streaming and during session restore.
@@ -2986,6 +3039,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const ctx: ChatUISpecRenderContext = {
       onAction: (action) => {
         ga.trackSuggestedQuestion(action.title, action.type);
+        if (action.type === 'addToCart') {
+          const addParams = this._parseAddToCartActionPayload(action.payload);
+          if (addParams) {
+            this._runChatAddToCartFlow(addParams);
+            return;
+          }
+        }
         if (action.type === 'launchSingleProduct') {
           this._drawer?.setDividerPreviewEnabled(false);
           const sku =
@@ -3029,37 +3089,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
       },
       onAddToCart: (params) => {
-        ga.trackCartAdd(params.sku, params.quantity);
-        const detail = {
-          ...params,
-          sessionId: this.config.session?.sessionId ?? null,
-        };
-        dispatch('gengage:chat:add-to-cart', detail);
-        this._bridge?.send('addToCart', params);
-        void this._runEventCallbacks('gengage-cart-add', detail as unknown as Record<string, unknown>);
-        this.track(
-          basketAddEvent(this.analyticsContext(), {
-            attribution_source: 'chat',
-            attribution_action_id: crypto.randomUUID(),
-            cart_value: 0, // Host page should enrich via event listener
-            currency: 'TRY',
-            line_items: params.quantity,
-            sku: params.sku,
-          }),
-        );
-        // Send addToCart action to backend — preservePanel keeps current products visible
-        this._sendAction(
-          {
-            title: this._i18n.addToCartButton ?? 'Add to Cart',
-            type: 'addToCart',
-            payload: { sku: params.sku, cart_code: params.cartCode, quantity: params.quantity },
-          },
-          { preservePanel: true },
-        );
-        // Show success toast and flash cart icon
-        const toastMsg = this._i18n.addedToCartToast ?? 'Added to cart';
-        this._drawer?.showCartToast(toastMsg);
-        this._drawer?.flashCartBadge();
+        this._runChatAddToCartFlow(params);
       },
       onProductSelect: (product) => {
         // Save current panel source to local history so back button can re-render it

@@ -331,6 +331,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
     }
+    if (this.options.onAddToCart !== undefined) {
+      config.onAddToCart = this.options.onAddToCart;
+    }
 
     this._chat = new GengageChat();
     await this._chat.init(config);

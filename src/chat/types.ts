@@ -143,6 +143,7 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   onClose?: () => void;
   onReady?: () => void;
   onScriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
+  onAddToCart?: (params: { sku: string; cartCode: string; quantity: number }) => void;
 
   // -------------------------------------------------------------------------
   // Security
