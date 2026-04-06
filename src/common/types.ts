@@ -301,6 +301,13 @@ export interface BackendContext {
 // Action payload — user-initiated actions (QNA, chat openers, etc.)
 // ---------------------------------------------------------------------------
 
+/** Params passed to add-to-cart callbacks across all widgets. */
+export interface AddToCartParams {
+  sku: string;
+  cartCode: string;
+  quantity: number;
+}
+
 export interface ActionPayload {
   /** Display label shown to the user. */
   title: string;

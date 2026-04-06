@@ -2982,24 +2982,24 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (typeof payload !== 'object' || payload === null) return null;
     const rec = payload as Record<string, unknown>;
     const sku = typeof rec['sku'] === 'string' ? rec['sku'] : '';
-    const cartCode =
-      typeof rec['cartCode'] === 'string'
-        ? rec['cartCode']
-        : typeof rec['cart_code'] === 'string'
-          ? rec['cart_code']
-          : '';
+    const cartCode = typeof rec['cart_code'] === 'string' ? rec['cart_code'] : '';
     let quantity = 1;
     if (typeof rec['quantity'] === 'number' && Number.isFinite(rec['quantity']) && rec['quantity'] > 0) {
-      quantity = Math.floor(rec['quantity']);
+      quantity = Math.max(1, Math.floor(rec['quantity']));
     }
     if (!sku || !cartCode) return null;
     return { sku, cartCode, quantity };
   }
 
   private _runChatAddToCartFlow(params: { sku: string; cartCode: string; quantity: number }): void {
-    void Promise.resolve(this.config.onAddToCart?.(params)).catch((err) => {
-      console.error('[gengage] onAddToCart', err);
-    });
+    if (this.config.onAddToCart !== undefined) {
+      try {
+        const result: unknown = this.config.onAddToCart(params);
+        if (result instanceof Promise) result.catch((err: unknown) => console.error('[gengage] onAddToCart', err));
+      } catch (err) {
+        console.error('[gengage] onAddToCart', err);
+      }
+    }
     ga.trackCartAdd(params.sku, params.quantity);
     const detail = {
       ...params,
@@ -3018,6 +3018,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         sku: params.sku,
       }),
     );
+    // Sends a normalized payload to the backend regardless of the original action's
+    // title or extra fields — the backend expects exactly { sku, cart_code, quantity }.
     this._sendAction(
       {
         title: this._i18n.addToCartButton ?? 'Add to Cart',
@@ -3043,8 +3045,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const addParams = this._parseAddToCartActionPayload(action.payload);
           if (addParams) {
             this._runChatAddToCartFlow(addParams);
-            return;
+            return; // handled — skip the generic _sendAction fallthrough below
           }
+          // Parse failed (missing sku/cartCode): fall through to _sendAction as a best-effort
         }
         if (action.type === 'launchSingleProduct') {
           this._drawer?.setDividerPreviewEnabled(false);

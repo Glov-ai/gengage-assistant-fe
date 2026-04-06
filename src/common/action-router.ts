@@ -1,5 +1,5 @@
 import type { UnknownActionPolicy } from './config-schema.js';
-import type { ActionPayload, StreamEventAction } from './types.js';
+import type { ActionPayload, AddToCartParams, StreamEventAction } from './types.js';
 import { isSafeUrl } from './safe-html.js';
 import { debugLog } from './debug.js';
 
@@ -7,7 +7,7 @@ export interface HostActionHandlers {
   openChat?: (payload?: ActionPayload | unknown) => void;
   navigate?: (params: { url: string; newTab?: boolean }) => void;
   saveSession?: (params: { sessionId: string; sku: string }) => void;
-  addToCart?: (params: { sku: string; quantity: number; cartCode: string }) => void;
+  addToCart?: (params: AddToCartParams) => void;
   scriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
   unknown?: (action: StreamEventAction['action']) => void;
 }

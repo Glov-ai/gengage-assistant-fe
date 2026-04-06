@@ -6,7 +6,7 @@ import { preflightDiagnostics } from './preflight.js';
 import type { PageContext } from './types.js';
 
 export interface HostActions {
-  onAddToCart?: (info: { sku: string; quantity?: number; cartCode?: string }) => void;
+  onAddToCart?: (params: import('./types.js').AddToCartParams) => void;
   onProductNavigate?: (url: string, sku: string, sessionId: string | null) => void;
   onScriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
 }

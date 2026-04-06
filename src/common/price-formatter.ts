@@ -7,6 +7,7 @@
  */
 
 export interface PriceFormatConfig {
+  /** ISO 4217 currency code (e.g. 'TRY', 'USD'). Used by analytics only — not consumed by formatPrice(). */
   currencyCode?: string;
   /** Currency symbol. Default: 'TL' */
   currencySymbol?: string;

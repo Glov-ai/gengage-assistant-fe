@@ -147,7 +147,7 @@ export interface OverlayWidgetsOptions {
   qna?: OverlayQNAOptions;
   simrel?: OverlaySimRelOptions;
   simbut?: OverlaySimButOptions;
-  onAddToCart?: SimRelWidgetConfig['onAddToCart'];
+  onAddToCart?: (params: import('./types.js').AddToCartParams) => void;
   onProductNavigate?: SimRelWidgetConfig['onProductNavigate'];
   onScriptCall?: ChatWidgetConfig['onScriptCall'];
 }

@@ -13,7 +13,7 @@ export interface SimRelWidgetConfig extends BaseWidgetConfig {
   // -------------------------------------------------------------------------
 
   /** Called when "Add to cart" is tapped on a product card. */
-  onAddToCart?: (params: { sku: string; quantity: number; cartCode: string }) => void;
+  onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
 
   /**
    * Called when the user taps a product card (navigation intent).
@@ -115,7 +115,7 @@ export interface SimRelI18n {
 
 export interface SimRelUISpecRenderContext {
   onClick: (product: SimilarProduct) => void;
-  onAddToCart: (params: { sku: string; quantity: number; cartCode: string }) => void;
+  onAddToCart: (params: import('../common/types.js').AddToCartParams) => void;
   onAction?: (action: ActionPayload) => void;
   discountType?: 'strike-through' | 'badge';
   renderCard?: (product: SimilarProduct, index: number) => string;
