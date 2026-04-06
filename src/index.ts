@@ -75,6 +75,7 @@ export {
   detectPageType,
   extractSkuFromUrl,
   autoDetectPageContext,
+  configureConnectionWarning,
 } from './common/index.js';
 
 // Types (re-exported for consumers who want to type their own code)

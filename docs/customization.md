@@ -807,6 +807,25 @@ const controller = await initOverlayWidgets({
 The `middlewareUrl` should be set in your integration script where you initialize the SDK.
 See `demos/` for complete brand-customized integration examples.
 
+### Connectivity Probe URL
+
+The SDK performs a background connectivity check by fetching `https://www.google.com/favicon.ico`.
+In environments where Google is blocked (certain corporate networks, China, etc.) this probe will
+silently fail and connection warnings may not work correctly.
+
+Call `configureConnectionWarning` once at init to point the probe at a URL that is always
+reachable in your deployment environment:
+
+```ts
+import { configureConnectionWarning } from '@gengage/assistant-fe';
+
+configureConnectionWarning({
+  probeUrl: 'https://cdn.mystore.com/favicon.ico',
+});
+```
+
+Any small, cacheable asset on a domain your users can always reach is a good choice.
+
 ---
 
 ## Page Auto-Detection

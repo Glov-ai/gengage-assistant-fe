@@ -110,7 +110,7 @@ export {
   dismissGlobalErrorToast,
   getGlobalErrorMessage,
 } from './global-error-toast.js';
-export { trackConnectionWarningRequest } from './connection-warning.js';
+export { trackConnectionWarningRequest, configureConnectionWarning } from './connection-warning.js';
 export type { ConnectionWarningRequestOptions } from './connection-warning.js';
 export {
   DEFAULT_CUSTOMIZATION_LOCALE,

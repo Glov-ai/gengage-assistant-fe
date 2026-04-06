@@ -1,8 +1,19 @@
+// Chat widget is intentionally not tracked here. It has its own offline bar
+// (ChatDrawer.ts) driven by window online/offline events, and suppresses
+// duplicate global toasts for offline errors (chat/index.ts). Adding
+// trackConnectionWarningRequest to chat would double-report connectivity issues
+// to users who are already seeing the inline offline bar.
+
 import { dismissGlobalErrorToast, showGlobalErrorToast } from './global-error-toast.js';
 
 const CONNECTION_CHECK_DELAY_MS = 8_000;
 const CONNECTIVITY_RECHECK_INTERVAL_MS = 5_000;
-const CONNECTIVITY_PROBE_URL = 'https://www.google.com/favicon.ico';
+
+let probeUrl = 'https://www.google.com/favicon.ico';
+
+export function configureConnectionWarning(options: { probeUrl?: string }): void {
+  if (options.probeUrl) probeUrl = options.probeUrl;
+}
 
 export interface ConnectionWarningRequestOptions {
   source: 'chat' | 'qna' | 'simrel';
@@ -21,7 +32,7 @@ function isTurkishLocale(locale?: string): boolean {
 
 function getConnectionWarningMessage(locale?: string): string {
   if (isTurkishLocale(locale)) {
-    return 'Internet baglantisinda sorun var gibi gorunuyor. Istek surerken yeniden deneyecegiz.';
+    return 'İnternet bağlantısında sorun var gibi görünüyor. İstek sürerken yeniden deneyeceğiz.';
   }
   return "Your internet connection looks unstable. We'll keep retrying while this request is active.";
 }
@@ -64,7 +75,7 @@ async function checkConnectivity(): Promise<boolean> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3_000);
     try {
-      await fetch(CONNECTIVITY_PROBE_URL, {
+      await fetch(probeUrl, {
         method: 'HEAD',
         mode: 'no-cors',
         cache: 'no-cache',
