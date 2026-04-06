@@ -143,6 +143,7 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   onClose?: () => void;
   onReady?: () => void;
   onScriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
+  onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
 
   // -------------------------------------------------------------------------
   // Security
@@ -301,7 +302,7 @@ export interface ChatContextualCopyByContext {
 export interface ChatUISpecRenderContext {
   onAction: (action: ActionPayload) => void;
   onProductClick?: (params: { sku: string; url: string }) => void;
-  onAddToCart?: (params: { sku: string; cartCode: string; quantity: number }) => void;
+  onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
   onProductSelect?: (product: Record<string, unknown>) => void;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig | undefined;
   i18n?: Pick<

@@ -147,7 +147,7 @@ export interface OverlayWidgetsOptions {
   qna?: OverlayQNAOptions;
   simrel?: OverlaySimRelOptions;
   simbut?: OverlaySimButOptions;
-  onAddToCart?: SimRelWidgetConfig['onAddToCart'];
+  onAddToCart?: (params: import('./types.js').AddToCartParams) => void;
   onProductNavigate?: SimRelWidgetConfig['onProductNavigate'];
   onScriptCall?: ChatWidgetConfig['onScriptCall'];
 }
@@ -330,6 +330,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
+    }
+    if (this.options.onAddToCart !== undefined) {
+      config.onAddToCart = this.options.onAddToCart;
     }
 
     this._chat = new GengageChat();

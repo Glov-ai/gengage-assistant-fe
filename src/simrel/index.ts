@@ -154,7 +154,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         attribution_source: 'simrel',
         attribution_action_id: crypto.randomUUID(),
         cart_value: 0, // Host page should enrich via event listener
-        currency: 'TRY',
+        currency: this.config.pricing?.currencyCode ?? 'TRY',
         line_items: params.quantity,
         sku: params.sku,
       }),
