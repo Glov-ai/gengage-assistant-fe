@@ -110,6 +110,41 @@ describe('ChatDrawer attachment staging', () => {
   });
 });
 
+describe('ChatDrawer attach-menu timer race condition', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('does not add document click listener when destroy() is called before setTimeout(0) fires', () => {
+    vi.useFakeTimers();
+    const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
+
+    const { container, drawer } = createDrawer();
+
+    // Click the attach button — this calls _openAttachMenu() which schedules
+    // a setTimeout(0) to add a document-level click listener
+    const attachBtn = container.querySelector('.gengage-chat-attach-btn') as HTMLElement;
+    attachBtn.click();
+
+    // Reset the spy AFTER the click so we only track calls that happen after destroy()
+    // (the click handler itself may call document.addEventListener for keydown)
+    addEventListenerSpy.mockClear();
+
+    // Destroy before the deferred setTimeout(0) fires
+    drawer.destroy();
+
+    // Advance timers — the deferred callback WOULD have fired here without the fix
+    vi.runAllTimers();
+
+    // The deferred 'click' listener must NOT have been added
+    const clickListenerCalls = addEventListenerSpy.mock.calls.filter(([event]) => event === 'click');
+    expect(clickListenerCalls).toHaveLength(0);
+
+    vi.useRealTimers();
+    container.remove();
+  });
+});
+
 describe('ChatDrawer addMessage with attachment', () => {
   beforeEach(() => {
     document.body.innerHTML = '';

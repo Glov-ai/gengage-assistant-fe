@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { trackConnectionWarningRequest } from '../src/common/connection-warning.js';
+import { configureConnectionWarning, trackConnectionWarningRequest } from '../src/common/connection-warning.js';
 
 let navigatorOnLineDescriptor: PropertyDescriptor | undefined;
 
@@ -63,5 +63,74 @@ describe('connection warning manager', () => {
     expect(document.querySelector('.gengage-global-toast')?.textContent).toContain('Connection warning');
 
     release();
+  });
+
+  it('probes the default Google favicon URL when configureConnectionWarning is not called', async () => {
+    // navigator.onLine must be true so checkConnectivity does not short-circuit at the
+    // first guard; the localhost bypass would also short-circuit, so we override
+    // window.location to use a non-localhost hostname.
+    Object.defineProperty(window.Navigator.prototype, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, hostname: 'example-store.com' },
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+
+    try {
+      const release = trackConnectionWarningRequest({ source: 'qna', locale: 'en' });
+      // Advance past the 8-second delay so checkConnectivity() is invoked
+      await vi.advanceTimersByTimeAsync(8_000);
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://www.google.com/favicon.ico',
+        expect.objectContaining({ method: 'HEAD', mode: 'no-cors' }),
+      );
+
+      release();
+    } finally {
+      fetchSpy.mockRestore();
+      Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    }
+  });
+
+  it('probes the configured URL when configureConnectionWarning is called with a custom probeUrl', async () => {
+    configureConnectionWarning({ probeUrl: 'https://example.com/probe' });
+
+    Object.defineProperty(window.Navigator.prototype, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, hostname: 'example-store.com' },
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+
+    try {
+      const release = trackConnectionWarningRequest({ source: 'simrel', locale: 'en' });
+      await vi.advanceTimersByTimeAsync(8_000);
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://example.com/probe',
+        expect.objectContaining({ method: 'HEAD', mode: 'no-cors' }),
+      );
+      expect(fetchSpy).not.toHaveBeenCalledWith('https://www.google.com/favicon.ico', expect.anything());
+
+      release();
+    } finally {
+      fetchSpy.mockRestore();
+      Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+      // Reset probe URL to default so later tests are not polluted
+      configureConnectionWarning({ probeUrl: 'https://www.google.com/favicon.ico' });
+    }
   });
 });
