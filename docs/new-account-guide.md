@@ -388,9 +388,6 @@ await controller.updateSku('NEW-SKU-789');
 
 ### Additional customization notes
 
-- **Quantity stepper styling:** The quantity stepper on product cards and SimRel cards can be
-  customized via CSS custom properties. See [customization.md](customization.md) for the
-  full list of stepper tokens.
 - **Share button:** The share button appears automatically when a product has a URL. On
   desktop it copies the URL to clipboard; on mobile it invokes the native share sheet.
 - **Voice input:** Enable voice input on the chat widget with `voiceEnabled: true` in

@@ -1,6 +1,6 @@
 /**
  * Widget completeness tests (G-K) — verifies SimRel tab panel visibility,
- * product card image sizing, quantity stepper bounds, share button in
+ * product card image sizing, add-to-cart button presence, share button in
  * product details panel, and sort toolbar in chat.
  */
 
@@ -104,58 +104,52 @@ test.describe('Widget completeness — product card image sizing', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────
-// I) Quantity stepper value bounds
+// I) SimRel add-to-cart button
 // ────────────────────────────────────────────────────────────────────────
 
-test.describe('Widget completeness — quantity stepper bounds', () => {
+test.describe('Widget completeness — SimRel add-to-cart button', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
     await gotoDemoReady(page);
   });
 
-  test('stepper starts at 1 and decrease button is disabled', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
-
-    const value = stepper.locator('.gengage-qty-value');
-    await expect(value).toHaveText('1');
-
-    // Decrease button (first button) should be disabled at 1
-    const decBtn = stepper.locator('button').first();
-    await expect(decBtn).toBeDisabled();
+  test('in-stock product with cart_code shows add-to-cart button', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
+    await expect(atcBtn).toBeEnabled();
   });
 
-  test('clicking decrease at value 1 does not go below 1', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('add-to-cart button is a clickable button element', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
 
-    const value = stepper.locator('.gengage-qty-value');
-    await expect(value).toHaveText('1');
-
-    // Try clicking decrease — should stay at 1
-    const decBtn = stepper.locator('button').first();
-    // Force-click even though it is disabled, to verify value does not change
-    await decBtn.click({ force: true });
-    await expect(value).toHaveText('1');
+    const tagName = await atcBtn.evaluate((el) => el.tagName.toLowerCase());
+    expect(tagName).toBe('button');
   });
 
-  test('increase then decrease returns to 1, decrease disabled again', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('out-of-stock product shows out-of-stock label instead of button', async ({ page }) => {
+    const tabs = page.locator('.gengage-simrel-tab');
+    await expect(tabs.first()).toBeVisible({ timeout: 10000 });
 
-    const value = stepper.locator('.gengage-qty-value');
-    const incBtn = stepper.locator('button').nth(1);
-    const decBtn = stepper.locator('button').first();
+    // Switch to Ekonomik tab which has out-of-stock products
+    await tabs.nth(1).click();
 
-    // Increase to 2
-    await incBtn.click();
-    await expect(value).toHaveText('2');
-    await expect(decBtn).toBeEnabled();
+    const visiblePanel = page.locator('.gengage-simrel-tab-panel:not([style*="display: none"])');
+    const cards = visiblePanel.locator('.gengage-simrel-card');
+    await expect(cards.first()).toBeVisible({ timeout: 5000 });
 
-    // Decrease back to 1
-    await decBtn.click();
-    await expect(value).toHaveText('1');
-    await expect(decBtn).toBeDisabled();
+    const count = await cards.count();
+    for (let i = 0; i < count; i++) {
+      const card = cards.nth(i);
+      const name = await card.locator('.gengage-simrel-card-name').textContent();
+      if (name?.includes('Makita')) {
+        // TEST-004 has no cart_code — should show OOS label, not ATC button
+        const atcCount = await card.locator('.gengage-simrel-atc-button').count();
+        expect(atcCount).toBe(0);
+        const oosLabel = card.locator('.gengage-simrel-card-oos');
+        await expect(oosLabel).toBeAttached();
+      }
+    }
   });
 });
 

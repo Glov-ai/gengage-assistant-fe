@@ -1,26 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createQuantityStepper } from '../src/common/quantity-stepper.js';
-
-describe('ATC success feedback', () => {
-  it('shows checkmark and success class after submit', () => {
-    vi.useFakeTimers();
-    const onSubmit = vi.fn();
-    const stepper = createQuantityStepper({ onSubmit, label: 'Add' });
-    const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
-
-    submitBtn.click();
-    expect(onSubmit).toHaveBeenCalledWith(1);
-    expect(submitBtn.textContent).toBe('\u2713');
-    expect(submitBtn.classList.contains('gengage-qty-submit--success')).toBe(true);
-    expect(submitBtn.disabled).toBe(true);
-
-    vi.advanceTimersByTime(1200);
-    expect(submitBtn.textContent).toBe('Add');
-    expect(submitBtn.classList.contains('gengage-qty-submit--success')).toBe(false);
-    expect(submitBtn.disabled).toBe(false);
-    vi.useRealTimers();
-  });
-});
 
 describe('ChatDrawer stop button', () => {
   it('showStopButton reuses the send button in stop mode and hideStopButton restores it', async () => {

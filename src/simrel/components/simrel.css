@@ -243,82 +243,6 @@
   background: transparent;
 }
 
-/* Button reset — simrel renders outside the chat shadow DOM so chat.css base
-   styles are not available. These rules replicate the base gengage-qty-btn
-   reset that normally lives in chat.css. */
-.gengage-simrel-atc .gengage-qty-btn,
-.gengage-simrel-atc .gengage-qty-submit {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gengage-simrel-atc .gengage-qty-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.gengage-simrel-atc .gengage-qty-value {
-  text-align: center;
-  font-weight: 600;
-  flex: 0 0 auto;
-  user-select: none;
-}
-
-.gengage-simrel-card .gengage-simrel-atc.gengage-qty-stepper {
-  gap: 0;
-  overflow: hidden;
-  border-radius: 0;
-  border-top: 1px solid var(--_gengage-surface-muted);
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
-  width: 36px;
-  height: 40px;
-  color: var(--_gengage-text-secondary);
-  font-size: 16px;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
-  background: var(--_gengage-surface-muted);
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-value {
-  min-width: 24px;
-  font-size: 13px;
-  color: var(--_gengage-text-primary);
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
-  flex: 1;
-  border-left: 1px solid var(--_gengage-border-color);
-  background: transparent;
-  color: var(--client-primary);
-  font-weight: 700;
-  font-size: 12px;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  padding: 8px 10px;
-  border-radius: 0;
-  transition:
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit:hover {
-  color: var(--client-primary-hover);
-  background: var(--_gengage-surface-muted);
-}
-
 .gengage-simrel-card-oos {
   width: 100%;
   padding: 8px 10px;
@@ -576,20 +500,6 @@
     min-height: 44px;
   }
 
-  /* Ensure 44x44px minimum touch targets on mobile (WCAG 2.5.5) */
-  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-  }
-
-  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
-    min-height: 44px;
-    flex-basis: auto;
-    border-left: 1px solid var(--_gengage-border-color);
-    border-top: none;
-  }
-
   /* GAP-009: Fix SimRel card borders on mobile */
   .gengage-simrel-card {
     border: 1px solid var(--_gengage-border-color);
@@ -605,8 +515,7 @@
 .gengage-simrel-card:focus-visible,
 .gengage-simrel-tab:focus-visible,
 .gengage-simrel-quick-action:focus-visible,
-.gengage-simrel-atc .gengage-qty-btn:focus-visible,
-.gengage-simrel-atc .gengage-qty-submit:focus-visible {
+.gengage-simrel-atc-button:focus-visible {
   outline: 2px solid var(--client-primary);
   outline-offset: 2px;
 }

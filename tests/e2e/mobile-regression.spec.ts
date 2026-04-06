@@ -94,8 +94,8 @@ test.describe('Mobile product cards', () => {
   });
 });
 
-test.describe('Mobile ATC stepper', () => {
-  test('quantity stepper buttons are tappable', async ({ page }) => {
+test.describe('Mobile ATC buy trigger', () => {
+  test('buy trigger button is tappable on mobile', async ({ page }) => {
     await setupMockRoutes(page, { processActionBody: MOCK_CHAT_PRODUCT_LIST_NDJSON });
     await gotoDemoReady(page);
 
@@ -109,25 +109,14 @@ test.describe('Mobile ATC stepper', () => {
     await input.fill('show products');
     await page.locator('.gengage-chat-send').tap();
 
-    // Wait for panel to have product cards with ATC steppers
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    // Wait for stepper to appear (mock data should include ATC-eligible products)
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+    // Wait for panel to have product cards with buy trigger buttons
+    const buyBtn = page.locator('.gengage-chat-product-card-buy-trigger').first();
+    await expect(buyBtn).toBeVisible({ timeout: 10000 });
 
-    const plusBtn = stepper.locator('.gengage-qty-plus');
-    const minusBtn = stepper.locator('.gengage-qty-minus');
-
-    await expect(plusBtn).toBeVisible();
-    const plusBox = await plusBtn.boundingBox();
-    expect(plusBox).toBeTruthy();
-    expect(plusBox!.width).toBeGreaterThanOrEqual(32);
-    expect(plusBox!.height).toBeGreaterThanOrEqual(32);
-
-    await expect(minusBtn).toBeVisible();
-    const minusBox = await minusBtn.boundingBox();
-    expect(minusBox).toBeTruthy();
-    expect(minusBox!.width).toBeGreaterThanOrEqual(32);
-    expect(minusBox!.height).toBeGreaterThanOrEqual(32);
+    const box = await buyBtn.boundingBox();
+    expect(box).toBeTruthy();
+    expect(box!.width).toBeGreaterThanOrEqual(32);
+    expect(box!.height).toBeGreaterThanOrEqual(32);
   });
 });
 

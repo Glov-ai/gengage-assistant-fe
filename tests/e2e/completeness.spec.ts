@@ -89,7 +89,7 @@ test.describe('Completeness — SimRel products', () => {
     expect(text!.length).toBeGreaterThan(0);
   });
 
-  test('no stepper on products without cartCode', async ({ page }) => {
+  test('no ATC button on products without cartCode', async ({ page }) => {
     const tabs = page.locator('.gengage-simrel-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10000 });
 
@@ -104,14 +104,14 @@ test.describe('Completeness — SimRel products', () => {
     for (let i = 0; i < count; i++) {
       const card = cards.nth(i);
       const nameText = await card.locator('.gengage-simrel-card-name').textContent();
-      const stepperCount = await card.locator('.gengage-qty-stepper').count();
+      const atcCount = await card.locator('.gengage-simrel-atc-button').count();
 
       if (nameText?.includes('Makita')) {
-        // TEST-004 has no cart_code — should not show stepper
-        expect(stepperCount).toBe(0);
+        // TEST-004 has no cart_code — should not show ATC button
+        expect(atcCount).toBe(0);
       } else if (nameText?.includes('Bosch')) {
-        // TEST-002 has cart_code — should show stepper
-        expect(stepperCount).toBe(1);
+        // TEST-002 has cart_code — should show ATC button
+        expect(atcCount).toBe(1);
       }
     }
   });

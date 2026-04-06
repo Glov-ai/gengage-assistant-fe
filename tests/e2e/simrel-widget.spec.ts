@@ -87,24 +87,20 @@ test.describe('SimRel widget', () => {
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test('in-stock product with cart_code shows quantity stepper', async ({ page }) => {
+  test('in-stock product with cart_code shows add-to-cart button', async ({ page }) => {
     // Both Profesyonel tab products (TEST-001 and TEST-003) have cart_code and in_stock=true
-    const steppers = page.locator('.gengage-simrel-card .gengage-qty-stepper');
-    await expect(steppers.first()).toBeVisible({ timeout: 10000 });
+    const atcBtns = page.locator('.gengage-simrel-card .gengage-simrel-atc-button');
+    await expect(atcBtns.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('quantity stepper has decrease, increase, and submit buttons', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('add-to-cart button is an enabled button with text', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
+    await expect(atcBtn).toBeEnabled();
 
-    const buttons = stepper.locator('button');
-    const count = await buttons.count();
-    // 3 buttons: decrease, increase, submit
-    expect(count).toBe(3);
-
-    // Value display shows "1"
-    const value = stepper.locator('.gengage-qty-value');
-    await expect(value).toHaveText('1');
+    const text = await atcBtn.textContent();
+    expect(text).toBeTruthy();
+    expect(text!.length).toBeGreaterThan(0);
   });
 
   test('card has rating when product has rating', async ({ page }) => {
@@ -133,7 +129,7 @@ test.describe('SimRel widget', () => {
     expect(texts.some((t) => t.includes('Makita'))).toBe(true);
   });
 
-  test('out-of-stock product without cart_code does not show stepper', async ({ page }) => {
+  test('out-of-stock product without cart_code does not show ATC button', async ({ page }) => {
     const tabs = page.locator('.gengage-simrel-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10000 });
 
@@ -145,20 +141,20 @@ test.describe('SimRel widget', () => {
     const names = visiblePanel.locator('.gengage-simrel-card-name');
     await expect(names.first()).toBeVisible({ timeout: 5000 });
 
-    // Find the card for TEST-004 (Makita) -- it should NOT have a stepper
+    // Find the card for TEST-004 (Makita) — should NOT have ATC button, should show OOS label
     const cards = visiblePanel.locator('.gengage-simrel-card');
     const count = await cards.count();
 
-    let makitaHasStepper = false;
+    let makitaHasAtc = false;
     for (let i = 0; i < count; i++) {
       const card = cards.nth(i);
       const name = await card.locator('.gengage-simrel-card-name').textContent();
       if (name?.includes('Makita')) {
-        const stepperCount = await card.locator('.gengage-qty-stepper').count();
-        makitaHasStepper = stepperCount > 0;
+        const atcCount = await card.locator('.gengage-simrel-atc-button').count();
+        makitaHasAtc = atcCount > 0;
       }
     }
-    expect(makitaHasStepper).toBe(false);
+    expect(makitaHasAtc).toBe(false);
   });
 });
 

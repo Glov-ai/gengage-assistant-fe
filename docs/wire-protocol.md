@@ -229,7 +229,7 @@ Falls back to `screen_sku_list` from context if `sku_list` is empty.
 ```
 
 - `cart_code` — the merchant's internal cart/basket code for the product.
-- `quantity` — user-selected quantity via the quantity stepper (previously hardcoded to 1).
+- `quantity` — always 1 (sent by the direct buy button).
 - `error_message` — optional. When present, the backend generates error resolution suggestions
   instead of complementary product suggestions.
 

@@ -16,3 +16,6 @@ Despite the fixes to the happy path, deep structured testing unveiled that the f
 
 ## 4. Codebase Accessibility Deficiencies
 - **Keyboard (a11y) Barriers:** Tabbing extensively throughout the raw underlying SDK instances (`vanilla-script` variants) verifies terrible focus routing paths. The primary chat launcher sits severely far down the DOM. Crucially, even after forcefully tabbing to its focus halo, native accessibility triggers (hitting `Enter` or `Space` natively) do absolutely nothing. The chat strictly relies entirely on raw mouse-pointer `onClick` listeners blocking all keyboard workflows.
+
+## 5. Data Contract Gaps
+- **Listing promo badges silently dropped (PR#25):** The frontend now suppresses promotion badges (e.g. "Free Shipping", "Flash Sale") on listing-style product cards. Promotions still render on the product-details panel. However, the backend (`micro-abilities`) still computes and sends `promotions` on every listing item. The FE silently discards this data at the listing level. This is an intentional product decision for a cleaner catalog view, but means wasted backend compute for data that is never displayed. Consider either removing the upstream computation or re-enabling listing badges if merchandising needs change.

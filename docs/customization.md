@@ -309,32 +309,29 @@ For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork re
 | `--gengage-primary-color` | `#3b82f6` | Buttons, links, accents |
 | `--gengage-primary-foreground` | `#ffffff` | Text on primary color |
 | `--gengage-background-color` | `#ffffff` | Widget background |
-| `--gengage-foreground-color` | `#1f2937` | Primary text color |
-| `--gengage-border-radius` | `8px` | Border radius for cards/buttons |
+| `--gengage-foreground-color` | `#111827` | Primary text color |
+| `--gengage-border-radius` | `0.75rem` | Border radius for cards/buttons |
 | `--gengage-font-family` | `system-ui, sans-serif` | Font stack |
 | `--gengage-font-size` | `14px` | Base font size |
-| `--gengage-z-index` | `9999` | Chat widget z-index |
+| `--gengage-z-index` | `1000` | Chat widget z-index (CSS fallback: max-int if theme not applied) |
 | `--gengage-chat-width` | `400px` | Floating chat drawer width |
 | `--gengage-chat-launcher-size` | `56px` | Launcher button diameter |
 | `--gengage-chat-launcher-bottom` | `20px` | Launcher distance from viewport bottom |
 | `--gengage-chat-launcher-right` | `20px` | Launcher distance from viewport right |
-| `--gengage-chat-shell-radius` | `12px` | Floating chat drawer radius |
-| `--gengage-chat-header-height` | `60px` | Chat header min-height |
+| `--gengage-chat-shell-radius` | `1rem` | Floating chat drawer radius |
+| `--gengage-chat-header-height` | `72px` | Chat header min-height |
 | `--gengage-chat-conversation-width` | `396px` | Right rail width in panel mode |
 | `--gengage-chat-panel-min-width` | `320px` | Left panel min width in panel mode |
 | `--gengage-chat-panel-max-width` | `1200px` | Left panel max width in panel mode |
 | `--gengage-chat-input-height` | `48px` | Chat input row control height |
 | `--gengage-qna-pill-radius` | `999px` | QNA quick-action pill radius |
-| `--gengage-qna-input-radius` | `14px` | QNA input + send button radius |
-| `--gengage-simrel-card-radius` | `14px` | Similar product card radius |
+| `--gengage-qna-input-radius` | `0.75rem` | QNA input + send button radius |
+| `--gengage-simrel-card-radius` | `0.75rem` | Similar product card radius |
 | `--gengage-keyboard-offset` | `0px` | iOS virtual keyboard offset (set via JS internally) |
-| `--gengage-chat-header-bg` | `#1d2939` | Chat header background color |
-| `--gengage-chat-header-foreground` | `#fff` | Chat header text color |
+| `--gengage-chat-header-bg` | `var(--surface-card)` → `#ffffff` | Chat header background (light by default; falls through design-system tokens) |
+| `--gengage-chat-header-foreground` | `var(--text-primary)` → `#111827` | Chat header text (dark by default; falls through design-system tokens) |
 | `--gengage-chat-panel-bg` | `#fff` | Product detail panel background color |
-| `--gengage-chat-text-secondary` | `#666` | Chat secondary text (timestamps, etc.) |
-| `--gengage-chat-success` | `#4caf50` | Success indicator (in-stock badge, etc.) |
-| `--gengage-chat-primary` | `#1976d2` | Chat-specific primary (CTA buttons) |
-| `--gengage-chat-shadow` | `0 12px 40px rgba(15,23,42,.18)` | Floating drawer box-shadow |
+| `--gengage-chat-shadow` | `var(--shadow-3)` → `0 10px 24px rgba(16,24,40,.12)` | Floating drawer box-shadow |
 | `--gengage-chat-offset` | `20px` | General spacing offset for the chat drawer |
 | `--gengage-simrel-columns` | `4` | Number of columns in the similar products grid |
 
@@ -373,23 +370,6 @@ They are optional — if not set, each falls back to a sensible default.
 | `--gengage-chat-promo-text` | `#2e7d32` | Promotional badge text |
 | `--gengage-chat-launcher-mobile-bottom` | `16px` | Mobile launcher bottom offset |
 | `--gengage-chat-launcher-mobile-right` | `16px` | Mobile launcher right offset |
-| `--gengage-qty-btn-size` | `28px` | Quantity stepper button size |
-| `--gengage-qty-btn-size-compact` | `24px` | Compact stepper button size |
-
-### Quantity Stepper
-
-The quantity stepper appears on product cards in both chat and simrel widgets when
-a `cartCode` is present. It provides increment/decrement buttons, a quantity display,
-and a submit (add-to-cart) button.
-
-| Selector | Description |
-|----------|-------------|
-| `.gengage-qty-stepper` | Flex container for the stepper row |
-| `.gengage-qty-btn` | The minus (−) and plus (+) buttons (24x24 desktop, 44x44 mobile for WCAG 2.5.5 touch targets) |
-| `.gengage-qty-value` | Quantity number display (`min-width: 28px`, `text-align: center`) |
-| `.gengage-qty-submit` | Submit / add-to-cart button |
-| `.gengage-qty-stepper--compact` | Compact mode variant — uses icon-only cart button instead of full label |
-
 ### Share Button
 
 The share button appears on the product detail panel. It copies the product URL to the
@@ -936,18 +916,12 @@ block that disables animations and transitions:
 This covers the chat drawer slide-in, typing indicator animation,
 launcher hover effects, pill scroll, and skeleton loading shimmer.
 
-### Quantity Stepper Live Region
-
-The quantity stepper's `.gengage-qty-value` element carries `aria-live="polite"` so
-screen readers announce quantity changes when the user presses the +/− buttons.
-
 ### Minimum Touch Targets
 
 On mobile viewports, all interactive controls meet the WCAG 2.5.5 minimum of 44x44 CSS
 pixels. This applies to:
 
 - Chat launcher button
-- Quantity stepper +/− buttons (`.gengage-qty-btn` — 24x24 on desktop, 44x44 on mobile)
 - Send / attach / close buttons in the chat input area
 - Suggestion pills in the toolbar row
 - Product card CTA buttons

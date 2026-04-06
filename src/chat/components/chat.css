@@ -67,10 +67,6 @@
 
   /* Ghost border (outline_variant @ 20% opacity — for input fields) */
   --_gengage-ghost-border: var(--gengage-ghost-border, color-mix(in srgb, var(--client-primary) 16%, transparent));
-
-  /* Quantity stepper geometry tokens */
-  --_gengage-qty-btn-size: var(--gengage-qty-btn-size, 28px);
-  --_gengage-qty-btn-size-compact: var(--gengage-qty-btn-size-compact, 24px);
 }
 
 /* Full-viewport scrim: slight dim outside chat; click closes (see index.ts) */
@@ -3284,10 +3280,6 @@ button.gengage-chat-product-card-cta {
 
 /* Mobile layout — driven by JS .gengage-chat-root--mobile class so the breakpoint
    is configurable via config.mobileBreakpoint (default 768px). */
-.gengage-chat-root--mobile {
-  --_gengage-qty-btn-size: 44px;
-  --_gengage-qty-btn-size-compact: 44px;
-}
 
 .gengage-chat-root--mobile .gengage-chat-header-btn,
 .gengage-chat-root--mobile .gengage-chat-close {
@@ -3380,22 +3372,6 @@ button.gengage-chat-product-card-cta {
   border-left: none;
 }
 
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-value {
-  min-width: 24px;
-  font-size: 13px;
-}
-
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
-  min-height: 44px;
-  padding: 0 12px;
-  font-size: 13px;
-}
-
-.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-submit {
-  min-height: 44px;
-  padding: 0 16px;
-}
-
 .gengage-chat-root--mobile .gengage-chat-product-details-share {
   width: 44px;
   height: 44px;
@@ -3412,27 +3388,6 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-cta {
   grid-column: 1 / -1;
   width: 100%;
-}
-
-/* ATC strip: only when stepper is a direct grid child of the card (not inside buy popover). */
-.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card > .gengage-chat-product-card-atc {
-  grid-column: 1 / -1;
-  width: 100%;
-  border-radius: 0;
-  box-shadow: none;
-  /* override the border coming from .gengage-chat-panel .gengage-qty-stepper */
-  border-width: 0;
-  border-top: 1px solid var(--border-default);
-}
-
-/* Submit fills remaining width; override compact variant's rounded right corner */
-.gengage-chat-root--mobile
-  .gengage-chat-panel
-  .gengage-chat-product-card
-  > .gengage-chat-product-card-atc
-  .gengage-qty-submit {
-  flex: 1;
-  border-radius: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-panel {
@@ -6403,135 +6358,6 @@ button.gengage-chat-product-card-cta {
   color: color-mix(in srgb, var(--warning) 84%, var(--text-primary));
 }
 
-/* ---- Quantity stepper ---- */
-.gengage-qty-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-control);
-  overflow: hidden;
-  background: var(--surface-card);
-}
-
-.gengage-qty-btn {
-  width: var(--_gengage-qty-btn-size);
-  height: var(--_gengage-qty-btn-size);
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.12s;
-}
-
-.gengage-qty-btn:hover:not(:disabled) {
-  background: var(--surface-card-soft);
-}
-
-.gengage-qty-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.gengage-qty-value {
-  min-width: 24px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  user-select: none;
-}
-
-.gengage-qty-submit {
-  border: none;
-  border-left: 1px solid var(--border-default);
-  background: var(--success);
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 6px 12px;
-  transition:
-    filter 0.12s ease,
-    transform 0.12s ease;
-}
-
-.gengage-qty-submit:hover {
-  filter: brightness(1.04);
-}
-
-.gengage-qty-submit:active {
-  transform: translateY(1px);
-}
-
-.gengage-qty-submit--success {
-  background: var(--success);
-  transition: background 0.2s ease;
-}
-
-/* Compact variant (product card ATC) */
-.gengage-qty-stepper--compact {
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-2);
-}
-
-.gengage-qty-stepper--compact .gengage-qty-btn {
-  width: var(--_gengage-qty-btn-size-compact);
-  height: var(--_gengage-qty-btn-size-compact);
-  font-size: 12px;
-}
-
-.gengage-qty-stepper--compact .gengage-qty-value {
-  min-width: 18px;
-  font-size: 12px;
-}
-
-.gengage-qty-stepper--compact .gengage-qty-submit {
-  padding: 4px 8px;
-  font-size: 13px;
-  /* No border-radius — parent's overflow:hidden + border-radius handles corner clipping */
-}
-
-.gengage-qty-submit--compact-labeled {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Panel qty-stepper borders — clean border grouping */
-.gengage-chat-panel .gengage-qty-stepper {
-  border: 1px solid var(--_gengage-border-color);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.gengage-chat-panel .gengage-qty-stepper button,
-.gengage-chat-panel .gengage-qty-stepper .gengage-qty-value {
-  border: none;
-  border-right: 1px solid var(--_gengage-border-color);
-}
-
-.gengage-chat-panel .gengage-qty-stepper .gengage-qty-submit {
-  border-right: none;
-}
-
-/* Details panel ATC stepper */
-.gengage-chat-product-details-atc-stepper {
-  min-height: 48px;
-  padding: 0 20px;
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 12px;
-}
-
 /* ---- Share button ---- */
 .gengage-chat-product-details-share {
   display: inline-flex;
@@ -6664,9 +6490,7 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-categories-tab:focus-visible,
 .gengage-chat-categories-filter-tag:focus-visible,
 .gengage-chat-product-grid-view-more:focus-visible,
-.gengage-chat-product-details-share:focus-visible,
-.gengage-qty-btn:focus-visible,
-.gengage-qty-submit:focus-visible {
+.gengage-chat-product-details-share:focus-visible {
   outline: 2px solid var(--client-focus-ring);
   outline-offset: 2px;
 }
@@ -6705,32 +6529,6 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-root--mobile .gengage-chat-panel-divider-toggle {
   min-height: 44px;
-}
-
-.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-btn {
-  width: 44px;
-  height: 44px;
-}
-
-.gengage-chat-root--mobile .gengage-chat-product-details-atc-stepper .gengage-qty-submit,
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
-  min-height: 44px;
-}
-
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-submit {
-  min-width: 44px;
-  padding: 0 10px;
-}
-
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-btn {
-  width: 44px;
-  height: 44px;
-  font-size: 14px;
-}
-
-.gengage-chat-root--mobile .gengage-qty-stepper--compact .gengage-qty-value {
-  min-width: 24px;
-  font-size: 13px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-card-cta,
