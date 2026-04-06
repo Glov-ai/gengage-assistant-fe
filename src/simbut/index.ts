@@ -11,8 +11,7 @@ import { BaseWidget } from '../common/widget-base.js';
 import type { PageContext } from '../common/types.js';
 import { isSafeUrl } from '../common/safe-html.js';
 import * as ga from '../common/ga-datalayer.js';
-import { CHAT_I18N_TR } from '../chat/locales/tr.js';
-import { CHAT_I18N_EN } from '../chat/locales/en.js';
+import { SIMBUT_I18N_TR, SIMBUT_I18N_EN } from './locales.js';
 import type { GengageChat } from '../chat/index.js';
 import type { SimButI18n, SimButWidgetConfig } from './types.js';
 
@@ -21,8 +20,8 @@ import './simbut.css';
 function resolveLabel(locale: string | undefined, i18n: Partial<SimButI18n> | undefined): string {
   if (i18n?.findSimilarLabel) return i18n.findSimilarLabel;
   const key = (locale ?? 'tr').toLowerCase();
-  if (key.startsWith('en')) return CHAT_I18N_EN.findSimilarLabel;
-  return CHAT_I18N_TR.findSimilarLabel;
+  if (key.startsWith('en')) return SIMBUT_I18N_EN.findSimilarLabel;
+  return SIMBUT_I18N_TR.findSimilarLabel;
 }
 
 function effectiveSku(config: SimButWidgetConfig): string | undefined {
@@ -36,7 +35,7 @@ function effectiveSku(config: SimButWidgetConfig): string | undefined {
 
 export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
   private _button: HTMLButtonElement | null = null;
-  private _label = CHAT_I18N_TR.findSimilarLabel;
+  private _label = SIMBUT_I18N_TR.findSimilarLabel;
 
   protected async onInit(config: SimButWidgetConfig): Promise<void> {
     this._label = resolveLabel(config.locale, config.i18n);
@@ -55,30 +54,28 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
     this._button = btn;
 
     const refreshDisabled = (): void => {
-      const sku = effectiveSku(this.config as SimButWidgetConfig);
-      const canFire =
-        !!sku && (!!(this.config as SimButWidgetConfig).onFindSimilar || !!(this.config as SimButWidgetConfig).chat);
+      const sku = effectiveSku(this.config);
+      const canFire = !!sku && (!!this.config.onFindSimilar || !!this.config.chat);
       btn.disabled = !canFire;
     };
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const sku = effectiveSku(this.config as SimButWidgetConfig);
+      const sku = effectiveSku(this.config);
       if (!sku) return;
 
-      const rawUrl = (this.config as SimButWidgetConfig).imageUrl;
+      const rawUrl = this.config.imageUrl;
       const imageUrl = typeof rawUrl === 'string' && isSafeUrl(rawUrl) ? rawUrl : undefined;
 
       ga.trackSuggestedQuestion(this._label, 'findSimilar');
       ga.trackFindSimilars(sku);
 
-      const cfg = this.config as SimButWidgetConfig;
-      if (cfg.onFindSimilar) {
-        cfg.onFindSimilar(imageUrl ? { sku, imageUrl } : { sku });
+      if (this.config.onFindSimilar) {
+        this.config.onFindSimilar(imageUrl ? { sku, imageUrl } : { sku });
         return;
       }
 
-      const chat = cfg.chat;
+      const chat = this.config.chat;
       if (!chat) return;
 
       const action = {
@@ -96,9 +93,8 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
 
   protected onUpdate(_context: Partial<PageContext>): void {
     if (!this._button) return;
-    const sku = effectiveSku(this.config as SimButWidgetConfig);
-    const cfg = this.config as SimButWidgetConfig;
-    const canFire = !!sku && (!!cfg.onFindSimilar || !!cfg.chat);
+    const sku = effectiveSku(this.config);
+    const canFire = !!sku && (!!this.config.onFindSimilar || !!this.config.chat);
     this._button.disabled = !canFire;
   }
 
@@ -113,11 +109,10 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
 
   /** Overlay chat bağlandıktan sonra çağrılabilir (isteğe bağlı). */
   setChat(chat: GengageChat | null): void {
-    (this.config as SimButWidgetConfig).chat = chat;
+    this.config.chat = chat;
     if (this._button) {
-      const sku = effectiveSku(this.config as SimButWidgetConfig);
-      const cfg = this.config as SimButWidgetConfig;
-      const canFire = !!sku && (!!cfg.onFindSimilar || !!cfg.chat);
+      const sku = effectiveSku(this.config);
+      const canFire = !!sku && (!!this.config.onFindSimilar || !!this.config.chat);
       this._button.disabled = !canFire;
     }
   }
