@@ -200,7 +200,7 @@ body {
     0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
 }
 
 .catalog-chat-frame-header {
@@ -209,7 +209,7 @@ body {
   gap: 10px;
   padding: 10px 14px;
   min-height: 56px;
-  background: var(--gengage-chat-header-bg, #1d2939);
+  background: var(--ds-header-bg, var(--surface-card, #fff));
   color: #fff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -272,7 +272,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
   min-height: 120px;
   max-height: 600px;
   overflow-y: auto;
@@ -288,13 +288,13 @@ body {
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
 }
 
 .catalog-panel-frame-sidebar {
   width: 440px;
   background: #f8fafc;
-  border-right: 1px solid var(--gengage-border-color, #e5e7eb);
+  border-right: 1px solid var(--border-default, rgba(17, 24, 39, 0.1));
   padding: 16px;
   overflow-y: auto;
   max-height: 600px;
@@ -312,8 +312,8 @@ body {
   gap: 10px;
   padding: 10px 14px;
   min-height: 56px;
-  background: var(--gengage-chat-header-bg, #1d2939);
-  color: #fff;
+  background: var(--ds-header-bg, var(--surface-card, #fff));
+  color: var(--ds-header-fg, var(--text-primary, #1d1d1f));
 }
 
 .catalog-panel-frame-messages {
@@ -322,7 +322,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
   min-height: 200px;
 }
 
@@ -343,26 +343,26 @@ body {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
 }
 
 .catalog-qna-frame-header {
   padding: 14px 18px;
-  border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+  border-bottom: 1px solid var(--border-default, rgba(17, 24, 39, 0.1));
   background: #fafbfc;
 }
 
 .catalog-qna-frame-header h4 {
   font-size: 15px;
   font-weight: 700;
-  color: var(--gengage-foreground-color, #1d1d1f);
+  color: var(--text-primary, #1d1d1f);
   margin-bottom: 4px;
 }
 
 .catalog-qna-frame-header .price {
   font-size: 20px;
   font-weight: 800;
-  color: var(--gengage-primary-color, #3b82f6);
+  color: var(--client-primary, #b7102a);
 }
 
 .catalog-qna-frame-body {
@@ -376,12 +376,12 @@ body {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  background: var(--gengage-background-color, #fff);
+  background: var(--surface-card, #fff);
 }
 
 .catalog-simrel-frame-header {
   padding: 14px 18px;
-  border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+  border-bottom: 1px solid var(--border-default, rgba(17, 24, 39, 0.1));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -390,7 +390,7 @@ body {
 .catalog-simrel-frame-header h4 {
   font-size: 17px;
   font-weight: 700;
-  color: var(--gengage-foreground-color, #1d1d1f);
+  color: var(--text-primary, #1d1d1f);
 }
 
 .catalog-simrel-frame-body {
@@ -658,7 +658,7 @@ body {
   .catalog-panel-frame-sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--gengage-border-color, #e5e7eb);
+    border-bottom: 1px solid var(--border-default, rgba(17, 24, 39, 0.1));
     max-height: none;
   }
 
