@@ -176,4 +176,13 @@
     transform: scale(1);
     opacity: 0.85;
   }
+
+  :where(.gds-ai-spinner) {
+    animation: none;
+  }
+
+  :where(.gds-ai-dot-loader span) {
+    animation: none;
+    opacity: 0.85;
+  }
 }
