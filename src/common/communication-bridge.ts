@@ -9,6 +9,7 @@
  *
  * Built-in message types:
  *   - 'addToCart'    -- host confirms cart addition
+ *   - 'productFavorite' -- widget → host: product card heart toggled (payload: sku, product, favorited, sessionId)
  *   - 'navigate'     -- host navigates to URL
  *   - 'openChat'     -- programmatic open
  *   - 'closeChat'    -- programmatic close

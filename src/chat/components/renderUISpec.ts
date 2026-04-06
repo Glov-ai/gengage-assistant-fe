@@ -191,6 +191,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
       const heart = document.createElement('button');
       heart.className = 'gengage-chat-favorite-btn';
       heart.type = 'button';
+      heart.dataset.gengageFavoriteSku = favSku;
       heart.setAttribute('aria-label', ctx.i18n?.addToFavoritesLabel ?? 'Add to favorites');
       const isFav = ctx.favoritedSkus?.has(favSku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');

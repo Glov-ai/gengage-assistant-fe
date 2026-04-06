@@ -43,8 +43,8 @@ export interface ChatDrawerOptions {
   /** URL for the cart icon link in the header (e.g. "/sepetim"). */
   /** @deprecated Use onCartClick instead. If set, the cart button will navigate to this URL. */
   headerCartUrl?: string | undefined;
-  /** @deprecated Favorites button is always shown. */
-  headerFavoritesToggle?: boolean | undefined;
+  /** When true, render the header favorites (heart) button. */
+  showHeaderFavorites?: boolean | undefined;
   onFavoritesClick?: (() => void) | undefined;
   /** Callback fired when the panel back button is clicked. */
   onPanelBack?: (() => void) | undefined;
@@ -352,14 +352,12 @@ export class ChatDrawer {
     closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     closeBtn.addEventListener('click', options.onClose);
 
-    // Favorites button — always visible, placed just before the close button
-    {
+    if (options.showHeaderFavorites) {
       const favBtn = document.createElement('button');
       favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav gds-btn gds-btn-ghost gds-icon-btn';
       favBtn.dataset['gengagePart'] = 'chat-header-favorites';
       favBtn.type = 'button';
       favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
-      favBtn.setAttribute('aria-pressed', 'false');
       favBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 
       const badge = document.createElement('span');
@@ -371,8 +369,6 @@ export class ChatDrawer {
       this._favBadgeEl = badge;
 
       favBtn.addEventListener('click', () => {
-        const pressed = favBtn.getAttribute('aria-pressed') === 'true';
-        favBtn.setAttribute('aria-pressed', String(!pressed));
         options.onFavoritesClick?.();
       });
       headerRight.appendChild(favBtn);

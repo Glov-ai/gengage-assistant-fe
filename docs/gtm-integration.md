@@ -47,6 +47,9 @@ Minimum host-handled actions:
 - add-to-basket/add-to-cart (callback receives `{ sku, cartCode, quantity }` — quantity is user-selectable via stepper, default 1),
 - open/close chat.
 
+Optional (recommended when you own wishlist/favorites):
+- favorites header + product heart via `onFavoritesClick`, `addCallback('gengage-product-favorite', …)`, and/or `gengage:chat:product-favorite` / bridge `productFavorite` — see **Customization → Favorites integration**.
+
 Recommended:
 - generic script-call handler registry keyed by action name,
 - fallback handler for unknown actions (log + no-op, never crash stream).

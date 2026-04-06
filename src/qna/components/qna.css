@@ -154,6 +154,7 @@
   border: 1px solid var(--ds-input-border);
   border-radius: var(--gengage-qna-input-radius, var(--ds-input-radius));
   background: var(--ds-input-bg);
+  box-shadow: var(--ds-input-highlight);
   overflow: hidden;
   transition:
     border-color 0.14s ease,
@@ -219,7 +220,8 @@
   flex-shrink: 0;
   align-self: stretch;
   min-width: 52px;
-  min-height: 44px;
+  min-height: 0;
+  margin: 0;
   padding: 0 18px;
   border: none;
   border-radius: 0;
@@ -232,6 +234,20 @@
   cursor: pointer;
   transition: filter 0.12s ease;
   white-space: nowrap;
+}
+
+/* Inline in combo: flush with shell edges (gds-btn defaults would inset the control). */
+.gengage-qna-input-combo .gengage-qna-send.gds-btn {
+  min-height: 0;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--_gengage-qna-send-divider);
+  box-shadow: none;
+}
+
+.gengage-qna-input-combo .gengage-qna-send.gds-btn-primary {
+  border: none;
+  border-left: 1px solid var(--_gengage-qna-send-divider);
 }
 
 .gengage-qna-send:hover {
@@ -325,6 +341,12 @@
     border-left: none;
     border-top: 1px solid var(--_gengage-qna-send-divider);
     font-size: 15px;
+  }
+
+  .gengage-qna-input-combo .gengage-qna-send.gds-btn,
+  .gengage-qna-input-combo .gengage-qna-send.gds-btn-primary {
+    border-left: none;
+    border-top: 1px solid var(--_gengage-qna-send-divider);
   }
 }
 

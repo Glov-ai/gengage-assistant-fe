@@ -105,6 +105,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   closePanelAriaLabel: 'Paneli kapat',
   dismissAriaLabel: 'Kapat',
   cartAddErrorMessage: 'Üzgünüm sepete ekleyemedim, bir sorunla karşılaştım.',
+  favoriteToggleErrorMessage: 'Favoriler güncellenemedi. Lütfen tekrar deneyin.',
   reviewFilterAll: 'Tümü',
   reviewFilterPositive: 'Olumlu',
   reviewFilterNegative: 'Olumsuz',

@@ -97,6 +97,7 @@ function appendTopPickMedia(item: AITopPickItem, alt: string, target: HTMLElemen
       const heart = document.createElement('button');
       heart.className = 'gengage-chat-favorite-btn';
       heart.type = 'button';
+      heart.dataset.gengageFavoriteSku = sku;
       heart.setAttribute('aria-label', ctx.i18n?.addToFavoritesLabel ?? 'Add to favorites');
       const isFav = ctx.favoritedSkus?.has(sku) ?? false;
       if (isFav) heart.classList.add('gengage-chat-favorite-btn--active');

@@ -56,10 +56,16 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Header cart link URL (e.g. "/sepetim"). Shows a cart icon in the header. */
   headerCartUrl?: string;
 
-  /** Show a favorites (heart) toggle button in the header. */
+  /**
+   * Legacy: show the header favorites (heart) button without `onFavoritesClick`.
+   * Opens the built-in favorites list in the side panel (IDB-backed).
+   */
   headerFavoritesToggle?: boolean;
 
-  /** Callback fired when the favorites header button is clicked (before internal favorites panel opens). */
+  /**
+   * When set, shows the header favorites button. On click, only this callback runs — use it to
+   * open the merchant's favorites page (same pattern as `onCartClick`). The built-in favorites panel is not opened.
+   */
   onFavoritesClick?: () => void;
 
   /** Callback fired when the cart icon button in the header is clicked (when headerCartUrl is not set). */
@@ -251,6 +257,8 @@ export interface ChatI18n {
   closePanelAriaLabel: string;
   dismissAriaLabel: string;
   cartAddErrorMessage: string;
+  /** Shown when a host `gengage-product-favorite` callback fails (returns false or throws). */
+  favoriteToggleErrorMessage: string;
   reviewFilterAll: string;
   reviewFilterPositive: string;
   reviewFilterNegative: string;

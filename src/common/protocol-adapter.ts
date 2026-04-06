@@ -593,6 +593,22 @@ function adaptProductDetails(event: V1ProductDetails): StreamEventUISpec {
     ...(product as unknown as Record<string, unknown>),
     ...normalized,
   };
+  if (event.payload.hide_side_panel === true) {
+    return {
+      type: 'ui_spec',
+      widget: 'chat',
+      spec: {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductSummaryCard',
+            props: { product: detailProduct },
+          },
+        },
+      },
+      clearPanel: true,
+    };
+  }
   return {
     type: 'ui_spec',
     widget: 'chat',

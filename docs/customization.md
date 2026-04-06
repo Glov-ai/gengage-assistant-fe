@@ -542,6 +542,9 @@ window.addEventListener('gengage:bridge:message', (e) => {
   if (type === 'addToCart') {
     addToCart(payload.sku, payload.cartCode, payload.quantity);
   }
+  if (type === 'productFavorite') {
+    // sku, product, favorited, sessionId — mirror your REST API / wishlist here
+  }
   if (type === 'navigate') {
     window.location.href = payload.url;
   }
@@ -605,6 +608,56 @@ It also dispatches a `gengage:similar:add-to-cart` CustomEvent on `window`.
 
 The "Add to Cart" button only appears on product cards that have a `cartCode` value
 in their product data. Products without a `cartCode` show only the product link.
+
+---
+
+## Favorites integration
+
+Favorites are delegated to the merchant (same idea as cart): you open your own favorites page from the header and persist toggles via your API. GA4 alignment uses existing dataLayer events **`gengage-like-list`** (header) and **`gengage-like-product`** (card heart when adding); `wireGADataLayer()` listens to `gengage:chat:product-favorite` for the latter — see **Analytics Contract → GA Data Layer Integration**.
+
+### Chat `init` and header button
+
+The header heart is shown when you pass **`onFavoritesClick`** and/or legacy **`headerFavoritesToggle: true`** (built-in IDB list only). With **`onFavoritesClick`**, the widget does not open an internal favorites panel — only your callback runs (navigate to your site).
+
+```js
+await chatWidget.init({
+  // ...
+  onFavoritesClick: () => {
+    window.location.href = '/favorilerim'; // your favorites URL
+  },
+});
+```
+
+### Product card heart — callback + CustomEvent
+
+On each heart click the widget dispatches **`gengage:chat:product-favorite`** on `window` and sends bridge type **`productFavorite`**. Register **`gengage-product-favorite`** to integrate with your backend (return `false` or throw on failure to revert the UI and show an error message):
+
+```js
+window.gengage.chat.addCallback('gengage-product-favorite', async (detail) => {
+  // detail.sku, detail.product, detail.favorited, detail.sessionId
+  const res = await fetch('/api/favorites', {
+    method: detail.favorited ? 'POST' : 'DELETE',
+    body: JSON.stringify({ sku: detail.sku }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return res.ok;
+});
+```
+
+If you do **not** register this callback, the widget keeps the previous behavior: IndexedDB favorites plus optional backend `like` action when adding.
+
+### Header badge count (host → widget)
+
+To sync the red badge on the header heart after your server state changes, send a bridge message from the host page:
+
+```js
+window.postMessage(
+  { gengage: 'chat', type: 'favoritesCountHandler', payload: { count: 3 } },
+  location.origin,
+);
+```
+
+Use `count: 0` to hide the badge.
 
 ---
 

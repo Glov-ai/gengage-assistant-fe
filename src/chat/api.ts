@@ -143,7 +143,7 @@ export interface StreamCallbacks {
       conversationMode?: string | undefined;
     },
   ) => void;
-  onUISpec: (spec: UISpec, widget: string, panelHint?: 'panel') => void;
+  onUISpec: (spec: UISpec, widget: string, panelHint?: 'panel', clearPanel?: boolean) => void;
   onAction: (event: StreamEvent) => void;
   onMetadata: (event: StreamEvent) => void;
   onError: (err: Error) => void;
@@ -259,7 +259,12 @@ export function sendChatMessage(
               });
               break;
             case 'ui_spec':
-              callbacks.onUISpec(normalized.spec, normalized.widget, normalized.panelHint);
+              callbacks.onUISpec(
+                normalized.spec,
+                normalized.widget,
+                normalized.panelHint,
+                normalized.clearPanel === true,
+              );
               break;
             case 'action':
               callbacks.onAction(normalized);
