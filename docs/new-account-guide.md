@@ -109,14 +109,14 @@ lives here in a single `initOverlayWidgets()` call:
       fontSize: '14px',
       zIndex: '1000',
 
-      // Additional CSS custom properties (passed through as-is)
+      // Client design tokens
       '--client-primary': 'hsl(221, 83%, 53%)',
-      '--surface-page': '#F6F6F6',
-      '--surface-card': '#fff',
-      '--surface-shell': '#515151',
-      '--text-inverse': '#e9ecf2',
-      '--border-default': '#cccccc',
-      '--text-primary': '#222',
+      '--client-primary-hover': 'hsl(221, 83%, 45%)',
+      '--client-primary-active': 'hsl(221, 83%, 40%)',
+      '--client-primary-subtle': 'hsla(221, 83%, 53%, 0.08)',
+      '--client-primary-soft': 'hsla(221, 83%, 53%, 0.14)',
+      '--client-on-primary': '#ffffff',
+      '--client-focus-ring': 'hsla(221, 83%, 53%, 0.4)',
     },
 
     // ── Chat widget ──
