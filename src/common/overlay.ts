@@ -503,15 +503,6 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     }
   }
 
-  private _destroyPdpWidgets(): void {
-    this._qna?.destroy();
-    this._simrel?.destroy();
-    this._simbut?.destroy();
-    this._qna = null;
-    this._simrel = null;
-    this._simbut = null;
-  }
-
   private _enqueue(fn: () => Promise<void>): Promise<void> {
     const next = this._queue.then(fn);
     this._queue = next.catch((err) => {
