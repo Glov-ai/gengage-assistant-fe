@@ -95,7 +95,10 @@ describe('renderUISpec', () => {
       const originalPrice = card.querySelector('.gengage-chat-product-card-original-price')!;
       expect(originalPrice.textContent).toBe('149,99 TL');
 
+      /* URL without cart: inline site CTA (no buy popover). */
+      expect(card.classList.contains('gengage-chat-product-card--buy-popover')).toBe(false);
       const cta = card.querySelector('.gengage-chat-product-card-cta') as HTMLAnchorElement;
+      expect(cta).toBeTruthy();
       expect(cta.href).toContain('example.com/product');
       expect(cta.target).toBe('_blank');
     });
@@ -475,7 +478,7 @@ describe('renderUISpec', () => {
       btn.click();
 
       expect(onAction).toHaveBeenCalledWith({
-        title: 'Small',
+        title: 'Action Variant (Small)',
         type: 'launchVariant',
         payload: { sku: 'V2-SM' },
       });
@@ -519,7 +522,7 @@ describe('renderUISpec', () => {
       // Action title should also use value
       (buttons[0] as HTMLElement).click();
       expect(onAction).toHaveBeenCalledWith({
-        title: 'Red',
+        title: 'Variant Value Product (Red)',
         type: 'launchVariant',
         payload: { sku: 'SKU-RED' },
       });

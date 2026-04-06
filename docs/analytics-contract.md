@@ -98,7 +98,7 @@ Minimum payload fields:
 
 Additional payload fields for `basket.add`:
 - `sku`
-- `quantity` (from product card quantity stepper; defaults to 1)
+- `quantity` (always 1)
 
 Additional payload fields for `basket.like`:
 - `sku` (sends a `like` action to the backend as a side effect)

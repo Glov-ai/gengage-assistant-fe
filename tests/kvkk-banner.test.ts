@@ -7,7 +7,8 @@ describe('KvkkBanner', () => {
       htmlContent: '<p>KVKK uyarisi <a href="https://example.com">Detaylar</a></p>',
       onDismiss: () => {},
     });
-    expect(el.className).toBe('gengage-chat-kvkk-banner');
+    expect(el.classList.contains('gengage-chat-kvkk-banner')).toBe(true);
+    expect(el.classList.contains('gds-evidence-card')).toBe(true);
     expect(el.getAttribute('role')).toBe('alert');
     expect(el.querySelector('a')?.href).toBe('https://example.com/');
     expect(el.querySelector('a')?.target).toBe('_blank');

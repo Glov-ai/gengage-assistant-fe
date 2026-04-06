@@ -8,7 +8,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
 }
 
 describe('renderAISuggestedSearchCards', () => {
-  it('renders cards with name, description, and why-different', () => {
+  it('renders cards with visual title only in compact mode', () => {
     const el: UIElement = {
       type: 'AISuggestedSearchCards',
       props: {
@@ -28,10 +28,8 @@ describe('renderAISuggestedSearchCards', () => {
     const cards = dom.querySelectorAll('.gengage-chat-suggested-search-card');
     expect(cards).toHaveLength(1);
     expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-name')?.textContent).toBe('Duvar boyası');
-    expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-desc')?.textContent).toBe(
-      'Su bazlı duvar boyaları',
-    );
-    expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-diff')?.textContent).toBe('Daha uzun ömürlü');
+    expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-desc')).toBeNull();
+    expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-diff')).toBeNull();
     expect(cards[0]!.querySelector('.gengage-chat-suggested-search-card-img')).not.toBeNull();
   });
 

@@ -354,6 +354,7 @@ export type GengageEventDetailMap = {
     message: string;
     code?: string;
     durationMs?: number;
+    sticky?: boolean;
   };
   'gengage:checkout:start': {
     attribution_source: 'chat' | 'qna' | 'simrel';

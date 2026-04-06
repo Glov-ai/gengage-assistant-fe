@@ -4,9 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  clearChoicePrompterDismissState,
   createChoicePrompter,
   isChoicePrompterDismissed,
-  isChoicePrompterGloballyDismissed,
+  recordChoicePrompterDismissedForThread,
 } from '../src/chat/components/ChoicePrompter.js';
 
 const THREAD_A = 'thread-aaa';
@@ -26,7 +27,8 @@ describe('createChoicePrompter', () => {
       onCtaClick: vi.fn(),
     });
 
-    expect(el.className).toBe('gengage-chat-choice-prompter');
+    expect(el.classList.contains('gengage-chat-choice-prompter')).toBe(true);
+    expect(el.classList.contains('gds-card')).toBe(true);
     expect(el.querySelector('.gengage-chat-choice-prompter-heading')?.textContent).toBe('Kararsız mı kaldın?');
     expect(el.querySelector('.gengage-chat-choice-prompter-suggestion')?.textContent).toBe(
       'Ürünleri seçip karşılaştırabilirsin',
@@ -107,30 +109,21 @@ describe('createChoicePrompter', () => {
   });
 });
 
-describe('ChoicePrompter product view gating', () => {
-  /**
-   * The widget only shows the ChoicePrompter after 2+ unique products viewed.
-   * We simulate the gating logic here (viewedProductSkus lives in GengageChat class).
-   */
-  function shouldShowPrompter(viewedCount: number, comparisonActive: boolean, threadId = THREAD_A): boolean {
-    return (
-      viewedCount >= 2 &&
-      !comparisonActive &&
-      !isChoicePrompterGloballyDismissed() &&
-      !isChoicePrompterDismissed(threadId)
-    );
+describe('ChoicePrompter grid gating (mirrors GengageChat)', () => {
+  /** Widget shows when panel ProductGrid has 2+ children (same as sort/compare toolbar). */
+  function shouldShowPrompter(gridChildCount: number, comparisonActive: boolean, threadId = THREAD_A): boolean {
+    return gridChildCount > 1 && !comparisonActive && !isChoicePrompterDismissed(threadId);
   }
 
-  it('does NOT show on first product view', () => {
+  it('does NOT show for a single product', () => {
     expect(shouldShowPrompter(1, false)).toBe(false);
   });
 
-  it('shows on second product view', () => {
+  it('shows when grid has 2+ products', () => {
     expect(shouldShowPrompter(2, false)).toBe(true);
   });
 
-  it('shows on third and subsequent product views', () => {
-    expect(shouldShowPrompter(3, false)).toBe(true);
+  it('shows for larger grids', () => {
     expect(shouldShowPrompter(10, false)).toBe(true);
   });
 
@@ -139,7 +132,6 @@ describe('ChoicePrompter product view gating', () => {
   });
 
   it('does NOT show when already dismissed for thread', () => {
-    // Dismiss by clicking CTA (internally calls markDismissed)
     const el = createChoicePrompter({
       heading: 'Test',
       suggestion: 'Try comparing',
@@ -151,17 +143,26 @@ describe('ChoicePrompter product view gating', () => {
     expect(shouldShowPrompter(2, false)).toBe(false);
   });
 
-  it('does NOT show on zero views', () => {
+  it('does NOT show on empty grid', () => {
     expect(shouldShowPrompter(0, false)).toBe(false);
   });
 });
 
-describe('isChoicePrompterGloballyDismissed', () => {
-  it('returns false when not dismissed', () => {
-    expect(isChoicePrompterGloballyDismissed()).toBe(false);
+describe('recordChoicePrompterDismissedForThread', () => {
+  it('marks thread dismissed without rendering the card', () => {
+    expect(isChoicePrompterDismissed(THREAD_A)).toBe(false);
+    recordChoicePrompterDismissedForThread(THREAD_A);
+    expect(isChoicePrompterDismissed(THREAD_A)).toBe(true);
   });
 
-  it('returns true after CTA click', () => {
+  it('no-ops for empty threadId', () => {
+    recordChoicePrompterDismissedForThread('');
+    expect(sessionStorage.getItem('gengage_choice_prompter_dismissed')).toBeNull();
+  });
+});
+
+describe('clearChoicePrompterDismissState', () => {
+  it('clears per-thread dismiss list so prompter can show again', () => {
     const el = createChoicePrompter({
       heading: 'Test',
       suggestion: 'Test',
@@ -170,34 +171,16 @@ describe('isChoicePrompterGloballyDismissed', () => {
       onCtaClick: vi.fn(),
     });
     el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-cta')!.click();
-    expect(isChoicePrompterGloballyDismissed()).toBe(true);
+    expect(isChoicePrompterDismissed(THREAD_A)).toBe(true);
+
+    clearChoicePrompterDismissState();
+    expect(isChoicePrompterDismissed(THREAD_A)).toBe(false);
   });
 
-  it('returns true after dismiss click', () => {
-    const el = createChoicePrompter({
-      heading: 'Test',
-      suggestion: 'Test',
-      ctaLabel: 'Go',
-      threadId: THREAD_A,
-      onCtaClick: vi.fn(),
-    });
-    el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-dismiss')!.click();
-    expect(isChoicePrompterGloballyDismissed()).toBe(true);
-  });
-
-  it('persists across threads — dismissing in thread A blocks thread B', () => {
-    const el = createChoicePrompter({
-      heading: 'Test',
-      suggestion: 'Test',
-      ctaLabel: 'Go',
-      threadId: THREAD_A,
-      onCtaClick: vi.fn(),
-    });
-    el.querySelector<HTMLElement>('.gengage-chat-choice-prompter-cta')!.click();
-
-    // Global dismiss prevents showing in any thread
-    expect(isChoicePrompterGloballyDismissed()).toBe(true);
-    expect(isChoicePrompterDismissed(THREAD_B)).toBe(false); // per-thread is still false
+  it('removes legacy global dismiss key if present', () => {
+    sessionStorage.setItem('gengage_choice_prompter_dismissed_global', '1');
+    clearChoicePrompterDismissState();
+    expect(sessionStorage.getItem('gengage_choice_prompter_dismissed_global')).toBeNull();
   });
 });
 
@@ -207,7 +190,6 @@ describe('isChoicePrompterDismissed (per-thread)', () => {
   });
 
   it('returns true only for the dismissed thread', () => {
-    // Dismiss thread A via CTA click
     const el = createChoicePrompter({
       heading: 'Test',
       suggestion: 'Test',
@@ -251,7 +233,6 @@ describe('isChoicePrompterDismissed (per-thread)', () => {
 
   it('handles legacy "1" value gracefully (does not crash)', () => {
     sessionStorage.setItem('gengage_choice_prompter_dismissed', '1');
-    // Legacy "1" is not valid JSON array, should return false gracefully
     expect(isChoicePrompterDismissed(THREAD_A)).toBe(false);
   });
 });

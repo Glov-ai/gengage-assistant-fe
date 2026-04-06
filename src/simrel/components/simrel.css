@@ -1,3 +1,5 @@
+@import '../../design-system/index.css';
+
 .gengage-simrel-container {
   font-family: var(
     --gengage-font-family,
@@ -9,16 +11,18 @@
     sans-serif
   );
   font-size: var(--gengage-font-size, 14px);
-  color: var(--gengage-foreground-color, #191c1d);
+  color: var(--text-primary);
 
   /* Semantic color tokens (overridable by customers) */
-  --_gengage-border-color: var(--gengage-border-color, #edeeef);
-  --_gengage-discount-color: var(--gengage-discount-color, #a03d40);
-  --_gengage-text-primary: var(--gengage-text-primary, #191c1d);
-  --_gengage-text-secondary: var(--gengage-text-secondary, #6b7280);
-  --_gengage-surface-muted: var(--gengage-surface-muted, #f8f9fa);
-  --_gengage-surface-secondary: var(--gengage-surface-secondary, #f3f4f5);
-  --_gengage-rating-color: var(--gengage-rating-color, #d97706);
+  --_gengage-border-color: var(--border-default);
+  --_gengage-discount-color: var(--gengage-discount-color, var(--client-primary));
+  --_gengage-text-primary: var(--text-primary);
+  --_gengage-text-secondary: var(--text-secondary);
+  --_gengage-surface-base: var(--surface-card);
+  --_gengage-surface-muted: var(--surface-card-muted);
+  --_gengage-surface-secondary: var(--surface-card-soft);
+  --_gengage-rating-color: var(--rating);
+  --_gengage-scrollbar-thumb: var(--ds-progress-scrollbar-thumb);
 }
 
 .gengage-simrel-uispec > * {
@@ -58,14 +62,14 @@
   flex-direction: column;
   position: relative;
   border: 1px solid var(--_gengage-border-color);
-  border-radius: var(--gengage-simrel-card-radius, 16px);
+  border-radius: var(--gengage-simrel-card-radius, var(--ds-card-radius));
   overflow: hidden;
-  background: var(--gengage-background-color, #fff);
+  background: var(--ds-card-bg);
   cursor: pointer;
   transition:
     box-shadow 0.2s ease,
     transform 0.1s ease;
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: var(--ds-card-shadow);
   width: 100%;
   min-width: 0;
   max-width: none;
@@ -73,13 +77,13 @@
 
 .gengage-simrel-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--ds-card-shadow-hover);
 }
 
 .gengage-simrel-card-image {
   position: relative;
   overflow: hidden;
-  background: #fff;
+  background: var(--_gengage-surface-base);
 }
 
 .gengage-simrel-card-image img {
@@ -98,7 +102,7 @@
   padding: 2px 8px;
   border-radius: 4px;
   background: var(--_gengage-discount-color);
-  color: #fff;
+  color: var(--client-on-primary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -184,7 +188,7 @@
   border-top: 1px solid var(--_gengage-surface-muted);
   border-radius: 0;
   background: transparent;
-  color: var(--gengage-primary-color, #b7102a);
+  color: var(--client-primary);
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -196,13 +200,35 @@
 }
 
 .gengage-simrel-card-cta:hover {
-  color: var(--gengage-primary-color, #9a0d23);
-  background: var(--_gengage-surface-muted);
+  color: var(--client-primary-hover);
+  background: var(--surface-card-soft);
 }
 
 .gengage-simrel-atc {
-  border: 1px solid var(--_gengage-border-color, #e5e7eb);
-  border-radius: 8px;
+  border: 1px solid var(--_gengage-border-color);
+  border-radius: var(--radius-control, 12px);
+}
+
+.gengage-simrel-atc-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 20px);
+  min-height: 44px;
+  margin: 0 10px 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--client-primary);
+  border-radius: var(--radius-control, 12px);
+  background: var(--surface-card);
+  color: var(--client-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.gengage-simrel-atc-button:hover {
+  background: var(--surface-card-soft);
+  color: var(--client-primary-hover);
 }
 
 .gengage-simrel-card .gengage-simrel-atc {
@@ -215,82 +241,6 @@
   border-bottom: none;
   border-radius: 0;
   background: transparent;
-}
-
-/* Button reset — simrel renders outside the chat shadow DOM so chat.css base
-   styles are not available. These rules replicate the base gengage-qty-btn
-   reset that normally lives in chat.css. */
-.gengage-simrel-atc .gengage-qty-btn,
-.gengage-simrel-atc .gengage-qty-submit {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gengage-simrel-atc .gengage-qty-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.gengage-simrel-atc .gengage-qty-value {
-  text-align: center;
-  font-weight: 600;
-  flex: 0 0 auto;
-  user-select: none;
-}
-
-.gengage-simrel-card .gengage-simrel-atc.gengage-qty-stepper {
-  gap: 0;
-  overflow: hidden;
-  border-radius: 0;
-  border-top: 1px solid var(--_gengage-surface-muted);
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
-  width: 36px;
-  height: 40px;
-  color: var(--_gengage-text-secondary);
-  font-size: 16px;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn:hover:not(:disabled) {
-  background: var(--_gengage-surface-muted);
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-value {
-  min-width: 24px;
-  font-size: 13px;
-  color: var(--_gengage-text-primary);
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
-  flex: 1;
-  border-left: 1px solid var(--_gengage-border-color);
-  background: transparent;
-  color: var(--gengage-primary-color, #b7102a);
-  font-weight: 700;
-  font-size: 12px;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  padding: 8px 10px;
-  border-radius: 0;
-  transition:
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit:hover {
-  color: var(--gengage-primary-color, #9a0d23);
-  background: var(--_gengage-surface-muted);
 }
 
 .gengage-simrel-card-oos {
@@ -335,9 +285,9 @@
 }
 
 .gengage-simrel-quick-action:hover {
-  border-color: var(--gengage-primary-color, #b7102a);
-  color: var(--gengage-primary-color, #b7102a);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  border-color: var(--client-primary);
+  color: var(--client-primary);
+  box-shadow: var(--shadow-2);
   transform: translateY(-1px);
 }
 
@@ -351,7 +301,7 @@
 .gengage-simrel-error {
   text-align: center;
   padding: 24px 16px;
-  color: var(--_gengage-text-secondary, #6b7280);
+  color: var(--_gengage-text-secondary);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -359,18 +309,18 @@
 .gengage-simrel-retry {
   display: inline-block;
   margin-top: 8px;
-  border: 1px solid var(--_gengage-border-color, #d1d5db);
-  background: #fff;
+  border: 1px solid var(--_gengage-border-color);
+  background: var(--_gengage-surface-base);
   border-radius: 6px;
   padding: 6px 16px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--_gengage-text-primary, #374151);
+  color: var(--_gengage-text-primary);
   transition: background 0.15s;
 }
 
 .gengage-simrel-retry:hover {
-  background: var(--_gengage-surface-secondary, #f3f4f6);
+  background: var(--_gengage-surface-secondary);
 }
 
 /* Group tabs — pill buttons + divider under row */
@@ -382,7 +332,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-color: var(--_gengage-scrollbar-thumb) transparent;
   padding-right: 24px;
   padding-left: 0;
   transition: padding 0.15s ease;
@@ -401,7 +351,7 @@
 }
 
 .gengage-simrel-tabs::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--_gengage-scrollbar-thumb);
   border-radius: 3px;
 }
 
@@ -418,7 +368,7 @@
   cursor: pointer;
   white-space: nowrap;
   margin-bottom: 0;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-1);
   transition:
     color 0.2s,
     border-color 0.2s,
@@ -427,17 +377,17 @@
 }
 
 .gengage-simrel-tab:hover {
-  color: var(--gengage-primary-color, #b7102a);
-  border-color: var(--gengage-primary-color, #b7102a);
+  color: var(--client-primary);
+  border-color: var(--client-primary);
   background: var(--_gengage-surface-secondary);
 }
 
 .gengage-simrel-tab--active {
-  color: var(--gengage-primary-color, #b7102a);
-  border-color: var(--gengage-primary-color, #b7102a);
+  color: var(--client-primary);
+  border-color: var(--client-primary);
   font-weight: 600;
   background: var(--_gengage-surface-secondary);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  box-shadow: var(--shadow-2);
 }
 
 /* Tab bar wrapper with scroll arrows */
@@ -463,8 +413,8 @@
   width: 28px;
   height: 40px;
   border: none;
-  background: var(--_gengage-bg-color, #fff);
-  color: var(--_gengage-text-secondary, #6b7280);
+  background: var(--_gengage-surface-base);
+  color: var(--_gengage-text-secondary);
   cursor: pointer;
   padding: 0;
   border-radius: 4px;
@@ -475,8 +425,8 @@
 }
 
 .gengage-simrel-tabs-arrow:hover {
-  color: var(--gengage-primary-color, #b7102a);
-  background: var(--_gengage-surface-secondary, #f3f4f6);
+  color: var(--client-primary);
+  background: var(--_gengage-surface-secondary);
 }
 
 .gengage-simrel-tabs-arrow--left {
@@ -497,7 +447,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid var(--_gengage-border-color);
-  border-top-color: var(--gengage-primary-color, #b7102a);
+  border-top-color: var(--client-primary);
   border-radius: 50%;
   animation: gengage-simrel-spin 0.7s linear infinite;
 }
@@ -550,20 +500,6 @@
     min-height: 44px;
   }
 
-  /* Ensure 44x44px minimum touch targets on mobile (WCAG 2.5.5) */
-  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-  }
-
-  .gengage-simrel-card .gengage-simrel-atc .gengage-qty-submit {
-    min-height: 44px;
-    flex-basis: auto;
-    border-left: 1px solid var(--_gengage-border-color);
-    border-top: none;
-  }
-
   /* GAP-009: Fix SimRel card borders on mobile */
   .gengage-simrel-card {
     border: 1px solid var(--_gengage-border-color);
@@ -579,9 +515,8 @@
 .gengage-simrel-card:focus-visible,
 .gengage-simrel-tab:focus-visible,
 .gengage-simrel-quick-action:focus-visible,
-.gengage-simrel-atc .gengage-qty-btn:focus-visible,
-.gengage-simrel-atc .gengage-qty-submit:focus-visible {
-  outline: 2px solid var(--gengage-primary-color, #b7102a);
+.gengage-simrel-atc-button:focus-visible {
+  outline: 2px solid var(--client-primary);
   outline-offset: 2px;
 }
 

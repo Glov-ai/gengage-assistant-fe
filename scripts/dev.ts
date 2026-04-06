@@ -314,6 +314,7 @@ async function main() {
           'src/chat/index.ts',
           'src/qna/index.ts',
           'src/simrel/index.ts',
+          'src/simbut/index.ts',
         ],
       },
       proxy: {

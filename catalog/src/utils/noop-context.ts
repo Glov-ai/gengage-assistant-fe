@@ -21,7 +21,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     errorMessage: 'Bir hata oluştu. Lütfen tekrar deneyin.',
     retryButton: 'Tekrar Dene',
     loadingMessage: 'Düşünüyorum...',
-    productCtaLabel: 'İncele',
+    productCtaLabel: 'Satın Al',
     viewOnSiteLabel: 'Sitede Gör',
     attachImageButton: 'Resim ekle',
     removeAttachmentButton: 'Resmi kaldır',

@@ -60,11 +60,12 @@ describe('Product Sort Controls', () => {
     const dom = renderUISpec(spec, ctx);
     const toolbar = dom.querySelector('.gengage-chat-product-sort-toolbar');
     expect(toolbar).not.toBeNull();
-    const buttons = toolbar!.querySelectorAll('.gengage-chat-product-sort-btn');
-    expect(buttons).toHaveLength(3);
-    expect(buttons[0]!.textContent).toBe('Related');
-    expect(buttons[1]!.textContent).toBe('Price \u2191');
-    expect(buttons[2]!.textContent).toBe('Price \u2193');
+    const options = toolbar!.querySelectorAll('.gengage-chat-product-sort-option');
+    expect(options).toHaveLength(3);
+    expect(options[0]!.querySelector('.gengage-chat-product-sort-option-label')?.textContent).toBe('Related');
+    expect(options[1]!.querySelector('.gengage-chat-product-sort-option-label')?.textContent).toBe('Price \u2191');
+    expect(options[2]!.querySelector('.gengage-chat-product-sort-option-label')?.textContent).toBe('Price \u2193');
+    expect(toolbar!.querySelector('.gengage-chat-product-sort-trigger-label')?.textContent).toBe('Related');
   });
 
   it('does not render sort toolbar for single product', () => {
@@ -91,8 +92,8 @@ describe('Product Sort Controls', () => {
     ]);
     const ctx = makeContext();
     const dom = renderUISpec(spec, ctx);
-    const active = dom.querySelector('.gengage-chat-product-sort-btn--active');
-    expect(active?.textContent).toBe('Related');
+    const active = dom.querySelector('.gengage-chat-product-sort-option--active');
+    expect(active?.querySelector('.gengage-chat-product-sort-option-label')?.textContent).toBe('Related');
   });
 
   it('calls onSortChange when sort button is clicked', () => {
@@ -103,8 +104,8 @@ describe('Product Sort Controls', () => {
     ]);
     const ctx = makeContext({ onSortChange });
     const dom = renderUISpec(spec, ctx);
-    const buttons = dom.querySelectorAll('.gengage-chat-product-sort-btn');
-    (buttons[1] as HTMLElement).click(); // Price ↑
+    const options = dom.querySelectorAll('.gengage-chat-product-sort-option');
+    (options[1] as HTMLElement).click(); // Price ↑
     expect(onSortChange).toHaveBeenCalledWith({ type: 'price', direction: 'asc' });
   });
 
@@ -118,8 +119,8 @@ describe('Product Sort Controls', () => {
     const dom = renderUISpec(spec, ctx);
 
     // Click "Price ↑" button
-    const buttons = dom.querySelectorAll('.gengage-chat-product-sort-btn');
-    (buttons[1] as HTMLElement).click();
+    const options = dom.querySelectorAll('.gengage-chat-product-sort-option');
+    (options[1] as HTMLElement).click();
 
     // Verify grid children are reordered
     const grid = dom.querySelector('.gengage-chat-product-grid');
@@ -138,8 +139,8 @@ describe('Product Sort Controls', () => {
     const dom = renderUISpec(spec, ctx);
 
     // Click "Price ↓" button
-    const buttons = dom.querySelectorAll('.gengage-chat-product-sort-btn');
-    (buttons[2] as HTMLElement).click();
+    const options = dom.querySelectorAll('.gengage-chat-product-sort-option');
+    (options[2] as HTMLElement).click();
 
     const grid = dom.querySelector('.gengage-chat-product-grid');
     const cards = grid!.querySelectorAll('.gengage-chat-product-card');
@@ -156,12 +157,12 @@ describe('Product Sort Controls', () => {
     const ctx = makeContext();
     const dom = renderUISpec(spec, ctx);
 
-    const buttons = dom.querySelectorAll('.gengage-chat-product-sort-btn');
+    const options = dom.querySelectorAll('.gengage-chat-product-sort-option');
 
     // Sort by price asc first
-    (buttons[1] as HTMLElement).click();
+    (options[1] as HTMLElement).click();
     // Then back to related
-    (buttons[0] as HTMLElement).click();
+    (options[0] as HTMLElement).click();
 
     const grid = dom.querySelector('.gengage-chat-product-grid');
     const cards = grid!.querySelectorAll('.gengage-chat-product-card');
@@ -176,15 +177,15 @@ describe('Product Sort Controls', () => {
     ]);
     const ctx = makeContext();
     const dom = renderUISpec(spec, ctx);
-    const buttons = dom.querySelectorAll('.gengage-chat-product-sort-btn');
+    const options = dom.querySelectorAll('.gengage-chat-product-sort-option');
 
     // Initially "Related" is active
-    expect(buttons[0]!.classList.contains('gengage-chat-product-sort-btn--active')).toBe(true);
-    expect(buttons[1]!.classList.contains('gengage-chat-product-sort-btn--active')).toBe(false);
+    expect(options[0]!.classList.contains('gengage-chat-product-sort-option--active')).toBe(true);
+    expect(options[1]!.classList.contains('gengage-chat-product-sort-option--active')).toBe(false);
 
     // Click Price ↑
-    (buttons[1] as HTMLElement).click();
-    expect(buttons[0]!.classList.contains('gengage-chat-product-sort-btn--active')).toBe(false);
-    expect(buttons[1]!.classList.contains('gengage-chat-product-sort-btn--active')).toBe(true);
+    (options[1] as HTMLElement).click();
+    expect(options[0]!.classList.contains('gengage-chat-product-sort-option--active')).toBe(false);
+    expect(options[1]!.classList.contains('gengage-chat-product-sort-option--active')).toBe(true);
   });
 });

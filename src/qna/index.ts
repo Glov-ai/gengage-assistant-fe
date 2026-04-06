@@ -15,6 +15,7 @@ import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
 import { dispatch } from '../common/events.js';
+import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
 import {
   streamStartEvent,
@@ -67,6 +68,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-qna-container';
+    this._contentEl.dataset['gengagePart'] = 'qna-container';
     this.root.appendChild(this._contentEl);
 
     const sku = config.pageContext?.sku;
@@ -155,6 +157,10 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
     const requestId = crypto.randomUUID();
     const fetchStart = Date.now();
+    const releaseConnectionWarning = trackConnectionWarningRequest({
+      source: 'qna',
+      locale: this.config.locale,
+    });
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -199,7 +205,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       this._contentEl.innerHTML = '';
 
       const panel = document.createElement('div');
-      panel.className = 'gengage-qna-panel';
+      panel.className = 'gengage-qna-panel gds-panel';
+      panel.dataset['gengagePart'] = 'qna-panel';
       this._contentEl.appendChild(panel);
 
       const hasQuestionHeading = this._specIncludesType(result.uiSpecs, 'QuestionHeading');
@@ -262,7 +269,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       dispatch('gengage:global:error', {
         source: 'qna',
         code: 'FETCH_ERROR',
-        message: getGlobalErrorMessage(this.config.locale),
+        message: getGlobalErrorMessage(this.config.locale, err),
       });
 
       this.track(
@@ -297,6 +304,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (import.meta.env?.DEV) {
         console.error('[gengage:qna] Failed to fetch launcher actions:', err);
       }
+    } finally {
+      releaseConnectionWarning();
     }
   }
 

@@ -1,0 +1,16 @@
+:where(.gds-panel) {
+  background: var(--ds-panel-bg);
+  border: 1px solid var(--ds-panel-border);
+  border-radius: var(--ds-panel-radius);
+  box-shadow: var(--ds-panel-shadow);
+}
+
+:where(
+  .gengage-qna-panel,
+  .gengage-chat-panel-topbar,
+  .gengage-chat-chat-header,
+  .gengage-chat-panel-ai-zone > .gengage-chat-ai-top-picks,
+  .gengage-chat-grounding-review
+) {
+  border-color: var(--ds-panel-border);
+}

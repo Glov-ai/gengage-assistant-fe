@@ -1,0 +1,10 @@
+:where(.gds-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+:where(.gds-toolbar-compact) {
+  gap: 8px;
+}

@@ -6,7 +6,8 @@
 
 export function renderProsAndCons(element: { props?: Record<string, unknown> }): HTMLElement {
   const container = document.createElement('div');
-  container.className = 'gengage-chat-pros-cons';
+  container.className = 'gengage-chat-pros-cons gds-card-soft';
+  container.dataset['gengagePart'] = 'pros-cons';
 
   const productName = element.props?.['productName'] as string | undefined;
   if (productName) {
@@ -22,9 +23,11 @@ export function renderProsAndCons(element: { props?: Record<string, unknown> }):
   if (pros && pros.length > 0) {
     const prosList = document.createElement('ul');
     prosList.className = 'gengage-chat-pros-cons-list';
+    prosList.dataset['gengagePart'] = 'pros-list';
     for (const pro of pros) {
       const li = document.createElement('li');
       li.className = 'gengage-chat-pros-cons-item';
+      li.dataset['gengagePart'] = 'pros-item';
       const icon = document.createElement('span');
       icon.className = 'gengage-chat-pros-cons-icon gengage-chat-pros-cons-icon--pro';
       icon.textContent = '\u2713';
@@ -40,9 +43,11 @@ export function renderProsAndCons(element: { props?: Record<string, unknown> }):
   if (cons && cons.length > 0) {
     const consList = document.createElement('ul');
     consList.className = 'gengage-chat-pros-cons-list';
+    consList.dataset['gengagePart'] = 'cons-list';
     for (const con of cons) {
       const li = document.createElement('li');
       li.className = 'gengage-chat-pros-cons-item';
+      li.dataset['gengagePart'] = 'cons-item';
       const icon = document.createElement('span');
       icon.className = 'gengage-chat-pros-cons-icon gengage-chat-pros-cons-icon--con';
       icon.textContent = '\u2717';

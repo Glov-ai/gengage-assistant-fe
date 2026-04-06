@@ -37,12 +37,13 @@ describe('locale key completeness', () => {
     expect(enKeys).toEqual(trKeys);
   });
 
-  it('all locale objects have only string values', () => {
+  it('all locale objects have only string or string[] values', () => {
     const allLocales = [CHAT_I18N_EN, CHAT_I18N_TR, QNA_I18N_EN, QNA_I18N_TR, SIMREL_I18N_EN, SIMREL_I18N_TR];
 
     for (const locale of allLocales) {
       for (const [key, value] of Object.entries(locale)) {
-        expect(typeof value, `key "${key}" should be a string`).toBe('string');
+        const isStringArray = Array.isArray(value) && value.every((item) => typeof item === 'string');
+        expect(typeof value === 'string' || isStringArray, `key "${key}" should be a string or string[]`).toBe(true);
       }
     }
   });

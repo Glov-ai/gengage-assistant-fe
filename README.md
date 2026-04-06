@@ -1,7 +1,7 @@
 # Gengage AI Assistant — Frontend SDK
 
 [![npm](https://img.shields.io/npm/v/@gengage/assistant-fe)](https://www.npmjs.com/package/@gengage/assistant-fe)
-[![tests](https://img.shields.io/badge/tests-1056%20passing-brightgreen)]()
+[![tests](https://img.shields.io/badge/tests-passing-brightgreen)]()
 [![license](https://img.shields.io/badge/license-source--available-blue)](LICENSE)
 
 Embeddable AI shopping assistant widgets for e-commerce — **chat**, **contextual Q&A**, and **similar products** — built with vanilla TypeScript, zero framework dependencies.
@@ -114,7 +114,7 @@ See [CUSTOMIZATION-GUIDE.md](CUSTOMIZATION-GUIDE.md) for the full playbook.
 npm install
 npm run dev -- koctascomtr --sku=1000465056   # Local dev server with HMR
 npm run typecheck                              # TypeScript strict check
-npm run test                                   # 1056 unit tests
+npm run test                                   # Unit tests
 npm run build                                  # Build to dist/
 npm run catalog                                # Visual component catalog at :3002
 ```

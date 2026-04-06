@@ -161,6 +161,9 @@ export interface ChatI18n {
   errorMessage: string;
   retryButton: string;
   loadingMessage: string;
+  loadingSequenceGeneric: string[];
+  loadingSequencePanel: string[];
+  loadingSequenceComparison: string[];
   productCtaLabel: string;
   /** CTA label in the product details panel when navigating to the product URL (distinct from the card "İncele" CTA). */
   viewOnSiteLabel: string;
@@ -188,6 +191,9 @@ export interface ChatI18n {
   sortToolbarAriaLabel: string;
   compareSelected: string;
   compareMinHint: string;
+  compareMaxHint: string;
+  comparisonSelectLabel: string;
+  comparisonSelectedLabel: string;
   /** Shown on product cards while comparison mode is on — whole card toggles selection. */
   comparisonSelectCardHint: string;
   /** Shown on the main panel while the comparison table is being generated. */
@@ -229,7 +235,6 @@ export interface ChatI18n {
   productNotFoundMessage: string;
   stopGenerating: string;
   offlineMessage: string;
-  stillWorkingMessage: string;
   cartAriaLabel: string;
   favoritesAriaLabel: string;
   showPanelAriaLabel: string;
@@ -308,6 +313,9 @@ export interface ChatUISpecRenderContext {
     | 'sortPriceDesc'
     | 'sortToolbarAriaLabel'
     | 'compareSelected'
+    | 'compareMinHint'
+    | 'comparisonSelectLabel'
+    | 'comparisonSelectedLabel'
     | 'comparisonSelectCardHint'
     | 'panelTitleProductDetails'
     | 'panelTitleSimilarProducts'
@@ -331,6 +339,7 @@ export interface ChatUISpecRenderContext {
     | 'specialCasesLabel'
     | 'emptyReviewsMessage'
     | 'closeAriaLabel'
+    | 'dismissAriaLabel'
     | 'startChatLabel'
     | 'handoffHeading'
     | 'customerReviewsTitle'
@@ -346,6 +355,8 @@ export interface ChatUISpecRenderContext {
   onSortChange?: ((sort: ProductSortState) => void) | undefined;
   comparisonSelectMode?: boolean | undefined;
   comparisonSelectedSkus?: string[] | undefined;
+  comparisonMaxSelection?: number | undefined;
+  comparisonSelectionWarning?: string | null | undefined;
   onToggleComparisonSku?: ((sku: string) => void) | undefined;
   favoritedSkus?: Set<string> | undefined;
   onFavoriteToggle?: ((sku: string, product: Record<string, unknown>) => void) | undefined;
@@ -354,6 +365,8 @@ export interface ChatUISpecRenderContext {
   isStreaming?: boolean | undefined;
   /** True when the widget is displayed in mobile viewport. Replaces hardcoded 768px check. */
   isMobile?: boolean | undefined;
+  /** ProductGrid: heading on the same row as sort/compare (panel list / Benzer Ürünler). */
+  panelProductListHeading?: string | undefined;
 }
 
 export interface ProductSortState {

@@ -18,11 +18,12 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
 
   const card = document.createElement('div');
-  card.className = 'gengage-chat-product-summary';
+  card.className = 'gengage-chat-product-summary gds-card';
+  card.dataset['gengagePart'] = 'product-summary-card';
   if (!product) return card;
 
   // Make entire card clickable to open product in panel
-  card.style.cursor = 'pointer';
+  card.classList.add('gds-clickable');
   card.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('a')) return;
     ctx.onProductSelect?.(product);
@@ -33,6 +34,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   if (imageUrl && isSafeUrl(imageUrl)) {
     const imgWrap = document.createElement('div');
     imgWrap.className = 'gengage-chat-product-summary__image';
+    imgWrap.dataset['gengagePart'] = 'product-summary-image';
     const img = document.createElement('img');
     img.loading = 'lazy';
     safeSetAttribute(img, 'src', imageUrl);
@@ -46,6 +48,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   // --- Content (right side) ---
   const content = document.createElement('div');
   content.className = 'gengage-chat-product-summary__content';
+  content.dataset['gengagePart'] = 'product-summary-content';
 
   // Product name (brand + name)
   const brand = product['brand'] as string | undefined;
@@ -53,6 +56,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   if (name) {
     const nameEl = document.createElement('div');
     nameEl.className = 'gengage-chat-product-summary__name';
+    nameEl.dataset['gengagePart'] = 'product-summary-name';
     // Only prepend brand if name doesn't already start with it
     const needsBrand = brand && !name.toLowerCase().startsWith(brand.toLowerCase());
     const fullName = needsBrand ? `${brand} ${name}` : name;
@@ -67,6 +71,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
     const ratingRow = document.createElement('div');
     ratingRow.className = 'gengage-chat-product-summary__rating';
+    ratingRow.dataset['gengagePart'] = 'product-summary-rating';
     ratingRow.appendChild(createStarRatingElement(rating));
     if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
       const count = document.createElement('span');
@@ -83,6 +88,7 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   if (price) {
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-summary__price';
+    priceRow.dataset['gengagePart'] = 'product-summary-price';
     if (originalPrice && originalPrice !== price) {
       const orig = document.createElement('span');
       orig.className = 'gengage-chat-product-summary__price-original';
@@ -103,7 +109,8 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
   const url = product['url'] as string | undefined;
   if (url && isSafeUrl(url)) {
     const cta = document.createElement('a');
-    cta.className = 'gengage-chat-product-summary__cta';
+    cta.className = 'gengage-chat-product-summary__cta gds-chip gds-chip-active';
+    cta.dataset['gengagePart'] = 'product-summary-cta';
     safeSetAttribute(cta, 'href', url);
     safeSetAttribute(cta, 'target', '_blank');
     safeSetAttribute(cta, 'rel', 'noopener noreferrer');

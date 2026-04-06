@@ -1,0 +1,104 @@
+:where(:root, .gengage-chat-root, .gengage-qna-container, .gengage-simrel-container, .gengage-simbut-root) {
+  --gengage-primary: var(--client-primary);
+  --gengage-primary-soft: var(--client-primary-soft);
+  --gengage-primary-subtle: var(--client-primary-subtle);
+  --gengage-text-color: var(--text-primary);
+  --gengage-text-secondary: var(--text-secondary);
+  --gengage-hover-color: var(--surface-card-soft);
+
+  --ds-button-primary-bg: var(--client-primary);
+  --ds-button-primary-bg-hover: var(--client-primary-hover);
+  --ds-button-primary-bg-active: var(--client-primary-active);
+  --ds-button-primary-fg: var(--client-on-primary);
+  --ds-button-primary-border: color-mix(in srgb, var(--client-primary) 82%, black 18%);
+
+  --ds-button-secondary-bg: var(--surface-card);
+  --ds-button-secondary-bg-hover: var(--client-primary-subtle);
+  --ds-button-secondary-fg: var(--client-primary);
+  --ds-button-secondary-border: color-mix(in srgb, var(--client-primary) 26%, white);
+
+  --ds-button-ghost-bg: var(--surface-card-muted);
+  --ds-button-ghost-bg-hover: var(--ds-button-ghost-bg);
+  --ds-button-ghost-fg: var(--text-primary);
+  --ds-button-ghost-fg-hover: var(--client-primary);
+  --ds-button-ghost-border: var(--border-default);
+  --ds-button-ghost-border-hover: color-mix(in srgb, var(--client-primary) 18%, white);
+
+  --ds-panel-bg: var(--surface-card);
+  --ds-panel-border: var(--border-default);
+  --ds-panel-shadow: var(--shadow-1);
+  --ds-panel-radius: var(--radius-panel);
+
+  --ds-header-bg: var(--surface-card);
+  --ds-header-fg: var(--text-primary);
+  --ds-header-muted: var(--text-muted);
+  --ds-header-border: var(--border-default);
+
+  --ds-card-bg: var(--surface-card);
+  --ds-card-bg-soft: var(--surface-card-muted);
+  --ds-card-border: var(--border-default);
+  --ds-card-shadow: var(--shadow-1);
+  --ds-card-shadow-hover: var(--shadow-2);
+  --ds-card-radius: var(--radius-card);
+  --ds-card-border-hover: color-mix(in srgb, var(--client-primary) 14%, var(--border-default));
+  --ds-card-bg-hover: color-mix(in srgb, var(--client-primary) 2%, var(--surface-card));
+  --ds-product-card-media-bg: var(--surface-card-muted);
+  --ds-product-card-media-border: var(--border-subtle);
+
+  --ds-input-bg: var(--surface-input);
+  --ds-input-border: var(--border-default);
+  --ds-input-radius: 16px;
+  --ds-input-focus-border: color-mix(in srgb, var(--client-primary) 28%, white);
+  --ds-input-focus-ring: 0 0 0 4px var(--client-focus-ring);
+  --ds-input-highlight: inset 0 1px 0 color-mix(in srgb, white 60%, transparent);
+
+  --ds-chip-bg: var(--surface-card);
+  --ds-chip-border: var(--border-default);
+  --ds-chip-fg: var(--text-secondary);
+  --ds-chip-bg-hover: var(--surface-card-muted);
+  --ds-chip-bg-active: color-mix(in srgb, var(--client-primary) 8%, white);
+  --ds-chip-border-active: color-mix(in srgb, var(--client-primary) 30%, white);
+  --ds-chip-fg-active: var(--client-primary);
+
+  --ds-tab-bg: var(--surface-card);
+  --ds-tab-bg-hover: var(--surface-card-muted);
+  --ds-tab-bg-active: color-mix(in srgb, var(--client-primary) 8%, white);
+  --ds-tab-border: var(--border-default);
+  --ds-tab-border-active: color-mix(in srgb, var(--client-primary) 26%, white);
+  --ds-tab-fg: var(--text-secondary);
+  --ds-tab-fg-active: var(--client-primary);
+
+  --ds-badge-brand-bg: color-mix(in srgb, var(--client-primary) 10%, white);
+  --ds-badge-brand-border: color-mix(in srgb, var(--client-primary) 18%, white);
+  --ds-badge-brand-fg: var(--client-primary);
+
+  --ds-message-user-bg: color-mix(in srgb, var(--client-primary) 10%, white);
+  --ds-message-user-fg: var(--text-primary);
+  --ds-message-user-border: color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+  --ds-message-user-shadow: none;
+
+  --ds-message-assistant-bg: var(--surface-card-soft);
+  --ds-message-assistant-fg: var(--text-primary);
+  --ds-message-assistant-border: var(--border-default);
+  --ds-message-assistant-shadow: none;
+  --ds-message-active-outline: color-mix(in srgb, var(--client-primary) 68%, white);
+
+  --ds-progress-card-border: var(--border-subtle);
+  --ds-progress-mark-bg: color-mix(in srgb, var(--ai-accent-start) 8%, var(--surface-card));
+  --ds-progress-mark-border: color-mix(in srgb, var(--ai-accent-start) 12%, var(--border-default));
+  --ds-progress-scrollbar-thumb: color-mix(in srgb, var(--text-primary) 18%, transparent);
+
+  --ds-toast-error-bg: color-mix(in srgb, var(--error) 5%, var(--surface-card));
+  --ds-toast-error-border: color-mix(in srgb, var(--error) 18%, var(--border-default));
+  --ds-toast-error-accent: var(--error);
+  --ds-toast-error-fg: color-mix(in srgb, var(--error) 22%, var(--text-primary));
+  --ds-toast-error-shadow: var(--shadow-3);
+
+  --ds-comparison-table-bg: var(--surface-card);
+  --ds-comparison-table-border: var(--border-default);
+  --ds-comparison-table-header-bg: var(--surface-card-muted);
+  --ds-comparison-table-header-fg: var(--text-muted);
+  --ds-comparison-table-row-border: var(--border-subtle);
+  --ds-comparison-table-winner-bg: color-mix(in srgb, var(--client-primary) 6%, white);
+  --ds-comparison-table-winner-fg: var(--client-primary);
+}

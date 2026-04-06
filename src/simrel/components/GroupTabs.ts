@@ -21,6 +21,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
   const instanceId = _groupTabsInstanceCounter++;
   const container = document.createElement('div');
   container.className = 'gengage-simrel-groups';
+  container.dataset['gengagePart'] = 'simrel-groups';
 
   if (options.groups.length === 0) {
     container.style.display = 'none';
@@ -30,7 +31,8 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
 
   // Tab bar — WAI-ARIA tablist pattern
   const tabBar = document.createElement('div');
-  tabBar.className = 'gengage-simrel-tabs';
+  tabBar.className = 'gengage-simrel-tabs gds-toolbar';
+  tabBar.dataset['gengagePart'] = 'simrel-tab-bar';
   tabBar.setAttribute('role', 'tablist');
 
   const tabs: HTMLButtonElement[] = [];
@@ -80,8 +82,9 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
 
     // Tab button
     const tab = document.createElement('button');
-    tab.className = 'gengage-simrel-tab';
+    tab.className = 'gengage-simrel-tab gds-tab';
     tab.type = 'button';
+    tab.dataset['gengagePart'] = 'simrel-tab';
     tab.id = tabId;
     tab.textContent = group.name;
     tab.setAttribute('role', 'tab');
@@ -115,6 +118,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     // Tab panel
     const panel = document.createElement('div');
     panel.className = 'gengage-simrel-tab-panel';
+    panel.dataset['gengagePart'] = 'simrel-tab-panel';
     panel.id = panelId;
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', tabId);

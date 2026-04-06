@@ -301,17 +301,6 @@ selectors. Useful as a fallback when the host page does not set `pageContext` ex
   or Trendyol-style `-p-SKU`.
 - `autoDetectPageContext(rules?)` — combines both to return a partial `PageContext`.
 
-## Quantity Stepper
-
-`src/common/quantity-stepper.ts` renders a `[−][value][+][Submit]` component for
-add-to-cart interactions. Used on product cards (compact mode with cart icon) and the
-product details panel (full mode with label).
-
-- Configurable min/max range (default 1–99), initial value, labels, and symbols.
-- Compact mode renders a cart icon button; full mode renders a labeled "Sepete Ekle" button.
-- All click events call `stopPropagation()` to prevent card-level click handlers from firing.
-- `aria-live="polite"` on the value display for screen reader announcements.
-
 ## Price Formatter
 
 `src/common/price-formatter.ts` provides locale-aware currency formatting via the
@@ -447,7 +436,7 @@ Key details:
 | `src/common/tts-player.ts` | Base64 audio playback for backend TTS events |
 | `src/common/ga-datalayer.ts` | Google Analytics 4 dataLayer event integration |
 | `src/common/page-detect.ts` | URL/DOM-based page type and SKU auto-detection |
-| `src/common/quantity-stepper.ts` | `[−][value][+][Submit]` component for ATC buttons |
+
 | `src/common/price-formatter.ts` | Locale-aware currency formatting |
 | `src/common/product-utils.ts` | Shared product rendering helpers (stars, ratings, image errors) |
 

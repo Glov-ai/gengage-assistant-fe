@@ -27,6 +27,7 @@ const mockedSendChatMessage = sendChatMessage as unknown as ReturnType<typeof vi
 const mockedFetchLauncherActions = fetchLauncherActions as unknown as ReturnType<typeof vi.fn>;
 const mockedFetchSimilarProducts = fetchSimilarProducts as unknown as ReturnType<typeof vi.fn>;
 let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+let navigatorOnLineDescriptor: PropertyDescriptor | undefined;
 
 type GlobalErrorDetail = {
   source: 'chat' | 'qna' | 'simrel' | 'sdk';
@@ -52,10 +53,14 @@ describe('global error event dispatch', () => {
     document.body.innerHTML = '';
     vi.clearAllMocks();
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    navigatorOnLineDescriptor = Object.getOwnPropertyDescriptor(window.Navigator.prototype, 'onLine');
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    if (navigatorOnLineDescriptor) {
+      Object.defineProperty(window.Navigator.prototype, 'onLine', navigatorOnLineDescriptor);
+    }
     document.body.innerHTML = '';
   });
 
@@ -86,6 +91,39 @@ describe('global error event dispatch', () => {
     // Widget emits 'error' event for programmatic consumers
     expect(errors).toHaveLength(1);
     expect(errors[0]!.message).toBe('HTTP 500');
+
+    collector.stop();
+    chat.destroy();
+  });
+
+  it('does not append a generic inline error when chat fails while offline', async () => {
+    mockedSendChatMessage.mockImplementation((_request, callbacks) => {
+      callbacks.onError(new TypeError('Failed to fetch'));
+      return new AbortController();
+    });
+    Object.defineProperty(window.Navigator.prototype, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+
+    const collector = collectGlobalErrors();
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'test-account',
+      session: { sessionId: 'test-session' },
+      locale: 'tr',
+    });
+
+    chat.openWithAction({
+      title: 'Sor',
+      type: 'user_message',
+      payload: 'merhaba',
+    });
+
+    const shadow = (chat as any)._shadow as ShadowRoot | null;
+    expect(shadow?.querySelector('.gengage-chat-offline-bar--visible')).not.toBeNull();
+    expect(shadow?.querySelector('.gengage-chat-error')).toBeNull();
+    expect(collector.events).toHaveLength(0);
 
     collector.stop();
     chat.destroy();
@@ -136,7 +174,7 @@ describe('global error event dispatch', () => {
     expect(collector.events[0]).toMatchObject({
       source: 'qna',
       code: 'FETCH_ERROR',
-      message: 'Connection issue. Please try again.',
+      message: 'Something went wrong. Please try again.',
     });
 
     // QNA should remain usable even when launcher fetch fails.
@@ -170,10 +208,42 @@ describe('global error event dispatch', () => {
     expect(collector.events[0]).toMatchObject({
       source: 'simrel',
       code: 'FETCH_ERROR',
-      message: 'Connection issue. Please try again.',
+      message: 'Something went wrong. Please try again.',
     });
 
     collector.stop();
     simrel.destroy();
+  });
+
+  it('uses a connection warning when qna fetch fails while offline', async () => {
+    mockedFetchLauncherActions.mockRejectedValue(new TypeError('Failed to fetch'));
+    Object.defineProperty(window.Navigator.prototype, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+
+    const host = document.createElement('div');
+    host.id = 'qna-offline-mount';
+    document.body.appendChild(host);
+
+    const collector = collectGlobalErrors();
+    const qna = new GengageQNA();
+    await qna.init({
+      accountId: 'test-account',
+      session: { sessionId: 'test-session' },
+      mountTarget: '#qna-offline-mount',
+      pageContext: { pageType: 'pdp', sku: 'SKU-1' },
+      locale: 'en',
+    });
+
+    expect(collector.events).toHaveLength(1);
+    expect(collector.events[0]).toMatchObject({
+      source: 'qna',
+      code: 'FETCH_ERROR',
+      message: 'Connection issue. Please try again.',
+    });
+
+    collector.stop();
+    qna.destroy();
   });
 });

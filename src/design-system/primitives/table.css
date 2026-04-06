@@ -1,0 +1,34 @@
+:where(.gds-comparison-table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--ds-comparison-table-border);
+  border-radius: 20px;
+  background: var(--ds-comparison-table-bg);
+}
+
+:where(.gds-comparison-table th, .gds-comparison-table td) {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 13px;
+  border-bottom: 1px solid var(--ds-comparison-table-row-border);
+}
+
+:where(.gds-comparison-table th) {
+  background: var(--ds-comparison-table-header-bg);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ds-comparison-table-header-fg);
+}
+
+:where(.gds-comparison-table tr:last-child td) {
+  border-bottom: 0;
+}
+
+:where(.gds-comparison-table-winner-cell) {
+  background: var(--ds-comparison-table-winner-bg);
+  color: var(--ds-comparison-table-winner-fg);
+  font-weight: 800;
+}

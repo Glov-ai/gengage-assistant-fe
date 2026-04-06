@@ -81,6 +81,7 @@ export interface ComparisonTableI18n {
   highlightsLabel?: string;
   keyDifferencesLabel?: string;
   specialCasesLabel?: string;
+  viewMoreLabel?: string;
   addToCartButton?: string;
   /** Locale-specific attribute display names (e.g., { screen_size: 'Screen Size' }). */
   criteriaLabels?: Record<string, string>;
@@ -102,24 +103,46 @@ export interface ComparisonTableOptions {
   pricing?: PriceFormatConfig | undefined;
 }
 
+function hasRenderablePrice(raw: string | undefined): raw is string {
+  if (typeof raw !== 'string') return false;
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0;
+}
+
+function hasRenderableRating(raw: number | string | undefined): raw is number | string {
+  const num = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN;
+  return Number.isFinite(num) && num > 0;
+}
+
+function createRatingBadge(raw: number | string): HTMLElement {
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  const badge = document.createElement('div');
+  badge.className = 'gengage-chat-comparison-recommended-rating';
+  badge.innerHTML =
+    '<span class="gengage-chat-comparison-recommended-rating-icon" aria-hidden="true">' +
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.6l2.58 5.23 5.77.84-4.17 4.07.98 5.75L12 16.78l-5.16 2.71.99-5.75L3.66 9.67l5.76-.84L12 3.6z"/></svg>' +
+    '</span>';
+  const label = document.createElement('span');
+  label.className = 'gengage-chat-comparison-recommended-rating-value';
+  label.textContent = value.toFixed(1);
+  badge.appendChild(label);
+  return badge;
+}
+
 export function renderComparisonTable(options: ComparisonTableOptions): HTMLElement {
   const { recommended, products, attributes, highlights, specialCases, onProductClick, i18n } = options;
 
   const container = document.createElement('div');
   container.className = 'gengage-chat-comparison';
+  container.dataset['gengagePart'] = 'comparison-dialog';
   container.setAttribute('role', 'dialog');
   container.setAttribute('aria-label', i18n?.comparisonHeading ?? 'Comparison Results');
 
-  // Heading
-  const heading = document.createElement('h3');
-  heading.className = 'gengage-chat-comparison-heading';
-  heading.textContent = i18n?.comparisonHeading ?? 'COMPARISON RESULTS';
-  container.appendChild(heading);
-
   // Recommended card
   if (recommended) {
-    const recCard = document.createElement('div');
-    recCard.className = 'gengage-chat-comparison-recommended';
+    const recCard = document.createElement('article');
+    recCard.className = 'gengage-chat-comparison-recommended gds-card';
+    recCard.dataset['gengagePart'] = 'comparison-recommended-card';
 
     const recLabel = document.createElement('div');
     recLabel.className = 'gengage-chat-comparison-recommended-label';
@@ -128,7 +151,13 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
 
     const recBody = document.createElement('div');
     recBody.className = 'gengage-chat-comparison-recommended-body';
+    recBody.classList.add('gds-clickable');
+    recBody.tabIndex = 0;
+    recBody.setAttribute('role', 'button');
+    recBody.setAttribute('aria-label', recommended.name);
 
+    const media = document.createElement('div');
+    media.className = 'gengage-chat-comparison-recommended-media';
     if (recommended.imageUrl && isSafeImageUrl(recommended.imageUrl)) {
       const img = document.createElement('img');
       img.src = recommended.imageUrl;
@@ -141,8 +170,14 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
         },
         { once: true },
       );
-      recBody.appendChild(img);
+      media.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'gengage-chat-comparison-recommended-placeholder';
+      placeholder.setAttribute('aria-hidden', 'true');
+      media.appendChild(placeholder);
     }
+    recBody.appendChild(media);
 
     const info = document.createElement('div');
     info.className = 'gengage-chat-comparison-recommended-info';
@@ -150,23 +185,43 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     title.className = 'gengage-chat-comparison-recommended-title';
     title.textContent = recommended.name;
     info.appendChild(title);
-    const price = document.createElement('div');
-    price.className = 'gengage-chat-comparison-recommended-price';
-    price.textContent = formatPrice(recommended.price, options.pricing);
-    info.appendChild(price);
+    const meta = document.createElement('div');
+    meta.className = 'gengage-chat-comparison-recommended-meta';
+    if (hasRenderableRating(recommended.rating)) {
+      meta.appendChild(createRatingBadge(recommended.rating!));
+    }
+    if (hasRenderablePrice(recommended.price)) {
+      const price = document.createElement('div');
+      price.className = 'gengage-chat-comparison-recommended-price';
+      price.textContent = formatPrice(recommended.price, options.pricing);
+      meta.appendChild(price);
+    }
+    if (meta.childElementCount > 0) info.appendChild(meta);
+    if (options.recommendedText) {
+      const recExplanation = document.createElement('p');
+      recExplanation.className = 'gengage-chat-comparison-recommended-text';
+      recExplanation.innerHTML = sanitizeHtml(options.recommendedText);
+      info.appendChild(recExplanation);
+    }
     recBody.appendChild(info);
 
-    recBody.addEventListener('click', () => {
+    const openRecommended = (): void => {
       onProductClick(recommended.sku);
+    };
+    recBody.addEventListener('click', openRecommended);
+    recBody.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      openRecommended();
     });
-    recBody.style.cursor = 'pointer';
 
     recCard.appendChild(recBody);
 
-    // Highlights
+    // Supporting bullets
     if (highlights.length > 0) {
       const hlSection = document.createElement('div');
       hlSection.className = 'gengage-chat-comparison-highlights';
+      hlSection.dataset['gengagePart'] = 'comparison-highlights';
       const hlLabel = document.createElement('div');
       hlLabel.className = 'gengage-chat-comparison-highlights-label';
       hlLabel.textContent = i18n?.highlightsLabel ?? 'Key Highlights';
@@ -181,24 +236,25 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       recCard.appendChild(hlSection);
     }
 
-    // Recommended choice explanation
-    if (options.recommendedText) {
-      const recExplanation = document.createElement('div');
-      recExplanation.className = 'gengage-chat-comparison-recommended-text';
-      recExplanation.innerHTML = sanitizeHtml(options.recommendedText);
-      recCard.appendChild(recExplanation);
-    }
-
     container.appendChild(recCard);
   }
 
   // Key Differences section
   if (options.keyDifferencesHtml) {
-    const kdSection = document.createElement('div');
+    const kdSection = document.createElement('details');
     kdSection.className = 'gengage-chat-comparison-key-differences';
-    const kdHeading = document.createElement('h4');
-    kdHeading.textContent = i18n?.keyDifferencesLabel ?? 'Key Differences';
-    kdSection.appendChild(kdHeading);
+    kdSection.dataset['gengagePart'] = 'comparison-key-differences';
+    const kdSummary = document.createElement('summary');
+    kdSummary.className = 'gengage-chat-comparison-key-differences-summary';
+    const kdLabel = document.createElement('span');
+    kdLabel.className = 'gengage-chat-comparison-key-differences-summary-label';
+    kdLabel.textContent = i18n?.keyDifferencesLabel ?? 'Key Differences';
+    const kdMeta = document.createElement('span');
+    kdMeta.className = 'gengage-chat-comparison-key-differences-summary-meta';
+    kdMeta.textContent = i18n?.viewMoreLabel ?? 'Show More';
+    kdSummary.appendChild(kdLabel);
+    kdSummary.appendChild(kdMeta);
+    kdSection.appendChild(kdSummary);
     const kdContent = document.createElement('div');
     kdContent.className = 'gengage-chat-comparison-key-differences-content';
     kdContent.innerHTML = sanitizeHtml(formatKeyDifferences(options.keyDifferencesHtml));
@@ -209,7 +265,8 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
   // Special cases (expandable)
   if (specialCases && specialCases.length > 0) {
     const special = document.createElement('details');
-    special.className = 'gengage-chat-comparison-special';
+    special.className = 'gengage-chat-comparison-special gds-evidence-card gds-evidence-card-warning';
+    special.dataset['gengagePart'] = 'comparison-special-cases';
     const summary = document.createElement('summary');
     summary.textContent = i18n?.specialCasesLabel ?? 'For Special Cases';
     special.appendChild(summary);
@@ -226,7 +283,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
   // Comparison table
   if (products.length > 0 && attributes.length > 0) {
     const table = document.createElement('table');
-    table.className = 'gengage-chat-comparison-table';
+    table.className = 'gengage-chat-comparison-table gds-comparison-table';
 
     // Header row: empty cell + product columns
     const thead = document.createElement('thead');
@@ -236,10 +293,24 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     for (const product of products) {
       const th = document.createElement('th');
       if (product.sku === recommended?.sku) {
-        th.className = 'gengage-chat-comparison-selected';
+        th.className = 'gengage-chat-comparison-selected gds-comparison-table-winner-cell';
       }
       const headerCell = document.createElement('div');
-      headerCell.className = 'gengage-chat-comparison-table-header-cell';
+      headerCell.className =
+        'gengage-chat-comparison-table-header-cell gengage-chat-comparison-table-header-cell--clickable gds-clickable';
+      headerCell.tabIndex = 0;
+      headerCell.setAttribute('role', 'button');
+      headerCell.setAttribute('aria-label', product.name);
+      headerCell.title = product.name;
+      const openProduct = (): void => {
+        onProductClick(product.sku);
+      };
+      headerCell.addEventListener('click', openProduct);
+      headerCell.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openProduct();
+      });
       if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
         const img = document.createElement('img');
         img.src = product.imageUrl;
@@ -263,10 +334,12 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       name.className = 'gengage-chat-comparison-table-product-name';
       name.textContent = product.name;
       headerCell.appendChild(name);
-      const prc = document.createElement('div');
-      prc.className = 'gengage-chat-comparison-table-price';
-      prc.textContent = formatPrice(product.price, options.pricing);
-      headerCell.appendChild(prc);
+      if (hasRenderablePrice(product.price)) {
+        const prc = document.createElement('div');
+        prc.className = 'gengage-chat-comparison-table-price';
+        prc.textContent = formatPrice(product.price, options.pricing);
+        headerCell.appendChild(prc);
+      }
       th.appendChild(headerCell);
       headerRow.appendChild(th);
     }
@@ -284,7 +357,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       for (let i = 0; i < attr.values.length; i++) {
         const td = document.createElement('td');
         if (products[i]?.sku === recommended?.sku) {
-          td.className = 'gengage-chat-comparison-selected';
+          td.className = 'gengage-chat-comparison-selected gds-comparison-table-winner-cell';
         }
         td.textContent = attr.values[i] ?? '';
         row.appendChild(td);
@@ -295,28 +368,9 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     // Wrap in a scrollable container so the table scrolls independently
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'gengage-chat-comparison-table-wrapper';
+    tableWrapper.dataset['gengagePart'] = 'comparison-table-wrapper';
     tableWrapper.appendChild(table);
     container.appendChild(tableWrapper);
-  }
-
-  // View product buttons
-  if (options.productActions) {
-    const btnRow = document.createElement('div');
-    btnRow.className = 'gengage-chat-comparison-product-actions';
-    for (const product of products) {
-      const action = options.productActions[product.sku];
-      if (action) {
-        const btn = document.createElement('button');
-        btn.className = 'gengage-chat-comparison-view-btn';
-        btn.type = 'button';
-        btn.textContent = product.name;
-        btn.addEventListener('click', () => onProductClick(product.sku));
-        btnRow.appendChild(btn);
-      }
-    }
-    if (btnRow.childElementCount > 0) {
-      container.appendChild(btnRow);
-    }
   }
 
   // Focus trap: keep Tab cycling within the comparison dialog

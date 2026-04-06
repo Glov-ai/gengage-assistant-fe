@@ -105,8 +105,9 @@ const DEFAULT_QNA_UI_SPEC_REGISTRY: QNAUISpecRegistry = {
 
   ActionButton: ({ element, context }) => {
     const button = document.createElement('button');
-    button.className = 'gengage-qna-button';
+    button.className = 'gengage-qna-button gds-chip';
     button.type = 'button';
+    button.dataset['gengagePart'] = 'qna-action-button';
 
     const label = element.props?.['label'];
     if (typeof label === 'string') {
@@ -144,6 +145,7 @@ const DEFAULT_QNA_UI_SPEC_REGISTRY: QNAUISpecRegistry = {
   QuestionHeading: ({ element }) => {
     const heading = document.createElement('h3');
     heading.className = 'gengage-qna-heading';
+    heading.dataset['gengagePart'] = 'qna-heading';
     const text = element.props?.['text'];
     heading.textContent = typeof text === 'string' ? text : '';
     return heading;

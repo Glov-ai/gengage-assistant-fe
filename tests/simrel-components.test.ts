@@ -49,7 +49,7 @@ describe('ProductCard', () => {
     });
 
     expect(card.querySelector('.gengage-simrel-card-name')?.textContent).toBe('Test Product');
-    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299,00 TL');
+    expect(card.querySelector('.gengage-simrel-card-price-current')?.textContent).toBe('1.299 TL');
     expect(card.querySelector('img')?.src).toBe('https://cdn.example.com/img.jpg');
   });
 
@@ -66,7 +66,7 @@ describe('ProductCard', () => {
     expect(card.querySelector('.gengage-simrel-card-cta')?.classList.contains('gengage-chat-product-card-cta')).toBe(
       true,
     );
-    expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-qty-stepper--compact')).toBe(true);
+    expect(card.querySelector('.gengage-simrel-atc')?.classList.contains('gengage-simrel-atc-button')).toBe(true);
   });
 
   it('dispatches onClick when card is clicked', () => {
@@ -82,7 +82,7 @@ describe('ProductCard', () => {
     expect(onClick).toHaveBeenCalledWith(expect.objectContaining({ sku: 'SKU-1' }));
   });
 
-  it('dispatches onAddToCart via stepper and prevents card click propagation', () => {
+  it('dispatches onAddToCart via direct button and prevents card click propagation', () => {
     const onClick = vi.fn();
     const onAddToCart = vi.fn();
     const card = renderProductCard({
@@ -95,15 +95,14 @@ describe('ProductCard', () => {
     const stepper = card.querySelector('.gengage-simrel-atc') as HTMLElement;
     expect(stepper).toBeTruthy();
 
-    // Stepper renders [−][1][+][Submit]
-    const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
+    const submitBtn = stepper as HTMLButtonElement;
     expect(submitBtn).toBeTruthy();
     submitBtn.click();
     expect(onAddToCart).toHaveBeenCalledWith({ sku: 'SKU-1', quantity: 1, cartCode: 'CART-1' });
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('stepper increments quantity before add-to-cart', () => {
+  it('direct button always adds quantity 1', () => {
     const onAddToCart = vi.fn();
     const card = renderProductCard({
       product: makeProduct({ cartCode: 'CART-1' }),
@@ -113,17 +112,8 @@ describe('ProductCard', () => {
     });
 
     const stepper = card.querySelector('.gengage-simrel-atc') as HTMLElement;
-    const incBtn = stepper.querySelectorAll('.gengage-qty-btn')[1] as HTMLButtonElement; // [+] button
-    const valueEl = stepper.querySelector('.gengage-qty-value') as HTMLElement;
-    const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
-
-    // Increment twice
-    incBtn.click();
-    incBtn.click();
-    expect(valueEl.textContent).toBe('3');
-
-    submitBtn.click();
-    expect(onAddToCart).toHaveBeenCalledWith({ sku: 'SKU-1', quantity: 3, cartCode: 'CART-1' });
+    (stepper as HTMLButtonElement).click();
+    expect(onAddToCart).toHaveBeenCalledWith({ sku: 'SKU-1', quantity: 1, cartCode: 'CART-1' });
   });
 
   it('omits ATC button when cartCode is absent', () => {
@@ -174,7 +164,7 @@ describe('ProductCard', () => {
 
     const original = card.querySelector('.gengage-simrel-card-price-original');
     expect(original).toBeTruthy();
-    expect(original!.textContent).toBe('999,00 TL');
+    expect(original!.textContent).toBe('999 TL');
   });
 
   it('renders rating stars clamped to 0-5', () => {

@@ -90,6 +90,14 @@ export interface ChatDrawerOptions {
 }
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
+const LOADING_STEP_INTERVAL_MS = 1400;
+
+interface LoadingSequenceBinding {
+  labelEl: HTMLElement;
+  steps: string[];
+  index: number;
+  intervalId: ReturnType<typeof setInterval> | null;
+}
 
 /** Clipboard API (async read) — Chrome/Edge; Safari may require permission. */
 async function readClipboardImageAsFile(): Promise<File | null> {
@@ -118,6 +126,7 @@ export class ChatDrawer {
   private messagesEl: HTMLElement;
   private inputEl: HTMLTextAreaElement;
   private sendBtn: HTMLButtonElement;
+  private _sendStopHandler: (() => void) | null = null;
   private i18n: ChatI18n;
   private onSend: (text: string, attachment?: File) => void;
   private _panelEl: HTMLElement;
@@ -157,7 +166,6 @@ export class ChatDrawer {
   private readonly _cleanups: Array<() => void> = [];
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
-  private _stillWorkingTimer: ReturnType<typeof setTimeout> | null = null;
   private _conversationEl: HTMLElement | null = null;
   private readonly _options: ChatDrawerOptions;
   private _reopenPanelBtn: HTMLButtonElement | null = null;
@@ -174,6 +182,10 @@ export class ChatDrawer {
   private _attachMenuEl: HTMLElement | null = null;
   private _attachBtn: HTMLButtonElement | null = null;
   private _attachMenuCleanup: (() => void) | null = null;
+  private _attachMenuClickTimerId: number | null = null;
+  private _typingLoadingBinding: LoadingSequenceBinding | null = null;
+  private _panelLoadingBinding: LoadingSequenceBinding | null = null;
+  private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -199,7 +211,8 @@ export class ChatDrawer {
     }
 
     this.root = document.createElement('div');
-    this.root.className = 'gengage-chat-drawer';
+    this.root.className = 'gengage-chat-drawer gds-panel';
+    this.root.dataset['gengagePart'] = 'chat-drawer';
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-label', this.i18n.headerTitle ?? 'Chat');
     this.root.setAttribute('aria-modal', 'true');
@@ -217,6 +230,7 @@ export class ChatDrawer {
     {
       const handleEl = document.createElement('div');
       handleEl.className = 'gengage-chat-drawer-handle';
+      handleEl.dataset['gengagePart'] = 'chat-drawer-handle';
       handleEl.setAttribute('aria-hidden', 'true');
       handleEl.style.pointerEvents = 'none'; // visual only; header receives the touch events
       _handleEl = handleEl;
@@ -224,15 +238,23 @@ export class ChatDrawer {
 
     // Header — branded dark bar
     const header = document.createElement('div');
-    header.className = 'gengage-chat-header';
+    header.className = 'gengage-chat-header gds-shell-header';
+    header.dataset['gengagePart'] = 'chat-header';
 
     const headerLeft = document.createElement('div');
     headerLeft.className = 'gengage-chat-header-left';
+    headerLeft.dataset['gengagePart'] = 'chat-header-left';
 
     const avatarUrl = options.headerAvatarUrl ?? options.launcherImageUrl;
+    const useLogoAvatar =
+      typeof options.headerAvatarUrl === 'string' &&
+      options.headerAvatarUrl.length > 0 &&
+      options.headerAvatarUrl !== options.launcherImageUrl;
     if (avatarUrl) {
       const avatar = document.createElement('img');
       avatar.className = 'gengage-chat-header-avatar';
+      if (useLogoAvatar) avatar.classList.add('gengage-chat-header-avatar--logo');
+      avatar.dataset['gengagePart'] = 'chat-header-avatar';
       avatar.src = avatarUrl;
       avatar.alt = options.headerTitle ?? 'Assistant';
       headerLeft.appendChild(avatar);
@@ -240,17 +262,21 @@ export class ChatDrawer {
 
     const headerInfo = document.createElement('div');
     headerInfo.className = 'gengage-chat-header-info';
+    headerInfo.dataset['gengagePart'] = 'chat-header-info';
 
     const titleRow = document.createElement('div');
     titleRow.className = 'gengage-chat-header-title-row';
+    titleRow.dataset['gengagePart'] = 'chat-header-title-row';
     const title = document.createElement('span');
     title.className = 'gengage-chat-header-title';
+    title.dataset['gengagePart'] = 'chat-header-title';
     title.textContent = options.headerTitle ?? this.i18n.headerTitle ?? 'Product Expert';
     titleRow.appendChild(title);
 
     if (options.headerBadge) {
       const badge = document.createElement('span');
-      badge.className = 'gengage-chat-header-badge';
+      badge.className = 'gengage-chat-header-badge gds-badge gds-badge-brand';
+      badge.dataset['gengagePart'] = 'chat-header-badge';
       badge.textContent = options.headerBadge;
       titleRow.appendChild(badge);
     }
@@ -258,10 +284,16 @@ export class ChatDrawer {
 
     const powered = document.createElement('a');
     powered.className = 'gengage-chat-header-powered';
+    powered.dataset['gengagePart'] = 'chat-header-powered-by';
     powered.href = 'https://gengage.ai/';
     powered.target = '_blank';
     powered.rel = 'noopener noreferrer';
-    powered.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 110 14A7 7 0 018 1zm0 1.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM7 4.5h2v4H7v-4zm0 5h2v2H7v-2z"/></svg>${this.i18n.poweredBy}`;
+    powered.innerHTML =
+      `<svg viewBox="0 0 15 15" fill="none" aria-hidden="true">` +
+      `<path d="M15 5.88941C12.2201 5.88941 9.72762 7.14107 8.05571 9.11059H0C2.77991 9.11059 5.27238 7.85893 6.94429 5.88941H15Z" fill="currentColor"/>` +
+      `<path d="M9.10964 0C9.10964 2.24394 8.29524 4.30038 6.94429 5.88941C5.27238 7.85962 2.77922 9.11059 0 9.11059V5.88941C3.24802 5.88941 5.89036 3.2465 5.89036 0H9.10964Z" fill="currentColor" fill-opacity="0.68"/>` +
+      `<path d="M15 5.88941V9.11059C11.752 9.11059 9.10964 11.7535 9.10964 15H5.89036C5.89036 12.7561 6.70476 10.6996 8.05571 9.11059C9.72762 7.14038 12.2208 5.88941 15 5.88941Z" fill="currentColor" fill-opacity="0.68"/>` +
+      `</svg>${this.i18n.poweredBy}`;
     headerInfo.appendChild(powered);
 
     headerLeft.appendChild(headerInfo);
@@ -269,12 +301,15 @@ export class ChatDrawer {
 
     const headerRight = document.createElement('div');
     headerRight.className = 'gengage-chat-header-right';
+    headerRight.dataset['gengagePart'] = 'chat-header-actions';
 
     // Reopen-panel button — shown on mobile when the side panel is hidden but has content
     {
       const reopenBtn = document.createElement('button');
       reopenBtn.type = 'button';
-      reopenBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel';
+      reopenBtn.className =
+        'gengage-chat-header-btn gengage-chat-header-btn--reopen-panel gds-btn gds-btn-ghost gds-icon-btn';
+      reopenBtn.dataset['gengagePart'] = 'chat-header-reopen-panel';
       reopenBtn.setAttribute('aria-label', this.i18n.showPanelAriaLabel);
       reopenBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
       reopenBtn.addEventListener('click', () => this._showMobilePanelFromBtn());
@@ -287,7 +322,8 @@ export class ChatDrawer {
     {
       const cartBtn = document.createElement('button');
       cartBtn.type = 'button';
-      cartBtn.className = 'gengage-chat-header-btn';
+      cartBtn.className = 'gengage-chat-header-btn gds-btn gds-btn-ghost gds-icon-btn';
+      cartBtn.dataset['gengagePart'] = 'chat-header-cart';
       cartBtn.setAttribute('aria-label', this.i18n.cartAriaLabel);
       cartBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
       cartBtn.addEventListener('click', () => options.onCartClick?.());
@@ -298,7 +334,8 @@ export class ChatDrawer {
     // New Chat button (optional — reset conversation)
     if (options.onNewChat) {
       const newChatBtn = document.createElement('button');
-      newChatBtn.className = 'gengage-chat-header-btn gengage-chat-new-chat';
+      newChatBtn.className = 'gengage-chat-header-btn gengage-chat-new-chat gds-btn gds-btn-ghost gds-icon-btn';
+      newChatBtn.dataset['gengagePart'] = 'chat-header-new-chat';
       newChatBtn.type = 'button';
       newChatBtn.setAttribute('aria-label', this.i18n.newChatButton);
       newChatBtn.title = this.i18n.newChatButton;
@@ -308,7 +345,8 @@ export class ChatDrawer {
     }
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'gengage-chat-close';
+    closeBtn.className = 'gengage-chat-close gds-btn gds-btn-ghost gds-icon-btn';
+    closeBtn.dataset['gengagePart'] = 'chat-header-close';
     closeBtn.type = 'button';
     closeBtn.setAttribute('aria-label', this.i18n.closeButton);
     closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
@@ -317,7 +355,8 @@ export class ChatDrawer {
     // Favorites button — always visible, placed just before the close button
     {
       const favBtn = document.createElement('button');
-      favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav';
+      favBtn.className = 'gengage-chat-header-btn gengage-chat-header-btn--fav gds-btn gds-btn-ghost gds-icon-btn';
+      favBtn.dataset['gengagePart'] = 'chat-header-favorites';
       favBtn.type = 'button';
       favBtn.setAttribute('aria-label', this.i18n.favoritesAriaLabel);
       favBtn.setAttribute('aria-pressed', 'false');
@@ -325,6 +364,7 @@ export class ChatDrawer {
 
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-header-fav-badge';
+      badge.dataset['gengagePart'] = 'chat-header-favorites-badge';
       badge.setAttribute('aria-hidden', 'true');
       badge.style.display = 'none';
       favBtn.appendChild(badge);
@@ -426,10 +466,12 @@ export class ChatDrawer {
     // Body: flex container for panel + conversation
     const body = document.createElement('div');
     body.className = 'gengage-chat-body';
+    body.dataset['gengagePart'] = 'chat-body';
 
     // Panel (hidden by default)
     this._panelEl = document.createElement('div');
-    this._panelEl.className = 'gengage-chat-panel';
+    this._panelEl.className = 'gengage-chat-panel gds-panel';
+    this._panelEl.dataset['gengagePart'] = 'chat-panel';
 
     // Panel top bar (navigation)
     this._panelTopBar = new PanelTopBar({
@@ -455,15 +497,18 @@ export class ChatDrawer {
     // Divider between panel and conversation
     this._dividerEl = document.createElement('div');
     this._dividerEl.className = 'gengage-chat-panel-divider gengage-chat-panel-divider--hidden';
+    this._dividerEl.dataset['gengagePart'] = 'chat-panel-divider';
     this._dividerEl.setAttribute('role', 'separator');
     this._dividerEl.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
     this._dividerEl.setAttribute('title', this.i18n.togglePanelAriaLabel);
     this._dividerPreviewEl = document.createElement('div');
     this._dividerPreviewEl.className = 'gengage-chat-panel-divider-preview';
+    this._dividerPreviewEl.dataset['gengagePart'] = 'chat-panel-divider-preview';
     this._dividerPreviewEl.setAttribute('aria-hidden', 'true');
     this._dividerEl.appendChild(this._dividerPreviewEl);
     const chevron = document.createElement('button');
-    chevron.className = 'gengage-chat-panel-divider-toggle';
+    chevron.className = 'gengage-chat-panel-divider-toggle gds-btn gds-btn-ghost';
+    chevron.dataset['gengagePart'] = 'chat-panel-divider-toggle';
     chevron.type = 'button';
     chevron.setAttribute('aria-label', this.i18n.togglePanelAriaLabel);
     chevron.setAttribute('title', this.i18n.togglePanelAriaLabel);
@@ -518,12 +563,14 @@ export class ChatDrawer {
     // Conversation wrapper — header lives inside so it only spans chat width
     const conversation = document.createElement('div');
     conversation.className = 'gengage-chat-conversation';
+    conversation.dataset['gengagePart'] = 'chat-conversation';
     this._conversationEl = conversation;
     conversation.appendChild(header);
 
     // Offline status bar (hidden by default, shown when navigator.onLine === false)
     const offlineBar = document.createElement('div');
-    offlineBar.className = 'gengage-chat-offline-bar';
+    offlineBar.className = 'gengage-chat-offline-bar gds-evidence-card gds-evidence-card-warning';
+    offlineBar.dataset['gengagePart'] = 'chat-offline-bar';
     offlineBar.setAttribute('role', 'status');
     offlineBar.setAttribute('aria-live', 'polite');
     offlineBar.textContent = this.i18n.offlineMessage;
@@ -544,12 +591,14 @@ export class ChatDrawer {
     // KVKK banner slot (inserted above messages)
     this._kvkkSlot = document.createElement('div');
     this._kvkkSlot.className = 'gengage-chat-kvkk-slot';
+    this._kvkkSlot.dataset['gengagePart'] = 'chat-kvkk-slot';
     conversation.appendChild(this._kvkkSlot);
 
     // Messages area (stable id for host tooling / getChatScrollElement registration)
     this.messagesEl = document.createElement('div');
     this.messagesEl.id = CHAT_SCROLL_ELEMENT_ID;
     this.messagesEl.className = 'gengage-chat-messages';
+    this.messagesEl.dataset['gengagePart'] = 'chat-messages';
     this.messagesEl.setAttribute('role', 'log');
     this.messagesEl.setAttribute('aria-live', 'polite');
     this.messagesEl.setAttribute('aria-atomic', 'false');
@@ -558,7 +607,8 @@ export class ChatDrawer {
 
     const formerBtn = document.createElement('button');
     formerBtn.type = 'button';
-    formerBtn.className = 'gengage-chat-former-messages-btn';
+    formerBtn.className = 'gengage-chat-former-messages-btn gds-chip';
+    formerBtn.dataset['gengagePart'] = 'chat-former-messages-button';
     formerBtn.textContent = this.i18n.showFormerMessagesButton;
     formerBtn.setAttribute('aria-label', this.i18n.showFormerMessagesButton);
     formerBtn.style.display = 'none';
@@ -651,6 +701,7 @@ export class ChatDrawer {
     // (e.g. ChoicePrompter) stay fixed to the panel's visible area regardless of scroll.
     this._panelFloatingEl = document.createElement('div');
     this._panelFloatingEl.className = 'gengage-chat-panel-float';
+    this._panelFloatingEl.dataset['gengagePart'] = 'chat-panel-floating-layer';
     this._panelEl.appendChild(this._panelFloatingEl);
 
     this._resetPanelAiZoneElement();
@@ -658,16 +709,19 @@ export class ChatDrawer {
     // Suggestion pills row (between messages and input)
     this._pillsEl = document.createElement('div');
     this._pillsEl.className = 'gengage-chat-pills';
+    this._pillsEl.dataset['gengagePart'] = 'chat-suggestion-pills';
     this._pillsEl.setAttribute('role', 'toolbar');
     this._pillsEl.setAttribute('aria-label', this.i18n.suggestionsAriaLabel);
     this._pillsEl.style.display = 'none';
 
     const pillsScroll = document.createElement('div');
     pillsScroll.className = 'gengage-chat-pills-scroll';
+    pillsScroll.dataset['gengagePart'] = 'chat-suggestion-pills-scroll';
     this._pillsEl.appendChild(pillsScroll);
 
     const pillsArrow = document.createElement('button');
-    pillsArrow.className = 'gengage-chat-pills-arrow';
+    pillsArrow.className = 'gengage-chat-pills-arrow gds-btn gds-btn-ghost';
+    pillsArrow.dataset['gengagePart'] = 'chat-suggestion-pills-more';
     pillsArrow.type = 'button';
     pillsArrow.setAttribute('aria-label', this.i18n.moreSuggestionsAriaLabel);
     pillsArrow.textContent = '\u203A'; // › single right-pointing angle
@@ -697,15 +751,18 @@ export class ChatDrawer {
     // Input-area chips (compact chips above input for search/info/review/similar)
     this._inputChipsEl = document.createElement('div');
     this._inputChipsEl.className = 'gengage-chat-input-chips';
+    this._inputChipsEl.dataset['gengagePart'] = 'chat-input-chips';
     this._inputChipsEl.style.display = 'none';
     conversation.appendChild(this._inputChipsEl);
 
     // Input area
     const inputArea = document.createElement('div');
     inputArea.className = 'gengage-chat-input-area';
+    inputArea.dataset['gengagePart'] = 'chat-input-area';
 
     this.inputEl = document.createElement('textarea');
     this.inputEl.className = 'gengage-chat-input';
+    this.inputEl.dataset['gengagePart'] = 'chat-input';
     this.inputEl.rows = 1;
     this.inputEl.placeholder = this.i18n.inputPlaceholder;
 
@@ -776,11 +833,13 @@ export class ChatDrawer {
     // Attach: camera button + popup (fotoğraf seç / panodan yapıştır)
     const attachWrap = document.createElement('div');
     attachWrap.className = 'gengage-chat-attach-wrap';
+    attachWrap.dataset['gengagePart'] = 'chat-attach-wrap';
     this._attachWrapEl = attachWrap;
 
     const attachBtn = document.createElement('button');
     this._attachBtn = attachBtn;
-    attachBtn.className = 'gengage-chat-attach-btn';
+    attachBtn.className = 'gengage-chat-attach-btn gds-btn gds-btn-ghost';
+    attachBtn.dataset['gengagePart'] = 'chat-attach-button';
     attachBtn.type = 'button';
     attachBtn.setAttribute('aria-label', this.i18n.attachImageButton);
     attachBtn.setAttribute('aria-haspopup', 'menu');
@@ -793,13 +852,15 @@ export class ChatDrawer {
 
     const attachMenu = document.createElement('div');
     this._attachMenuEl = attachMenu;
-    attachMenu.className = 'gengage-chat-attach-menu';
+    attachMenu.className = 'gengage-chat-attach-menu gds-menu';
+    attachMenu.dataset['gengagePart'] = 'chat-attach-menu';
     attachMenu.setAttribute('role', 'menu');
     attachMenu.setAttribute('hidden', '');
 
     const selectPhotoBtn = document.createElement('button');
     selectPhotoBtn.type = 'button';
-    selectPhotoBtn.className = 'gengage-chat-attach-menu-item';
+    selectPhotoBtn.className = 'gengage-chat-attach-menu-item gds-btn gds-btn-ghost';
+    selectPhotoBtn.dataset['gengagePart'] = 'chat-attach-menu-select-photo';
     selectPhotoBtn.setAttribute('role', 'menuitem');
     selectPhotoBtn.innerHTML =
       '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
@@ -813,11 +874,13 @@ export class ChatDrawer {
 
     const sep = document.createElement('div');
     sep.className = 'gengage-chat-attach-menu-sep';
+    sep.dataset['gengagePart'] = 'chat-attach-menu-separator';
     sep.setAttribute('aria-hidden', 'true');
 
     const pasteBtn = document.createElement('button');
     pasteBtn.type = 'button';
-    pasteBtn.className = 'gengage-chat-attach-menu-item';
+    pasteBtn.className = 'gengage-chat-attach-menu-item gds-btn gds-btn-ghost';
+    pasteBtn.dataset['gengagePart'] = 'chat-attach-menu-paste';
     pasteBtn.setAttribute('role', 'menuitem');
     pasteBtn.innerHTML =
       '<span class="gengage-chat-attach-menu-icon" aria-hidden="true">' +
@@ -842,14 +905,19 @@ export class ChatDrawer {
 
     // Attachment preview strip (hidden by default)
     this._previewStrip = document.createElement('div');
-    this._previewStrip.className = 'gengage-chat-attachment-preview gengage-chat-attachment-preview--hidden';
+    this._previewStrip.className =
+      'gengage-chat-attachment-preview gengage-chat-attachment-preview--hidden gds-card-soft';
+    this._previewStrip.dataset['gengagePart'] = 'chat-attachment-preview';
     const previewThumb = document.createElement('img');
     previewThumb.className = 'gengage-chat-attachment-preview-thumb';
+    previewThumb.dataset['gengagePart'] = 'chat-attachment-preview-thumb';
     previewThumb.alt = '';
     this._previewName = document.createElement('span');
     this._previewName.className = 'gengage-chat-attachment-name';
+    this._previewName.dataset['gengagePart'] = 'chat-attachment-preview-name';
     const removeBtn = document.createElement('button');
-    removeBtn.className = 'gengage-chat-attachment-remove';
+    removeBtn.className = 'gengage-chat-attachment-remove gds-btn gds-btn-ghost';
+    removeBtn.dataset['gengagePart'] = 'chat-attachment-preview-remove';
     removeBtn.type = 'button';
     removeBtn.setAttribute('aria-label', this.i18n.removeAttachmentButton);
     removeBtn.textContent = '\u00D7'; // multiplication sign (x)
@@ -859,12 +927,22 @@ export class ChatDrawer {
     this._previewStrip.appendChild(removeBtn);
 
     this.sendBtn = document.createElement('button');
-    this.sendBtn.className = 'gengage-chat-send';
+    this.sendBtn.className = 'gengage-chat-send gds-btn gds-btn-primary';
+    this.sendBtn.dataset['gengagePart'] = 'chat-send';
     this.sendBtn.type = 'button';
     this.sendBtn.disabled = true;
     this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
-    this.sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
-    this.sendBtn.addEventListener('click', () => this._submit());
+    this.sendBtn.dataset['tooltip'] = this.i18n.sendButton;
+    this._renderSendButtonIcon('send');
+    this.sendBtn.addEventListener('click', () => {
+      if (this._sendStopHandler) {
+        const onStop = this._sendStopHandler;
+        this.hideStopButton();
+        onStop();
+        return;
+      }
+      this._submit();
+    });
 
     // Drag-and-drop on input area
     inputArea.addEventListener('dragover', (e) => {
@@ -885,14 +963,16 @@ export class ChatDrawer {
 
     // Build pill container: [camera] [input] [mic?] [send]
     const pill = document.createElement('div');
-    pill.className = 'gengage-chat-input-pill';
+    pill.className = 'gengage-chat-input-pill gds-input-shell';
+    pill.dataset['gengagePart'] = 'chat-input-shell';
     pill.appendChild(attachWrap);
     pill.appendChild(this.inputEl);
 
     // Voice input mic button (Web Speech API STT)
     if (this._voiceEnabled && isVoiceInputSupported()) {
       this._micBtn = document.createElement('button');
-      this._micBtn.className = 'gengage-chat-mic-btn';
+      this._micBtn.className = 'gengage-chat-mic-btn gds-btn gds-btn-ghost';
+      this._micBtn.dataset['gengagePart'] = 'chat-mic-button';
       this._micBtn.type = 'button';
       this._micBtn.setAttribute('aria-label', this.i18n.voiceButton);
       this._micBtn.innerHTML =
@@ -956,6 +1036,7 @@ export class ChatDrawer {
     // Footer
     const footer = document.createElement('div');
     footer.className = 'gengage-chat-footer';
+    footer.dataset['gengagePart'] = 'chat-footer';
     footer.textContent = this.i18n.poweredBy;
     this.root.appendChild(footer);
 
@@ -973,7 +1054,9 @@ export class ChatDrawer {
 
   addMessage(message: ChatMessage): void {
     const bubble = document.createElement('div');
-    bubble.className = `gengage-chat-bubble gengage-chat-bubble--${message.role}`;
+    const bubbleRoleClass = message.role === 'assistant' ? 'gds-message-assistant' : 'gds-message-user';
+    bubble.className = `gengage-chat-bubble gds-message ${bubbleRoleClass} gengage-chat-bubble--${message.role}`;
+    bubble.dataset['gengagePart'] = message.role === 'assistant' ? 'chat-message-assistant' : 'chat-message-user';
     bubble.setAttribute('role', 'listitem');
     bubble.dataset['messageId'] = message.id;
     if (message.threadId) {
@@ -999,6 +1082,7 @@ export class ChatDrawer {
     if (message.content) {
       const text = document.createElement('div');
       text.className = 'gengage-chat-bubble-text';
+      text.dataset['gengagePart'] = 'chat-message-text';
       if (message.role === 'assistant') {
         text.innerHTML = sanitizeHtml(message.content);
         // Intercept all links in bot HTML
@@ -1023,7 +1107,8 @@ export class ChatDrawer {
     // Add rollback button to user message bubbles
     if (message.role === 'user' && this._onRollback) {
       const rollbackBtn = document.createElement('button');
-      rollbackBtn.className = 'gengage-chat-rollback-btn';
+      rollbackBtn.className = 'gengage-chat-rollback-btn gds-btn gds-btn-ghost';
+      rollbackBtn.dataset['gengagePart'] = 'chat-message-rollback';
       rollbackBtn.type = 'button';
       rollbackBtn.setAttribute('aria-label', this.i18n.rollbackAriaLabel);
       rollbackBtn.title = this.i18n.rollbackAriaLabel;
@@ -1044,99 +1129,90 @@ export class ChatDrawer {
 
   showTypingIndicator(searchText?: string): void {
     this.removeTypingIndicator();
-    const container = document.createElement('div');
-    container.className = 'gengage-chat-typing';
-    container.dataset['typing'] = 'true';
+    const initialSteps =
+      this._thinkingSteps.length > 0
+        ? this._thinkingSteps.slice(-3)
+        : searchText
+          ? [searchText]
+          : this.i18n.loadingSequenceGeneric;
+    const { root, binding } = this._createLoadingSequence(
+      'chat',
+      initialSteps,
+      'chat-typing-indicator',
+      'gengage-chat-typing',
+    );
+    root.dataset['typing'] = 'true';
+    this._typingLoadingBinding = binding;
 
-    if (this._thinkingSteps.length > 0) {
-      // Render accumulated thinking steps
-      this._renderThinkingStepsInto(container);
-    } else {
-      // Default 3-dot animation
-      const indicator = document.createElement('div');
-      indicator.className = 'gengage-chat-typing-dots';
-      for (let i = 0; i < 3; i++) indicator.appendChild(document.createElement('span'));
-      container.appendChild(indicator);
-      if (searchText) {
-        const sparkle = document.createElement('span');
-        sparkle.className = 'gengage-chat-typing-sparkle';
-        sparkle.textContent = '\u2728'; // sparkle
-        container.appendChild(sparkle);
-
-        const text = document.createElement('span');
-        text.className = 'gengage-chat-typing-text';
-        text.textContent = searchText;
-        container.appendChild(text);
-      }
-    }
-
-    this.messagesEl.appendChild(container);
+    this.messagesEl.appendChild(root);
     this._scrollToBottom(true);
-
-    // Start "still working" timer — shows a hint after 10s with no text chunks
-    this._clearStillWorkingTimer();
-    this._stillWorkingTimer = setTimeout(() => {
-      this._stillWorkingTimer = null;
-      const typing = this.messagesEl.querySelector('.gengage-chat-typing');
-      if (!typing) return;
-      // Only add if not already present
-      if (typing.querySelector('.gengage-chat-still-working')) return;
-      const hint = document.createElement('div');
-      hint.className = 'gengage-chat-still-working';
-      hint.textContent = this.i18n.stillWorkingMessage;
-      typing.appendChild(hint);
-      this._scrollToBottom(true);
-    }, 10_000);
   }
 
   /** Accumulate a new thinking step (shown as a checklist in the typing indicator). */
   addThinkingStep(text: string): void {
-    this._thinkingSteps.push(text);
-    this._renderThinkingSteps();
+    const normalized = text.trim();
+    if (!normalized) return;
+    if (this._thinkingSteps[this._thinkingSteps.length - 1] === normalized) return;
+    this._thinkingSteps.push(normalized);
+    this._thinkingSteps = this._thinkingSteps.slice(-3);
+    if (this._typingLoadingBinding) {
+      this._applyLoadingSteps(this._typingLoadingBinding, this._thinkingSteps, true);
+    }
+    if (this._panelLoadingBinding) {
+      this._applyLoadingSteps(this._panelLoadingBinding, this._thinkingSteps, true);
+    }
+    if (this._panelAiZoneLoadingBinding) {
+      this._applyLoadingSteps(this._panelAiZoneLoadingBinding, this._thinkingSteps, true);
+    }
+  }
+
+  setThinkingSteps(steps: string[]): void {
+    const normalized = steps
+      .map((step) => step.trim())
+      .filter(Boolean)
+      .slice(-3);
+    if (normalized.length === 0) return;
+    this._thinkingSteps = normalized;
+    if (this._typingLoadingBinding) {
+      this._applyLoadingSteps(this._typingLoadingBinding, this._thinkingSteps, true);
+    }
+    if (this._panelLoadingBinding) {
+      this._applyLoadingSteps(this._panelLoadingBinding, this._thinkingSteps, true);
+    }
+    if (this._panelAiZoneLoadingBinding) {
+      this._applyLoadingSteps(this._panelAiZoneLoadingBinding, this._thinkingSteps, true);
+    }
   }
 
   removeTypingIndicator(): void {
-    this._clearStillWorkingTimer();
+    this._destroyLoadingBinding(this._typingLoadingBinding);
+    this._typingLoadingBinding = null;
     const existing = this.messagesEl.querySelector('.gengage-chat-typing');
     existing?.remove();
     this._thinkingSteps = [];
     this.hideStopButton();
   }
 
-  private _clearStillWorkingTimer(): void {
-    if (this._stillWorkingTimer !== null) {
-      clearTimeout(this._stillWorkingTimer);
-      this._stillWorkingTimer = null;
-    }
-  }
-
   /** Show a "Stop generating" button below the typing indicator. */
   showStopButton(onStop: () => void): void {
-    this.hideStopButton();
-    const btn = document.createElement('button');
-    btn.className = 'gengage-chat-stop-btn';
-    btn.type = 'button';
-    btn.setAttribute('aria-label', this.i18n.stopGenerating);
-    // Square stop icon + label
-    const icon = document.createElement('span');
-    icon.className = 'gengage-chat-stop-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    btn.appendChild(icon);
-    const label = document.createElement('span');
-    label.textContent = this.i18n.stopGenerating;
-    btn.appendChild(label);
-    btn.addEventListener('click', () => {
-      this.hideStopButton();
-      onStop();
-    });
-    this.messagesEl.appendChild(btn);
-    this._scrollToBottom(true);
+    this._sendStopHandler = onStop;
+    this.sendBtn.disabled = false;
+    this.sendBtn.classList.add('gengage-chat-send--stop', 'gds-btn-secondary');
+    this.sendBtn.classList.remove('gds-btn-primary');
+    this.sendBtn.setAttribute('aria-label', this.i18n.stopGenerating);
+    this.sendBtn.dataset['tooltip'] = this.i18n.stopGenerating;
+    this._renderSendButtonIcon('stop');
   }
 
   /** Remove the stop-generating button if present. */
   hideStopButton(): void {
-    const existing = this.messagesEl.querySelector('.gengage-chat-stop-btn');
-    existing?.remove();
+    this._sendStopHandler = null;
+    this.sendBtn.classList.remove('gengage-chat-send--stop', 'gds-btn-secondary');
+    this.sendBtn.classList.add('gds-btn-primary');
+    this.sendBtn.setAttribute('aria-label', this.i18n.sendButton);
+    this.sendBtn.dataset['tooltip'] = this.i18n.sendButton;
+    this._renderSendButtonIcon('send');
+    this._updateSendEnabled();
   }
 
   showError(message?: string, onRetry?: () => void): void {
@@ -1194,7 +1270,9 @@ export class ChatDrawer {
     this._pillsEl.style.display = '';
     for (const pill of pills) {
       const btn = document.createElement('button');
-      btn.className = pill.image ? 'gengage-chat-pill gengage-chat-pill--rich' : 'gengage-chat-pill';
+      btn.className = pill.image
+        ? 'gengage-chat-pill gds-chip gds-chip-active gengage-chat-pill--rich'
+        : 'gengage-chat-pill gds-chip gds-chip-active';
       btn.type = 'button';
 
       if (pill.icon) {
@@ -1303,6 +1381,10 @@ export class ChatDrawer {
     if (!this._attachMenuEl) return;
     this._attachMenuEl.setAttribute('hidden', '');
     this._attachBtn?.setAttribute('aria-expanded', 'false');
+    if (this._attachMenuClickTimerId !== null) {
+      clearTimeout(this._attachMenuClickTimerId);
+      this._attachMenuClickTimerId = null;
+    }
     if (this._attachMenuCleanup) {
       this._attachMenuCleanup();
       this._attachMenuCleanup = null;
@@ -1323,7 +1405,8 @@ export class ChatDrawer {
         this._closeAttachMenu();
       }
     };
-    window.setTimeout(() => {
+    this._attachMenuClickTimerId = window.setTimeout(() => {
+      this._attachMenuClickTimerId = null;
       document.addEventListener('click', onDocCapture, true);
     }, 0);
     document.addEventListener('keydown', onEsc, true);
@@ -1370,6 +1453,8 @@ export class ChatDrawer {
     options?: { resultEl?: HTMLElement; analyzingLabel?: string },
   ): void {
     if (!this._panelAiZoneEl.isConnected) return;
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
     if (state === 'hidden') {
       this._panelAiZoneEl.innerHTML = '';
       this._panelAiZoneEl.setAttribute('hidden', '');
@@ -1378,19 +1463,18 @@ export class ChatDrawer {
     this._panelAiZoneEl.removeAttribute('hidden');
     if (state === 'analyzing') {
       this._panelAiZoneEl.innerHTML = '';
-      const wrap = document.createElement('div');
-      wrap.className = 'gengage-chat-panel-ai-zone-inner';
-      const dots = document.createElement('div');
-      dots.className = 'gengage-chat-typing-dots';
-      for (let i = 0; i < 3; i++) {
-        dots.appendChild(document.createElement('span'));
-      }
-      const text = document.createElement('span');
-      text.className = 'gengage-chat-panel-ai-zone-text';
-      text.textContent = options?.analyzingLabel ?? this.i18n.aiAnalysisAnalyzingLabel;
-      wrap.appendChild(dots);
-      wrap.appendChild(text);
-      this._panelAiZoneEl.appendChild(wrap);
+      const fallbackSequence = [
+        options?.analyzingLabel ?? this.i18n.aiAnalysisAnalyzingLabel,
+        ...this.i18n.loadingSequencePanel,
+      ];
+      const { root, binding } = this._createLoadingSequence(
+        'panel',
+        this._thinkingSteps.length > 0 ? this._thinkingSteps.slice(-3) : fallbackSequence,
+        'panel-ai-zone-loading',
+        'gengage-chat-panel-ai-zone-inner',
+      );
+      this._panelAiZoneLoadingBinding = binding;
+      this._panelAiZoneEl.appendChild(root);
     } else if (state === 'results' && options?.resultEl) {
       this._panelAiZoneEl.innerHTML = '';
       this._panelAiZoneEl.appendChild(options.resultEl);
@@ -1403,8 +1487,49 @@ export class ChatDrawer {
     this._panelAiZoneEl.setAttribute('hidden', '');
   }
 
+  private _syncPanelTopBarFromContent(contentEl: HTMLElement): void {
+    const gridHead = contentEl.querySelector<HTMLElement>('.gengage-chat-product-grid-head');
+    if (gridHead) {
+      const titleEl = gridHead.querySelector<HTMLElement>('.gengage-chat-product-grid-head-title');
+      const actionsEl = gridHead.querySelector<HTMLElement>('.gengage-chat-product-grid-head-actions');
+      if (titleEl?.textContent?.trim()) {
+        const derivedTitle = titleEl.textContent.trim();
+        contentEl.dataset['gengagePanelDerivedTitle'] = derivedTitle;
+        this._panelTopBar.setTitle(derivedTitle);
+      }
+      if (actionsEl) {
+        actionsEl.classList.add('gengage-chat-panel-topbar-toolbar-host');
+        this._panelTopBar.setActions(actionsEl);
+      } else {
+        this._panelTopBar.setActions(null);
+      }
+      gridHead.remove();
+      return;
+    }
+    this._syncPanelTopBarTitleFromContent(contentEl);
+  }
+
+  private _syncPanelTopBarTitleFromContent(contentEl: HTMLElement): void {
+    const derivedTitle = contentEl.dataset['gengagePanelDerivedTitle'];
+    if (derivedTitle?.trim()) {
+      this._panelTopBar.setTitle(derivedTitle.trim());
+      return;
+    }
+    const titleCandidate = contentEl.querySelector<HTMLElement>(
+      '.gengage-chat-product-details-title, .gengage-chat-product-details-similars-heading, .gengage-chat-ai-top-picks-title',
+    );
+    const titleText = titleCandidate?.textContent?.trim();
+    if (titleText) {
+      this._panelTopBar.setTitle(titleText);
+    }
+  }
+
   /** Replace panel content and show the panel. */
   setPanelContent(el: HTMLElement): void {
+    this._destroyLoadingBinding(this._panelLoadingBinding);
+    this._panelLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
     const wasVisible = this._panelVisible;
     // Only apply opacity crossfade when swapping content in an already-visible panel.
     // Applying it on first-show would hide the slide-in animation (opacity:0 masks the transform).
@@ -1415,9 +1540,11 @@ export class ChatDrawer {
     this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(this._panelAiZoneEl);
+    this._panelTopBar.setActions(null);
     this._panelEl.appendChild(el);
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
+    this._syncPanelTopBarFromContent(el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1442,6 +1569,7 @@ export class ChatDrawer {
     const thumb = this._thumbnailsColumn.getElement();
     const ref = thumb.parentElement === this._panelEl ? thumb : this._panelFloatingEl;
     this._panelEl.insertBefore(el, ref);
+    this._syncPanelTopBarFromContent(this.getPanelContentElement() ?? el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     if (!this._panelVisible) {
       this._panelVisible = true;
@@ -1486,6 +1614,8 @@ export class ChatDrawer {
 
   /** Show loading skeleton in the panel. Variant depends on contentType hint. */
   showPanelLoading(contentType?: string): void {
+    this._destroyLoadingBinding(this._panelLoadingBinding);
+    this._panelLoadingBinding = null;
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._panelEl.innerHTML = '';
     this._resetPanelAiZoneElement();
@@ -1493,9 +1623,19 @@ export class ChatDrawer {
     this._panelEl.appendChild(this._panelAiZoneEl);
     const skeleton = document.createElement('div');
     skeleton.className = 'gengage-chat-panel-skeleton';
+    const panelSequence =
+      contentType === 'comparisonTable' ? this.i18n.loadingSequenceComparison : this.i18n.loadingSequencePanel;
+    const { root: panelStatus, binding: panelBinding } = this._createLoadingSequence(
+      'panel',
+      this._thinkingSteps.length > 0 ? this._thinkingSteps.slice(-3) : panelSequence,
+      'panel-loading-status',
+      'gengage-chat-panel-loading-status',
+    );
+    this._panelLoadingBinding = panelBinding;
 
     switch (contentType) {
       case 'productDetails': {
+        skeleton.appendChild(panelStatus);
         // Tall image placeholder + text lines
         const imgBlock = document.createElement('div');
         imgBlock.className = 'gengage-chat-panel-skeleton-block gengage-chat-panel-skeleton-block--image';
@@ -1509,6 +1649,7 @@ export class ChatDrawer {
       }
       case 'productList':
       case 'groupList': {
+        skeleton.appendChild(panelStatus);
         // 2x3 grid of small card placeholders
         const grid = document.createElement('div');
         grid.className = 'gengage-chat-panel-skeleton-grid';
@@ -1522,23 +1663,10 @@ export class ChatDrawer {
       }
       case 'comparisonTable': {
         skeleton.classList.add('gengage-chat-panel-skeleton--comparison');
+        skeleton.appendChild(panelStatus);
         const root = document.createElement('div');
         root.className = 'gengage-chat-comparison gengage-chat-comparison--skeleton';
         root.setAttribute('aria-busy', 'true');
-
-        const status = document.createElement('div');
-        status.className = 'gengage-chat-comparison-loading-header';
-        status.setAttribute('role', 'status');
-        status.setAttribute('aria-live', 'polite');
-        const spinner = document.createElement('div');
-        spinner.className = 'gengage-chat-comparison-loading-spinner';
-        spinner.setAttribute('aria-hidden', 'true');
-        const statusLabel = document.createElement('p');
-        statusLabel.className = 'gengage-chat-comparison-loading-label';
-        statusLabel.textContent = this.i18n.comparisonPreparingLabel;
-        status.appendChild(spinner);
-        status.appendChild(statusLabel);
-        root.appendChild(status);
 
         // Önerilen seçim kartı — gerçek .gengage-chat-comparison-recommended ile aynı kutu
         const rec = document.createElement('div');
@@ -1653,6 +1781,7 @@ export class ChatDrawer {
         break;
       }
       default: {
+        skeleton.appendChild(panelStatus);
         // Generic: 3 blocks (existing behavior)
         for (let i = 0; i < 3; i++) {
           const block = document.createElement('div');
@@ -1679,6 +1808,10 @@ export class ChatDrawer {
     // On mobile the back button always closes the side-panel overlay, so keep it active
     const isMobile = this._options.getMobileViewport?.() ?? false;
     this._panelTopBar.update(isMobile ? true : canBack, canForward, title);
+    const contentEl = this.getPanelContentElement();
+    if (contentEl) {
+      this._syncPanelTopBarTitleFromContent(contentEl);
+    }
   }
 
   getPanelTopBarTitle(): string {
@@ -1703,12 +1836,17 @@ export class ChatDrawer {
    * Keeps `_panelCollapsed` untouched so user collapse preference survives future panel renders.
    */
   clearPanel(): void {
+    this._destroyLoadingBinding(this._panelLoadingBinding);
+    this._panelLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
     this._panelEl.innerHTML = '';
     this._resetPanelAiZoneElement();
     this._panelEl.appendChild(this._panelTopBar.getElement());
     this._panelEl.appendChild(this._panelAiZoneEl);
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
+    this._panelTopBar.setActions(null);
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible', 'gengage-chat-panel--collapsed');
     this.root.classList.remove('gengage-chat-drawer--with-panel');
@@ -1817,6 +1955,7 @@ export class ChatDrawer {
     const panel = this._panelEl;
     const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 10;
     panel.classList.toggle('gengage-chat-panel--has-scroll', !atBottom && panel.scrollHeight > panel.clientHeight);
+    panel.classList.toggle('gengage-chat-panel--scrolled', panel.scrollTop > 88);
   }
 
   /** Horizontal swipe on conversation/panel areas to toggle the panel (mobile only). */
@@ -1825,7 +1964,7 @@ export class ChatDrawer {
     let startY = 0;
 
     const onTouchStart = (e: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const t = e.touches[0];
       if (!t) return;
       startX = t.clientX;
@@ -1833,7 +1972,7 @@ export class ChatDrawer {
     };
 
     const onTouchEnd = (e: TouchEvent) => {
-      if (window.innerWidth > 768) return;
+      if (!(this._options.getMobileViewport?.() ?? window.innerWidth <= 768)) return;
       const t = e.changedTouches[0];
       if (!t) return;
       const dx = t.clientX - startX;
@@ -1911,58 +2050,96 @@ export class ChatDrawer {
     return false;
   }
 
-  /** Re-render thinking steps inside the existing typing indicator container. */
-  private _renderThinkingSteps(): void {
-    const existing = this.messagesEl.querySelector('[data-typing="true"]') as HTMLElement | null;
-    if (!existing) {
-      // No typing indicator yet — create one with the steps
-      this.showTypingIndicator();
-      return;
+  private _createLoadingSequence(
+    variant: 'chat' | 'panel',
+    steps: string[],
+    part: string,
+    className: string,
+  ): { root: HTMLElement; binding: LoadingSequenceBinding } {
+    const root = document.createElement('div');
+    root.className = `${className} gds-progress-loader ${variant === 'chat' ? 'gds-progress-loader-chat' : 'gds-progress-loader-panel'}`;
+    root.dataset['gengagePart'] = part;
+    root.setAttribute('role', 'status');
+    root.setAttribute('aria-live', 'polite');
+
+    const label = document.createElement('span');
+    label.className =
+      variant === 'chat'
+        ? 'gengage-chat-typing-text gds-progress-label'
+        : 'gengage-chat-panel-loading-label gds-progress-label';
+    root.appendChild(label);
+
+    const dots = document.createElement('span');
+    dots.className = variant === 'chat' ? 'gengage-chat-typing-dots gds-progress-dots' : 'gds-progress-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'gds-progress-dot';
+      dots.appendChild(dot);
     }
-    // Clear and re-render
-    existing.innerHTML = '';
-    this._renderThinkingStepsInto(existing);
-    this._scrollToBottom(false);
+    root.appendChild(dots);
+
+    const binding: LoadingSequenceBinding = {
+      labelEl: label,
+      steps: [],
+      index: 0,
+      intervalId: null,
+    };
+    this._applyLoadingSteps(binding, steps);
+    return { root, binding };
   }
 
-  /** Render the accumulated thinking-step checklist into a container element. */
-  private _renderThinkingStepsInto(container: HTMLElement): void {
-    const list = document.createElement('div');
-    list.className = 'gengage-chat-thinking-steps';
+  private _applyLoadingSteps(binding: LoadingSequenceBinding, steps: string[], forceLatest = false): void {
+    const normalized = steps
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(-3);
+    const fallback = [this.i18n.loadingMessage];
+    binding.steps = normalized.length > 0 ? normalized : fallback;
+    this._clearLoadingBindingInterval(binding);
+    binding.index = forceLatest ? binding.steps.length - 1 : 0;
+    binding.labelEl.textContent = binding.steps[binding.index]!;
 
-    for (let i = 0; i < this._thinkingSteps.length; i++) {
-      const step = document.createElement('div');
-      step.className = 'gengage-chat-thinking-step';
-
-      const marker = document.createElement('span');
-      marker.className = 'gengage-chat-thinking-step-marker';
-
-      if (i < this._thinkingSteps.length - 1) {
-        // Completed step
-        marker.textContent = '\u2713'; // ✓
-        marker.classList.add('gengage-chat-thinking-step-marker--done');
-      } else {
-        // Current step (last one — still in progress)
-        marker.textContent = '\u25CF'; // ●
-        marker.classList.add('gengage-chat-thinking-step-marker--active');
-      }
-
-      step.appendChild(marker);
-
-      const text = document.createElement('span');
-      text.className = 'gengage-chat-thinking-step-text';
-      text.textContent = this._thinkingSteps[i]!;
-      step.appendChild(text);
-
-      list.appendChild(step);
+    if (!forceLatest && binding.steps.length > 1) {
+      binding.intervalId = setInterval(() => {
+        if (binding.index >= binding.steps.length - 1) {
+          this._clearLoadingBindingInterval(binding);
+          return;
+        }
+        binding.index += 1;
+        binding.labelEl.textContent = binding.steps[binding.index]!;
+        if (binding.index >= binding.steps.length - 1) {
+          this._clearLoadingBindingInterval(binding);
+        }
+      }, LOADING_STEP_INTERVAL_MS);
     }
+  }
 
-    container.appendChild(list);
+  private _clearLoadingBindingInterval(binding: LoadingSequenceBinding | null): void {
+    if (binding?.intervalId) {
+      clearInterval(binding.intervalId);
+      binding.intervalId = null;
+    }
+  }
+
+  private _destroyLoadingBinding(binding: LoadingSequenceBinding | null): void {
+    this._clearLoadingBindingInterval(binding);
   }
 
   private _updateSendEnabled(): void {
+    if (this._sendStopHandler) {
+      this.sendBtn.disabled = false;
+      return;
+    }
     const hasContent = this.inputEl.value.trim().length > 0 || this._pendingAttachment !== null;
     this.sendBtn.disabled = !hasContent;
+  }
+
+  private _renderSendButtonIcon(mode: 'send' | 'stop'): void {
+    this.sendBtn.innerHTML =
+      mode === 'stop'
+        ? '<span class="gengage-chat-send-stop-icon" aria-hidden="true"></span>'
+        : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
   }
 
   private _submit(): void {
@@ -2131,7 +2308,7 @@ export class ChatDrawer {
     this._inputChipsEl.style.display = '';
     for (const chip of chips) {
       const btn = document.createElement('button');
-      btn.className = 'gengage-chat-input-chip';
+      btn.className = 'gengage-chat-input-chip gds-chip';
       btn.type = 'button';
 
       // Icon (SVG from icon map, falls back to generic arrow for unknown names)
@@ -2303,11 +2480,17 @@ export class ChatDrawer {
   destroy(): void {
     registerChatScrollElement(null);
     this.releaseFocus();
-    this._clearStillWorkingTimer();
     if (this._resizeRafId !== null) {
       cancelAnimationFrame(this._resizeRafId);
       this._resizeRafId = null;
     }
+    this._destroyLoadingBinding(this._typingLoadingBinding);
+    this._typingLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelLoadingBinding);
+    this._panelLoadingBinding = null;
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
+    this._closeAttachMenu();
     for (const cleanup of this._cleanups) cleanup();
     this._cleanups.length = 0;
     this._voiceInput?.destroy();

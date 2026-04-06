@@ -98,43 +98,33 @@ test.describe('SimRel widget — card details', () => {
   });
 });
 
-test.describe('SimRel widget — stepper interactions', () => {
+test.describe('SimRel widget — add-to-cart button', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
     await gotoDemoReady(page);
   });
 
-  test('stepper increment changes value from 1 to 2', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('in-stock product shows add-to-cart button with label', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
 
-    const value = stepper.locator('.gengage-qty-value');
-    await expect(value).toHaveText('1');
-
-    // Click the increase button (second button = index 1)
-    const incBtn = stepper.locator('button').nth(1);
-    await incBtn.click();
-    await expect(value).toHaveText('2');
+    const text = await atcBtn.textContent();
+    expect(text).toBeTruthy();
+    expect(text!.length).toBeGreaterThan(0);
   });
 
-  test('stepper decrement button is disabled at minimum value (1)', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
-
-    const value = stepper.locator('.gengage-qty-value');
-    await expect(value).toHaveText('1');
-
-    // Decrease button is the first button
-    const decBtn = stepper.locator('button').first();
-    await expect(decBtn).toBeDisabled();
+  test('add-to-cart button is enabled and clickable', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
+    await expect(atcBtn).toBeEnabled();
   });
 
-  test('stepper has a submit button', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('add-to-cart button has proper button type', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
 
-    const submitBtn = stepper.locator('.gengage-qty-submit');
-    await expect(submitBtn).toBeAttached();
+    const type = await atcBtn.getAttribute('type');
+    expect(type).toBe('button');
   });
 });
 

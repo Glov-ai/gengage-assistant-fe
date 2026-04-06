@@ -23,9 +23,9 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 // The widget to build is passed via GENGAGE_IIFE_WIDGET env var.
-// Valid values: 'chat', 'qna', 'simrel', 'native'
+// Valid values: 'chat', 'qna', 'simrel', 'simbut', 'native'
 const widget = process.env['GENGAGE_IIFE_WIDGET'] ?? 'chat';
-const validWidgets = ['chat', 'qna', 'simrel', 'native'] as const;
+const validWidgets = ['chat', 'qna', 'simrel', 'simbut', 'native'] as const;
 if (!validWidgets.includes(widget as (typeof validWidgets)[number])) {
   throw new Error(
     `Invalid GENGAGE_IIFE_WIDGET="${widget}". Must be one of: ${validWidgets.join(', ')}`,
@@ -39,6 +39,7 @@ export default defineConfig({
       '@gengage/chat': resolve(__dirname, 'src/chat/index.ts'),
       '@gengage/qna': resolve(__dirname, 'src/qna/index.ts'),
       '@gengage/simrel': resolve(__dirname, 'src/simrel/index.ts'),
+      '@gengage/simbut': resolve(__dirname, 'src/simbut/index.ts'),
     },
   },
   build: {

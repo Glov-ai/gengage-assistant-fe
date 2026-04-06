@@ -55,7 +55,7 @@ describe('AITopPicks reason rendering', () => {
     expect(reasonEl!.textContent).toBe('Best overall performance and value');
   });
 
-  it('renders reason text on compact card', () => {
+  it('does not render reason text on compact card', () => {
     const el = {
       type: 'AITopPicks' as const,
       props: {
@@ -79,8 +79,7 @@ describe('AITopPicks reason rendering', () => {
     const cards = result.querySelectorAll('.gengage-chat-ai-toppick-card');
     const compactCard = cards[1]!;
     const reasonEl = compactCard.querySelector('.gengage-chat-ai-toppick-reason');
-    expect(reasonEl).not.toBeNull();
-    expect(reasonEl!.textContent).toBe('Great price-to-performance ratio');
+    expect(reasonEl).toBeNull();
   });
 
   it('omits reason element when reason is not provided', () => {

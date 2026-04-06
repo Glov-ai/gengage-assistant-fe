@@ -1,0 +1,71 @@
+/**
+ * PDP "Benzerlerini Bul" — QNA birincil aksiyon pill’leriyle aynı tema değişkenleri
+ * (`--gengage-primary-color`, `--gengage-qna-pill-radius`, …). Chat içi ürün kartındaki
+ * koyu hover pill’den ayrılır; marka rengi overlay init’teki `theme` ile gelir.
+ *
+ * Yerleşim: Pill `position: absolute`; kök `pointer-events: none`, yalnızca düğme tıklanır.
+ */
+@import '../design-system/index.css';
+
+.gengage-simbut-root {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.gengage-simbut-root .gengage-chat-find-similar-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--ds-button-primary-border);
+  border-radius: var(--radius-pill, var(--gengage-qna-pill-radius, 999px));
+  background: var(--ds-button-primary-bg);
+  color: var(--ds-button-primary-fg);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 1;
+  pointer-events: auto;
+  box-shadow: var(--shadow-1);
+  transition:
+    filter 0.14s ease,
+    transform 0.12s ease,
+    opacity 0.2s ease,
+    box-shadow 0.14s ease;
+}
+
+.gengage-simbut-root .gengage-chat-find-similar-pill:not(:disabled):hover {
+  background: var(--ds-button-primary-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.gengage-simbut-root .gengage-chat-find-similar-pill:not(:disabled):active {
+  transform: translateY(0) scale(0.988);
+  filter: brightness(0.98);
+}
+
+.gengage-simbut-root .gengage-chat-find-similar-pill:focus-visible {
+  outline: 2px solid var(--client-primary);
+  outline-offset: 2px;
+}
+
+.gengage-simbut-root .gengage-chat-find-similar-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}

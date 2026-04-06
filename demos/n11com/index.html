@@ -173,15 +173,22 @@
           radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--brand-secondary) 14%, white), transparent 45%),
           radial-gradient(circle at 70% 65%, color-mix(in srgb, var(--brand-primary) 12%, white), transparent 50%),
           linear-gradient(160deg, #ffffff, color-mix(in srgb, var(--brand-primary) 4%, white));
+        padding: 16px;
+        position: relative;
+      }
+
+      .gallery-main__inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
         display: grid;
         place-items: center;
         color: color-mix(in srgb, var(--brand-primary) 72%, #1f2937);
         font-weight: 700;
         text-align: center;
-        padding: 16px;
       }
 
-      .gallery-main small {
+      .gallery-main__inner small {
         display: block;
         font-weight: 500;
         color: var(--brand-muted);
@@ -414,10 +421,12 @@
       <section class="pdp-layout">
         <article class="gallery-card">
           <div class="gallery-main">
-            <span>
-              Demo Ürün Görseli
-              <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
-            </span>
+            <div id="n11-pdp-image-wrap" class="gallery-main__inner">
+              <span>
+                Demo Ürün Görseli
+                <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
+              </span>
+            </div>
           </div>
           <div class="gallery-thumbs" aria-hidden="true">
             <div class="gallery-thumb"></div>
@@ -505,16 +514,13 @@
           fontFamily: '"Poppins", "Open Sans", Arial, sans-serif',
           fontSize: '13px',
           zIndex: '1050',
-          '--color-client-primary': '#ff44ef',
-          '--root-background': '#F6F6F6',
-          '--root-background-mobile': '#F6F6F6',
-          '--client-message-bubble': '#ece1e7',
-          '--client-card': '#e5e5e5',
-          '--client-background': '#ffffff',
-          '--client-foreground': '#e9ecf2',
-          '--client-border': '#cccccc',
-          '--client-text': '#222',
-          '--client-primary-color': '#ff44ef',
+          '--client-primary': '#ff44ef',
+          '--client-primary-hover': 'color-mix(in srgb, #ff44ef 88%, black 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #ff44ef 78%, black 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #ff44ef 12%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #ff44ef 20%, white)',
+          '--client-on-primary': '#ffffff',
+          '--client-focus-ring': 'color-mix(in srgb, #ff44ef 32%, transparent)',
           '--root-wrapper-background-color': '#f2f2f2',
           '--root-wrapper-border-color': '#e5e5e5',
         },
@@ -532,6 +538,9 @@
         simrel: {
           mountTarget: '#n11-similar-products',
           discountType: 'badge',
+        },
+        simbut: {
+          mountTarget: '#n11-pdp-image-wrap',
         },
         onAddToCart: (p) => {
           console.log('[n11] add-to-cart', p);

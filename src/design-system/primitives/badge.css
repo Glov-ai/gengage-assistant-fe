@@ -1,0 +1,16 @@
+:where(.gds-badge) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+:where(.gds-badge-brand) {
+  background: var(--ds-badge-brand-bg);
+  color: var(--ds-badge-brand-fg);
+  border: 1px solid var(--ds-badge-brand-border);
+}

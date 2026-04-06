@@ -8,16 +8,19 @@ export interface KvkkBannerOptions {
 
 export function createKvkkBanner(options: KvkkBannerOptions): HTMLElement {
   const banner = document.createElement('div');
-  banner.className = 'gengage-chat-kvkk-banner';
+  banner.className = 'gengage-chat-kvkk-banner gds-evidence-card gds-evidence-card-warning';
+  banner.dataset['gengagePart'] = 'kvkk-banner';
   banner.setAttribute('role', 'alert');
 
   const content = document.createElement('div');
   content.className = 'gengage-chat-kvkk-content';
+  content.dataset['gengagePart'] = 'kvkk-content';
   content.innerHTML = sanitizeHtml(options.htmlContent);
   banner.appendChild(content);
 
   const dismiss = document.createElement('button');
   dismiss.className = 'gengage-chat-kvkk-dismiss';
+  dismiss.dataset['gengagePart'] = 'kvkk-dismiss';
   dismiss.type = 'button';
   dismiss.setAttribute('aria-label', options.closeAriaLabel ?? 'Close privacy notice');
   dismiss.textContent = '\u00D7';

@@ -1,29 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createQuantityStepper } from '../src/common/quantity-stepper.js';
-
-describe('ATC success feedback', () => {
-  it('shows checkmark and success class after submit', () => {
-    vi.useFakeTimers();
-    const onSubmit = vi.fn();
-    const stepper = createQuantityStepper({ onSubmit, label: 'Add' });
-    const submitBtn = stepper.querySelector('.gengage-qty-submit') as HTMLButtonElement;
-
-    submitBtn.click();
-    expect(onSubmit).toHaveBeenCalledWith(1);
-    expect(submitBtn.textContent).toBe('\u2713');
-    expect(submitBtn.classList.contains('gengage-qty-submit--success')).toBe(true);
-    expect(submitBtn.disabled).toBe(true);
-
-    vi.advanceTimersByTime(1200);
-    expect(submitBtn.textContent).toBe('Add');
-    expect(submitBtn.classList.contains('gengage-qty-submit--success')).toBe(false);
-    expect(submitBtn.disabled).toBe(false);
-    vi.useRealTimers();
-  });
-});
 
 describe('ChatDrawer stop button', () => {
-  it('showStopButton creates and hideStopButton removes the stop button', async () => {
+  it('showStopButton reuses the send button in stop mode and hideStopButton restores it', async () => {
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
     const drawer = new ChatDrawer(container, {
@@ -36,19 +14,20 @@ describe('ChatDrawer stop button', () => {
     const stopFn = vi.fn();
     drawer.showStopButton(stopFn);
 
-    const btn = drawer.getElement().querySelector('.gengage-chat-stop-btn') as HTMLButtonElement;
+    const btn = drawer.getElement().querySelector('.gengage-chat-send') as HTMLButtonElement;
     expect(btn).not.toBeNull();
-    expect(btn.textContent).toContain('Stop generating');
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(true);
+    expect(btn.getAttribute('aria-label')).toContain('Stop generating');
 
     btn.click();
     expect(stopFn).toHaveBeenCalledOnce();
 
-    // After click, button should be removed
-    const afterClick = drawer.getElement().querySelector('.gengage-chat-stop-btn');
-    expect(afterClick).toBeNull();
+    drawer.hideStopButton();
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(false);
+    expect(btn.getAttribute('aria-label')).toContain('Send');
   });
 
-  it('removeTypingIndicator also removes stop button', async () => {
+  it('removeTypingIndicator also restores send button from stop mode', async () => {
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
     const drawer = new ChatDrawer(container, {
@@ -60,10 +39,11 @@ describe('ChatDrawer stop button', () => {
 
     drawer.showTypingIndicator();
     drawer.showStopButton(vi.fn());
-    expect(drawer.getElement().querySelector('.gengage-chat-stop-btn')).not.toBeNull();
+    const btn = drawer.getElement().querySelector('.gengage-chat-send') as HTMLButtonElement;
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(true);
 
     drawer.removeTypingIndicator();
-    expect(drawer.getElement().querySelector('.gengage-chat-stop-btn')).toBeNull();
+    expect(btn.classList.contains('gengage-chat-send--stop')).toBe(false);
   });
 });
 
@@ -137,8 +117,8 @@ describe('ChatDrawer offline bar', () => {
   });
 });
 
-describe('ChatDrawer still working message', () => {
-  it('shows "still working" text after 10s of typing with no text chunks', async () => {
+describe('ChatDrawer typing indicator', () => {
+  it('does not show the removed "still working" hint after extended typing', async () => {
     vi.useFakeTimers();
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');
@@ -151,24 +131,19 @@ describe('ChatDrawer still working message', () => {
 
     drawer.showTypingIndicator();
 
-    // Before 10s — no hint
     vi.advanceTimersByTime(9000);
     expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
-    // After 10s — hint appears
-    vi.advanceTimersByTime(1500);
-    const hint = drawer.getElement().querySelector('.gengage-chat-still-working');
-    expect(hint).not.toBeNull();
-    expect(hint!.textContent).toContain('Still working');
+    vi.advanceTimersByTime(4000);
+    expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
-    // removeTypingIndicator clears it
     drawer.removeTypingIndicator();
     expect(drawer.getElement().querySelector('.gengage-chat-still-working')).toBeNull();
 
     vi.useRealTimers();
   });
 
-  it('does not show hint if typing indicator is removed within 10s', async () => {
+  it('clears typing indicator cleanly if removed within 10s', async () => {
     vi.useFakeTimers();
     const { ChatDrawer } = await import('../src/chat/components/ChatDrawer.js');
     const container = document.createElement('div');

@@ -163,7 +163,7 @@ describe('GAP-042: Zero price guard', () => {
 // ---------------------------------------------------------------------------
 
 describe('GAP-073: Zero-value promotion badge filter', () => {
-  it('filters "%0.0 değerinde Puan" badge in chat ProductCard', () => {
+  it('does not render listing promotion badges in chat ProductCard', () => {
     const spec = makeProductCardSpec({
       name: 'Promo Test',
       price: '100',
@@ -172,11 +172,11 @@ describe('GAP-073: Zero-value promotion badge filter', () => {
     });
     const el = renderUISpec(spec, makeCtx());
     const badges = el.querySelectorAll('.gengage-chat-product-card-promo-badge');
-    expect(badges.length).toBe(1);
-    expect(badges[0]?.textContent).toBe('Free Shipping');
+    expect(badges.length).toBe(0);
+    expect(el.querySelector('.gengage-chat-product-card-promos')).toBeNull();
   });
 
-  it('filters "%0 değerinde" badge in chat ProductCard', () => {
+  it('omits listing promo container even when non-zero promotions are present', () => {
     const spec = makeProductCardSpec({
       name: 'Promo Test',
       price: '100',
@@ -185,11 +185,11 @@ describe('GAP-073: Zero-value promotion badge filter', () => {
     });
     const el = renderUISpec(spec, makeCtx());
     const badges = el.querySelectorAll('.gengage-chat-product-card-promo-badge');
-    expect(badges.length).toBe(1);
-    expect(badges[0]?.textContent).toBe('Flash Sale');
+    expect(badges.length).toBe(0);
+    expect(el.querySelector('.gengage-chat-product-card-promos')).toBeNull();
   });
 
-  it('does not filter non-zero promotion badges', () => {
+  it('does not render non-zero promotion badges on listing cards either', () => {
     const spec = makeProductCardSpec({
       name: 'Promo Test',
       price: '100',
@@ -198,7 +198,7 @@ describe('GAP-073: Zero-value promotion badge filter', () => {
     });
     const el = renderUISpec(spec, makeCtx());
     const badges = el.querySelectorAll('.gengage-chat-product-card-promo-badge');
-    expect(badges.length).toBe(2);
+    expect(badges.length).toBe(0);
   });
 
   it('hides promo container when all badges are zero-value', () => {

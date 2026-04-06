@@ -71,7 +71,7 @@ export class PanelManager {
     const shadow = this.deps.shadow();
     const bubble = shadow?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
-    (bubble as HTMLElement).style.cursor = 'pointer';
+    (bubble as HTMLElement).classList.add('gds-clickable');
     bubble.addEventListener('click', () => this.restoreForMessage(messageId));
   }
 
@@ -110,7 +110,18 @@ export class PanelManager {
     drawer?.setDividerPreviewEnabled(snapshotType === 'ProductGrid');
     if (snapshotType) {
       this.currentType = snapshotType;
-      this.updateTopBar(snapshotType);
+      const inlineGridHead = el.querySelector('.gengage-chat-product-grid-head-title');
+      if (inlineGridHead && snapshotType === 'ProductGrid') {
+        const currentThreadId = this.deps.currentThreadId();
+        if (currentThreadId) {
+          const idx = this.threads.indexOf(currentThreadId);
+          const canBack = idx > 0;
+          const canForward = idx >= 0 && idx < this.threads.length - 1;
+          this.deps.drawer()?.updatePanelTopBar(canBack, canForward, '');
+        }
+      } else {
+        this.updateTopBar(snapshotType);
+      }
     }
     return true;
   }
@@ -156,13 +167,14 @@ export class PanelManager {
    * Update the panel top bar navigation state and title.
    * When the backend provides a `panelTitle`, it takes precedence over i18n defaults.
    */
-  updateTopBar(componentType: string, backendTitle?: string): void {
+  /** @param displayTitle When passed (including empty string), used instead of titleForComponent. */
+  updateTopBar(componentType: string, backendTitle?: string, displayTitle?: string): void {
     const currentThreadId = this.deps.currentThreadId();
     if (!currentThreadId) return;
     const idx = this.threads.indexOf(currentThreadId);
     const canBack = idx > 0;
     const canForward = idx >= 0 && idx < this.threads.length - 1;
-    const title = this.titleForComponent(componentType, backendTitle);
+    const title = displayTitle !== undefined ? displayTitle : this.titleForComponent(componentType, backendTitle);
     this.deps.drawer()?.updatePanelTopBar(canBack, canForward, title);
   }
 

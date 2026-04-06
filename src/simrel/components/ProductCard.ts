@@ -3,7 +3,6 @@ import type { SimRelI18n } from '../types.js';
 import type { PriceFormatConfig } from '../../common/price-formatter.js';
 import { formatPrice } from '../../common/price-formatter.js';
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
-import { createQuantityStepper } from '../../common/quantity-stepper.js';
 import { clampDiscount, addImageErrorHandler, createStarRatingElement } from '../../common/product-utils.js';
 
 export interface ProductCardOptions {
@@ -32,7 +31,9 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   // Custom card renderer (XSS warning: raw HTML injection)
   if (renderCard) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'gengage-simrel-card gengage-simrel-card--custom';
+    wrapper.className =
+      'gengage-simrel-card gengage-simrel-card--custom gds-card gds-product-card gds-card-interactive';
+    wrapper.dataset['gengagePart'] = 'simrel-product-card';
     // Sanitize renderCard output to prevent XSS from user-provided renderers.
     wrapper.innerHTML = sanitizeHtml(renderCard(product, index));
     wrapper.addEventListener('click', (e) => {
@@ -45,7 +46,8 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
 
   const card = document.createElement('article');
   // Intentional class coupling: reuse chat product-card classes so SimRel and chat stay visually identical.
-  card.className = 'gengage-simrel-card gengage-chat-product-card';
+  card.className = 'gengage-simrel-card gengage-chat-product-card gds-card gds-product-card gds-card-interactive';
+  card.dataset['gengagePart'] = 'simrel-product-card';
   if (product.inStock === false) {
     card.classList.add('gengage-simrel-card--out-of-stock');
   }
@@ -55,6 +57,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   // Image
   const imgWrapper = document.createElement('div');
   imgWrapper.className = 'gengage-simrel-card-image gengage-chat-product-card-img-wrapper';
+  imgWrapper.dataset['gengagePart'] = 'simrel-product-card-image';
   if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
     const img = document.createElement('img');
     img.className = 'gengage-chat-product-card-img';
@@ -78,6 +81,7 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
   // Info section
   const info = document.createElement('div');
   info.className = 'gengage-simrel-card-info gengage-chat-product-card-body';
+  info.dataset['gengagePart'] = 'simrel-product-card-body';
 
   // Brand
   if (product.brand) {
@@ -133,8 +137,9 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
 
   // Keep SimRel cards aligned with chat product-card structure.
   const cta = document.createElement('button');
-  cta.className = 'gengage-simrel-card-cta gengage-chat-product-card-cta';
+  cta.className = 'gengage-simrel-card-cta gengage-chat-product-card-cta gds-btn gds-btn-secondary';
   cta.type = 'button';
+  cta.dataset['gengagePart'] = 'simrel-product-card-cta';
   cta.textContent = i18n?.ctaLabel ?? 'View';
   cta.addEventListener('click', (e) => {
     e.preventDefault();
@@ -150,18 +155,16 @@ export function renderProductCard(options: ProductCardOptions): HTMLElement {
     oos.textContent = i18n?.outOfStockLabel ?? 'Out of Stock';
     card.appendChild(oos);
   } else if (product.cartCode) {
-    const cartCode = product.cartCode;
-    const stepper = createQuantityStepper({
-      compact: true,
-      label: i18n?.addToCartButton ?? 'Add to Cart',
-      decreaseLabel: i18n?.decreaseLabel,
-      increaseLabel: i18n?.increaseLabel,
-      onSubmit: (quantity) => {
-        onAddToCart({ sku: product.sku, quantity, cartCode });
-      },
+    const cartBtn = document.createElement('button');
+    cartBtn.className = 'gengage-simrel-atc gengage-simrel-atc-button gds-btn gds-btn-secondary';
+    cartBtn.type = 'button';
+    cartBtn.textContent = i18n?.addToCartButton ?? 'Add to Cart';
+    cartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onAddToCart({ sku: product.sku, quantity: 1, cartCode: product.cartCode! });
     });
-    stepper.classList.add('gengage-simrel-atc');
-    card.appendChild(stepper);
+    card.appendChild(cartBtn);
   }
 
   // Card click → navigate

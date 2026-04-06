@@ -14,6 +14,7 @@
 export { GengageChat, createChatWidget } from './chat/index.js';
 export { GengageQNA, createQNAWidget } from './qna/index.js';
 export { GengageSimRel, createSimRelWidget } from './simrel/index.js';
+export { GengageSimBut, createSimButWidget } from './simbut/index.js';
 export {
   renderUISpec as renderChatUISpec,
   createDefaultChatUISpecRegistry,
@@ -74,6 +75,7 @@ export {
   detectPageType,
   extractSkuFromUrl,
   autoDetectPageContext,
+  configureConnectionWarning,
 } from './common/index.js';
 
 // Types (re-exported for consumers who want to type their own code)
@@ -110,6 +112,7 @@ export type {
   OverlayChatOptions,
   OverlayQNAOptions,
   OverlaySimRelOptions,
+  OverlaySimButOptions,
   NativeBridgeEnvironment,
   NativeSessionPayload,
   NativeBridgeMessage,
@@ -151,3 +154,5 @@ export type {
   SimRelUISpecRegistry,
   SimRelRendererConfig,
 } from './simrel/index.js';
+
+export type { SimButWidgetConfig, SimButI18n } from './simbut/index.js';

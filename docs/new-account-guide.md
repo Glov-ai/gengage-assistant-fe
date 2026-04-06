@@ -109,16 +109,14 @@ lives here in a single `initOverlayWidgets()` call:
       fontSize: '14px',
       zIndex: '1000',
 
-      // Additional CSS custom properties (passed through as-is)
-      '--color-client-primary': 'hsl(221, 83%, 53%)',
-      '--root-background': '#F6F6F6',
-      '--client-message-bubble': '#dbeafe',
-      '--client-card': '#fff',
-      '--client-background': '#515151',
-      '--client-foreground': '#e9ecf2',
-      '--client-border': '#cccccc',
-      '--client-text': '#222',
-      '--client-primary-color': '#2563eb',
+      // Client design tokens
+      '--client-primary': 'hsl(221, 83%, 53%)',
+      '--client-primary-hover': 'hsl(221, 83%, 45%)',
+      '--client-primary-active': 'hsl(221, 83%, 40%)',
+      '--client-primary-subtle': 'hsla(221, 83%, 53%, 0.08)',
+      '--client-primary-soft': 'hsla(221, 83%, 53%, 0.14)',
+      '--client-on-primary': '#ffffff',
+      '--client-focus-ring': 'hsla(221, 83%, 53%, 0.4)',
     },
 
     // ── Chat widget ──
@@ -193,9 +191,9 @@ lives here in a single `initOverlayWidgets()` call:
 | `zIndex` | `'1000'` | Widget z-index layer |
 
 Any additional keys on the `theme` object are passed through as CSS custom properties
-(e.g. `'--client-primary-color': '#ec6e00'`). See `demos/koctascomtr/index.html` and
+(e.g. `'--client-primary': '#ec6e00'`). See `demos/koctascomtr/index.html` and
 `demos/arcelikcomtr/index.html` for real-world examples of which `--client-*` and
-`--root-*` variables the renderer uses.
+`--surface-*` variables the renderer uses.
 
 ---
 
@@ -388,9 +386,6 @@ await controller.updateSku('NEW-SKU-789');
 
 ### Additional customization notes
 
-- **Quantity stepper styling:** The quantity stepper on product cards and SimRel cards can be
-  customized via CSS custom properties. See [customization.md](customization.md) for the
-  full list of stepper tokens.
 - **Share button:** The share button appears automatically when a product has a URL. On
   desktop it copies the URL to clipboard; on mobile it invokes the native share sheet.
 - **Voice input:** Enable voice input on the chat widget with `voiceEnabled: true` in
@@ -416,7 +411,7 @@ Existing account demos to reference:
 |------|-------------|-------|
 | `demos/koctascomtr/` | Orange `#ec6e00` | Best starting template. Turkish locale. |
 | `demos/arcelikcomtr/` | Red `#d93131` | Shows `discountType: 'strike-through'` in SimRel. |
-| `demos/n11com/` | Green | Marketplace layout variant. |
+| `demos/n11com/` | Magenta `#ff44ef` | Marketplace layout variant. |
 | `demos/hepsiburadacom/` | Orange | High-traffic marketplace demo. |
 | `demos/yatasbeddingcomtr/` | Blue | Furniture e-commerce demo. |
 

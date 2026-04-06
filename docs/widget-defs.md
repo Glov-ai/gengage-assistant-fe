@@ -167,10 +167,8 @@ Source: `src/chat/components/ProductSummaryCard.ts`
 **Async pricing**: If `price_async` is present, shows a skeleton for ~300ms then updates
 with the async price fields (`price_async_discounted`, `price_async_discount_rate`).
 
-**Quantity stepper**: All Add to Cart buttons include a quantity stepper: `[−] [1] [+] [Add to Cart]`.
-Min 1, max 99, default 1. Uses `createQuantityStepper()` from `src/common/quantity-stepper.ts`.
-The quantity display has `aria-live="polite"` and the +/− buttons have descriptive `aria-label` attributes.
-In compact mode (product cards in grids), the layout contracts to `[−] [1] [+] [cart icon]`.
+**Buy button**: All Add to Cart buttons are direct buy buttons that send `quantity: 1`.
+In compact mode (product cards in grids), the button displays a cart icon only.
 
 **Share button**: An icon-button in the action row, shown only when the product has a URL.
 Uses `navigator.share()` when available (mobile), falls back to `navigator.clipboard.writeText()`
@@ -237,8 +235,7 @@ floating "Compare Selected" button appears and dispatches `compareSelected` with
 
 **Interactions**:
 - Product card click → `launchSingleProduct`
-- Cart button (with quantity stepper) → host bridge `glovAddToBasket` with selected quantity.
-  Compact mode: `[−] [1] [+] [cart icon]` layout.
+- Cart button → host bridge `glovAddToBasket` with quantity 1.
 - Find Similar → `findSimilar`
 - View More → `moreProductList`
 
@@ -596,8 +593,7 @@ All widgets follow these accessibility patterns:
 `:focus-visible` outlines. CSS selectors include `.gengage-simrel-card:focus-visible`,
 `.gengage-chat-action:focus-visible`, `.gengage-qna-button:focus-visible`, and others.
 
-**Live regions**: The quantity stepper display uses `aria-live="polite"` so screen readers
-announce quantity changes. The handoff notice uses `role="alert"` for immediate announcement.
+**Live regions**: The handoff notice uses `role="alert"` for immediate announcement.
 
 **Reduced motion**: All widgets respect `prefers-reduced-motion: reduce`. When enabled,
 CSS transitions and animations (typewriter effect, loading dots, card hover transforms,

@@ -41,10 +41,12 @@ export function createLauncher(options: LauncherOptions): LauncherElements {
   // Container holds content areas + button
   const container = document.createElement('div');
   container.className = 'gengage-chat-launcher-container';
+  container.dataset['gengagePart'] = 'chat-launcher-container';
 
   // Content area above button (QNA actions, buying-hesitation questions)
   const contentArea = document.createElement('div');
   contentArea.className = 'gengage-chat-launcher-content-area';
+  contentArea.dataset['gengagePart'] = 'chat-launcher-content-primary';
   container.appendChild(contentArea);
 
   // The FAB button
@@ -63,10 +65,12 @@ export function createLauncher(options: LauncherOptions): LauncherElements {
     button.className = 'gengage-chat-launcher';
     button.innerHTML = options.svgMarkup ?? DEFAULT_SVG;
   }
+  button.dataset['gengagePart'] = 'chat-launcher-button';
 
   if (options.tooltip !== undefined) {
     const tooltipEl = document.createElement('span');
     tooltipEl.className = 'gengage-chat-launcher-tooltip';
+    tooltipEl.dataset['gengagePart'] = 'chat-launcher-tooltip';
     tooltipEl.textContent = options.tooltip;
     button.appendChild(tooltipEl);
   }
@@ -84,6 +88,7 @@ export function createLauncher(options: LauncherOptions): LauncherElements {
   // Content area below button (secondary content)
   const contentAreaBottom = document.createElement('div');
   contentAreaBottom.className = 'gengage-chat-launcher-content-area-bottom';
+  contentAreaBottom.dataset['gengagePart'] = 'chat-launcher-content-secondary';
   container.appendChild(contentAreaBottom);
 
   return { container, button, contentArea, contentAreaBottom };

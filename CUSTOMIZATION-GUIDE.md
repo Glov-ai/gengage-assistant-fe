@@ -53,6 +53,33 @@ Rule: if at least two accounts need the same behavior, move it to `src/common` o
 4. Add host-side callbacks (cart/navigation/script actions) inline in the demo page.
 5. Validate with `npm run dev -- <accountId> --sku=<sku>` and confirm all widgets mount.
 
+## Styling Contract For Clients
+
+For open-source customer customization, use this priority order:
+
+1. Theme tokens in `demos/<accountId>/index.html`
+2. Stable `data-gengage-part` selectors for widget parts
+3. Minimal account-specific CSS overrides only when tokens are not enough
+
+Prefer changing semantic tokens such as:
+
+- `--client-primary`, `--client-on-primary`
+- `--surface-page`, `--surface-card`, `--surface-input`
+- `--text-primary`, `--text-secondary`
+- `--border-default`, `--border-strong`
+- `--radius-control`, `--radius-card`, `--radius-panel`
+- `--shadow-1`, `--shadow-2`
+
+Use `data-gengage-part` selectors for account-level refinements instead of reaching into deep internal classes. Example targets include:
+
+- `[data-gengage-part="chat-drawer"]`
+- `[data-gengage-part="chat-header"]`
+- `[data-gengage-part="chat-input-shell"]`
+- `[data-gengage-part="qna-panel"]`
+- `[data-gengage-part="simrel-product-card"]`
+
+Do not treat `.gds-*` classes as the primary customer API. They are internal shared primitives for the SDK and may evolve as the core design system is refactored.
+
 ## Centralization Rulebook For Agents
 
 When implementing features:

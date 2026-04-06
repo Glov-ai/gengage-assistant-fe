@@ -82,7 +82,7 @@ describe('ComparisonTable', () => {
     expect(items[0]?.textContent).toContain('Oda Boyutu:');
   });
 
-  it('renders heading text', () => {
+  it('uses dialog aria-label instead of duplicate in-content heading', () => {
     const el = renderComparisonTable({
       recommended: { sku: 'ABC', name: 'Rec', price: '99 TL' },
       products: [],
@@ -90,7 +90,8 @@ describe('ComparisonTable', () => {
       highlights: [],
       onProductClick: () => {},
     });
-    expect(el.querySelector('h3')?.textContent).toContain('COMPARISON');
+    expect(el.getAttribute('aria-label')).toContain('Comparison');
+    expect(el.querySelector('h3')).toBeNull();
   });
 
   it('does not render image for unsafe URLs', () => {
@@ -143,7 +144,7 @@ describe('ComparisonTable', () => {
 
   it('renders recommended product info correctly', () => {
     const el = renderComparisonTable({
-      recommended: { sku: 'REC1', name: 'Best Product', price: '1.299 TL', imageUrl: 'https://img.test/best.jpg' },
+      recommended: { sku: 'REC1', name: 'Best Product', price: '1299', imageUrl: 'https://img.test/best.jpg' },
       products: [],
       attributes: [],
       highlights: [],
@@ -179,7 +180,7 @@ describe('ComparisonTable', () => {
     expect(el.querySelector('.gengage-chat-comparison-recommended-text')).toBeNull();
   });
 
-  it('renders view product buttons when productActions is present', () => {
+  it('renders clickable product header cells when productActions is present', () => {
     const el = renderComparisonTable({
       recommended: { sku: 'ABC', name: 'Product A', price: '99 TL' },
       products: [
@@ -194,13 +195,13 @@ describe('ComparisonTable', () => {
         DEF: { title: 'Product B', type: 'launchSingleProduct', payload: { sku: 'DEF' } },
       },
     });
-    const btns = el.querySelectorAll('.gengage-chat-comparison-view-btn');
-    expect(btns.length).toBe(2);
-    expect(btns[0]?.textContent).toBe('Product A');
-    expect(btns[1]?.textContent).toBe('Product B');
+    const cells = el.querySelectorAll('.gengage-chat-comparison-table-header-cell--clickable');
+    expect(cells.length).toBe(2);
+    expect(cells[0]?.textContent).toContain('Product A');
+    expect(cells[1]?.textContent).toContain('Product B');
   });
 
-  it('view product button click calls onProductClick with sku', () => {
+  it('clicking product header cell calls onProductClick with sku', () => {
     const onClick = vi.fn();
     const el = renderComparisonTable({
       recommended: { sku: 'ABC', name: 'Product A', price: '99 TL' },
@@ -212,7 +213,7 @@ describe('ComparisonTable', () => {
         ABC: { title: 'Product A', type: 'launchSingleProduct', payload: { sku: 'ABC' } },
       },
     });
-    const btn = el.querySelector('.gengage-chat-comparison-view-btn') as HTMLButtonElement;
+    const btn = el.querySelector('.gengage-chat-comparison-table-header-cell--clickable') as HTMLDivElement;
     btn.click();
     expect(onClick).toHaveBeenCalledWith('ABC');
   });

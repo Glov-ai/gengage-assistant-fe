@@ -6,7 +6,8 @@
  */
 
 const SESSION_STORAGE_KEY = 'gengage_choice_prompter_dismissed';
-const GLOBAL_DISMISS_KEY = 'gengage_choice_prompter_dismissed_global';
+/** Eski sürümler — clearChoicePrompterDismissState kaldırır. */
+const LEGACY_GLOBAL_DISMISS_KEY = 'gengage_choice_prompter_dismissed_global';
 
 export interface ChoicePrompterOptions {
   heading: string;
@@ -20,29 +21,31 @@ export interface ChoicePrompterOptions {
 
 export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'gengage-chat-choice-prompter';
+  card.className = 'gengage-chat-choice-prompter gds-card';
+  card.dataset['gengagePart'] = 'choice-prompter';
+
+  const copy = document.createElement('div');
+  copy.className = 'gengage-chat-choice-prompter-copy';
 
   const headingEl = document.createElement('div');
   headingEl.className = 'gengage-chat-choice-prompter-heading';
   headingEl.textContent = options.heading;
-  card.appendChild(headingEl);
+  copy.appendChild(headingEl);
 
   const suggestionEl = document.createElement('div');
   suggestionEl.className = 'gengage-chat-choice-prompter-suggestion';
   suggestionEl.textContent = options.suggestion;
-  card.appendChild(suggestionEl);
+  copy.appendChild(suggestionEl);
+
+  card.appendChild(copy);
 
   const cta = document.createElement('button');
   cta.type = 'button';
-  cta.className = 'gengage-chat-choice-prompter-cta';
+  cta.className = 'gengage-chat-choice-prompter-cta gds-btn gds-btn-primary';
+  cta.dataset['gengagePart'] = 'choice-prompter-cta';
   cta.textContent = options.ctaLabel;
   cta.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try {
-      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
-    } catch {
-      /* */
-    }
     card.remove();
     options.onCtaClick();
   });
@@ -51,15 +54,11 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   const dismiss = document.createElement('button');
   dismiss.type = 'button';
   dismiss.className = 'gengage-chat-choice-prompter-dismiss';
+  dismiss.dataset['gengagePart'] = 'choice-prompter-dismiss';
   dismiss.textContent = '\u00D7'; // × close
   dismiss.setAttribute('aria-label', options.dismissAriaLabel ?? 'Dismiss');
   dismiss.addEventListener('click', () => {
     markDismissed(options.threadId);
-    try {
-      sessionStorage.setItem(GLOBAL_DISMISS_KEY, '1');
-    } catch {
-      /* */
-    }
     card.remove();
     options.onDismiss?.();
   });
@@ -68,11 +67,13 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
   return card;
 }
 
-export function isChoicePrompterGloballyDismissed(): boolean {
+/** Yeni kullanıcı araması başlarken çağrılır — kart tekrar gösterilebilir. */
+export function clearChoicePrompterDismissState(): void {
   try {
-    return sessionStorage.getItem(GLOBAL_DISMISS_KEY) === '1';
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(LEGACY_GLOBAL_DISMISS_KEY);
   } catch {
-    return false;
+    /* */
   }
 }
 
@@ -98,4 +99,10 @@ function markDismissed(threadId: string): void {
   } catch {
     // sessionStorage unavailable — silently ignore
   }
+}
+
+/** Toolbar “Karşılaştır” gibi dış aksiyonlarda CTA ile aynı dismiss kaydı. */
+export function recordChoicePrompterDismissedForThread(threadId: string): void {
+  if (!threadId) return;
+  markDismissed(threadId);
 }

@@ -115,22 +115,15 @@ test.describe('Accessibility — SimRel widget', () => {
     }
   });
 
-  test('stepper decrease button has aria-label', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
+  test('SimRel add-to-cart button is a proper button element', async ({ page }) => {
+    const atcBtn = page.locator('.gengage-simrel-atc-button').first();
+    await expect(atcBtn).toBeVisible({ timeout: 10000 });
 
-    const decBtn = stepper.locator('button').first();
-    const ariaLabel = await decBtn.getAttribute('aria-label');
-    expect(ariaLabel).toBeTruthy();
-  });
+    const tagName = await atcBtn.evaluate((el) => el.tagName.toLowerCase());
+    expect(tagName).toBe('button');
 
-  test('stepper increase button has aria-label', async ({ page }) => {
-    const stepper = page.locator('.gengage-qty-stepper').first();
-    await expect(stepper).toBeVisible({ timeout: 10000 });
-
-    const incBtn = stepper.locator('button').nth(1);
-    const ariaLabel = await incBtn.getAttribute('aria-label');
-    expect(ariaLabel).toBeTruthy();
+    const type = await atcBtn.getAttribute('type');
+    expect(type).toBe('button');
   });
 
   test('tab list has role="tablist"', async ({ page }) => {

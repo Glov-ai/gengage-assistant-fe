@@ -11,7 +11,8 @@ export function renderHandoffNotice(
   context: ChatUISpecRenderContext,
 ): HTMLElement {
   const container = document.createElement('div');
-  container.className = 'gengage-chat-handoff-notice';
+  container.className = 'gengage-chat-handoff-notice gds-evidence-card gds-evidence-card-warning';
+  container.dataset['gengagePart'] = 'handoff-notice';
   container.setAttribute('role', 'alert');
 
   const icon = document.createElement('span');

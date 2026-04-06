@@ -12,7 +12,8 @@ import type { ChatUISpecRenderContext } from '../types.js';
 
 export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const container = document.createElement('div');
-  container.className = 'gengage-chat-grounding-review';
+  container.className = 'gengage-chat-grounding-review gds-evidence-card';
+  container.dataset['gengagePart'] = 'grounding-review-card';
 
   const props = element.props ?? {};
   const title = props['title'] as string | undefined;
@@ -28,10 +29,12 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
 
   const body = document.createElement('div');
   body.className = 'gengage-chat-grounding-review-body';
+  body.dataset['gengagePart'] = 'grounding-review-body';
 
   // Title
   const titleEl = document.createElement('div');
   titleEl.className = 'gengage-chat-grounding-review-title';
+  titleEl.dataset['gengagePart'] = 'grounding-review-title';
   titleEl.textContent = title ?? ctx.i18n?.customerReviewsTitle ?? 'Customer Reviews';
   body.appendChild(titleEl);
 
@@ -39,6 +42,7 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   if (reviewCount) {
     const subtitle = document.createElement('div');
     subtitle.className = 'gengage-chat-grounding-review-subtitle';
+    subtitle.dataset['gengagePart'] = 'grounding-review-subtitle';
     const template = ctx.i18n?.groundingReviewSubtitle ?? '{count} yorum mevcut';
     subtitle.textContent = template.replace('{count}', reviewCount);
     body.appendChild(subtitle);
@@ -49,12 +53,13 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   // CTA arrow
   const cta = document.createElement('span');
   cta.className = 'gengage-chat-grounding-review-cta';
+  cta.dataset['gengagePart'] = 'grounding-review-cta';
   cta.textContent = `${ctaLabel} \u2192`;
   container.appendChild(cta);
 
   // Make entire card clickable
   if (action) {
-    container.style.cursor = 'pointer';
+    container.classList.add('gds-clickable');
     container.setAttribute('role', 'button');
     container.setAttribute('tabindex', '0');
     container.addEventListener('click', () => ctx.onAction(action));

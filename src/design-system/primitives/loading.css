@@ -1,0 +1,188 @@
+:where(.gds-ai-card) {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  border: 1px solid var(--ds-progress-card-border);
+}
+
+:where(.gds-ai-mark) {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--ds-progress-mark-bg);
+  color: var(--ai-accent-start);
+  border: 1px solid var(--ds-progress-mark-border);
+}
+
+:where(.gds-ai-loader-row) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:where(.gds-progress-loader) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ai-accent-start) 10%, var(--border-default));
+  background: linear-gradient(
+    110deg,
+    var(--surface-card-soft) 8%,
+    color-mix(in srgb, var(--ai-accent-start) 5%, var(--surface-card)) 18%,
+    var(--surface-card-soft) 33%
+  );
+  background-size: 220% 100%;
+  color: var(--text-secondary);
+  animation: gds-progress-shimmer 1.8s linear infinite;
+}
+
+:where(.gds-progress-loader-chat) {
+  align-self: flex-start;
+  max-width: 85%;
+}
+
+:where(.gds-progress-loader-panel) {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+:where(.gds-progress-label) {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+:where(.gds-progress-dots) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+:where(.gds-progress-dot) {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ai-accent-start) 20%, var(--text-muted));
+  display: inline-block;
+  animation: gds-progress-dot-pulse 1.2s ease-in-out infinite;
+}
+
+:where(.gds-progress-dot:nth-child(2)) {
+  animation-delay: 0.2s;
+}
+
+:where(.gds-progress-dot:nth-child(3)) {
+  animation-delay: 0.4s;
+}
+
+:where(.gds-ai-status) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: calc(var(--radius-control) + 2px);
+  border-bottom-left-radius: 6px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-card-muted);
+  color: var(--text-secondary);
+}
+
+:where(.gds-ai-status-text) {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+:where(.gds-ai-dot-loader) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+:where(.gds-ai-dot-loader span) {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ai-accent-start) 38%, var(--text-muted));
+  display: inline-block;
+  animation: gds-progress-dot-pulse 1.2s ease-in-out infinite;
+}
+
+:where(.gds-ai-dot-loader span:nth-child(2)) {
+  animation-delay: 0.2s;
+}
+
+:where(.gds-ai-dot-loader span:nth-child(3)) {
+  animation-delay: 0.4s;
+}
+
+:where(.gds-ai-spinner) {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border-default);
+  border-top-color: var(--ai-accent-start);
+  animation: gds-spin 0.72s linear infinite;
+}
+
+@keyframes gds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gds-progress-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -20% 0;
+  }
+}
+
+@keyframes gds-progress-dot-pulse {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.gds-progress-loader) {
+    animation: none;
+  }
+
+  :where(.gds-progress-dot) {
+    animation: none;
+    transform: scale(1);
+    opacity: 0.85;
+  }
+
+  :where(.gds-ai-spinner) {
+    animation: none;
+  }
+
+  :where(.gds-ai-dot-loader span) {
+    animation: none;
+    opacity: 0.85;
+  }
+}

@@ -12,12 +12,13 @@ describe('PanelTopBar', () => {
       onForward: vi.fn(),
     });
     const el = topBar.getElement();
-    expect(el.className).toBe('gengage-chat-panel-topbar');
+    expect(el.classList.contains('gengage-chat-panel-topbar')).toBe(true);
+    expect(el.classList.contains('gds-toolbar')).toBe(true);
 
     const back = el.querySelector('.gengage-chat-panel-topbar-back') as HTMLButtonElement;
     expect(back).not.toBeNull();
     expect(back.disabled).toBe(true);
-    expect(back.textContent).toBe('\u2190');
+    expect(back.querySelector('svg')).not.toBeNull();
 
     const title = el.querySelector('.gengage-chat-panel-topbar-title');
     expect(title).not.toBeNull();
@@ -26,7 +27,7 @@ describe('PanelTopBar', () => {
     const forward = el.querySelector('.gengage-chat-panel-topbar-forward') as HTMLButtonElement;
     expect(forward).not.toBeNull();
     expect(forward.disabled).toBe(true);
-    expect(forward.textContent).toBe('\u2192');
+    expect(forward.querySelector('svg')).not.toBeNull();
   });
 
   it('updates button states and title', () => {

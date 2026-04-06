@@ -56,6 +56,7 @@ function normalizeGroupingAction(entry: GroupingEntry): ActionPayload {
 export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const container = document.createElement('div');
   container.className = 'gengage-chat-grouping-cards';
+  container.dataset['gengagePart'] = 'ai-grouping-cards';
 
   const entries = (element.props?.['entries'] ?? []) as GroupingEntry[];
   if (entries.length === 0) return container;
@@ -74,17 +75,20 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
 
   const scrollRow = document.createElement('div');
   scrollRow.className = 'gengage-chat-grouping-cards-scroll';
+  scrollRow.dataset['gengagePart'] = 'ai-grouping-cards-scroll';
 
   for (const entry of entries) {
     const card = document.createElement('div');
-    card.className = 'gengage-chat-grouping-card';
-    card.style.cursor = 'pointer';
+    card.className = 'gengage-chat-grouping-card gds-card';
+    card.dataset['gengagePart'] = 'ai-grouping-card';
+    card.classList.add('gds-clickable');
     card.addEventListener('click', () => ctx.onAction(normalizeGroupingAction(entry)));
 
     // Image — intrinsic size; CSS sets panel vs chat dimensions
     if (entry.image && isSafeImageUrl(entry.image)) {
       const img = document.createElement('img');
       img.className = 'gengage-chat-grouping-card-img';
+      img.dataset['gengagePart'] = 'ai-grouping-card-image';
       img.src = entry.image;
       img.alt = entry.name;
       img.width = 64;
@@ -94,23 +98,24 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
 
     const body = document.createElement('div');
     body.className = 'gengage-chat-grouping-card-body';
+    body.dataset['gengagePart'] = 'ai-grouping-card-body';
 
     const nameEl = document.createElement('span');
     nameEl.className = 'gengage-chat-grouping-card-name';
+    nameEl.dataset['gengagePart'] = 'ai-grouping-card-name';
     nameEl.textContent = entry.name;
     body.appendChild(nameEl);
 
-    if (entry.description) {
-      const desc = document.createElement('span');
-      desc.className = 'gengage-chat-grouping-card-desc';
-      desc.textContent = entry.description;
-      body.appendChild(desc);
-    }
-
     if (entry.labels && entry.labels.length > 0) {
-      const labelsEl = document.createElement('span');
+      const labelsEl = document.createElement('div');
       labelsEl.className = 'gengage-chat-grouping-card-labels';
-      labelsEl.textContent = entry.labels.slice(0, 3).join(' \u00B7 ');
+      labelsEl.dataset['gengagePart'] = 'ai-grouping-card-labels';
+      for (const label of entry.labels.slice(0, 2)) {
+        const chip = document.createElement('span');
+        chip.className = 'gengage-chat-grouping-card-label gds-chip';
+        chip.textContent = label;
+        labelsEl.appendChild(chip);
+      }
       body.appendChild(labelsEl);
     }
 

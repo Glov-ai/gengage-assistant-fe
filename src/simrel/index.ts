@@ -12,6 +12,7 @@ import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
 import { dispatch } from '../common/events.js';
+import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
 import {
   streamStartEvent,
@@ -65,6 +66,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-simrel-container';
+    this._contentEl.dataset['gengagePart'] = 'simrel-container';
     const gridCols = this._clampGridColumns(config.gridColumns);
     if (gridCols !== undefined) {
       this._contentEl.style.setProperty('--gengage-simrel-columns', String(gridCols));
@@ -191,8 +193,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     // Show loading spinner
     const loading = document.createElement('div');
     loading.className = 'gengage-simrel-loading';
+    loading.dataset['gengagePart'] = 'simrel-loading';
     const spinner = document.createElement('div');
     spinner.className = 'gengage-simrel-spinner';
+    spinner.dataset['gengagePart'] = 'simrel-loading-spinner';
     loading.appendChild(spinner);
     this._contentEl.appendChild(loading);
 
@@ -202,6 +206,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     const requestId = crypto.randomUUID();
     const fetchStart = Date.now();
+    const releaseConnectionWarning = trackConnectionWarningRequest({
+      source: 'simrel',
+      locale: this.config.locale,
+    });
 
     this.track(
       streamStartEvent(this.analyticsContext(), {
@@ -330,7 +338,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
       dispatch('gengage:global:error', {
         source: 'simrel',
         code: 'FETCH_ERROR',
-        message: getGlobalErrorMessage(this.config.locale),
+        message: getGlobalErrorMessage(this.config.locale, err),
       });
 
       this.track(
@@ -362,6 +370,8 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         errorEl.appendChild(retryBtn);
         this._contentEl.appendChild(errorEl);
       }
+    } finally {
+      releaseConnectionWarning();
     }
   }
 

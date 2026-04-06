@@ -13,10 +13,12 @@ export interface TextInputOptions {
 export function renderTextInput(options: TextInputOptions): HTMLElement {
   const container = document.createElement('div');
   container.className = 'gengage-qna-input-wrapper';
+  container.dataset['gengagePart'] = 'qna-input-wrapper';
 
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'gengage-qna-input';
+  input.dataset['gengagePart'] = 'qna-input';
   input.setAttribute('aria-label', options.askQuestionAriaLabel ?? 'Ask a question');
 
   // Rotating placeholders
@@ -43,13 +45,15 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
   }
 
   const sendBtn = document.createElement('button');
-  sendBtn.className = 'gengage-qna-send';
+  sendBtn.className = 'gengage-qna-send gds-btn gds-btn-primary';
   sendBtn.type = 'button';
+  sendBtn.dataset['gengagePart'] = 'qna-send';
   sendBtn.textContent = options.ctaLabel ?? options.sendButtonText ?? 'Ask';
   sendBtn.setAttribute('aria-label', options.sendQuestionAriaLabel ?? 'Send question');
 
   const combo = document.createElement('div');
-  combo.className = 'gengage-qna-input-combo';
+  combo.className = 'gengage-qna-input-combo gds-input-shell';
+  combo.dataset['gengagePart'] = 'qna-input-combo';
 
   const submit = () => {
     const text = input.value.trim();
