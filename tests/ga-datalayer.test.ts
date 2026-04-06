@@ -159,26 +159,6 @@ describe('ga-datalayer', () => {
       unsub();
     });
 
-    it('listens to gengage:chat:product-favorite and pushes gengage-like-product when favorited', () => {
-      const unsub = wireGADataLayer();
-      window.dispatchEvent(
-        new CustomEvent('gengage:chat:product-favorite', {
-          detail: { sku: 'SKU-F', product: {}, favorited: true, sessionId: null },
-        }),
-      );
-      expect(window.dataLayer).toContainEqual(
-        expect.objectContaining({ event: 'gengage-like-product', gengage_sku: 'SKU-F' }),
-      );
-      window.dataLayer = [];
-      window.dispatchEvent(
-        new CustomEvent('gengage:chat:product-favorite', {
-          detail: { sku: 'SKU-F', product: {}, favorited: false, sessionId: null },
-        }),
-      );
-      expect(window.dataLayer).toHaveLength(0);
-      unsub();
-    });
-
     it('cleans up listeners after unsub', () => {
       const unsub = wireGADataLayer();
       unsub();

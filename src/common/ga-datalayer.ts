@@ -217,11 +217,6 @@ export function wireGADataLayer(): () => void {
   // QNA open chat
   on<Record<string, never>>('gengage:qna:open-chat', () => trackShow('chat'));
 
-  // Product favorite (card heart) — aligns with gengage-like-product GA event
-  on<{ sku: string; favorited: boolean }>('gengage:chat:product-favorite', ({ sku, favorited }) => {
-    if (favorited) trackLikeProduct(sku);
-  });
-
   // Error tracking
   on<{ source: string; message: string }>('gengage:global:error', ({ source, message }) => {
     trackError(source, message);

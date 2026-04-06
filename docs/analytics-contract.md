@@ -201,7 +201,6 @@ in GA dashboards:
 | `gengage:chat:open` | `gengage-show` (widget: chat) |
 | `gengage:chat:close` | `gengage-hide` (widget: chat) |
 | `gengage:chat:add-to-cart` | `gengage-cart-add` (sku, quantity) |
-| `gengage:chat:product-favorite` | `gengage-like-product` (sku) |
 | `gengage:similar:add-to-cart` | `gengage-cart-add` (sku, quantity) |
 | `gengage:similar:product-click` | `gengage-product-detail` (sku) |
 | `gengage:qna:action` | `gengage-suggested-question` (title, type) |
