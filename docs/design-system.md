@@ -78,11 +78,4 @@ Key primitive families: buttons, cards, chips, badges, panels, inputs, tabs, too
 - Chat input area, sort trigger, comparison states, review tabs, shortcut chips
 - Some QNA and SimRel CSS that depends on local classes rather than thin primitive wrappers
 
-**Known reference mismatches** between the markdown spec and the showcase HTML:
-- `--client-primary-soft`: spec 20%, showcase 18%
-- `--client-focus-ring`: spec 32%, showcase 28%
-- `--text-secondary`: spec `#4b5563`, showcase `#475467`
-- `--text-muted`: spec `#6b7280`, showcase `#667085`
-- `--border-default`: spec `rgba(17,24,39,0.10)`, showcase `rgba(17,24,39,0.12)`
-
-The SDK follows the markdown spec values as canonical.
+Canonical token defaults live in `src/common/theme-utils.ts` (`BASE_WIDGET_THEME`). All `color-mix()` derivatives (hover, active, subtle, soft, focus-ring) are computed from `--client-primary` at the CSS level.

@@ -24,14 +24,14 @@ Prefer overriding semantic/client tokens like:
 
 ```js
 theme: {
-  '--client-primary': '#e12629',
+  '--client-primary': '#b7102a',
   '--surface-card': '#ffffff',
-  '--surface-card-soft': '#f7f8fc',
-  '--text-primary': '#182033',
-  '--text-secondary': '#5a6578',
-  '--border-default': 'rgba(24, 32, 51, 0.12)',
-  '--radius-control': '14px',
-  '--radius-card': '20px',
+  '--surface-card-soft': '#f8fafc',
+  '--text-primary': '#111827',
+  '--text-secondary': '#4b5563',
+  '--border-default': 'rgba(17, 24, 39, 0.10)',
+  '--radius-control': '12px',
+  '--radius-card': '16px',
 }
 ```
 
