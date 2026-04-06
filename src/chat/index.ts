@@ -318,7 +318,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onPanelBack: () => this._navigatePanelBack(),
       onPanelForward: () => this._panel?.navigateForward(),
       onPanelClose: () => {
-        // User tapped ✕ on mobile — clear all panel history and comparison state
+        // Mobile ✕: panel is only hidden (content kept); header reopen stays meaningful.
+        if (this._isMobileViewport) {
+          this._comparisonSelectMode = false;
+          this._comparisonSelectedSkus = [];
+          return;
+        }
         this._localPanelHistory = [];
         this._comparisonSelectMode = false;
         this._comparisonSelectedSkus = [];
@@ -1645,6 +1650,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
+          const effectivePanelHint =
+            componentType === 'ProductDetailsPanel' && panelHint !== 'panel' ? ('panel' as const) : panelHint;
           this.track(
             streamUiSpecEvent(this.analyticsContext(), {
               request_id: requestId,
@@ -1667,9 +1674,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             ga.trackSearch(undefined, childCount);
           }
 
-          const panelSpec = panelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
+          const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
-          if (panelHint === 'panel' && this._panel) {
+          if (effectivePanelHint === 'panel' && this._panel) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
 
@@ -1702,6 +1709,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               // Reset comparison state when new panel content replaces the grid
               this._comparisonSelectMode = false;
               this._comparisonSelectedSkus = [];
+              this._comparisonSelectionWarning = null;
+              this._drawer?.setComparisonDockContent(null);
               this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
               this._currentPanelSource = { kind: 'spec', spec: panelSpec };
               this._panel.currentType = componentType;
@@ -1745,7 +1754,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // ProductDetailsPanel goes to the panel, but also render a compact
           // horizontal ProductSummaryCard in chat messages (production parity
           // with the prior engine's LaunchSingleProduct component).
-          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && panelHint === 'panel') {
+          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && effectivePanelHint === 'panel') {
             const product = rootElement?.props?.['product'] as Record<string, unknown> | undefined;
             if (product) {
               const inlineSpec: UISpec = {
@@ -1763,7 +1772,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 if (botMsg.threadId) {
                   inline.dataset['threadId'] = botMsg.threadId;
                 }
-                messagesContainer.appendChild(inline);
+                const bubble = this._shadow?.querySelector(
+                  `[data-message-id="${botMsg.id}"]`,
+                ) as HTMLElement | null;
+                if (bubble && bubble.parentNode === messagesContainer) {
+                  bubble.after(inline);
+                } else {
+                  messagesContainer.appendChild(inline);
+                }
                 inline.scrollIntoView({ behavior: 'auto', block: 'end' });
                 this._drawer?.refreshPresentationCollapsed();
               }
@@ -1788,7 +1804,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const shouldRenderInline =
             !botMsg.silent &&
-            (panelHint !== 'panel' || componentType === 'ProductCard') &&
+            (effectivePanelHint !== 'panel' || componentType === 'ProductCard') &&
             componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
@@ -1855,7 +1871,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const productGridChildCount = rootElement?.children?.length ?? 0;
           if (
             componentType === 'ProductGrid' &&
-            panelHint === 'panel' &&
+            effectivePanelHint === 'panel' &&
             productGridChildCount > 1 &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
@@ -2854,12 +2870,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    */
   private _refreshComparisonUI(): void {
     const panelEl = this._shadow?.querySelector('.gengage-chat-panel');
-    if (!panelEl) return;
+    if (!panelEl) {
+      this._drawer?.setComparisonDockContent(null);
+      return;
+    }
 
     const gridWrapper = panelEl.querySelector('.gengage-chat-product-grid-wrapper');
-    if (!gridWrapper) return;
-    const grid = gridWrapper.querySelector('.gengage-chat-product-grid');
-    if (!grid) return;
+    const grid = gridWrapper?.querySelector('.gengage-chat-product-grid');
+    if (!gridWrapper || !grid) {
+      this._drawer?.setComparisonDockContent(null);
+      return;
+    }
 
     // 1. Toggle comparison button active state
     const toggleBtn = gridWrapper.querySelector('.gengage-chat-comparison-toggle-btn');
@@ -2946,12 +2967,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // 3. Update the slim bottom-docked comparison bar
     const existingFloating = gridWrapper.querySelector('.gengage-chat-comparison-floating-btn');
+    existingFloating?.remove();
     if (this._comparisonSelectMode) {
-      existingFloating?.remove();
       const dock = renderFloatingComparisonButton(this._comparisonSelectedSkus, this._buildRenderContext());
-      gridWrapper.appendChild(dock);
+      if (this._isMobileViewport) {
+        this._drawer?.setComparisonDockContent(dock);
+      } else {
+        this._drawer?.setComparisonDockContent(null);
+        gridWrapper.appendChild(dock);
+      }
     } else {
-      existingFloating?.remove();
+      this._drawer?.setComparisonDockContent(null);
     }
   }
 

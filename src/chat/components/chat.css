@@ -350,7 +350,7 @@
   background: var(--gengage-chat-header-bg, var(--ds-header-bg));
   color: var(--gengage-chat-header-foreground, var(--ds-header-fg));
   box-shadow: none;
-  border-bottom: 1px solid var(--ds-header-border);
+  border-bottom: 1px solid var(--gengage-chat-header-border-bottom, var(--ds-header-border));
   position: relative;
   z-index: 2;
 }
@@ -1186,6 +1186,21 @@
 
 .gengage-chat-panel-loading-status {
   margin-bottom: 16px;
+}
+
+/* Mobilde panel yükleme satırı taşmasın; metin tek satır + ellipsis */
+.gengage-chat-root--mobile .gengage-chat-panel-loading-status.gds-progress-loader-panel {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel-loading-status .gengage-chat-panel-loading-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Offline status bar */
@@ -3378,34 +3393,59 @@ button.gengage-chat-product-card-cta {
   height: 44px;
 }
 
-.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card {
-  grid-template-columns: 84px 1fr;
-}
-
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-buy-footer {
-  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-cta {
-  grid-column: 1 / -1;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-panel {
-  padding: 12px;
-  gap: 12px;
+  padding: 10px;
+  gap: 8px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-media {
-  min-height: 140px;
+  min-height: 0;
+  padding: 8px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-content {
+  gap: 6px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-title {
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-rating {
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-original-price {
+  font-size: 12px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-current-price {
-  font-size: 20px;
+  font-size: 18px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-actions {
+  margin-top: 2px;
+  gap: 6px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-cta {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
 }
 
 /* Mobile product grid: fixed-width cards with snap scrolling */
@@ -3416,11 +3456,35 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-root--mobile .gengage-chat-product-card {
   width: 280px;
   min-width: 280px;
+  max-width: 100%;
+  box-sizing: border-box;
   scroll-snap-align: center;
 }
 
+/* Horizontal product strip + any mobile card: vertically center image in its frame */
+.gengage-chat-root--mobile .gengage-chat-product-card-img-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
 .gengage-chat-root--mobile .gengage-chat-product-card-img {
-  height: 180px;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 180px;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-card-discount-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .gengage-chat-root--mobile .gengage-chat-drawer {
@@ -3438,10 +3502,76 @@ button.gengage-chat-product-card-cta {
   max-width: 100%;
 }
 
-/* GAP-007/008: Cap panel product images so they don't dominate on mobile */
+/* Mobile panel cards: center product image vertically in the media band (avoid “stuck to top”) */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-img-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-height: 0;
+}
+
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-img {
-  max-height: 120px;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(200px, 72%);
+  min-height: 0;
   object-fit: contain;
+  object-position: center;
+}
+
+/* Product card overlay: keep fav + find-similar square (global mobile rule sets fav to 44px for header/details) */
+.gengage-chat-root--mobile .gengage-chat-product-card-img-actions .gengage-chat-favorite-btn,
+.gengage-chat-root--mobile .gengage-chat-product-card-img-actions .gengage-chat-find-similar-pill {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  flex-shrink: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-discount-badge {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-buy-footer {
+  padding: 0 12px 14px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-buy-trigger {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  hyphens: auto;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card .gengage-chat-product-card-cta {
+  margin-left: 12px;
+  margin-right: 12px;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: normal;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-rating-compact {
+  padding: 2px 6px;
+  font-size: 10px;
+  gap: 3px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-card-stock {
+  font-size: 10px;
+  padding: 2px 5px;
 }
 
 /* GAP-012: Hide native scrollbar on mobile */
@@ -3479,9 +3609,10 @@ button.gengage-chat-product-card-cta {
   min-height: 0;
 }
 
-/* GAP-047: Improve mobile drawer product image visibility */
+/* GAP-047: Mobile product image — compact frame, still readable */
 .gengage-chat-root--mobile .gengage-chat-product-details-img {
-  min-height: 120px;
+  min-height: 0;
+  max-height: 200px;
   object-fit: contain;
 }
 
@@ -4416,14 +4547,6 @@ button.gengage-chat-product-card-cta {
   color: var(--text-secondary);
 }
 
-/* Score */
-.gengage-chat-ai-toppick-score {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--client-primary);
-  margin-top: 6px;
-}
-
 .gengage-chat-ai-toppick-reason {
   margin: 10px 0 0;
   font-size: 13px;
@@ -4524,13 +4647,43 @@ button.gengage-chat-product-card-cta {
   }
 }
 
-/* Mobile: 3 column grid — no horizontal overflow / snap (lean parity) */
+/* Mobile: hero pick full width, next two half-width (1 + 2 column row) */
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks {
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-title {
+  font-size: 14px;
+  margin: 0 0 2px;
+}
+
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   overflow: visible;
-  padding: 10px 0 4px;
+  padding: 6px 0 2px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Shorter media band on hero card — less empty frame around product */
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child .gengage-chat-ai-toppick-media {
+  max-height: min(156px, 34vw);
+  aspect-ratio: 16 / 10;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child .gengage-chat-ai-toppick-img {
+  max-height: min(156px, 34vw);
+  padding: 2px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner,
@@ -4540,6 +4693,7 @@ button.gengage-chat-product-card-cta {
   max-width: none;
   flex-shrink: 1;
   scroll-snap-align: none;
+  padding: 8px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
@@ -4549,28 +4703,77 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media {
-  max-height: 76px;
-  margin-top: 4px;
-  margin-bottom: 6px;
+  max-height: 68px;
+  margin-top: 2px;
+  margin-bottom: 4px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-img {
-  max-height: 76px;
+  max-height: 68px;
+  padding: 2px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-badge {
-  top: -8px;
-  left: 6px;
+  top: -7px;
+  left: 5px;
   font-size: 7px;
-  padding: 2px 5px;
+  padding: 1px 5px;
   max-width: calc(100% - 12px);
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-name {
+  font-size: 13px;
+  line-height: 1.28;
+  margin-bottom: 2px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-rating {
+  margin-top: 2px;
+  padding: 2px 6px;
+  gap: 3px;
+  font-size: 10px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-price {
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-original-price {
+  font-size: 11px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-labels {
+  margin-top: 5px;
+  gap: 4px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-label {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-reason {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.38;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-review {
+  margin-top: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  border-radius: 10px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta {
-  width: calc(100% - 20px);
-  margin: 12px 10px 10px;
+  width: calc(100% - 16px);
+  margin: 8px 8px 6px;
+  padding: 6px 0;
+  font-size: 12px;
   align-self: stretch;
   opacity: 1;
   transform: none;
@@ -5390,6 +5593,28 @@ button.gengage-chat-product-card-cta {
   backdrop-filter: blur(10px);
 }
 
+/* Mobile: dock mounts here (body child) so it stacks above the transformed panel overlay */
+.gengage-chat-comparison-dock-slot {
+  display: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot:not(:empty) {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: 0 10px max(6px, env(safe-area-inset-bottom, 0px));
+  max-width: 100%;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot > * {
+  pointer-events: auto;
+}
+
 .gengage-chat-comparison-floating-summary {
   display: flex;
   align-items: center;
@@ -5454,25 +5679,101 @@ button.gengage-chat-product-card-cta {
   opacity: 0.6;
 }
 
-/* On mobile the panel is position:absolute with overflow-y:auto — position:sticky
-   inside such a container is unreliable on some mobile browsers (especially Safari).
-   Switch to a margin-based flush-bottom layout that is universally supported. */
-.gengage-chat-root--mobile .gengage-chat-comparison-floating-btn {
+/* Mobile: bar lives in .gengage-chat-comparison-dock-slot (above panel z-index, not inside scroll) */
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-btn {
   position: relative;
   bottom: auto;
-  margin-top: 12px;
+  margin: 0;
   width: 100%;
-  border-radius: var(--radius-card);
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 14px;
   flex-direction: column;
   align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px 10px 10px;
+  box-shadow: var(--shadow-3);
 }
 
-.gengage-chat-root--mobile .gengage-chat-comparison-floating-action {
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-summary {
+  display: flex;
+  gap: 8px;
+  padding-right: 34px; /* clear close (top-right) */
+  align-items: center; /* rozet + yazı aynı dikey eksende */
+  min-height: 26px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-count {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-title {
+  font-size: 13px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-warning {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-action {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 0 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.gengage-chat-root--mobile .gengage-chat-comparison-floating-close {
-  align-self: flex-end;
+/* ✕ — sağ üst, tam kare (.gds-btn min-height ve .gds-icon-btn boyutlarını ezer) */
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-close {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px !important;
+  max-width: 26px;
+  max-height: 26px;
+  padding: 0 !important;
+  border-radius: 8px;
+  flex: none;
+  align-self: unset;
+  z-index: 10;
+  line-height: 0;
+  touch-action: manipulation;
+}
+
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot .gengage-chat-comparison-floating-close svg {
+  width: 11px;
+  height: 11px;
+  display: block;
 }
 
 /* Panel TopBar — navigation arrows + title */
@@ -5484,7 +5785,7 @@ button.gengage-chat-product-card-cta {
   box-sizing: border-box;
   height: var(--_gengage-chat-header-height);
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: none;
   background: var(--surface-card);
   flex-shrink: 0;
   position: sticky;
@@ -6287,6 +6588,7 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-comparison--mobile .gengage-chat-comparison-table {
   min-width: 480px;
+  table-layout: fixed;
 }
 
 /* Sticky first column: label column stays fixed while products scroll */
@@ -6298,6 +6600,27 @@ button.gengage-chat-product-card-cta {
   z-index: 1;
   /* Shadow instead of border to avoid border-collapse artefacts */
   box-shadow: 2px 0 4px color-mix(in srgb, var(--surface-shell) 8%, transparent);
+}
+
+/* İlk sütun: sola hizalı, dar tutulup uzun kriter adları … ile kısaltılır */
+.gengage-chat-comparison--mobile .gengage-chat-comparison-table thead th:first-child {
+  width: 22ch;
+  max-width: 22ch;
+  min-width: 0;
+  padding: 8px 6px;
+  box-sizing: border-box;
+}
+
+.gengage-chat-comparison--mobile .gengage-chat-comparison-table td.gengage-chat-comparison-label {
+  text-align: left;
+  width: 22ch;
+  max-width: 22ch;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
 /* ===== Similar Products heading in panel ===== */
@@ -6503,6 +6826,35 @@ button.gengage-chat-product-card-cta {
   min-height: 40px;
 }
 
+/* Panel (side sheet): sort + compare — icon only on mobile */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-trigger-label,
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-trigger-chevron,
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-comparison-toggle-label {
+  display: none !important;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-dropdown {
+  flex: 0 0 auto;
+  max-width: none;
+  width: auto;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-sort-trigger {
+  width: auto;
+  min-width: 44px;
+  justify-content: center;
+  padding: 0 10px;
+  gap: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-comparison-toggle-btn {
+  min-width: 44px;
+  width: 44px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+
 .gengage-chat-root--mobile .gengage-chat-input-chip {
   min-height: 40px;
   padding: 8px 12px;
@@ -6519,8 +6871,7 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-root--mobile .gengage-chat-product-card-cta,
 .gengage-chat-root--mobile .gengage-chat-choice-prompter-cta,
-.gengage-chat-root--mobile .gengage-chat-product-grid-view-more,
-.gengage-chat-root--mobile .gengage-chat-comparison-floating-btn {
+.gengage-chat-root--mobile .gengage-chat-product-grid-view-more {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -6536,27 +6887,9 @@ button.gengage-chat-product-card-cta {
   min-width: 44px;
 }
 
-/* Close (✕) button — mobile only, dismisses all panel layers at once */
+/* Panel close (✕) — hidden on mobile; use header “reopen panel” / back stack instead */
 .gengage-chat-root--mobile .gengage-chat-panel-topbar-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.15s ease;
-  margin-left: auto;
-}
-
-.gengage-chat-root--mobile .gengage-chat-panel-topbar-close:hover {
-  background: var(--surface-card-muted);
-  color: var(--text-primary);
+  display: none !important;
 }
 
 /* ---------------------------------------------------------------------------

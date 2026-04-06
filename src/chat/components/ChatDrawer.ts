@@ -151,6 +151,8 @@ export class ChatDrawer {
   private _inputChipsEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
   private _panelFloatingEl: HTMLElement;
+  /** Mobile: overlay host for comparison dock (above panel scroll; avoids transformed panel containing block). */
+  private _comparisonDockSlotEl: HTMLElement;
   /** Slot between panel top bar and main scroll content (desktop AI picks / analyzing strip). */
   private _panelAiZoneEl!: HTMLElement;
   private _favBadgeEl: HTMLElement | null = null;
@@ -474,7 +476,11 @@ export class ChatDrawer {
       onBack: () => options.onPanelBack?.(),
       onForward: () => options.onPanelForward?.(),
       onClose: () => {
-        this.clearPanel();
+        if (options.getMobileViewport?.() ?? false) {
+          this.hideMobilePanel();
+        } else {
+          this.clearPanel();
+        }
         options.onPanelClose?.();
       },
       backAriaLabel: this.i18n.backAriaLabel,
@@ -1023,6 +1029,12 @@ export class ChatDrawer {
     conversation.appendChild(inputArea);
 
     body.appendChild(conversation);
+
+    this._comparisonDockSlotEl = document.createElement('div');
+    this._comparisonDockSlotEl.className = 'gengage-chat-comparison-dock-slot';
+    this._comparisonDockSlotEl.dataset['gengagePart'] = 'comparison-dock-slot';
+    body.appendChild(this._comparisonDockSlotEl);
+
     this.root.appendChild(body);
 
     // Horizontal swipe to toggle panel on mobile (GAP-101)
@@ -1850,6 +1862,16 @@ export class ChatDrawer {
     this._dividerPreviewEnabled = false;
     this._syncDividerPreview();
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
+    this.setComparisonDockContent(null);
+  }
+
+  /**
+   * Mobile-only slot (see CSS): pins the comparison dock above panel scroll.
+   * Pass null to clear.
+   */
+  setComparisonDockContent(el: HTMLElement | null): void {
+    this._comparisonDockSlotEl.replaceChildren();
+    if (el) this._comparisonDockSlotEl.appendChild(el);
   }
 
   /**
