@@ -489,7 +489,7 @@
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
-      const assistantAvatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
+      const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
 
       const controller = await initOverlayWidgets({
         accountId: 'teknosacom',
@@ -520,8 +520,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Teknosa'ya Sor",
-          launcherImageUrl: assistantAvatarUrl,
-          headerAvatarUrl: assistantAvatarUrl,
+          launcherImageUrl: avatarUrl,
+          headerAvatarUrl: avatarUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Gengage ile',
