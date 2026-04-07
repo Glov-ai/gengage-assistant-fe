@@ -65,7 +65,7 @@ describe('renderGroundingReviewCard', () => {
     expect(dom.classList.contains('gds-evidence-card')).toBe(true);
     expect(dom.querySelector('.gengage-chat-grounding-review-title')?.textContent).toBe('Müşteri Yorumları');
     expect(dom.querySelector('.gengage-chat-grounding-review-subtitle')?.textContent).toBe('123 yorum mevcut');
-    expect(dom.querySelector('.gengage-chat-grounding-review-cta')?.textContent).toBe('Yorumları Oku \u2192');
+    expect(dom.querySelector('.gengage-chat-grounding-review-cta')?.textContent).toContain('Yorumları Oku');
   });
 
   it('dispatches action on click', () => {

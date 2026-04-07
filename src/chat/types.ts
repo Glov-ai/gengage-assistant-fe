@@ -265,6 +265,9 @@ export interface ChatI18n {
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
+  reviewCustomersMentionSingular: string;
+  reviewCustomersMentionPlural: string;
+  reviewSubjectsHeading: string;
   tryAgainButton: string;
   askSomethingElseButton: string;
   accountInactiveMessage: string;
@@ -358,6 +361,9 @@ export interface ChatUISpecRenderContext {
     | 'reviewFilterNegative'
     | 'decreaseLabel'
     | 'increaseLabel'
+    | 'reviewCustomersMentionSingular'
+    | 'reviewCustomersMentionPlural'
+    | 'reviewSubjectsHeading'
     | 'aiBrowseCategoriesTitle'
   >;
   productSort?: ProductSortState | undefined;
