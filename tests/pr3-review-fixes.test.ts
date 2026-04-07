@@ -60,7 +60,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
       findSimilarLabel: 'Find Similar',
       viewMoreLabel: 'Show More',
       similarProductsLabel: 'Similar Products',
-    },
+    } as ChatUISpecRenderContext['i18n'],
     ...overrides,
   };
 }
