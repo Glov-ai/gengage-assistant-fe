@@ -119,6 +119,18 @@ npm run build                                  # Build to dist/
 npm run catalog                                # Visual component catalog at :3002
 ```
 
+**Using a local backend:**
+
+```bash
+npm run dev -- koctascomtr --sku=1000465056 --backend-url=http://localhost:7860
+```
+
+The default backend is `https://chatbe-dev.gengage.ai`. You can also set it via the `MIDDLEWARE_URL` environment variable:
+
+```bash
+MIDDLEWARE_URL=http://localhost:7860 npm run dev -- koctascomtr --sku=1000465056
+```
+
 ---
 
 ## Documentation
