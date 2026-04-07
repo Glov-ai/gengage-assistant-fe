@@ -260,8 +260,9 @@ export interface ChatI18n {
   cartAddErrorMessage: string;
   /** Shown when a host `gengage-product-favorite` callback fails (returns false or throws). */
   favoriteToggleErrorMessage: string;
-  reviewFilterAll: string;
+  /** Used as lowercase suffix for positive mention counts, e.g. "3 positive". */
   reviewFilterPositive: string;
+  /** Used as lowercase suffix for negative mention counts, e.g. "2 negative". */
   reviewFilterNegative: string;
   decreaseLabel: string;
   increaseLabel: string;
@@ -356,7 +357,6 @@ export interface ChatUISpecRenderContext {
     | 'handoffHeading'
     | 'customerReviewsTitle'
     | 'addToFavoritesLabel'
-    | 'reviewFilterAll'
     | 'reviewFilterPositive'
     | 'reviewFilterNegative'
     | 'decreaseLabel'

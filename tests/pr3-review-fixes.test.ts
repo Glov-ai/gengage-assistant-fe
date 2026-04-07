@@ -309,7 +309,6 @@ describe('Review highlights filter pills', () => {
     const ctx = makeContext({
       i18n: {
         ...makeContext().i18n!,
-        reviewFilterAll: 'All',
         reviewFilterPositive: 'Positive',
         reviewFilterNegative: 'Negative',
         customerReviewsTitle: 'Reviews',

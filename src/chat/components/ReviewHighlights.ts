@@ -91,7 +91,6 @@ export function renderReviewHighlights(
   element: UIElement,
   options?: {
     emptyReviewsMessage?: string | undefined;
-    reviewFilterAll?: string | undefined;
     reviewFilterPositive?: string | undefined;
     reviewFilterNegative?: string | undefined;
     reviewCustomersMentionSingular?: string | undefined;

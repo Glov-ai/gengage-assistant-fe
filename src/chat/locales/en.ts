@@ -106,7 +106,6 @@ export const CHAT_I18N_EN: ChatI18n = {
   dismissAriaLabel: 'Dismiss',
   cartAddErrorMessage: "Sorry, I couldn't add that to your cart. Something went wrong.",
   favoriteToggleErrorMessage: "We couldn't update favorites. Please try again.",
-  reviewFilterAll: 'All',
   reviewFilterPositive: 'Positive',
   reviewFilterNegative: 'Negative',
   decreaseLabel: 'Decrease',
