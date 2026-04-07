@@ -62,7 +62,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
     chatI18n: {
       inputPlaceholder: 'Ne aramıştınız?',
-      poweredBy: 'Gengage',
+      poweredBy: 'n11 AI Asistan',
     },
   },
 
