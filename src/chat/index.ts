@@ -139,6 +139,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
   private _drawerVisible = false;
+  /** Host sayfası scroll’u dondurulduğunda (floating/overlay + drawer açık). */
+  private _hostScrollLockActive = false;
+  private _hostScrollLockScrollY = 0;
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
   // corruption when concurrent preservePanel streams write simultaneously.
@@ -557,6 +560,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   protected onDestroy(): void {
+    this._releaseHostDocumentScrollLock();
     this._abortAllActiveRequests();
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
@@ -1174,6 +1178,60 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (this._backdropEl) {
       this._backdropEl.setAttribute('aria-hidden', this._drawerVisible ? 'false' : 'true');
     }
+    this._syncHostDocumentScrollLock();
+  }
+
+  private _syncHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined') return;
+    const variant = this.config.variant ?? 'floating';
+    if (variant === 'inline') {
+      this._releaseHostDocumentScrollLock();
+      return;
+    }
+    if (this._drawerVisible) {
+      this._applyHostDocumentScrollLock();
+    } else {
+      this._releaseHostDocumentScrollLock();
+    }
+  }
+
+  private _applyHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined' || this._hostScrollLockActive) return;
+    const html = document.documentElement;
+    const body = document.body;
+    if (!body) return;
+
+    this._hostScrollLockScrollY = window.scrollY ?? window.pageYOffset ?? 0;
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    body.style.position = 'fixed';
+    body.style.top = `-${this._hostScrollLockScrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    this._hostScrollLockActive = true;
+  }
+
+  private _releaseHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined' || !this._hostScrollLockActive) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const y = this._hostScrollLockScrollY;
+    html.style.overflow = '';
+    html.style.overscrollBehavior = '';
+    body.style.overflow = '';
+    body.style.overscrollBehavior = '';
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.width = '';
+    this._hostScrollLockActive = false;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, y);
+    });
   }
 
   private _handleAttachment(file: File): void {
