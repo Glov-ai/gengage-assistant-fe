@@ -1,5 +1,5 @@
 /**
- * Tests for ReviewHighlights — filter tabs, sentiment pills, and review items.
+ * Tests for ReviewHighlights — subject chips, mention counts, and snippets.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -11,61 +11,82 @@ function makeElement(reviews: Array<Record<string, unknown>>): UIElement {
 }
 
 describe('ReviewHighlights', () => {
-  it('renders filter tabs with counts', () => {
+  it('renders subject chips with mention counts', () => {
     const el = renderReviewHighlights(
       makeElement([
-        { review_class: 'positive', review_text: 'Great', review_tag: 'quality' },
-        { review_class: 'negative', review_text: 'Bad', review_tag: 'price' },
+        { review_class: 'positive', review_text: 'Great build quality', review_tag: 'Build quality' },
+        { review_class: 'negative', review_text: 'Too expensive for me', review_tag: 'Value' },
+        { review_class: 'positive', review_text: 'Feels solid', review_tag: 'Build quality' },
       ]),
     );
-    const tabs = el.querySelectorAll('.gengage-chat-review-tab');
-    expect(tabs.length).toBe(3); // All, Positive, Negative
-    expect(tabs[0]?.textContent).toContain('All (2)');
-    expect(tabs[1]?.textContent).toContain('Positive (1)');
-    expect(tabs[2]?.textContent).toContain('Negative (1)');
+    const subjects = el.querySelectorAll('.gengage-chat-review-subject');
+    expect(subjects.length).toBe(2);
+    expect(subjects[0]?.textContent).toContain('Build quality');
+    expect(subjects[0]?.textContent).toContain('(2)');
+    expect(subjects[1]?.textContent).toContain('Value');
+    expect(subjects[1]?.textContent).toContain('(1)');
   });
 
-  it('filters items when tab is clicked', () => {
+  it('switches snippets when a different subject is clicked', () => {
     const el = renderReviewHighlights(
       makeElement([
-        { review_class: 'positive', review_text: 'Great' },
-        { review_class: 'negative', review_text: 'Bad' },
-        { review_class: 'positive', review_text: 'Awesome' },
+        { review_class: 'positive', review_text: 'Fast startup and smooth use', review_tag: 'Performance' },
+        { review_class: 'negative', review_text: 'Battery drains quickly', review_tag: 'Battery' },
+        { review_class: 'positive', review_text: 'Runs games well', review_tag: 'Performance' },
       ]),
     );
-    // Initially all items
-    expect(el.querySelectorAll('.gengage-chat-review-item').length).toBe(3);
-    // Click "Olumlu" tab
-    const olumluTab = el.querySelectorAll('.gengage-chat-review-tab')[1] as HTMLButtonElement;
-    olumluTab?.click();
-    expect(el.querySelectorAll('.gengage-chat-review-item').length).toBe(2);
+    const subjects = el.querySelectorAll('.gengage-chat-review-subject');
+    const performanceSnippets = el.querySelectorAll('.gengage-chat-review-snippet');
+    expect(performanceSnippets.length).toBe(2);
+
+    const battery = subjects[1] as HTMLButtonElement;
+    battery.click();
+    const batterySnippets = el.querySelectorAll('.gengage-chat-review-snippet');
+    expect(batterySnippets.length).toBe(1);
+    expect(el.textContent).toContain('Battery');
   });
 
-  it('renders sentiment tag pills', () => {
+  it('shows positive and negative mention counts for active subject', () => {
     const el = renderReviewHighlights(
       makeElement([
-        { review_class: 'positive', review_tag: 'quality', review_text: 'A' },
-        { review_class: 'positive', review_tag: 'quality', review_text: 'B' },
-        { review_class: 'negative', review_tag: 'price', review_text: 'C' },
+        { review_class: 'positive', review_tag: 'Hardware', review_text: 'Powerful CPU' },
+        { review_class: 'positive', review_tag: 'Hardware', review_text: 'Strong GPU' },
+        { review_class: 'negative', review_tag: 'Hardware', review_text: 'Fan got noisy once' },
       ]),
     );
-    const pills = el.querySelectorAll('.gengage-chat-review-pill');
-    expect(pills.length).toBe(2); // quality and price
-    const countBadge = el.querySelector('.gengage-chat-review-pill-count');
-    expect(countBadge?.textContent).toBe('2'); // quality appears twice
+    const meta = el.querySelector('.gengage-chat-review-detail-meta');
+    expect(meta?.textContent).toContain('3 customers mention "Hardware"');
+    expect(meta?.textContent).toContain('2 positive');
+    expect(meta?.textContent).toContain('1 negative');
+  });
+
+  it('splits comma-joined tags and groups them as separate subjects', () => {
+    const el = renderReviewHighlights(
+      makeElement([
+        { review_class: 'positive', review_tag: 'Watt değeri, Şarj hızı', review_text: 'Hızlı ve güçlü' },
+        { review_class: 'negative', review_tag: 'Şarj hızı', review_text: 'Bazen yavaşlıyor' },
+      ]),
+    );
+    const subjects = Array.from(el.querySelectorAll('.gengage-chat-review-subject')).map((n) => n.textContent ?? '');
+    expect(subjects.some((s) => s.includes('Watt değeri'))).toBe(true);
+    expect(subjects.some((s) => s.includes('Şarj hızı'))).toBe(true);
+
+    // Şarj hızı should aggregate both rows (2 mentions)
+    const chargeSubject = subjects.find((s) => s.includes('Şarj hızı'));
+    expect(chargeSubject).toContain('(2)');
   });
 
   it('shows empty state when no reviews', () => {
     const el = renderReviewHighlights({ type: 'ReviewHighlights', props: { reviews: [] } });
     expect(el.querySelector('.gengage-chat-review-empty')).not.toBeNull();
-    expect(el.querySelectorAll('.gengage-chat-review-tab').length).toBe(0);
+    expect(el.querySelectorAll('.gengage-chat-review-subject').length).toBe(0);
   });
 
-  it('renders review items with tone data attribute', () => {
+  it('renders snippets with tone data attribute', () => {
     const el = renderReviewHighlights(
-      makeElement([{ review_class: 'positive', review_text: 'Good stuff', review_tag: 'value' }]),
+      makeElement([{ review_class: 'positive', review_text: 'Good stuff', review_tag: 'Value' }]),
     );
-    const item = el.querySelector('.gengage-chat-review-item');
+    const item = el.querySelector('.gengage-chat-review-snippet');
     expect(item?.getAttribute('data-tone')).toBe('positive');
   });
 });

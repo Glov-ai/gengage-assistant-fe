@@ -46,9 +46,11 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   ReviewHighlights: ({ element, context }) =>
     renderReviewHighlightsComponent(element, {
       emptyReviewsMessage: context.i18n?.emptyReviewsMessage,
-      reviewFilterAll: context.i18n?.reviewFilterAll,
       reviewFilterPositive: context.i18n?.reviewFilterPositive,
       reviewFilterNegative: context.i18n?.reviewFilterNegative,
+      reviewCustomersMentionSingular: context.i18n?.reviewCustomersMentionSingular,
+      reviewCustomersMentionPlural: context.i18n?.reviewCustomersMentionPlural,
+      reviewSubjectsHeading: context.i18n?.reviewSubjectsHeading,
     }),
   ComparisonTable: ({ element, context }) => renderComparisonTableElement(element, context),
   AITopPicks: ({ element, context }) => renderAITopPicks(element, context),

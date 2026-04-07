@@ -112,8 +112,26 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
               },
               {
                 review_class: 'positive',
+                review_text: 'Malzeme kalitesi gercekten iyi, saglam hissettiriyor.',
+                review_rating: '4',
+                review_tag: 'Kalite',
+              },
+              {
+                review_class: 'negative',
+                review_text: 'Kalitesi iddia edildigi kadar iyi degil, boya dokuluyor.',
+                review_rating: '2',
+                review_tag: 'Kalite',
+              },
+              {
+                review_class: 'positive',
                 review_text: 'Fiyat/performans orani cok iyi. Tavsiye ederim.',
                 review_rating: '4',
+                review_tag: 'Deger',
+              },
+              {
+                review_class: 'positive',
+                review_text: 'Bu fiyata bu ozellikler harika, rakiplerinden ucuz.',
+                review_rating: '5',
                 review_tag: 'Deger',
               },
               {
@@ -123,10 +141,22 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
                 review_tag: 'Aku',
               },
               {
+                review_class: 'negative',
+                review_text: 'Sarj suresi cok uzun, 4 saat beklemek gerekiyor.',
+                review_rating: '2',
+                review_tag: 'Aku',
+              },
+              {
                 review_class: 'positive',
                 review_text: 'Fena degil ama bekledigimden hafif. Is goruyor.',
                 review_rating: '3',
                 review_tag: 'Genel',
+              },
+              {
+                review_class: 'positive',
+                review_text: 'Tasarimi cok sik, elde rahat tutuluyor.',
+                review_rating: '5',
+                review_tag: 'Kalite, Deger',
               },
             ],
           },

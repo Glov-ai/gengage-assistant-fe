@@ -60,7 +60,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
       findSimilarLabel: 'Find Similar',
       viewMoreLabel: 'Show More',
       similarProductsLabel: 'Similar Products',
-    },
+    } as ChatUISpecRenderContext['i18n'],
     ...overrides,
   };
 }
@@ -309,7 +309,6 @@ describe('Review highlights filter pills', () => {
     const ctx = makeContext({
       i18n: {
         ...makeContext().i18n!,
-        reviewFilterAll: 'All',
         reviewFilterPositive: 'Positive',
         reviewFilterNegative: 'Negative',
         customerReviewsTitle: 'Reviews',
