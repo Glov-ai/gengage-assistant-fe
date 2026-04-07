@@ -216,10 +216,14 @@
         height: 14px;
         background: var(--muted);
         border-radius: 50%;
-        transition: transform 0.2s, background 0.2s;
+        transition:
+          transform 0.2s,
+          background 0.2s;
       }
 
-      .backend-toggle input { display: none; }
+      .backend-toggle input {
+        display: none;
+      }
 
       .backend-toggle input:checked + label .toggle-track {
         background: #22c55e;
@@ -235,7 +239,9 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
 
-      .header { position: relative; }
+      .header {
+        position: relative;
+      }
     </style>
   </head>
   <body>
@@ -243,7 +249,7 @@
       <h1>Gengage Demo Launcher</h1>
       <p>Pick an account demo to start the dev server with a real SKU</p>
       <div class="backend-toggle">
-        <input type="checkbox" id="backend-toggle">
+        <input type="checkbox" id="backend-toggle" />
         <label for="backend-toggle">
           <span class="toggle-track"></span>
           <span class="toggle-label">localhost:7860</span>
