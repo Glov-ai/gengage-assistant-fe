@@ -100,10 +100,7 @@ describe('AITopPicks per-card spinner', () => {
         ],
       },
     };
-    const result = renderAITopPicks(
-      el as never,
-      makeCtx({ isMobile: true, topPicksLoadingSku: 'SKU2' }),
-    );
+    const result = renderAITopPicks(el as never, makeCtx({ isMobile: true, topPicksLoadingSku: 'SKU2' }));
     expect(result.querySelectorAll('.gengage-chat-ai-toppick-cta')).toHaveLength(1);
     const spinners = result.querySelectorAll('.gengage-chat-ai-toppick-spinner');
     expect(spinners.length).toBe(2);

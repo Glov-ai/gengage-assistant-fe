@@ -4348,7 +4348,10 @@ button.gengage-chat-product-card-cta {
   aspect-ratio: 4 / 3;
 }
 
-.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-scroll > :first-child:has(.gengage-chat-ai-toppick-detail) .gengage-chat-ai-toppick-media {
+.gengage-chat-panel-ai-zone
+  .gengage-chat-ai-top-picks-scroll
+  > :first-child:has(.gengage-chat-ai-toppick-detail)
+  .gengage-chat-ai-toppick-media {
   grid-row: 1 / span 3;
 }
 
@@ -4385,7 +4388,10 @@ button.gengage-chat-product-card-cta {
   padding-top: 6px;
 }
 
-.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-scroll > :first-child:has(.gengage-chat-ai-toppick-detail) .gengage-chat-ai-toppick-cta {
+.gengage-chat-panel-ai-zone
+  .gengage-chat-ai-top-picks-scroll
+  > :first-child:has(.gengage-chat-ai-toppick-detail)
+  .gengage-chat-ai-toppick-cta {
   grid-row: 3;
 }
 
@@ -4970,7 +4976,10 @@ button.gengage-chat-product-card-cta {
   gap: 5px;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media .gengage-chat-product-card-img-actions {
+.gengage-chat-root--mobile
+  .gengage-chat-ai-toppick-card--winner
+  .gengage-chat-ai-toppick-media
+  .gengage-chat-product-card-img-actions {
   top: 5px;
   right: 6px;
   gap: 5px;

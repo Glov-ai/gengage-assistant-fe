@@ -391,8 +391,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Extended mode manager for host PDP maximize/minimize
     this._extendedModeManager = new ExtendedModeManager({
       onChange: (extended) => this._panel?.notifyExtension(extended),
-      productDetailsInPanel:
-        (config.isDemoWebsite ?? false) && (config.productDetailsExtended ?? false),
+      productDetailsInPanel: (config.isDemoWebsite ?? false) && (config.productDetailsExtended ?? false),
     });
 
     // Panel manager for snapshot/topbar/navigation state
@@ -1717,8 +1716,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
-          const similarsAppendGrid =
-            componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
+          const similarsAppendGrid = componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
           /** PDP akışında yan panel kapalı: tam detay + benzer ürün grid’i yalnızca sohbette. */
           const skipSidePanelForUISpec =
             this.config.productDetailsExtended !== true &&
@@ -1866,8 +1864,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           let routeAiAnalysisToPanel = false;
           let deferAiPanelUntilGrid = false;
           if (skipSidePanelForUISpec && similarsAppendGrid) {
-            renderContext.panelProductListHeading =
-              this._i18n.similarProductsLabel ?? 'Similar Products';
+            renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
           }
           if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
             if (panelListEligibleForAiZone) {
