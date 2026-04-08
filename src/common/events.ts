@@ -76,6 +76,29 @@ function extractFreeTextActionMessage(action: ActionPayload): string | null {
   return null;
 }
 
+function injectQnaLauncherSuggestedFlags(action: ActionPayload): ActionPayload {
+  if (action.type !== 'inputText') {
+    return action;
+  }
+
+  const base: Record<string, unknown> =
+    typeof action.payload === 'string'
+      ? { text: action.payload.trim() }
+      : action.payload != null && typeof action.payload === 'object' && !Array.isArray(action.payload)
+        ? { ...(action.payload as Record<string, unknown>) }
+        : {};
+
+  if (typeof base['text'] !== 'string' || !base['text'].trim()) {
+    const fromTitle = action.title?.trim();
+    if (fromTitle) base['text'] = fromTitle;
+  }
+
+  if (!('is_launcher' in base)) base['is_launcher'] = 1;
+  if (!('is_suggested_text' in base)) base['is_suggested_text'] = 1;
+
+  return { ...action, payload: base };
+}
+
 /**
  * Convenience: wire QNA → Chat automatically.
  * Call this once after both widgets are initialised.
@@ -113,13 +136,17 @@ export function wireQNAToChat(options?: WireQNAToChatOptions): () => void {
   }
 
   function routeActionToChat(chat: WireableChatAPI, action: ActionPayload): void {
+    if (chat.openWithAction) {
+      const routed = action.type === 'inputText' ? injectQnaLauncherSuggestedFlags(action) : action;
+      chat.openWithAction(routed);
+      return;
+    }
     const freeText = extractFreeTextActionMessage(action);
     if (freeText && chat.sendMessage) {
       chat.open?.();
       chat.sendMessage(freeText);
       return;
     }
-    chat.openWithAction?.(action);
   }
 
   function clearPollTimer(): void {
