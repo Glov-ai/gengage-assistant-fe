@@ -1188,11 +1188,16 @@
   margin-bottom: 16px;
 }
 
-/* Mobile: prevent panel loading status overflow; single line with ellipsis */
-.gengage-chat-root--mobile .gengage-chat-panel-loading-status.gds-progress-loader-panel {
+/* Panel loading strip: stay inside padded panel (desktop + mobile) */
+.gengage-chat-panel-loading-status.gds-progress-loader-panel {
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+/* Mobile: single-line label with ellipsis */
+.gengage-chat-root--mobile .gengage-chat-panel-loading-status.gds-progress-loader-panel {
+  max-width: 100%;
 }
 
 .gengage-chat-root--mobile .gengage-chat-panel-loading-status .gengage-chat-panel-loading-label {
@@ -1319,7 +1324,7 @@
   padding: 10px 12px 12px;
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-card);
-  /* Yukarı taşan ek menüsü mesaj listesinin altında kalmaması için */
+  /* Keep attach menu (overflows upward) below the message list */
   position: relative;
   z-index: 2;
 }
@@ -1335,7 +1340,7 @@
   border: 1px solid var(--border-default);
   border-radius: 16px;
   padding: 6px 6px 6px 14px;
-  /* overflow:visible — attach menüsü yukarı taşar; hidden menüyü keserdi */
+  /* overflow:visible — attach menu overflows upward; hidden would clip it */
   overflow: visible;
   transition:
     border-color 0.2s ease,
@@ -2256,6 +2261,9 @@ button.gengage-chat-product-card-cta {
   flex-direction: column;
   gap: 14px;
   padding: 6px 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .gengage-chat-panel-skeleton-block {
@@ -2308,7 +2316,7 @@ button.gengage-chat-product-card-cta {
   border-radius: 8px;
 }
 
-/* Skeleton variant: comparison — panel wrapper (içerik .gengage-chat-comparison ile aynı ölçü) */
+/* Skeleton variant: comparison — panel wrapper (matches .gengage-chat-comparison dimensions) */
 .gengage-chat-panel-skeleton--comparison {
   padding: 0;
   gap: 0;
@@ -2325,7 +2333,7 @@ button.gengage-chat-product-card-cta {
   box-sizing: border-box;
 }
 
-/* Shimmer — .gengage-chat-panel-skeleton-block ile aynı animasyon */
+/* Shimmer — same animation as .gengage-chat-panel-skeleton-block */
 .gengage-chat-comparison-skeleton-shimmer {
   background: linear-gradient(90deg, var(--ds-neutral-200) 25%, var(--ds-neutral-100) 50%, var(--ds-neutral-200) 75%);
   background-size: 200% 100%;
@@ -2585,6 +2593,29 @@ button.gengage-chat-product-card-cta {
   gap: 12px;
   min-height: auto;
   padding: 4px 0;
+}
+
+/*
+ * Mobile panel search results: panel grid with `minmax(176px)` collapsed to single column on narrow screens.
+ * `--mobile` forces two equal columns; no horizontal scroll, vertical list.
+ */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--mobile {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-x: visible;
+  gap: 8px;
+  padding: 6px 0 10px;
+  min-height: auto;
+}
+
+.gengage-chat-root--mobile
+  .gengage-chat-panel
+  .gengage-chat-product-grid.gengage-chat-product-grid--mobile
+  .gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .gengage-chat-panel .gengage-chat-product-card-img-wrapper {
@@ -3420,9 +3451,13 @@ button.gengage-chat-product-card-cta {
   font-size: 13px;
 }
 
-/* Mobile product grid: fixed-width cards with snap scrolling */
-.gengage-chat-root--mobile .gengage-chat-product-grid {
+/* Mobile product grid: 2 columns (--mobile) or horizontal strip (legacy, when --mobile absent) */
+.gengage-chat-root--mobile .gengage-chat-product-grid:not(.gengage-chat-product-grid--mobile) {
   scroll-snap-type: x mandatory;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-grid.gengage-chat-product-grid--mobile {
+  scroll-snap-type: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-card {
@@ -3431,6 +3466,13 @@ button.gengage-chat-product-card-cta {
   max-width: 100%;
   box-sizing: border-box;
   scroll-snap-align: center;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-grid--mobile .gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  scroll-snap-align: start;
 }
 
 /* Horizontal product strip + any mobile card: vertically center image in its frame */
@@ -3815,8 +3857,8 @@ button.gengage-chat-product-card-cta {
 }
 
 /*
- * th üzerinde display:grid kullanılmaz — table-cell bozulur, sütunlar dikey yığılır.
- * Grid yalnızca iç sarmalayıcıda; fiyatlar satır boyunca aynı yatay hizada kalır.
+ * display:grid must not be used on th — table-cell breaks and columns stack vertically.
+ * Grid is only on inner wrappers; prices stay horizontally aligned across the row.
  */
 .gengage-chat-comparison-table thead th:not(:first-child) {
   vertical-align: top;
@@ -4194,6 +4236,21 @@ button.gengage-chat-product-card-cta {
   min-width: 0;
 }
 
+/* 2+ picks: wraps non-hero cards. Desktop/panel: transparent to layout (grid still sees cards). */
+.gengage-chat-ai-top-picks-rest {
+  display: contents;
+}
+
+/* Top row: image + (name / rating / price / chips). Transparent on desktop — children merge into card flow. */
+.gengage-chat-ai-toppick-top-row {
+  display: contents;
+}
+
+.gengage-chat-ai-toppick-detail {
+  width: 100%;
+  min-width: 0;
+}
+
 /* Panel AI zone: title row + horizontal scroll rail (parity with grouping cards / legacy Top Picks) */
 .gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks {
   gap: 0;
@@ -4241,6 +4298,10 @@ button.gengage-chat-product-card-cta {
   row-gap: 12px;
 }
 
+.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-scroll > :first-child:has(.gengage-chat-ai-toppick-detail) {
+  grid-template-rows: auto auto auto;
+}
+
 .gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact {
   flex-direction: column;
   align-items: stretch;
@@ -4257,6 +4318,20 @@ button.gengage-chat-product-card-cta {
   grid-row: 1 / span 2;
   max-height: 260px;
   aspect-ratio: 4 / 3;
+}
+
+.gengage-chat-panel-ai-zone
+  .gengage-chat-ai-top-picks-scroll
+  > :first-child:has(.gengage-chat-ai-toppick-detail)
+  .gengage-chat-ai-toppick-media {
+  grid-row: 1 / span 3;
+}
+
+.gengage-chat-panel-ai-zone .gengage-chat-ai-top-picks-scroll > :first-child .gengage-chat-ai-toppick-detail {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  padding-top: 0;
 }
 
 .gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img,
@@ -4283,6 +4358,13 @@ button.gengage-chat-product-card-cta {
   grid-column: 2;
   grid-row: 1;
   padding-top: 6px;
+}
+
+.gengage-chat-panel-ai-zone
+  .gengage-chat-ai-top-picks-scroll
+  > :first-child:has(.gengage-chat-ai-toppick-detail)
+  .gengage-chat-ai-toppick-cta {
+  grid-row: 3;
 }
 
 .gengage-chat-panel-ai-zone .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
@@ -4537,6 +4619,13 @@ button.gengage-chat-product-card-cta {
   color: var(--text-primary);
 }
 
+.gengage-chat-ai-toppick-snippet {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 /* Price */
 .gengage-chat-ai-toppick-price {
   font-size: 14px;
@@ -4631,67 +4720,263 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow: visible;
   padding: 6px 0 2px;
+  min-width: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child {
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 
-/* Shorter media band on hero card — less empty frame around product */
-.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child .gengage-chat-ai-toppick-media {
-  max-height: min(156px, 34vw);
-  aspect-ratio: 16 / 10;
-  margin-top: 2px;
-  margin-bottom: 4px;
+/* Mobile: top row (image + text) — winner gets detail + CTA below */
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child.gengage-chat-ai-toppick-card--winner {
+  flex-direction: column;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child .gengage-chat-ai-toppick-img {
-  max-height: min(156px, 34vw);
-  padding: 2px;
+/* Non-hero picks: horizontally scrollable strip (mobile only) */
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-rest {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 2px 2px 8px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  min-width: 0;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner,
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-rest::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-top-picks-rest .gengage-chat-ai-toppick-card--compact {
+  flex: 0 0 min(82vw, 272px);
+  width: min(82vw, 272px);
+  max-width: 272px;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex-shrink: 1;
+  scroll-snap-align: none;
+  padding: 10px;
+}
+
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
   width: 100%;
   min-width: 0;
   max-width: none;
   flex-shrink: 1;
   scroll-snap-align: none;
-  padding: 8px;
+  padding: 6px 8px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner {
+  margin-bottom: 8px;
+  border: 1.5px solid color-mix(in srgb, var(--client-primary) 28%, var(--border-default));
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact {
   flex-direction: column;
   align-items: stretch;
+  border: 1px solid var(--border-default);
+  box-shadow: none;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media,
+/* Winner top row: square image on the left, title / rating / price on the right */
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-media {
-  max-height: 68px;
-  margin-top: 2px;
-  margin-bottom: 4px;
+  flex: 0 0 clamp(96px, 30vw, 124px);
+  width: clamp(96px, 30vw, 124px);
+  height: clamp(96px, 30vw, 124px);
+  max-height: none;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-img {
-  max-height: 68px;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-detail {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-reason {
+  display: block !important;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-review {
+  display: block !important;
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-style: italic;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-card-muted);
+}
+
+/* Compact cards (horizontal strip): small square on left, text on right; snippet below */
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-media {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  max-height: 64px;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-img {
+  max-height: 100%;
+  width: 100%;
+  object-fit: contain;
   padding: 2px;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-badge {
-  top: -7px;
-  left: 5px;
-  font-size: 7px;
-  padding: 1px 5px;
-  max-width: calc(100% - 12px);
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-rating {
+  display: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-detail {
+  margin-top: 4px;
+  width: 100%;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-snippet {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-role-line {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 2px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-snippet {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Compact card fav + similar actions — top-right corner of image */
+.gengage-chat-root--mobile
+  .gengage-chat-ai-toppick-card--compact
+  .gengage-chat-ai-toppick-media
+  .gengage-chat-product-card-img-actions {
+  top: 3px;
+  right: 5px;
+  gap: 5px;
+}
+
+.gengage-chat-root--mobile
+  .gengage-chat-ai-toppick-card--winner
+  .gengage-chat-ai-toppick-media
+  .gengage-chat-product-card-img-actions {
+  top: 5px;
+  right: 6px;
+  gap: 5px;
+}
+
+/* Winner badge: solid client color + white text; smaller padding — font size unchanged */
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-badge {
+  top: -14px;
+  left: 8px;
+  max-width: calc(100% - 18px);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.15;
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+  background: var(--client-primary);
+  color: var(--client-on-primary);
+  border: none;
+  box-shadow: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-name {
+  font-size: 12px;
+  line-height: 1.22;
+  margin-bottom: 1px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-name {
@@ -4707,6 +4992,11 @@ button.gengage-chat-product-card-cta {
   font-size: 10px;
 }
 
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-price {
+  font-size: 13px;
+  margin-top: 1px;
+}
+
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-price {
   font-size: 13px;
   margin-top: 2px;
@@ -4716,40 +5006,37 @@ button.gengage-chat-product-card-cta {
   font-size: 11px;
 }
 
+/* Mobile: hide sentiment chips; reason/review shown inside winner detail instead */
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-labels {
-  margin-top: 5px;
-  gap: 4px;
+  display: none !important;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-label {
-  font-size: 9px;
-  padding: 2px 6px;
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta {
+  display: none !important;
 }
 
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-reason {
-  margin-top: 5px;
-  font-size: 12px;
-  line-height: 1.38;
-}
-
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-review {
-  margin-top: 5px;
-  padding: 6px 8px;
-  font-size: 11px;
-  line-height: 1.35;
-  border-radius: 10px;
-}
-
-.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-cta,
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta {
   width: calc(100% - 16px);
   margin: 8px 8px 6px;
   padding: 6px 0;
   font-size: 12px;
+  font-weight: 600;
   align-self: stretch;
   opacity: 1;
   transform: none;
   pointer-events: auto;
+  border: 1px solid var(--client-primary);
+  background: var(--surface-card);
+  color: var(--client-primary);
+  box-shadow: none;
+  filter: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-cta:hover {
+  background: color-mix(in srgb, var(--client-primary) 10%, var(--surface-card));
+  color: var(--client-primary);
+  border-color: var(--client-primary);
+  filter: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-rollback-btn {
@@ -6243,7 +6530,7 @@ button.gengage-chat-product-card-cta {
 }
 
 /* ── ThumbnailsColumn ──
- * Mantık/DOM korunur; ürün panelinde şerit gösterilmiyor (legacy parity). */
+ * Logic/DOM preserved; strip not shown in product panel (legacy parity). */
 .gengage-chat-thumbnails-column {
   display: none !important;
   pointer-events: none;
@@ -6551,19 +6838,19 @@ button.gengage-chat-product-card-cta {
   background: var(--ds-button-secondary-bg-hover);
 }
 
-/* ===== Mobile product grid ===== */
+/* ===== Mobile product grid (narrow screen: 2 products per row, no horizontal scroll) ===== */
 .gengage-chat-product-grid--mobile {
-  display: flex;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   padding: 8px 0;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: visible;
 }
 
 .gengage-chat-product-grid--mobile .gengage-chat-product-card {
-  min-width: 160px;
-  max-width: 180px;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 /* ===== Mobile comparison ===== */

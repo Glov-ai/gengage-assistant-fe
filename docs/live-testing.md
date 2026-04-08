@@ -106,7 +106,7 @@ npm run dev -- koctascomtr --sku=1000465056
 ```
 
 1. Open the chat launcher
-2. Wait for `launchSingleProduct` init to complete (product detail loads in panel)
+2. Wait for `launchSingleProduct` init to complete (product summary card appears in chat; full panel detail requires `productDetailsExtended: true`)
 3. Type a product question — verify NDJSON stream renders text + suggestions
 4. Click a suggested action — verify it dispatches and streams a response
 5. Use back arrow to navigate panel history

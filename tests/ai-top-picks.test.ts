@@ -54,6 +54,20 @@ describe('renderAITopPicks', () => {
     expect(title?.textContent).toBe('Sizin İçin En İyiler');
   });
 
+  it('wraps non-hero picks in ai-top-picks-rest for mobile horizontal scroll layout', () => {
+    const el = makeElement([
+      { product: { sku: '1', name: 'Product A' }, role: 'winner' },
+      { product: { sku: '2', name: 'Product B' }, role: 'best_value' },
+    ]);
+    const ctx = makeContext();
+    const dom = renderAITopPicks(el, ctx);
+    const scroll = dom.querySelector('.gengage-chat-ai-top-picks-scroll');
+    const rest = dom.querySelector('.gengage-chat-ai-top-picks-rest');
+    expect(scroll?.children).toHaveLength(2);
+    expect(rest).not.toBeNull();
+    expect(rest?.querySelectorAll('.gengage-chat-ai-toppick-card')).toHaveLength(1);
+  });
+
   it('first item gets winner class and badge', () => {
     const el = makeElement([
       { product: { sku: '1', name: 'Product A' }, role: 'winner' },
@@ -89,6 +103,22 @@ describe('renderAITopPicks', () => {
     // Role pills (same badge component as winner)
     expect(compactCards[0]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En Uygun Fiyatlı');
     expect(compactCards[1]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En İyi Alternatif');
+  });
+
+  it('mobil kompaktta rol metni rozet yerine gövde içi satırda; CTA yok', () => {
+    const el = makeElement([
+      { product: { sku: '1', name: 'Product A' }, role: 'winner' },
+      {
+        product: { sku: '2', name: 'Product B', cartCode: 'C1', price: '10 TL' },
+        role: 'best_value',
+      },
+    ]);
+    const ctx = makeContext({ isMobile: true });
+    const dom = renderAITopPicks(el, ctx);
+    const compact = dom.querySelector('.gengage-chat-ai-toppick-card--compact')!;
+    expect(compact.querySelector('.gengage-chat-ai-toppick-badge')).toBeNull();
+    expect(compact.querySelector('.gengage-chat-ai-toppick-role-line')?.textContent).toBe('En Uygun Fiyatlı');
+    expect(compact.querySelector('.gengage-chat-ai-toppick-cta')).toBeNull();
   });
 
   it('renders sentiment chips with correct data-sentiment', () => {
