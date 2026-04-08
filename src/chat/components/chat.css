@@ -1943,52 +1943,7 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-review-highlights {
-  padding: 2px 0 6px;
-}
-
-.gengage-chat-review-item {
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-control);
-  padding: 10px 12px;
-  background: var(--surface-card);
-  box-shadow: none;
-}
-
-.gengage-chat-review-item[data-tone='positive'] {
-  border-color: color-mix(in srgb, var(--success) 22%, var(--border-default));
-  background: color-mix(in srgb, var(--success) 10%, white);
-}
-
-.gengage-chat-review-item[data-tone='negative'] {
-  border-color: color-mix(in srgb, var(--error) 20%, var(--border-default));
-  background: color-mix(in srgb, var(--error) 8%, white);
-}
-
-.gengage-chat-review-tag {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--_gengage-text-secondary);
-  margin-bottom: 4px;
-}
-
-.gengage-chat-review-text {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--_gengage-text-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.gengage-chat-review-rating {
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
+  padding: 4px 0 8px;
 }
 
 .gengage-chat-review-empty {
@@ -1996,115 +1951,132 @@ button.gengage-chat-product-card-cta {
   color: var(--_gengage-text-secondary);
 }
 
-/* Review filter tabs */
-.gengage-chat-review-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.gengage-chat-review-tab {
-  padding: 6px 14px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-
-.gengage-chat-review-tab:hover {
-  background: var(--surface-card-muted);
-  border-color: var(--border-strong);
-}
-
-.gengage-chat-review-tab--active {
-  background: var(--client-primary-subtle);
-  border-color: color-mix(in srgb, var(--client-primary) 26%, var(--border-default));
-  color: var(--client-primary);
-}
-
-/* Review sentiment pills */
-.gengage-chat-review-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.gengage-chat-review-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-secondary);
-  box-shadow: none;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-
-.gengage-chat-review-pill:hover {
-  background: var(--surface-card-muted);
-}
-
-.gengage-chat-review-pill--active {
-  background: var(--client-primary-subtle);
-  border-color: color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
+.gengage-chat-review-subjects-heading {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.gengage-chat-review-subjects {
+  margin-bottom: 12px;
+}
+
+.gengage-chat-review-subject {
+  gap: 6px;
+  padding: 7px 11px;
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  box-shadow: none;
 }
 
-.gengage-chat-review-pill--active .gengage-chat-review-pill-count {
-  background: color-mix(in srgb, var(--client-primary) 14%, white);
-  color: var(--client-primary);
+.gengage-chat-review-subject--active {
+  border-color: var(--ds-chip-border-active);
+  background: var(--ds-chip-bg-active);
+  color: var(--ds-chip-fg-active);
 }
 
-.gengage-chat-review-pill[data-tone='positive'] {
-  border-color: color-mix(in srgb, var(--success) 20%, var(--border-default));
+.gengage-chat-review-subject-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.gengage-chat-review-pill[data-tone='negative'] {
-  border-color: color-mix(in srgb, var(--error) 18%, var(--border-default));
+.gengage-chat-review-subject-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
-.gengage-chat-review-pill-icon {
-  font-size: 11px;
+.gengage-chat-review-subject[data-tone='positive'] .gengage-chat-review-subject-icon {
+  color: color-mix(in srgb, var(--success) 82%, var(--text-primary));
+}
+
+.gengage-chat-review-subject[data-tone='negative'] .gengage-chat-review-subject-icon {
+  color: color-mix(in srgb, var(--error) 84%, var(--text-primary));
+}
+
+.gengage-chat-review-subject[data-tone='neutral'] .gengage-chat-review-subject-icon {
+  color: var(--text-secondary);
+}
+
+.gengage-chat-review-subject-label {
+  color: inherit;
+}
+
+.gengage-chat-review-subject-count {
+  color: var(--text-secondary);
+  font-size: 12px;
   font-weight: 700;
 }
 
-.gengage-chat-review-pill[data-tone='positive'] .gengage-chat-review-pill-icon {
+.gengage-chat-review-detail {
+  padding: 12px;
+}
+
+.gengage-chat-review-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.gengage-chat-review-detail-mentions {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--_gengage-text-primary);
+}
+
+.gengage-chat-review-detail-positive {
+  font-size: 13px;
+  font-weight: 700;
   color: var(--_gengage-success-color);
 }
 
-.gengage-chat-review-pill[data-tone='negative'] .gengage-chat-review-pill-icon {
+.gengage-chat-review-detail-negative {
+  font-size: 13px;
+  font-weight: 700;
   color: var(--error);
 }
 
-.gengage-chat-review-pill-count {
-  font-size: 10px;
-  font-weight: 700;
-  background: var(--surface-card-muted);
-  color: var(--text-secondary);
-  border-radius: 999px;
-  padding: 1px 5px;
-}
-
-/* Review items container */
-.gengage-chat-review-items {
+.gengage-chat-review-snippets {
   display: grid;
   gap: 10px;
+}
+
+.gengage-chat-review-snippet {
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-card-soft);
+  padding: 8px 10px;
+}
+
+.gengage-chat-review-snippet[data-tone='positive'] {
+  border-left-color: color-mix(in srgb, var(--success) 40%, var(--border-default));
+}
+
+.gengage-chat-review-snippet[data-tone='negative'] {
+  border-left-color: color-mix(in srgb, var(--error) 40%, var(--border-default));
+}
+
+.gengage-chat-review-snippet-text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--_gengage-text-primary);
+}
+
+.gengage-chat-review-snippet-rating {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 /* -- Favorites Page -------------------------------------------------------- */
@@ -5079,23 +5051,34 @@ button.gengage-chat-product-card-cta {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--surface-card-muted);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-1);
   transition:
     background 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .gengage-chat-grounding-review:hover {
-  background: color-mix(in srgb, var(--client-primary) 6%, white);
-  border-color: color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
+  background: var(--ds-card-bg-hover);
+  border-color: var(--ds-card-border-hover);
+  box-shadow: var(--ds-card-shadow-hover);
 }
 
 .gengage-chat-grounding-review-icon {
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--client-primary) 8%, var(--surface-card));
+  color: var(--client-primary);
   flex-shrink: 0;
+}
+
+.gengage-chat-grounding-review-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .gengage-chat-grounding-review-body {
@@ -5116,11 +5099,25 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-grounding-review-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--client-primary);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.gengage-chat-grounding-review-cta-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gengage-chat-grounding-review-cta-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 /* ---------------------------------------------------------------------------

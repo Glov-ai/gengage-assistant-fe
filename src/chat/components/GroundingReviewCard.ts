@@ -10,6 +10,8 @@
 import type { UIElement, ActionPayload } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 
+import { createLucideIcon } from '../utils/ui.js';
+
 export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const container = document.createElement('div');
   container.className = 'gengage-chat-grounding-review gds-evidence-card';
@@ -24,7 +26,9 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   // Icon
   const icon = document.createElement('span');
   icon.className = 'gengage-chat-grounding-review-icon';
-  icon.textContent = '\u{1F4CB}'; // clipboard
+  icon.appendChild(
+    createLucideIcon(['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', 'M8 9h8', 'M8 13h6']),
+  );
   container.appendChild(icon);
 
   const body = document.createElement('div');
@@ -54,7 +58,13 @@ export function renderGroundingReviewCard(element: UIElement, ctx: ChatUISpecRen
   const cta = document.createElement('span');
   cta.className = 'gengage-chat-grounding-review-cta';
   cta.dataset['gengagePart'] = 'grounding-review-cta';
-  cta.textContent = `${ctaLabel} \u2192`;
+  const ctaLabelEl = document.createElement('span');
+  ctaLabelEl.textContent = ctaLabel;
+  cta.appendChild(ctaLabelEl);
+  const ctaIcon = document.createElement('span');
+  ctaIcon.className = 'gengage-chat-grounding-review-cta-icon';
+  ctaIcon.appendChild(createLucideIcon(['M5 12h14', 'M15 8l4 4-4 4'], 14));
+  cta.appendChild(ctaIcon);
   container.appendChild(cta);
 
   // Make entire card clickable
