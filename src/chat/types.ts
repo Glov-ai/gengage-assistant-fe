@@ -313,7 +313,7 @@ export interface ChatContextualCopyByContext {
 
 export interface ChatUISpecRenderContext {
   onAction: (action: ActionPayload) => void;
-  onProductClick?: (params: { sku: string; url: string }) => void;
+  onProductClick?: (params: { sku: string; url: string; name?: string }) => void;
   onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
   onProductSelect?: (product: Record<string, unknown>) => void;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig | undefined;

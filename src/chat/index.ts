@@ -3182,8 +3182,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         // Production mode: navigate to product page (chat auto-opens on new page)
         const shouldNavigate = this.config.isDemoWebsite !== true && this._isSameOriginUrl(params.url);
         if (!shouldNavigate) {
+          const displayTitle = params.name?.trim() ? params.name.trim() : params.sku;
           this._sendAction({
-            title: params.sku,
+            title: displayTitle,
             type: 'launchSingleProduct',
             payload: { sku: params.sku },
           });
