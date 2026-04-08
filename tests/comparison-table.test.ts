@@ -117,7 +117,7 @@ describe('ComparisonTable', () => {
     });
     const recBody = el.querySelector('.gengage-chat-comparison-recommended-body') as HTMLElement;
     recBody.click();
-    expect(onClick).toHaveBeenCalledWith('ABC');
+    expect(onClick).toHaveBeenCalledWith({ sku: 'ABC', name: 'Rec' });
   });
 
   it('does not render table when products or attributes are empty', () => {
@@ -201,7 +201,7 @@ describe('ComparisonTable', () => {
     expect(cells[1]?.textContent).toContain('Product B');
   });
 
-  it('clicking product header cell calls onProductClick with sku', () => {
+  it('clicking product header cell calls onProductClick with sku and name', () => {
     const onClick = vi.fn();
     const el = renderComparisonTable({
       recommended: { sku: 'ABC', name: 'Product A', price: '99 TL' },
@@ -215,7 +215,7 @@ describe('ComparisonTable', () => {
     });
     const btn = el.querySelector('.gengage-chat-comparison-table-header-cell--clickable') as HTMLDivElement;
     btn.click();
-    expect(onClick).toHaveBeenCalledWith('ABC');
+    expect(onClick).toHaveBeenCalledWith({ sku: 'ABC', name: 'Product A' });
   });
 
   it('does not render view product buttons when productActions is absent', () => {

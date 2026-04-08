@@ -1827,8 +1827,8 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
     attributes,
     highlights,
     specialCases,
-    onProductClick: (sku) => {
-      ctx.onProductClick?.({ sku, url: '' });
+    onProductClick: ({ sku, name }) => {
+      ctx.onProductClick?.({ sku, url: '', name });
     },
     pricing: ctx.pricing,
   };

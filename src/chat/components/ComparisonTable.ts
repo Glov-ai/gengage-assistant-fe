@@ -93,7 +93,7 @@ export interface ComparisonTableOptions {
   attributes: ComparisonAttribute[];
   highlights: string[];
   specialCases?: string[] | undefined;
-  onProductClick: (sku: string) => void;
+  onProductClick: (params: { sku: string; name: string }) => void;
   onAddToCart?: ((sku: string) => void) | undefined;
   recommendedText?: string | undefined;
   winnerHits?: Record<string, { positive?: string[]; negative?: string[] }> | undefined;
@@ -206,7 +206,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
     recBody.appendChild(info);
 
     const openRecommended = (): void => {
-      onProductClick(recommended.sku);
+      onProductClick({ sku: recommended.sku, name: recommended.name });
     };
     recBody.addEventListener('click', openRecommended);
     recBody.addEventListener('keydown', (event) => {
@@ -303,7 +303,7 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       headerCell.setAttribute('aria-label', product.name);
       headerCell.title = product.name;
       const openProduct = (): void => {
-        onProductClick(product.sku);
+        onProductClick({ sku: product.sku, name: product.name });
       };
       headerCell.addEventListener('click', openProduct);
       headerCell.addEventListener('keydown', (event) => {

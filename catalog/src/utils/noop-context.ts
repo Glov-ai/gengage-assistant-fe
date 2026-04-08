@@ -80,7 +80,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
       console.log('[catalog] onAction:', action);
       appendToMiniConsole(`onAction: ${JSON.stringify(action)}`);
     },
-    onProductClick: (params: { sku: string; url: string }) => {
+    onProductClick: (params: { sku: string; url: string; name?: string }) => {
       console.log('[catalog] onProductClick:', params);
       appendToMiniConsole(`onProductClick: ${JSON.stringify(params)}`);
     },
