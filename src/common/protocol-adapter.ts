@@ -78,6 +78,7 @@ export interface V1Product {
   images?: string[];
   price?: number;
   price_discounted?: number;
+  price_discount_rate?: number;
   price_currency?: string;
   discount_reason?: string;
   url?: string;
@@ -85,6 +86,12 @@ export interface V1Product {
   review_count?: number;
   cart_code?: string;
   in_stock?: boolean;
+  description?: string;
+  description_html?: string;
+  features?: Array<{ name?: string; key?: string; value?: string | number | boolean; [key: string]: unknown }>;
+  specifications?: Record<string, string> | Array<{ key: string; value: string }>;
+  facet_tags?: string[];
+  short_name?: string;
   category_ids?: string[];
   category_names?: string[];
   variants?: Array<Record<string, unknown>>;
@@ -1693,6 +1700,12 @@ export interface NormalizedProduct {
   variants?: Array<Record<string, unknown>>;
   discountReason?: string;
   promotions?: string[];
+  description?: string;
+  descriptionHtml?: string;
+  features?: Array<{ name?: string; key?: string; value?: string | number | boolean; [key: string]: unknown }>;
+  specifications?: Record<string, string> | Array<{ key: string; value: string }>;
+  facetHits?: Record<string, unknown>;
+  shortName?: string;
   /** Pass-through bag for backend fields not consumed by the SDK. */
   extras?: Record<string, unknown>;
 }
@@ -1705,6 +1718,7 @@ const KNOWN_V1_PRODUCT_KEYS: ReadonlySet<string> = new Set([
   'images',
   'price',
   'price_discounted',
+  'price_discount_rate',
   'price_currency',
   'discount_reason',
   'url',
@@ -1712,6 +1726,12 @@ const KNOWN_V1_PRODUCT_KEYS: ReadonlySet<string> = new Set([
   'review_count',
   'cart_code',
   'in_stock',
+  'description',
+  'description_html',
+  'features',
+  'specifications',
+  'facet_tags',
+  'short_name',
   'category_ids',
   'category_names',
   'variants',
@@ -1727,6 +1747,8 @@ export function productToNormalized(p: V1Product): NormalizedProduct {
   let discountPercent: number | undefined;
   if (originalPrice != null && price != null && originalPrice > 0) {
     discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
+  } else if (p.price_discount_rate != null && p.price_discount_rate > 0) {
+    discountPercent = p.price_discount_rate;
   }
 
   const brand = firstNonEmptyString(p.brand);
@@ -1753,6 +1775,12 @@ export function productToNormalized(p: V1Product): NormalizedProduct {
   if (p.variants && p.variants.length > 0) result.variants = p.variants;
   if (p.discount_reason !== undefined) result.discountReason = p.discount_reason;
   if (p.promotions && p.promotions.length > 0) result.promotions = p.promotions;
+  if (p.description !== undefined) result.description = p.description;
+  if (p.description_html !== undefined) result.descriptionHtml = p.description_html;
+  if (p.features && p.features.length > 0) result.features = p.features;
+  if (p.specifications !== undefined) result.specifications = p.specifications;
+  if (p.facet_hits) result.facetHits = p.facet_hits;
+  if (p.short_name !== undefined) result.shortName = p.short_name;
 
   // Collect any extra backend fields not consumed above.
   const raw = p as unknown as Record<string, unknown>;

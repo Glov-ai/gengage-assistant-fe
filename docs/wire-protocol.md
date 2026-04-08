@@ -1221,7 +1221,8 @@ This ties analytics events across widgets into a single user journey.
   price_async_discounted?: number;
   price_async_discount_rate?: number;
   facet_tags: string[];
-  features: Array<{ name: string; value: string }>;
+  features: Array<{ name?: string; key?: string; label?: string; value: string | number | boolean }>;
+  facet_hits?: Record<string, string>;
   url: string;
   variants?: Array<{
     name: string;
@@ -1230,7 +1231,8 @@ This ties analytics events across widgets into a single user journey.
     price: number;
     price_currency: string;
     price_discounted: number;
-    image: string;
+    image?: string;
+    url?: string;
     in_stock: boolean;
   }>;
   selection_reasons: Record<string, { text: string }>;

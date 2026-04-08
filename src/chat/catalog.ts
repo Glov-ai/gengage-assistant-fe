@@ -167,9 +167,27 @@ const ActionPayloadSchema = z.object({
 const ProductVariantSchema = z.object({
   name: z.string().optional(),
   value: z.string().optional(),
+  option_value: z.string().optional(),
+  attribute_value: z.string().optional(),
+  type: z.string().optional(),
+  attribute: z.string().optional(),
+  option_name: z.string().optional(),
+  attribute_name: z.string().optional(),
   variant_name: z.string().optional(),
   sku: z.string().optional(),
   price: z.union([z.number(), z.string()]).optional(),
+  price_discounted: z.union([z.number(), z.string()]).optional(),
+  image: z.string().optional(),
+  imageUrl: z.string().optional(),
+  image_url: z.string().optional(),
+  color: z.string().optional(),
+  colour: z.string().optional(),
+  color_hex: z.string().optional(),
+  hex: z.string().optional(),
+  swatch: z.string().optional(),
+  swatchColor: z.string().optional(),
+  in_stock: z.boolean().optional(),
+  inStock: z.boolean().optional(),
 });
 
 export const ProductDetailsPanelSchema = z.object({
@@ -183,13 +201,32 @@ export const ProductDetailsPanelSchema = z.object({
       reviewCount: z.number().optional(),
       price: z.string().optional(),
       originalPrice: z.string().optional(),
+      price_discount_rate: z.number().optional(),
       price_async: z.boolean().optional(),
       inStock: z.boolean().optional(),
       promotions: z.array(z.string()).optional(),
       variants: z.array(ProductVariantSchema).optional(),
+      variantOptions: z.array(ProductVariantSchema).optional(),
+      variant_options: z.array(ProductVariantSchema).optional(),
+      productVariants: z.array(ProductVariantSchema).optional(),
+      product_variants: z.array(ProductVariantSchema).optional(),
       url: z.string().optional(),
       cartCode: z.string().optional(),
       description: z.string().optional(),
+      description_html: z.string().optional(),
+      descriptionHtml: z.string().optional(),
+      facet_hits: z.record(z.string(), z.unknown()).optional(),
+      facetHits: z.record(z.string(), z.unknown()).optional(),
+      features: z
+        .array(
+          z.object({
+            name: z.string().optional(),
+            key: z.string().optional(),
+            label: z.string().optional(),
+            value: z.union([z.string(), z.number(), z.boolean()]).optional(),
+          }),
+        )
+        .optional(),
       specifications: z
         .union([z.record(z.string(), z.string()), z.array(z.object({ key: z.string(), value: z.string() }))])
         .optional(),

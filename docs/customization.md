@@ -673,9 +673,17 @@ also opens in the left-side panel area. The panel shows detailed product informa
 - **Rating** — star rating with review count (e.g. "4.5 (128)").
 - **Prices** — current price and strikethrough original price when discounted.
 - **Stock status** — in-stock / out-of-stock indicator.
+- **Variants** — clickable product variants from `variants`; falls back to variant-like
+  `facet_hits` / `features` such as color and size when sibling variants are not
+  present.
 - **Product link** — link to the product URL (opens in a new tab).
 - **Add to Cart** — add-to-cart button (shown when `cartCode` is present).
 - **Find Similar** — triggers a `findSimilar` action for the product's SKU.
+
+Clicking the rating chip triggers the review summary action for the product SKU.
+`description_html` is preferred over flattened `description` text and is sanitized
+before rendering so merchant paragraphs, headings, and lists can keep their
+structure in the panel.
 
 The panel is rendered by the `ProductDetailsPanel` component in the chat UISpec
 registry (`src/chat/components/renderUISpec.ts`). Override it via Level 2

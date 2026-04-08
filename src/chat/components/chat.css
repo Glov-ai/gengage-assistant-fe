@@ -3002,6 +3002,45 @@ button.gengage-chat-product-card-cta {
   color: var(--text-secondary);
 }
 
+.gengage-chat-product-description {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.gengage-chat-product-description p,
+.gengage-chat-product-description h2,
+.gengage-chat-product-description h3,
+.gengage-chat-product-description h4,
+.gengage-chat-product-description ul,
+.gengage-chat-product-description ol {
+  margin: 0;
+}
+
+.gengage-chat-product-description h2,
+.gengage-chat-product-description h3,
+.gengage-chat-product-description h4 {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.gengage-chat-product-description ul,
+.gengage-chat-product-description ol {
+  padding-left: 20px;
+}
+
+.gengage-chat-product-description li + li {
+  margin-top: 6px;
+}
+
+.gengage-chat-product-description strong,
+.gengage-chat-product-description b {
+  font-weight: 800;
+}
+
 .gengage-chat-product-specs-table {
   width: 100%;
   border-collapse: collapse;
@@ -5416,6 +5455,289 @@ button.gengage-chat-product-card-cta {
   background: var(--surface-card-muted);
   border-color: color-mix(in srgb, var(--client-primary) 20%, var(--border-default));
   color: var(--client-primary);
+}
+
+/* Product details PDP redesign */
+.gengage-chat-product-details-panel {
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-1);
+}
+
+.gengage-chat-product-details-media {
+  min-height: 320px;
+  justify-content: center;
+  border-color: var(--border-default);
+  border-radius: var(--radius-card);
+  background: var(--surface-card-soft);
+}
+
+.gengage-chat-product-details-img {
+  max-height: 420px;
+}
+
+.gengage-chat-product-details-content {
+  gap: 12px;
+}
+
+.gengage-chat-product-details-brand {
+  color: var(--client-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.gengage-chat-product-details-title {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.gengage-chat-product-details-rating {
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, var(--border-default));
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface-card));
+  color: color-mix(in srgb, var(--warning) 72%, var(--text-primary));
+  font-family: inherit;
+}
+
+button.gengage-chat-product-details-rating {
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, var(--border-default));
+  cursor: pointer;
+}
+
+.gengage-chat-product-details-rating--clickable:hover {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--border-default));
+  background: color-mix(in srgb, var(--warning) 14%, var(--surface-card));
+}
+
+.gengage-chat-product-details-rating .gengage-star-rating {
+  line-height: 1;
+}
+
+.gengage-chat-product-details-rating-value {
+  color: var(--text-primary);
+}
+
+.gengage-chat-product-details-price {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gengage-chat-product-details-original-price {
+  order: 2;
+}
+
+.gengage-chat-product-details-current-price {
+  order: 1;
+  font-size: 30px;
+}
+
+.gengage-chat-product-details-discount-badge {
+  order: 3;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--error) 12%, white);
+  color: color-mix(in srgb, var(--error) 84%, var(--text-primary));
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gengage-chat-product-details-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.gengage-chat-product-details-fact {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-card-soft);
+}
+
+.gengage-chat-product-details-fact dt,
+.gengage-chat-product-details-fact dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gengage-chat-product-details-fact dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gengage-chat-product-details-fact dd {
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gengage-chat-product-variants {
+  margin-top: 4px;
+}
+
+.gengage-chat-product-variants-label {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: normal;
+}
+
+.gengage-chat-product-variants-list {
+  gap: 8px;
+}
+
+.gengage-chat-product-variant-btn {
+  min-height: 44px;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gengage-chat-product-variant-btn--active {
+  border-color: var(--client-primary);
+  background: color-mix(in srgb, var(--client-primary) 8%, var(--surface-card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--client-primary) 36%, transparent);
+  color: var(--client-primary);
+}
+
+.gengage-chat-product-variant-btn--out {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.gengage-chat-product-variant-swatch {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  background: var(--surface-card-muted);
+  box-shadow: inset 0 0 0 2px var(--surface-card);
+}
+
+.gengage-chat-product-variant-swatch--image {
+  object-fit: cover;
+  box-shadow: none;
+}
+
+.gengage-chat-product-variant-label,
+.gengage-chat-product-variant-price {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gengage-chat-product-variant-price {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gengage-chat-product-details-actions {
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.gengage-chat-product-details-atc,
+.gengage-chat-product-details-cta {
+  min-height: 44px;
+  border-radius: var(--radius-control);
+}
+
+.gengage-chat-product-details-atc {
+  border: 1px solid var(--ds-button-primary-border);
+  background: var(--ds-button-primary-bg);
+  color: var(--ds-button-primary-fg);
+}
+
+.gengage-chat-product-details-atc:hover {
+  background: var(--ds-button-primary-bg-hover);
+  filter: none;
+}
+
+.gengage-chat-product-details-cta.gds-btn-secondary {
+  border-color: var(--ds-button-secondary-border);
+  background: var(--ds-button-secondary-bg);
+  color: var(--ds-button-secondary-fg);
+}
+
+.gengage-chat-product-details-cta.gds-btn-secondary:hover {
+  background: var(--ds-button-secondary-bg-hover);
+}
+
+@media (min-width: 960px) {
+  .gengage-chat-product-details-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    align-items: start;
+  }
+
+  .gengage-chat-product-details-media {
+    position: sticky;
+    top: 0;
+  }
+
+  .gengage-chat-product-detail-tabs {
+    grid-column: 1 / -1;
+  }
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-panel {
+  padding: 10px;
+  gap: 10px;
+  box-shadow: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-media {
+  min-height: 220px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-title {
+  font-size: 18px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-current-price {
+  font-size: 24px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-facts {
+  grid-template-columns: 1fr;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 44px;
+  align-items: stretch;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-actions > .gengage-chat-product-details-share {
+  width: 44px;
+  min-width: 44px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-atc,
+.gengage-chat-root--mobile .gengage-chat-product-details-cta {
+  width: 100%;
+  padding-inline: 10px;
 }
 
 /* Product grid: optional heading row + sort/compare (no outer box — deneysel) */
