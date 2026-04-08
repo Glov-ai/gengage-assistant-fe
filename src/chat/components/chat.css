@@ -2623,6 +2623,29 @@ button.gengage-chat-product-card-cta {
   padding: 4px 0;
 }
 
+/*
+ * Mobil panel arama sonuçları: panel grid’i `minmax(176px)` ile dar ekranda tek sütuna düşüyordu.
+ * `--mobile` ile iki eşit sütun; yatay kaydırma yok, dikey liste.
+ */
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--mobile {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-x: visible;
+  gap: 8px;
+  padding: 6px 0 10px;
+  min-height: auto;
+}
+
+.gengage-chat-root--mobile
+  .gengage-chat-panel
+  .gengage-chat-product-grid.gengage-chat-product-grid--mobile
+  .gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  box-sizing: border-box;
+}
+
 .gengage-chat-panel .gengage-chat-product-card-img-wrapper {
   position: relative;
   width: 100%;
@@ -3456,9 +3479,13 @@ button.gengage-chat-product-card-cta {
   font-size: 13px;
 }
 
-/* Mobile product grid: fixed-width cards with snap scrolling */
-.gengage-chat-root--mobile .gengage-chat-product-grid {
+/* Mobile product grid: 2 sütun (--mobile) veya yatay şerit (eski, --mobile yoksa) */
+.gengage-chat-root--mobile .gengage-chat-product-grid:not(.gengage-chat-product-grid--mobile) {
   scroll-snap-type: x mandatory;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-grid.gengage-chat-product-grid--mobile {
+  scroll-snap-type: none;
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-card {
@@ -3467,6 +3494,13 @@ button.gengage-chat-product-card-cta {
   max-width: 100%;
   box-sizing: border-box;
   scroll-snap-align: center;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-grid--mobile .gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  scroll-snap-align: start;
 }
 
 /* Horizontal product strip + any mobile card: vertically center image in its frame */
@@ -6798,19 +6832,19 @@ button.gengage-chat-product-card-cta {
   background: var(--ds-button-secondary-bg-hover);
 }
 
-/* ===== Mobile product grid ===== */
+/* ===== Mobile product grid (dar ekran: satırda 2 ürün, yatay kaydırma yok) ===== */
 .gengage-chat-product-grid--mobile {
-  display: flex;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   padding: 8px 0;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: visible;
 }
 
 .gengage-chat-product-grid--mobile .gengage-chat-product-card {
-  min-width: 160px;
-  max-width: 180px;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 /* ===== Mobile comparison ===== */
