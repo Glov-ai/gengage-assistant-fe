@@ -12,6 +12,7 @@ import type { CommunicationBridge } from '../common/communication-bridge.js';
 import { isSafeUrl } from '../common/safe-html.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
+import type { PersistedExpertModeState } from './expert-mode/types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
 
 export type { FavoriteData };
@@ -28,6 +29,7 @@ export interface PersistSessionParams {
   panelThreads: string[];
   thumbnailEntries: ThumbnailEntry[];
   lastBackendContext: BackendContext | null;
+  expertModeState: PersistedExpertModeState;
   sku?: string | undefined;
 }
 
@@ -106,6 +108,7 @@ export class SessionPersistence {
       panelThreads: params.panelThreads.length > 0 ? params.panelThreads : undefined,
       thumbnailEntries: params.thumbnailEntries.length > 0 ? params.thumbnailEntries : undefined,
       panelSnapshotHtml: Object.keys(panelSnapshotHtml).length > 0 ? panelSnapshotHtml : undefined,
+      expertModeState: params.expertModeState,
       sku: params.sku,
     });
 

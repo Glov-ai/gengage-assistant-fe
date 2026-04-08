@@ -47,6 +47,7 @@ function basePersistParams() {
     panelThreads: [] as string[],
     thumbnailEntries: [] as Array<{ sku: string; imageUrl: string; threadId: string }>,
     lastBackendContext: null,
+    expertModeState: { activeSession: null as null },
     sku: 'SKU1',
   };
 }
@@ -73,6 +74,7 @@ describe('SessionPersistence', () => {
       expect(saved.userId).toBe('u1');
       expect(saved.appId).toBe('a1');
       expect(saved.sessionId).toBe('s1');
+      expect(saved.expertModeState).toEqual({ activeSession: null });
     });
 
     it('serializes messages — converts streaming status to done', async () => {

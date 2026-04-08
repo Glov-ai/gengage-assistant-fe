@@ -3,6 +3,7 @@ import { adaptBackendEvent } from '../common/protocol-adapter.js';
 import { buildChatEndpointUrl } from '../common/api-paths.js';
 import type { StreamEvent, UISpec, PageContext } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
+import type { ExpertModeId } from './expert-mode/types.js';
 
 export interface BackendRequestMeta {
   outputLanguage: string;
@@ -20,6 +21,7 @@ export interface BackendRequestMeta {
   threadId: string;
   isControlGroup: boolean;
   isMobile: boolean;
+  assistantMode?: ExpertModeId | 'shopping';
   viewId?: string;
 }
 

@@ -17,6 +17,7 @@ import { dispatch } from '../common/events.js';
 import { uuidv7 } from '../common/uuidv7.js';
 import { CommunicationBridge } from '../common/communication-bridge.js';
 import { routeStreamAction } from '../common/action-router.js';
+import { normalizeMiddlewareUrl } from '../common/api-paths.js';
 import {
   streamStartEvent,
   streamChunkEvent,
@@ -63,6 +64,7 @@ import type {
   ChatUISpecRegistry,
   ProductSortState,
 } from './types.js';
+import type { ExpertModeDefinition, ExpertModeSessionState } from './expert-mode/types.js';
 import { GengageIndexedDB } from '../common/indexed-db.js';
 import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
@@ -70,7 +72,9 @@ import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
+import { createDefaultExpertModeController } from './expert-mode/controller.js';
 import { isLikelyConnectivityIssue } from '../common/global-error-toast.js';
+import { debugLog } from '../common/debug.js';
 import {
   containsKvkk,
   isKvkkShown,
@@ -111,6 +115,65 @@ function isSafeCSSColor(value: string): boolean {
 /** Lightweight runtime check: value looks like an ActionPayload (has a string `type`). */
 function isActionLike(value: unknown): value is ActionPayload {
   return typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).type === 'string';
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function requestDetailsToAction(
+  requestDetails: unknown,
+  label: string,
+): ActionPayload | null {
+  const details = asRecord(requestDetails);
+  if (!details) return null;
+  const type = typeof details['type'] === 'string' ? details['type'].trim() : '';
+  if (!type) return null;
+  const action: ActionPayload = {
+    title: label || type,
+    type,
+  };
+  if (details['payload'] !== undefined) action.payload = details['payload'];
+  return action;
+}
+
+function normalizeSuggestedActionButtons(
+  value: unknown,
+): Array<{ label: string; action: ActionPayload; icon?: string }> {
+  if (!Array.isArray(value)) return [];
+  const buttons: Array<{ label: string; action: ActionPayload; icon?: string }> = [];
+  for (const entry of value) {
+    const record = asRecord(entry);
+    if (!record) continue;
+    const label = typeof record['title'] === 'string' ? record['title'].trim() : '';
+    const action = requestDetailsToAction(record['requestDetails'], label);
+    if (!label || !action) continue;
+    const button: { label: string; action: ActionPayload; icon?: string } = {
+      label,
+      action,
+    };
+    if (typeof record['icon'] === 'string' && record['icon'].trim()) {
+      button.icon = record['icon'].trim();
+    }
+    buttons.push(button);
+  }
+  return buttons;
+}
+
+function getQuickReplyText(action: ActionPayload | undefined): string | null {
+  if (!action) return null;
+  if (action.type !== 'inputText' && action.type !== 'user_message') return null;
+  if (typeof action.payload === 'string' && action.payload.trim()) return action.payload.trim();
+  const payload = asRecord(action.payload);
+  if (payload && typeof payload['text'] === 'string' && payload['text'].trim()) {
+    return payload['text'].trim();
+  }
+  return typeof action.title === 'string' && action.title.trim() ? action.title.trim() : null;
+}
+
+function isExpertQuickReplyAction(action: ActionPayload | undefined): boolean {
+  return getQuickReplyText(action) !== null;
 }
 
 /**
@@ -223,6 +286,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     action: ActionPayload;
     options?: SendActionOptions | undefined;
   } | null = null;
+  /** Shared expert-mode capability state (beauty/watch/future expert flows). */
+  private readonly _expertModes = createDefaultExpertModeController();
   /** Consecutive identical error counter for account-inactive detection. */
   private _consecutiveErrorCount = 0;
   /** Last error message text for deduplication. */
@@ -314,6 +379,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       i18n: this._i18n,
       onSend: (text, attachment) => this._sendMessage(text, attachment),
       onClose: () => this.close(),
+      onExpertExit: () => {
+        void this._exitActiveExpertMode();
+      },
       onAttachment: (file) => this._handleAttachment(file),
       onPanelToggle: () => {
         this._drawer?.persistPanelState(config.accountId);
@@ -717,6 +785,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._currentThreadId = null;
     this._lastThreadId = null;
     this._lastBackendContext = null;
+    this._expertModes.reset();
     this._chatCreatedAt = new Date().toISOString();
     // Allow PDP auto-launch for new SKU
     this._pdpLaunched = false;
@@ -1315,6 +1384,391 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
+  private _getActiveExpertDefinition(): ExpertModeDefinition | null {
+    return this._expertModes.getActiveDefinition();
+  }
+
+  private _shouldSuppressExpertArtifacts(
+    kind: 'pills' | 'inputChips' | 'thinkingSteps' | 'panelLoading',
+  ): boolean {
+    const policy = this._expertModes.getActiveArtifactPolicy();
+    if (!policy) return false;
+    switch (kind) {
+      case 'pills':
+        return policy.blockShoppingPills;
+      case 'inputChips':
+        return policy.blockShoppingInputChips;
+      case 'thinkingSteps':
+        return policy.blockShoppingThinkingSteps;
+      case 'panelLoading':
+        return policy.blockShoppingPanelLoading;
+      default:
+        return false;
+    }
+  }
+
+  private _getLastUserMessageText(threadId?: string | null): string | null {
+    const messages = [...this._messages].reverse();
+    for (const message of messages) {
+      if (message.role !== 'user') continue;
+      if (!message.content?.trim()) continue;
+      if (threadId && message.threadId !== threadId) continue;
+      return message.content.trim();
+    }
+    return null;
+  }
+
+  private _debugExpertMode(message: string, data?: unknown): void {
+    debugLog('expert-mode', message, data);
+  }
+
+  private _debugExpertSessionState(message: string): void {
+    const session = this._expertModes.getActiveSession();
+    this._debugExpertMode(message, session
+      ? {
+          modeId: session.modeId,
+          threadId: session.threadId,
+          previousThreadId: session.previousThreadId,
+          scenario: session.scenario ?? null,
+          status: session.status ?? null,
+          transferText: session.transferText ?? null,
+          fields: session.fields,
+          missingFields: session.missingFields,
+          extra: session.extra,
+        }
+      : null);
+  }
+
+  private _buildExpertPanelState(
+    session: ExpertModeSessionState,
+    definition: ExpertModeDefinition,
+  ): Record<string, unknown> {
+    const sharedState = {
+      ...(session.scenario !== undefined ? { scenario: session.scenario } : {}),
+      status: session.status ?? 'collecting',
+      handoff_summary: session.handoffSummary ?? null,
+      transfer_text: session.transferText ?? null,
+      fields: { ...session.fields },
+      missing_fields: [...session.missingFields],
+      ...(session.extra ? { ...session.extra } : {}),
+      source: session.source ?? definition.sourceName,
+    };
+
+    return {
+      assistant_mode: session.modeId,
+      [definition.contextPanelKey]: sharedState,
+    };
+  }
+
+  private async _initializeExpertHandoff(
+    definition: ExpertModeDefinition,
+    payload: {
+      scenario?: string | null;
+      transferText?: string | null;
+      handoffSummary?: string | null;
+      knownFields?: Record<string, unknown>;
+    },
+  ): Promise<Record<string, unknown> | null> {
+    if (!definition.initEndpoint) return null;
+    this._debugExpertMode('init_request', {
+      modeId: definition.modeId,
+      scenario: payload.scenario ?? null,
+      transferText: payload.transferText ?? null,
+      knownFieldKeys: Object.keys(payload.knownFields ?? {}),
+    });
+    const baseUrl = normalizeMiddlewareUrl(this.config.middlewareUrl);
+    const response = await fetch(`${baseUrl}${definition.initEndpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        account_id: this.config.accountId,
+        scenario: payload.scenario ?? null,
+        transfer_text: payload.transferText ?? null,
+        handoff_summary: payload.handoffSummary ?? null,
+        known_fields: payload.knownFields ?? {},
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Expert handoff init failed: HTTP ${response.status}`);
+    }
+    const data = (await response.json()) as unknown;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    this._debugExpertMode('init_response', { modeId: definition.modeId, payload: data });
+    return data as Record<string, unknown>;
+  }
+
+  private _syncExpertModeDrawer(): void {
+    const activeSession = this._expertModes.getActiveSession();
+    const definition = this._expertModes.getActiveDefinition();
+    if (!activeSession || !definition) {
+      this._drawer?.setExpertModeShell(null);
+      return;
+    }
+    const subtitle =
+      activeSession.handoffSummary?.trim() ||
+      activeSession.scenario?.trim() ||
+      null;
+    this._drawer?.setExpertModeShell({
+      title: definition.headerTitle,
+      subtitle,
+      exitLabel: 'Alisverise Don',
+    });
+  }
+
+  private _applyMessageVisibility(): void {
+    const expertThreadId = this._expertModes.getVisibleThreadId();
+    const cutoff = this._currentThreadId;
+
+    for (const msg of this._messages) {
+      const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+      if (!bubble) continue;
+      const visible = expertThreadId
+        ? msg.threadId === expertThreadId
+        : !cutoff || !msg.threadId || msg.threadId <= cutoff;
+      bubble.classList.toggle('gengage-chat-bubble--hidden', !visible);
+    }
+
+    this._shadow?.querySelectorAll('[data-thread-id]').forEach((el) => {
+      if (!(el instanceof HTMLElement)) return;
+      const threadId = el.dataset['threadId'];
+      const visible = expertThreadId
+        ? threadId === expertThreadId
+        : !cutoff || !threadId || threadId <= cutoff;
+      el.classList.toggle('gengage-chat-bubble--hidden', !visible);
+    });
+  }
+
+  private async _enterExpertModeFromRedirect(
+    redirectPayload: Record<string, unknown>,
+    sourceThreadId: string,
+  ): Promise<void> {
+    const requestedMode = redirectPayload['assistant_mode'];
+    if (requestedMode !== 'beauty_consulting' && requestedMode !== 'watch_expert') return;
+    this._debugExpertMode('redirect_received', { sourceThreadId, requestedMode, redirectPayload });
+
+    const definition = this._expertModes.getDefinition(requestedMode);
+    if (!definition) return;
+
+    const activeSession = this._expertModes.getActiveSession();
+    if (activeSession?.modeId === requestedMode && activeSession.threadId) {
+      return;
+    }
+
+    const prefill = redirectPayload['prefill'];
+    const prefillRecord =
+      prefill && typeof prefill === 'object' && !Array.isArray(prefill) ? (prefill as Record<string, unknown>) : null;
+    const handoffSummary =
+      (typeof redirectPayload['handoff_summary'] === 'string' && redirectPayload['handoff_summary'].trim()) ||
+      definition.handoffLoadingText;
+    const transferText =
+      (typeof prefillRecord?.['transfer_text'] === 'string' && prefillRecord['transfer_text'].trim()) ||
+      (typeof redirectPayload['user_text'] === 'string' && redirectPayload['user_text'].trim()) ||
+      this._getLastUserMessageText(sourceThreadId) ||
+      null;
+    const scenario =
+      typeof redirectPayload['scenario'] === 'string' && redirectPayload['scenario'].trim()
+        ? redirectPayload['scenario']
+        : null;
+
+    const expertThreadId = uuidv7();
+    let fields: Record<string, unknown> = {};
+    let missingFields: string[] = [];
+    let initialPrompt = definition.fallbackPrompt([]);
+    let status = 'handoff';
+    let extra: Record<string, unknown> | undefined;
+    let initSuggestedButtons: Array<{ label: string; action: ActionPayload; icon?: string }> = [];
+
+    this._debugExpertMode('redirect_handoff_resolved', {
+      requestedMode,
+      sourceThreadId,
+      scenario,
+      handoffSummary,
+      transferText,
+      fallbackLastUserText: this._getLastUserMessageText(sourceThreadId),
+    });
+
+    const session: ExpertModeSessionState = {
+      modeId: requestedMode,
+      threadId: expertThreadId,
+      previousThreadId: sourceThreadId,
+      scenario,
+      status,
+      handoffSummary,
+      transferText,
+      fields,
+      missingFields,
+      source: 'chat_intent',
+      ...(extra ? { extra } : {}),
+    };
+
+    this._expertModes.enterSession(session);
+    this._debugExpertMode('session_entered', {
+      modeId: session.modeId,
+      threadId: session.threadId,
+      previousThreadId: session.previousThreadId,
+      scenario: session.scenario ?? null,
+      status: session.status ?? null,
+      fields: session.fields,
+      missingFields: session.missingFields,
+      extra: session.extra,
+    });
+    this._currentThreadId = expertThreadId;
+    this._lastThreadId = expertThreadId;
+    this._lastBackendContext = {
+      ...(this._lastBackendContext ?? {}),
+      panel: this._buildExpertPanelState(session, definition),
+      messages: [],
+      message_id: expertThreadId,
+    };
+
+    this._drawer?.removeTypingIndicator();
+    this._drawer?.setPills([]);
+    this._drawer?.clearInputAreaChips();
+    this._drawer?.clearPanel();
+    this._choicePrompterEl?.remove();
+    this._choicePrompterEl = null;
+    this._syncExpertModeDrawer();
+    this._presentation.setFocusedThreadId(expertThreadId);
+    this._drawer?.setPresentationFocus(expertThreadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+    this._drawer?.showTypingIndicator(handoffSummary);
+    this._drawer?.setThinkingSteps([handoffSummary]);
+    this._bridge?.send('loadingMessage', { text: handoffSummary });
+    this._debugExpertMode('handoff_loading_rendered', {
+      modeId: session.modeId,
+      threadId: expertThreadId,
+      handoffSummary,
+    });
+
+    try {
+      const initPayload = await this._initializeExpertHandoff(definition, {
+        scenario,
+        transferText,
+        handoffSummary,
+        knownFields: fields,
+      });
+      if (initPayload) {
+        if (initPayload['fields'] && typeof initPayload['fields'] === 'object' && !Array.isArray(initPayload['fields'])) {
+          fields = { ...(initPayload['fields'] as Record<string, unknown>) };
+        }
+        if (Array.isArray(initPayload['missing_fields'])) {
+          missingFields = initPayload['missing_fields']
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => item.trim())
+            .filter(Boolean);
+        } else {
+          missingFields = [];
+        }
+        if (typeof initPayload['assistant_reply'] === 'string' && initPayload['assistant_reply'].trim()) {
+          initialPrompt = initPayload['assistant_reply'].trim();
+        } else {
+          initialPrompt = definition.fallbackPrompt(missingFields);
+        }
+        if (typeof initPayload['status'] === 'string' && initPayload['status'].trim()) {
+          status = initPayload['status'].trim();
+        } else {
+          status = 'collecting';
+        }
+        if (initPayload['state_patch'] && typeof initPayload['state_patch'] === 'object' && !Array.isArray(initPayload['state_patch'])) {
+          extra = { ...(initPayload['state_patch'] as Record<string, unknown>) };
+        }
+        initSuggestedButtons = normalizeSuggestedActionButtons(initPayload['suggested_actions']);
+      }
+    } catch {
+      status = 'collecting';
+      // Fall back to local prompt and empty seeded fields.
+    }
+
+    const updatedSession =
+      this._expertModes.updateActiveSession({
+        scenario,
+        status,
+        handoffSummary,
+        transferText,
+        fields,
+        missingFields,
+        ...(extra ? { extra } : {}),
+      }) ?? session;
+    this._lastBackendContext = {
+      ...(this._lastBackendContext ?? {}),
+      panel: this._buildExpertPanelState(updatedSession, definition),
+      messages: [],
+      message_id: expertThreadId,
+    };
+    this._debugExpertMode('session_seeded_backend_context', this._buildExpertPanelState(updatedSession, definition));
+    this._syncExpertModeDrawer();
+    this._drawer?.removeTypingIndicator();
+    this._bridge?.send('loadingMessage', { text: null });
+
+    const botMsg = this._createMessage('assistant', initialPrompt);
+    botMsg.threadId = expertThreadId;
+    this._messages.push(botMsg);
+    if (botMsg.threadId && !this._threadsWithFirstBot.has(botMsg.threadId)) {
+      this._threadsWithFirstBot.add(botMsg.threadId);
+      this._drawer?.markFirstBotMessage(botMsg.id);
+    }
+    this._drawer?.addMessage(botMsg);
+    this._debugExpertMode('initial_prompt_rendered', {
+      modeId: session.modeId,
+      threadId: expertThreadId,
+      initialPrompt,
+    });
+    if (initSuggestedButtons.length > 0) {
+      this._drawer?.setInputAreaChips(
+        initSuggestedButtons
+          .filter((button) => isExpertQuickReplyAction(button.action))
+          .map((button) => ({
+            label: button.label,
+            onAction: () => this._sendAction(button.action),
+            ...(button.icon ? { icon: button.icon } : {}),
+          })),
+      );
+      this._debugExpertMode('expert_init_suggestions_rendered', {
+        modeId: session.modeId,
+        count: initSuggestedButtons.length,
+        labels: initSuggestedButtons.map((button) => button.label),
+      });
+    }
+    this._applyMessageVisibility();
+    this._drawer?.scrollToBottomPresentation('smooth');
+    await this._persistToIndexedDB().catch(() => {
+      /* non-fatal */
+    });
+  }
+
+  private async _exitActiveExpertMode(): Promise<void> {
+    const previousSession = this._expertModes.exitSession();
+    if (!previousSession) return;
+
+    this._drawer?.setPills([]);
+    this._drawer?.clearInputAreaChips();
+    this._drawer?.removeTypingIndicator();
+    this._syncExpertModeDrawer();
+
+    const previousThreadId = previousSession.previousThreadId;
+    if (previousThreadId) {
+      if (this.config.session?.sessionId && this._session?.db) {
+        try {
+          const ctx = await this._session.db.loadContext(this.config.session.sessionId, previousThreadId);
+          this._lastBackendContext = ctx?.context ?? null;
+        } catch {
+          this._lastBackendContext = null;
+        }
+      } else {
+        this._lastBackendContext = null;
+      }
+      this._rollbackToThread(previousThreadId);
+    } else {
+      this._lastBackendContext = null;
+      this._applyMessageVisibility();
+    }
+    await this._persistToIndexedDB().catch(() => {
+      /* non-fatal */
+    });
+  }
+
   private _sendAction(action: ActionPayload, options?: SendActionOptions): void {
     // Cancel any running typewriter animation and TTS playback
     this._activeTypewriter?.cancel();
@@ -1385,10 +1839,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Notify host that assistant is responding
     this._bridge?.send('isResponding', true);
 
-    // Generate thread ID for this request-response cycle
-    const threadId = uuidv7();
+    // Reuse the dedicated expert thread while an expert mode session is active.
+    const expertThreadId = this._expertModes.getVisibleThreadId();
+    const threadId = expertThreadId ?? uuidv7();
     this._currentThreadId = threadId;
-    this._lastThreadId = threadId;
+    if (!expertThreadId) {
+      this._lastThreadId = threadId;
+    }
     // Preserve the active grid intent during product drilldowns. A product click
     // should not relabel an existing search-result panel as "similar products".
     if (this._panel && action.type !== 'launchSingleProduct') {
@@ -1473,8 +1930,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._panel?.updateTopBarForLoading('comparisonTable');
     }
 
-    // Show typing indicator
-    this._drawer?.showTypingIndicator();
+    // Show typing indicator only when the active mode allows shopping-style progress affordances.
+    if (!this._shouldSuppressExpertArtifacts('thinkingSteps')) {
+      this._drawer?.showTypingIndicator();
+    }
     // Use a local text accumulator per stream invocation to prevent corruption
     // when multiple concurrent preservePanel streams write to the same state.
     let localBotText = '';
@@ -1536,6 +1995,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isControlGroup: this.config.session?.abTestVariant === 'control',
       isMobile: this._isMobileViewport,
     };
+    const assistantMode = this._expertModes.getAssistantModeMeta();
+    if (assistantMode !== undefined) {
+      meta.assistantMode = assistantMode;
+      this._debugExpertMode('request_meta_mode', {
+        assistantMode,
+        threadId,
+        actionType: action.type,
+      });
+      this._debugExpertMode('request_context_panel', {
+        threadId,
+        assistantMode,
+        panel: this._lastBackendContext?.panel ?? null,
+      });
+    }
     if (this.config.session?.viewId !== undefined) {
       meta.viewId = this.config.session.viewId;
     }
@@ -1761,6 +2234,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (componentType === 'ProductGrid') {
             const childCount = rootElement?.children?.length ?? 0;
             ga.trackSearch(undefined, childCount);
+            const source = rootElement?.props?.['source'];
+            if (source === 'beauty_consulting' || source === 'watch_expert') {
+              this._debugExpertMode('expert_product_grid_received', {
+                threadId,
+                source,
+                panelHint: effectivePanelHint ?? null,
+                title: rootElement?.props?.['panelTitle'],
+                recommendationGroups: rootElement?.props?.['recommendationGroups'],
+                styleVariations: rootElement?.props?.['styleVariations'],
+              });
+            }
           }
 
           const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
@@ -1971,6 +2455,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             !skipSidePanelForUISpec &&
             productGridChildCount > 1 &&
             !this._comparisonSelectMode &&
+            !this._expertModes.isActive() &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
             this._choicePrompterEl?.remove();
@@ -2030,49 +2515,62 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (buttons && buttons.length > 0) {
               const inputChips: Array<{ label: string; icon?: string | undefined; action: ActionPayload }> = [];
               const pillButtons: typeof buttons = [];
+              let hasExpertQuickReplies = false;
 
               for (const btn of buttons) {
-                if (isInputAreaAction(btn)) {
+                const expertQuickReply = this._expertModes.isActive() && isExpertQuickReplyAction(btn.action);
+                if (expertQuickReply || isInputAreaAction(btn)) {
                   const chip: { label: string; icon?: string | undefined; action: ActionPayload } = {
                     label: btn.label,
                     action: btn.action,
                   };
                   if (btn.icon) chip.icon = btn.icon;
                   inputChips.push(chip);
+                  hasExpertQuickReplies = hasExpertQuickReplies || expertQuickReply;
                 } else {
                   pillButtons.push(btn);
                 }
               }
 
               if (inputChips.length > 0) {
-                this._drawer?.setInputAreaChips(
-                  inputChips.map((chip) => ({
-                    label: chip.label,
-                    onAction: () => this._sendAction(chip.action),
-                    ...(chip.icon ? { icon: chip.icon } : {}),
-                  })),
-                );
+                if (!this._shouldSuppressExpertArtifacts('inputChips') || hasExpertQuickReplies) {
+                  this._drawer?.setInputAreaChips(
+                    inputChips.map((chip) => ({
+                      label: chip.label,
+                      onAction: () => this._sendAction(chip.action),
+                      ...(chip.icon ? { icon: chip.icon } : {}),
+                    })),
+                  );
+                  if (hasExpertQuickReplies) {
+                    this._debugExpertMode('expert_quick_replies_received', {
+                      threadId: botMsg.threadId ?? null,
+                      labels: inputChips.map((chip) => chip.label),
+                    });
+                  }
+                }
               }
 
               if (pillButtons.length > 0) {
-                this._drawer?.setPills(
-                  pillButtons.map((btn) => {
-                    const pill: {
-                      label: string;
-                      onAction: () => void;
-                      icon?: string;
-                      image?: string;
-                      description?: string;
-                    } = {
-                      label: btn.label,
-                      onAction: () => this._sendAction(btn.action),
-                    };
-                    if (btn.icon) pill.icon = btn.icon;
-                    if (btn.image) pill.image = btn.image;
-                    if (btn.description) pill.description = btn.description;
-                    return pill;
-                  }),
-                );
+                if (!this._shouldSuppressExpertArtifacts('pills')) {
+                  this._drawer?.setPills(
+                    pillButtons.map((btn) => {
+                      const pill: {
+                        label: string;
+                        onAction: () => void;
+                        icon?: string;
+                        image?: string;
+                        description?: string;
+                      } = {
+                        label: btn.label,
+                        onAction: () => this._sendAction(btn.action),
+                      };
+                      if (btn.icon) pill.icon = btn.icon;
+                      if (btn.image) pill.image = btn.image;
+                      if (btn.description) pill.description = btn.description;
+                      return pill;
+                    }),
+                  );
+                }
               }
             }
           }
@@ -2126,10 +2624,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               event.meta.message_id !== undefined
             ) {
               this._lastBackendContext = event.meta as import('../common/types.js').BackendContext;
+              if (event.meta.panel && typeof event.meta.panel === 'object' && !Array.isArray(event.meta.panel)) {
+                this._expertModes.syncFromPanel(event.meta.panel as Record<string, unknown>);
+                this._debugExpertMode('context_panel_sync', event.meta.panel);
+                this._debugExpertSessionState('active_session_after_panel_sync');
+                this._syncExpertModeDrawer();
+                this._applyMessageVisibility();
+              }
             }
 
             // Panel loading indicator
-            if (event.meta.panelLoading) {
+            if (event.meta.panelLoading && !this._shouldSuppressExpertArtifacts('panelLoading')) {
               const pendingType =
                 typeof event.meta.panelPendingType === 'string' ? event.meta.panelPendingType : undefined;
               const suppressProductDetailsSkeleton =
@@ -2178,10 +2683,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 target: event.meta.redirectTarget ?? null,
                 payload: event.meta.redirect ?? null,
               });
+              if (event.meta.redirect && typeof event.meta.redirect === 'object' && !Array.isArray(event.meta.redirect)) {
+                void this._enterExpertModeFromRedirect(event.meta.redirect as Record<string, unknown>, threadId);
+              }
             }
 
             // Analyze animation — show panel loading skeleton with pulse
-            if (event.meta.analyzeAnimation && this.config.productDetailsExtended === true) {
+            if (
+              event.meta.analyzeAnimation &&
+              this.config.productDetailsExtended === true &&
+              !this._shouldSuppressExpertArtifacts('panelLoading')
+            ) {
               panelLoadingSeen = true;
               panelContentReceived = false;
               capturePanelSourceIfNeeded();
@@ -2192,7 +2704,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
 
             // Thinking step messages — accumulate as checklist in typing indicator
-            if (event.meta.loading) {
+            if (event.meta.loading && !this._shouldSuppressExpertArtifacts('thinkingSteps')) {
               const thinkingMessages = Array.isArray(event.meta.thinkingMessages)
                 ? event.meta.thinkingMessages.filter((item): item is string => typeof item === 'string')
                 : [];
@@ -2469,6 +2981,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Return messages visible at the current thread cursor. */
   private _getVisibleMessages(): ChatMessage[] {
     const msgs = this._messages.filter((m) => !m.silent);
+    const expertThreadId = this._expertModes.getVisibleThreadId();
+    if (expertThreadId) {
+      return msgs.filter((m) => m.threadId === expertThreadId);
+    }
     if (!this._currentThreadId) return msgs;
     const cutoff = this._currentThreadId;
     return msgs.filter((m) => !m.threadId || m.threadId <= cutoff);
@@ -2582,25 +3098,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._drawer?.setFormerMessagesButtonVisible(false);
 
-    // Toggle visibility of messages after the cutoff
-    for (const msg of this._messages) {
-      const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
-      if (!bubble) continue;
-      if (msg.threadId && msg.threadId > threadId) {
-        bubble.classList.add('gengage-chat-bubble--hidden');
-      } else {
-        bubble.classList.remove('gengage-chat-bubble--hidden');
-      }
-    }
-
-    // Hide inline UISpec elements from future threads
-    this._shadow?.querySelectorAll('[data-thread-id]').forEach((el) => {
-      if (el instanceof HTMLElement && el.dataset['threadId'] && el.dataset['threadId'] > threadId) {
-        el.classList.add('gengage-chat-bubble--hidden');
-      } else if (el instanceof HTMLElement) {
-        el.classList.remove('gengage-chat-bubble--hidden');
-      }
-    });
+    this._applyMessageVisibility();
 
     // Restore panel snapshot from the target thread's bot message
     const targetBot = this._messages.find((m) => m.role === 'assistant' && m.threadId === threadId);
@@ -2659,6 +3157,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       panelThreads: this._panel?.threads ?? [],
       thumbnailEntries: this._thumbnailEntries,
       lastBackendContext: this._lastBackendContext,
+      expertModeState: this._expertModes.serialize(),
       sku: this.config.pageContext?.sku,
     });
   }
@@ -2749,6 +3248,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._currentThreadId = this._lastThreadId;
     }
     this._chatCreatedAt = session.createdAt;
+    this._expertModes.hydrate(session.expertModeState ?? null);
+    this._syncExpertModeDrawer();
 
     // Restore panel threads and thumbnail entries
     if (session.panelThreads) {
@@ -2835,21 +3336,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
-    // Apply thread visibility — hide messages from future threads
-    if (this._currentThreadId) {
-      const cutoff = this._currentThreadId;
-      for (const msg of this._messages) {
-        if (msg.threadId && msg.threadId > cutoff) {
-          const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
-          bubble?.classList.add('gengage-chat-bubble--hidden');
-        }
-      }
-      this._shadow?.querySelectorAll('[data-thread-id]').forEach((el) => {
-        if (el instanceof HTMLElement && el.dataset['threadId'] && el.dataset['threadId'] > cutoff) {
-          el.classList.add('gengage-chat-bubble--hidden');
-        }
-      });
-    }
+    this._applyMessageVisibility();
 
     // Update panel topbar if we have panel threads
     if (this._panel!.threads.length > 0 && this._currentThreadId) {
@@ -2870,8 +3357,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
-    this._presentation.releaseFocusedThread();
-    this._drawer?.setPresentationFocus(null);
+    const visibleThreadId = this._expertModes.getVisibleThreadId();
+    if (visibleThreadId) {
+      this._presentation.setFocusedThreadId(visibleThreadId);
+      this._drawer?.setPresentationFocus(visibleThreadId);
+      this._drawer?.setFormerMessagesButtonVisible(false);
+    } else {
+      this._presentation.releaseFocusedThread();
+      this._drawer?.setPresentationFocus(null);
+    }
 
     // After lockout expires, scroll to last thread boundary instead of absolute bottom
     setTimeout(() => {

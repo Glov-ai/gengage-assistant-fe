@@ -577,7 +577,21 @@ function adaptSuggestedActions(event: V1SuggestedActions): StreamEventUISpec {
 }
 
 function adaptProductList(event: V1ProductList): StreamEventUISpec {
-  const spec = buildProductGridUISpec(event.payload.product_list ?? [], 'chat');
+  const expertSource = firstNonEmptyString(event.payload.source);
+  const expertStyleVariations = normalizeExpertStyleVariations(event.payload.style_variations);
+  const expertRecommendationGroups = normalizeExpertRecommendationGroups(event.payload.recommendation_groups);
+  const expertProducts = normalizeExpertProductList(
+    event.payload.product_list_w_reason,
+    event.payload.product_list,
+    expertStyleVariations[0]?.products,
+  );
+
+  const baseProducts =
+    expertProducts.length > 0
+      ? expertProducts
+      : normalizeExpertProductList(event.payload.product_list, expertStyleVariations[0]?.products);
+
+  const spec = buildProductGridUISpec(baseProducts, 'chat');
   spec.panelHint = 'panel';
   // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
@@ -586,6 +600,19 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
     if (typeof event.payload.end_of_list === 'boolean')
       root.props = { ...root.props, endOfList: event.payload.end_of_list };
     if (typeof event.payload.title === 'string') root.props = { ...root.props, panelTitle: event.payload.title };
+    if (expertSource) {
+      root.props = {
+        ...root.props,
+        source: expertSource,
+        expertProducts: baseProducts,
+        recommendationGroups: expertRecommendationGroups,
+        styleVariations: expertStyleVariations,
+        ...(typeof event.payload.chat_text_brief === 'string' ? { chatTextBrief: event.payload.chat_text_brief } : {}),
+        ...(typeof event.payload.chat_text_mobile === 'string'
+          ? { chatTextMobile: event.payload.chat_text_mobile }
+          : {}),
+      };
+    }
   }
   return spec;
 }
@@ -1491,14 +1518,14 @@ function buildActionButtonsUISpec(entries: ButtonEntry[], widget: WidgetName): S
   };
 }
 
-function buildProductGridUISpec(products: V1Product[], widget: WidgetName): StreamEventUISpec {
+function buildProductGridUISpec(products: unknown[], widget: WidgetName): StreamEventUISpec {
   const elements: Record<string, UIElement> = {};
   const childIds: string[] = [];
 
   for (let i = 0; i < products.length; i++) {
-    const product = products[i];
+    const product = normalizeProductGridEntry(products[i]);
     if (!product) continue;
-    const normalized = productToNormalized(product);
+    const normalized = product;
     const id = `product-${i}`;
     childIds.push(id);
     const props: Record<string, unknown> = { product: normalized, index: i };
@@ -1559,6 +1586,102 @@ function buildEmptyUISpec(widget: WidgetName): StreamEventUISpec {
       },
     },
   };
+}
+
+function normalizeProductGridEntry(entry: unknown): NormalizedProduct | null {
+  const record = asRecord(entry);
+  if (!record) return null;
+
+  const wrappedProduct = asRecord(record['product_detail']);
+  const baseRecord = wrappedProduct ?? record;
+  const sku = firstNonEmptyString(baseRecord['sku']);
+  if (!sku) return null;
+
+  const normalized = productToNormalized(baseRecord as unknown as V1Product);
+  const selectionReasons = asRecord(record['selection_reasons']) ?? asRecord(baseRecord['selection_reasons']);
+  if (selectionReasons) {
+    normalized.extras = {
+      ...(normalized.extras ?? {}),
+      selection_reasons: selectionReasons,
+    };
+  }
+  return normalized;
+}
+
+function normalizeExpertProductList(...candidates: unknown[]): NormalizedProduct[] {
+  for (const candidate of candidates) {
+    if (!Array.isArray(candidate)) continue;
+    const products = candidate
+      .map((entry) => normalizeProductGridEntry(entry))
+      .filter((entry): entry is NormalizedProduct => entry !== null);
+    if (products.length > 0) {
+      return products;
+    }
+  }
+  return [];
+}
+
+function normalizeExpertRecommendationGroups(value: unknown): Array<{ label: string; reason?: string; skus: string[] }> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const record = asRecord(entry);
+      if (!record) return null;
+      const label = firstNonEmptyString(record['label']);
+      const skus = Array.isArray(record['skus'])
+        ? record['skus'].filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        : [];
+      if (!label || skus.length === 0) return null;
+      const reason = firstNonEmptyString(record['reason']) ?? undefined;
+      return { label, ...(reason ? { reason } : {}), skus };
+    })
+    .filter((entry): entry is { label: string; reason?: string; skus: string[] } => entry !== null);
+}
+
+function normalizeExpertStyleVariations(
+  value: unknown,
+): Array<{
+  styleLabel: string;
+  styleMood?: string;
+  imageUrl?: string | null;
+  selectionReason?: string;
+  products: NormalizedProduct[];
+  recommendationGroups: Array<{ label: string; reason?: string; skus: string[] }>;
+}> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const record = asRecord(entry);
+      if (!record) return null;
+      const styleLabel = firstNonEmptyString(record['style_label']);
+      const products = normalizeExpertProductList(record['product_list']);
+      const recommendationGroups = normalizeExpertRecommendationGroups(record['recommendation_groups']);
+      if (!styleLabel || products.length === 0) return null;
+      return {
+        styleLabel,
+        ...(firstNonEmptyString(record['style_mood']) ? { styleMood: firstNonEmptyString(record['style_mood'])! } : {}),
+        ...(typeof record['image_url'] === 'string' || record['image_url'] === null
+          ? { imageUrl: (record['image_url'] as string | null | undefined) ?? null }
+          : {}),
+        ...(firstNonEmptyString(record['selection_reason'])
+          ? { selectionReason: firstNonEmptyString(record['selection_reason'])! }
+          : {}),
+        products,
+        recommendationGroups,
+      };
+    })
+    .filter(
+      (
+        entry,
+      ): entry is {
+        styleLabel: string;
+        styleMood?: string;
+        imageUrl?: string | null;
+        selectionReason?: string;
+        products: NormalizedProduct[];
+        recommendationGroups: Array<{ label: string; reason?: string; skus: string[] }>;
+      } => entry !== null,
+    );
 }
 
 function suggestionToNormalizedProduct(suggestion: V1AiProductSuggestion): NormalizedProduct | null {

@@ -24,6 +24,7 @@ import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
+import type { NormalizedProduct } from '../../common/protocol-adapter.js';
 import {
   clampRating,
   clampDiscount,
@@ -104,6 +105,390 @@ export function renderUISpec(
     containerClassName: 'gengage-chat-uispec',
     unknownRenderer,
   });
+}
+
+type ExpertModeSource = 'beauty_consulting' | 'watch_expert';
+
+type ExpertRecommendationGroup = {
+  label: string;
+  reason?: string;
+  skus: string[];
+};
+
+type ExpertStyleVariation = {
+  styleLabel: string;
+  styleMood?: string;
+  imageUrl?: string | null;
+  selectionReason?: string;
+  products: NormalizedProduct[];
+  recommendationGroups: ExpertRecommendationGroup[];
+};
+
+function resolveRemoteConfigAssetCandidates(assetPath: string | null | undefined): string[] {
+  if (!assetPath) return [];
+  const trimmed = assetPath.trim();
+  if (!trimmed) return [];
+  if (!trimmed.startsWith('/remoteConfig')) return [trimmed];
+
+  const candidates: string[] = [];
+
+  try {
+    if (window.localStorage.getItem('use_local_config') === 'true') {
+      candidates.push(`http://localhost:8888${trimmed.replace(/^\/remoteConfig/, '')}`);
+    }
+  } catch {
+    // Ignore localStorage errors and continue with bundled/hosted assets.
+  }
+
+  try {
+    const sameOrigin = new URL(trimmed, window.location.origin).toString();
+    candidates.push(sameOrigin);
+  } catch {
+    // Ignore URL construction failures.
+  }
+
+  candidates.push(`https://configs.glov.ai${trimmed}`);
+
+  return candidates.filter((candidate, index) => candidate && candidates.indexOf(candidate) === index);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function getExpertModeSource(element: UIElement): ExpertModeSource | null {
+  const source = element.props?.['source'];
+  return source === 'beauty_consulting' || source === 'watch_expert' ? source : null;
+}
+
+function normalizeExpertGroups(value: unknown): ExpertRecommendationGroup[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const record = asRecord(entry);
+      if (!record) return null;
+      const label = typeof record['label'] === 'string' ? record['label'].trim() : '';
+      const skus = Array.isArray(record['skus'])
+        ? record['skus'].filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        : [];
+      if (!label || skus.length === 0) return null;
+      const reason = typeof record['reason'] === 'string' && record['reason'].trim() ? record['reason'].trim() : undefined;
+      return { label, ...(reason ? { reason } : {}), skus };
+    })
+    .filter((entry): entry is ExpertRecommendationGroup => entry !== null);
+}
+
+function normalizeExpertProducts(value: unknown): NormalizedProduct[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => asRecord(entry) as NormalizedProduct | null)
+    .filter((entry): entry is NormalizedProduct => entry !== null && typeof entry.sku === 'string');
+}
+
+function normalizeExpertVariations(value: unknown): ExpertStyleVariation[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      const record = asRecord(entry);
+      if (!record) return null;
+      const styleLabel = typeof record['styleLabel'] === 'string' ? record['styleLabel'].trim() : '';
+      const products = normalizeExpertProducts(record['products']);
+      if (!styleLabel || products.length === 0) return null;
+      return {
+        styleLabel,
+        ...(typeof record['styleMood'] === 'string' && record['styleMood'].trim()
+          ? { styleMood: record['styleMood'].trim() }
+          : {}),
+        ...(typeof record['imageUrl'] === 'string' || record['imageUrl'] === null
+          ? { imageUrl: (record['imageUrl'] as string | null | undefined) ?? null }
+          : {}),
+        ...(typeof record['selectionReason'] === 'string' && record['selectionReason'].trim()
+          ? { selectionReason: record['selectionReason'].trim() }
+          : {}),
+        products,
+        recommendationGroups: normalizeExpertGroups(record['recommendationGroups']),
+      };
+    })
+    .filter((entry): entry is ExpertStyleVariation => entry !== null);
+}
+
+function getExpertReason(product: NormalizedProduct, source: ExpertModeSource): string | null {
+  const selectionReasons = asRecord(product.extras?.['selection_reasons']);
+  if (!selectionReasons) return null;
+  const sourceReason = asRecord(selectionReasons[source]);
+  const reason = typeof sourceReason?.['text'] === 'string' ? sourceReason['text'].trim() : '';
+  return reason || null;
+}
+
+function buildExpertProductCard(product: NormalizedProduct, ctx: UISpecRenderContext): HTMLElement {
+  const cardElement: UIElement = {
+    type: 'ProductCard',
+    props: {
+      product,
+      action: {
+        title: product.name,
+        type: 'launchSingleProduct',
+        payload: { sku: product.sku },
+      },
+    },
+  };
+  return renderProductCard(cardElement, ctx);
+}
+
+function renderExpertProductGroup(
+  group: ExpertRecommendationGroup,
+  products: NormalizedProduct[],
+  source: ExpertModeSource,
+  ctx: UISpecRenderContext,
+): HTMLElement | null {
+  const productMap = new Map(products.map((product) => [product.sku, product]));
+  const groupProducts = group.skus.map((sku) => productMap.get(sku)).filter((product): product is NormalizedProduct => !!product);
+  if (groupProducts.length === 0) return null;
+
+  const section = document.createElement('section');
+  section.className = `gengage-chat-expert-group gengage-chat-expert-group--${source === 'watch_expert' ? 'watch' : 'beauty'}`;
+  if (groupProducts.length === 1) {
+    section.classList.add('gengage-chat-expert-group--single-product');
+  }
+
+  const header = document.createElement('div');
+  header.className = 'gengage-chat-expert-group-header';
+
+  const badge = document.createElement('div');
+  badge.className = 'gengage-chat-expert-group-badge';
+  badge.textContent = source === 'watch_expert' ? '⌚' : '✦';
+  header.appendChild(badge);
+
+  const copy = document.createElement('div');
+  copy.className = 'gengage-chat-expert-group-copy';
+  const title = document.createElement('div');
+  title.className = 'gengage-chat-expert-group-title';
+  title.textContent = group.label;
+  copy.appendChild(title);
+  if (group.reason) {
+    const reason = document.createElement('div');
+    reason.className = 'gengage-chat-expert-group-reason';
+    reason.textContent = group.reason;
+    copy.appendChild(reason);
+  }
+  header.appendChild(copy);
+  section.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = `gengage-chat-expert-group-products ${
+    ctx.isMobile ?? isMobileViewport()
+      ? 'gengage-chat-expert-group-products--mobile'
+      : 'gengage-chat-expert-group-products--desktop'
+  }`;
+
+  for (const product of groupProducts) {
+    const tile = document.createElement('div');
+    tile.className = 'gengage-chat-expert-product-tile';
+    const reasonText = getExpertReason(product, source);
+    if (reasonText) {
+      if (source === 'watch_expert' && reasonText.includes('•')) {
+        const tags = document.createElement('div');
+        tags.className = 'gengage-chat-expert-product-tags';
+        for (const tagText of reasonText
+          .split('•')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, 4)) {
+          const tag = document.createElement('span');
+          tag.className = 'gengage-chat-expert-product-tag';
+          tag.textContent = tagText;
+          tags.appendChild(tag);
+        }
+        if (tags.childElementCount > 0) {
+          tile.appendChild(tags);
+        }
+      } else {
+        const reason = document.createElement('div');
+        reason.className = 'gengage-chat-expert-product-reason';
+        reason.textContent = reasonText;
+        tile.appendChild(reason);
+      }
+    }
+    tile.appendChild(buildExpertProductCard(product, ctx));
+    grid.appendChild(tile);
+  }
+
+  section.appendChild(grid);
+  return section;
+}
+
+function renderExpertVariationPicker(
+  source: ExpertModeSource,
+  variations: ExpertStyleVariation[],
+  getSelectedIndex: () => number,
+  onSelect: (index: number) => void,
+): HTMLElement {
+  const picker = document.createElement('div');
+  picker.className = `gengage-chat-expert-variation-picker gengage-chat-expert-variation-picker--${
+    source === 'watch_expert' ? 'watch' : 'beauty'
+  }`;
+
+  const heading = document.createElement('div');
+  heading.className = 'gengage-chat-expert-variation-heading';
+  heading.textContent =
+    source === 'watch_expert'
+      ? `Saat uzmanimiz sizin icin ${variations.length} farkli yon hazirladi`
+      : `Sizin icin ${variations.length} farkli stil hazirladim`;
+  picker.appendChild(heading);
+
+  const list = document.createElement('div');
+  list.className = `gengage-chat-expert-variation-list ${
+    variations.length > 2 ? 'gengage-chat-expert-variation-list--three-up' : ''
+  }`;
+
+  const syncActiveState = (): void => {
+    const activeIndex = getSelectedIndex();
+    list.querySelectorAll<HTMLButtonElement>('.gengage-chat-expert-variation-card').forEach((button, index) => {
+      const selected = index === activeIndex;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+  };
+
+  for (let index = 0; index < variations.length; index++) {
+    const variation = variations[index]!;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'gengage-chat-expert-variation-card';
+    button.setAttribute('aria-pressed', index === getSelectedIndex() ? 'true' : 'false');
+
+    const media = document.createElement('div');
+    media.className = 'gengage-chat-expert-variation-media';
+    const imageCandidates = resolveRemoteConfigAssetCandidates(variation.imageUrl);
+    const initialImageUrl = imageCandidates.find((candidate) => isSafeUrl(candidate)) ?? null;
+    if (initialImageUrl) {
+      const img = document.createElement('img');
+      img.className = 'gengage-chat-expert-variation-image';
+      let imageCandidateIndex = imageCandidates.indexOf(initialImageUrl);
+      safeSetAttribute(img, 'src', initialImageUrl);
+      img.alt = variation.styleLabel;
+      img.addEventListener(
+        'error',
+        () => {
+          while (imageCandidateIndex + 1 < imageCandidates.length) {
+            imageCandidateIndex += 1;
+            const nextCandidate = imageCandidates[imageCandidateIndex];
+            if (nextCandidate && isSafeUrl(nextCandidate)) {
+              safeSetAttribute(img, 'src', nextCandidate);
+              return;
+            }
+          }
+          img.style.display = 'none';
+        },
+        { once: false },
+      );
+      media.appendChild(img);
+    } else {
+      const fallback = document.createElement('div');
+      fallback.className = 'gengage-chat-expert-variation-fallback';
+      fallback.textContent = source === 'watch_expert' ? '⌚' : '✨';
+      media.appendChild(fallback);
+    }
+    button.appendChild(media);
+
+    const label = document.createElement('div');
+    label.className = 'gengage-chat-expert-variation-label';
+    label.textContent = variation.styleLabel;
+    button.appendChild(label);
+
+    if (variation.styleMood) {
+      const mood = document.createElement('div');
+      mood.className = 'gengage-chat-expert-variation-mood';
+      mood.textContent = variation.styleMood;
+      button.appendChild(mood);
+    }
+
+    button.addEventListener('click', () => {
+      onSelect(index);
+      syncActiveState();
+    });
+    list.appendChild(button);
+  }
+
+  picker.appendChild(list);
+  return picker;
+}
+
+function renderExpertProductGrid(element: UIElement, ctx: UISpecRenderContext): HTMLElement | null {
+  const source = getExpertModeSource(element);
+  if (!source) return null;
+
+  const baseProducts = normalizeExpertProducts(element.props?.['expertProducts']);
+  const baseGroups = normalizeExpertGroups(element.props?.['recommendationGroups']);
+  const variations = normalizeExpertVariations(element.props?.['styleVariations']);
+  if (baseProducts.length === 0 && variations.length === 0) {
+    return null;
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = `gengage-chat-product-grid-wrapper gengage-chat-expert-grid gengage-chat-expert-grid--${
+    source === 'watch_expert' ? 'watch' : 'beauty'
+  }`;
+
+  let selectedVariationIndex = 0;
+  const getActiveVariation = (): ExpertStyleVariation | null => variations[selectedVariationIndex] ?? null;
+  const groupsHost = document.createElement('div');
+  groupsHost.className = `gengage-chat-expert-groups gengage-chat-expert-groups--${
+    source === 'watch_expert' ? 'watch' : 'beauty'
+  }`;
+
+  const renderActiveContent = (): void => {
+    groupsHost.replaceChildren();
+    const activeVariation = getActiveVariation();
+    const products = activeVariation?.products ?? baseProducts;
+    const groups = activeVariation?.recommendationGroups ?? baseGroups;
+
+    if (activeVariation?.selectionReason) {
+      const intro = document.createElement('div');
+      intro.className = 'gengage-chat-expert-variation-intro';
+      intro.textContent = activeVariation.selectionReason;
+      groupsHost.appendChild(intro);
+    }
+
+    if (groups.length === 0) {
+      const fallbackSection = document.createElement('div');
+      fallbackSection.className = 'gengage-chat-expert-fallback-grid';
+      for (const product of products) {
+        const tile = document.createElement('div');
+        tile.className = 'gengage-chat-expert-product-tile';
+        const reasonText = getExpertReason(product, source);
+        if (reasonText) {
+          const reason = document.createElement('div');
+          reason.className = 'gengage-chat-expert-product-reason';
+          reason.textContent = reasonText;
+          tile.appendChild(reason);
+        }
+        tile.appendChild(buildExpertProductCard(product, ctx));
+        fallbackSection.appendChild(tile);
+      }
+      groupsHost.appendChild(fallbackSection);
+      return;
+    }
+
+    for (const group of groups) {
+      const section = renderExpertProductGroup(group, products, source, ctx);
+      if (section) groupsHost.appendChild(section);
+    }
+  };
+
+  if (variations.length > 1) {
+    wrapper.appendChild(
+      renderExpertVariationPicker(source, variations, () => selectedVariationIndex, (index) => {
+        selectedVariationIndex = index;
+        renderActiveContent();
+      }),
+    );
+  }
+
+  renderActiveContent();
+  wrapper.appendChild(groupsHost);
+  return wrapper;
 }
 
 function renderActionButtons(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
@@ -1539,6 +1924,11 @@ function renderProductGrid(
   renderElement: (elementId: string) => HTMLElement | null,
   ctx?: UISpecRenderContext,
 ): HTMLElement {
+  const expertGrid = ctx ? renderExpertProductGrid(element, ctx) : null;
+  if (expertGrid) {
+    return expertGrid;
+  }
+
   const wrapper = document.createElement('div');
   wrapper.className = 'gengage-chat-product-grid-wrapper';
 

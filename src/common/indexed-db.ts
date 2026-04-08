@@ -10,6 +10,7 @@
  */
 
 import type { SerializableChatMessage } from '../chat/types.js';
+import type { PersistedExpertModeState } from '../chat/expert-mode/types.js';
 import type { UISpec } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,7 @@ export interface SessionData {
   panelSnapshotHtml?: Record<string, string> | undefined;
   /** SKU active when session was saved — prevents cross-SKU restore. */
   sku?: string | undefined;
+  expertModeState?: PersistedExpertModeState | undefined;
 }
 
 export interface ContextData {

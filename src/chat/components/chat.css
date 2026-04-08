@@ -447,6 +447,53 @@
   flex-shrink: 0;
 }
 
+.gengage-chat-expert-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--client-primary) 8%, white), rgba(255, 255, 255, 0.94));
+}
+
+.gengage-chat-expert-shell-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gengage-chat-expert-shell-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.gengage-chat-expert-shell-subtitle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.gengage-chat-expert-shell-exit {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+  background: white;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+}
+
+.gengage-chat-expert-shell-exit:hover {
+  color: var(--client-primary);
+  border-color: color-mix(in srgb, var(--client-primary) 36%, white);
+}
+
 .gengage-chat-header-right {
   display: flex;
   align-items: center;
@@ -7642,4 +7689,388 @@ button.gengage-chat-product-details-rating {
 
 .gengage-chat-header-btn--cart-flash {
   animation: gengage-cart-flash 0.5s ease;
+}
+
+/* ---------------------------------------------------------------------------
+ * Expert recommendation pane
+ * ---------------------------------------------------------------------------*/
+.gengage-chat-expert-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gengage-chat-expert-grid--beauty {
+  --_expert-accent: color-mix(in srgb, var(--client-primary) 82%, white);
+  --_expert-border: color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+  --_expert-soft: color-mix(in srgb, var(--client-primary) 8%, white);
+}
+
+.gengage-chat-expert-grid--watch {
+  --_expert-accent: #0f766e;
+  --_expert-border: color-mix(in srgb, #0f766e 18%, var(--border-default));
+  --_expert-soft: color-mix(in srgb, #0f766e 8%, white);
+}
+
+.gengage-chat-expert-variation-picker {
+  border: 1px solid var(--_expert-border);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--_expert-soft), white 62%);
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.gengage-chat-expert-variation-heading {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.gengage-chat-expert-variation-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gengage-chat-expert-variation-list--three-up {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gengage-chat-expert-variation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.gengage-chat-expert-variation-card:hover {
+  border-color: var(--_expert-border);
+  transform: translateY(-1px);
+}
+
+.gengage-chat-expert-variation-card.is-active {
+  border-color: var(--_expert-accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--_expert-accent) 30%, transparent),
+    0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.gengage-chat-expert-variation-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--_expert-accent) 10%, white), #fff);
+}
+
+.gengage-chat-expert-variation-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gengage-chat-expert-variation-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--_expert-accent);
+  font-size: 28px;
+}
+
+.gengage-chat-expert-variation-label {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.gengage-chat-expert-variation-mood {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.gengage-chat-expert-variation-intro {
+  border: 1px solid var(--_expert-border);
+  border-radius: 18px;
+  background: var(--_expert-soft);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
+
+.gengage-chat-expert-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gengage-chat-expert-groups--beauty {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.gengage-chat-expert-groups--beauty > .gengage-chat-expert-variation-intro {
+  grid-column: 1 / -1;
+}
+
+.gengage-chat-expert-groups--beauty > .gengage-chat-expert-group {
+  min-width: 0;
+  height: 100%;
+}
+
+.gengage-chat-expert-group {
+  border: 1px solid var(--_expert-border);
+  border-radius: 24px;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.gengage-chat-expert-group--single-product {
+  display: flex;
+  flex-direction: column;
+}
+
+.gengage-chat-expert-group-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gengage-chat-expert-group--single-product .gengage-chat-expert-group-header {
+  margin-bottom: 10px;
+}
+
+.gengage-chat-expert-group-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: var(--_expert-soft);
+  color: var(--_expert-accent);
+  font-size: 16px;
+}
+
+.gengage-chat-expert-group-copy {
+  min-width: 0;
+}
+
+.gengage-chat-expert-group-title {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.gengage-chat-expert-group-reason {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.gengage-chat-expert-group-products {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gengage-chat-expert-group-products--mobile,
+.gengage-chat-expert-fallback-grid {
+  grid-template-columns: 1fr;
+}
+
+.gengage-chat-expert-product-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gengage-chat-expert-product-reason {
+  border-radius: 16px;
+  background: var(--_expert-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 9px 11px;
+}
+
+.gengage-chat-expert-product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gengage-chat-expert-product-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--_expert-soft);
+  border: 1px solid var(--_expert-border);
+  color: var(--_expert-accent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card {
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-img-wrapper {
+  aspect-ratio: 1 / 1;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--_expert-soft) 62%, white) 0%, transparent 72%),
+    white;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-img {
+  height: clamp(132px, 16vw, 180px);
+  padding: 10px;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-body {
+  gap: 6px;
+  padding: 10px 12px 12px;
+  text-align: left;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-meta-row {
+  min-height: 0;
+  align-items: center;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-price,
+.gengage-chat-expert-product-tile .gengage-chat-product-card-price-block {
+  justify-content: flex-start;
+  font-size: 15px;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-name {
+  min-height: calc(2 * 1.3em);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-stock {
+  margin-top: 0;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-buy-footer {
+  padding: 0 12px 12px;
+}
+
+.gengage-chat-expert-product-tile .gengage-chat-product-card-buy-trigger,
+.gengage-chat-expert-product-tile .gengage-chat-product-card-cta {
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+@media (max-width: 767px) {
+  .gengage-chat-expert-variation-list,
+  .gengage-chat-expert-variation-list--three-up {
+    grid-template-columns: 1fr;
+  }
+
+  .gengage-chat-expert-groups--beauty {
+    grid-template-columns: 1fr;
+  }
+
+  .gengage-chat-expert-group-products,
+  .gengage-chat-expert-group-products--mobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .gengage-chat-expert-group {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-img-wrapper {
+    aspect-ratio: 1 / 1;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-img {
+    width: 100%;
+    max-width: 100%;
+    height: 132px;
+    max-height: none;
+    padding: 8px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-body {
+    padding: 9px 10px 10px;
+    gap: 5px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-name {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-price,
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-price-block {
+    font-size: 14px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-rating-compact {
+    padding: 2px 5px;
+    font-size: 10px;
+    gap: 3px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-buy-footer {
+    padding: 0 10px 10px;
+  }
+
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-buy-trigger,
+  .gengage-chat-root--mobile .gengage-chat-expert-product-tile .gengage-chat-product-card-cta {
+    width: calc(100% - 20px);
+    max-width: calc(100% - 20px);
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
+
+@media (max-width: 479px) {
+  .gengage-chat-expert-group-products,
+  .gengage-chat-expert-group-products--mobile,
+  .gengage-chat-expert-fallback-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -32,6 +32,7 @@ export interface ChatDrawerOptions {
   /** Callback fired when the cart icon button in the header is clicked. */
   onCartClick?: (() => void) | undefined;
   onClose: () => void;
+  onExpertExit?: (() => void) | undefined;
   onAttachment?: (file: File) => void;
   onPanelToggle?: () => void;
   onRollback?: (messageId: string) => void;
@@ -188,6 +189,10 @@ export class ChatDrawer {
   private _typingLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
+  private _expertModeShellEl: HTMLElement | null = null;
+  private _expertModeShellTitleEl: HTMLElement | null = null;
+  private _expertModeShellSubtitleEl: HTMLElement | null = null;
+  private _expertModeShellExitBtn: HTMLButtonElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -595,6 +600,39 @@ export class ChatDrawer {
     this._kvkkSlot.className = 'gengage-chat-kvkk-slot';
     this._kvkkSlot.dataset['gengagePart'] = 'chat-kvkk-slot';
     conversation.appendChild(this._kvkkSlot);
+
+    const expertModeShell = document.createElement('div');
+    expertModeShell.className = 'gengage-chat-expert-shell';
+    expertModeShell.dataset['gengagePart'] = 'chat-expert-shell';
+    expertModeShell.style.display = 'none';
+
+    const expertModeInfo = document.createElement('div');
+    expertModeInfo.className = 'gengage-chat-expert-shell-info';
+
+    const expertModeTitle = document.createElement('div');
+    expertModeTitle.className = 'gengage-chat-expert-shell-title';
+    expertModeTitle.dataset['gengagePart'] = 'chat-expert-shell-title';
+    expertModeInfo.appendChild(expertModeTitle);
+
+    const expertModeSubtitle = document.createElement('div');
+    expertModeSubtitle.className = 'gengage-chat-expert-shell-subtitle';
+    expertModeSubtitle.dataset['gengagePart'] = 'chat-expert-shell-subtitle';
+    expertModeInfo.appendChild(expertModeSubtitle);
+
+    const expertModeExitBtn = document.createElement('button');
+    expertModeExitBtn.type = 'button';
+    expertModeExitBtn.className = 'gengage-chat-expert-shell-exit gds-btn gds-btn-ghost';
+    expertModeExitBtn.dataset['gengagePart'] = 'chat-expert-shell-exit';
+    expertModeExitBtn.textContent = 'Alisverise Don';
+    expertModeExitBtn.addEventListener('click', () => this._options.onExpertExit?.());
+
+    expertModeShell.appendChild(expertModeInfo);
+    expertModeShell.appendChild(expertModeExitBtn);
+    conversation.appendChild(expertModeShell);
+    this._expertModeShellEl = expertModeShell;
+    this._expertModeShellTitleEl = expertModeTitle;
+    this._expertModeShellSubtitleEl = expertModeSubtitle;
+    this._expertModeShellExitBtn = expertModeExitBtn;
 
     // Messages area (stable id for host tooling / getChatScrollElement registration)
     this.messagesEl = document.createElement('div');
@@ -1260,6 +1298,29 @@ export class ChatDrawer {
     for (const child of [...this.messagesEl.children]) {
       if (child !== former) child.remove();
     }
+  }
+
+  setExpertModeShell(payload: { title: string; subtitle?: string | null; exitLabel?: string | null } | null): void {
+    if (
+      !this._expertModeShellEl ||
+      !this._expertModeShellTitleEl ||
+      !this._expertModeShellSubtitleEl ||
+      !this._expertModeShellExitBtn
+    ) {
+      return;
+    }
+    if (!payload) {
+      this._expertModeShellEl.style.display = 'none';
+      this._expertModeShellTitleEl.textContent = '';
+      this._expertModeShellSubtitleEl.textContent = '';
+      return;
+    }
+    this._expertModeShellTitleEl.textContent = payload.title;
+    const subtitle = payload.subtitle?.trim() ?? '';
+    this._expertModeShellSubtitleEl.textContent = subtitle;
+    this._expertModeShellSubtitleEl.style.display = subtitle ? '' : 'none';
+    this._expertModeShellExitBtn.textContent = payload.exitLabel?.trim() || 'Alisverise Don';
+    this._expertModeShellEl.style.display = '';
   }
 
   /** Replace suggestion pills. Pass empty array to hide. */

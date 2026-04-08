@@ -113,6 +113,73 @@ describe('adaptBackendEvent', () => {
     });
   });
 
+  it('adapts expert productList payload into expert-aware ProductGrid props', () => {
+    const raw = {
+      type: 'productList',
+      payload: {
+        source: 'beauty_consulting',
+        title: 'Guzellik Onerileri',
+        product_list_w_reason: [
+          {
+            product_detail: {
+              sku: 'B1',
+              name: 'Soft Foundation',
+              brand: 'Flormar',
+              images: ['https://example.com/b1.jpg'],
+              price: 199,
+              url: 'https://example.com/b1',
+            },
+            selection_reasons: {
+              beauty_consulting: {
+                text: 'Dogal ten gorunumu icin secildi',
+              },
+            },
+          },
+        ],
+        recommendation_groups: [{ label: 'Ten urunu', reason: 'Temel adim', skus: ['B1'] }],
+        style_variations: [
+          {
+            style_label: 'Soft Glam',
+            style_mood: 'Yumusak ve gunluk',
+            image_url: '/remoteConfig/beauty-styles/soft_glam.png',
+            selection_reason: 'Bu stil size en yakin secenek.',
+            product_list: [
+              {
+                sku: 'B1',
+                name: 'Soft Foundation',
+                brand: 'Flormar',
+                images: ['https://example.com/b1.jpg'],
+                price: 199,
+                url: 'https://example.com/b1',
+              },
+            ],
+            recommendation_groups: [{ label: 'Ten urunu', reason: 'Temel adim', skus: ['B1'] }],
+          },
+        ],
+      },
+    };
+
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('ui_spec');
+
+    const uiSpec = result as { spec: { elements: Record<string, { props?: Record<string, unknown> }> } };
+    const rootProps = uiSpec.spec.elements['root']!.props!;
+
+    expect(rootProps['source']).toBe('beauty_consulting');
+    const expertProducts = rootProps['expertProducts'] as Array<Record<string, unknown>>;
+    expect(expertProducts).toHaveLength(1);
+    expect(expertProducts[0]?.['sku']).toBe('B1');
+    expect((expertProducts[0]?.['extras'] as Record<string, unknown>)?.['selection_reasons']).toBeTruthy();
+
+    const recommendationGroups = rootProps['recommendationGroups'] as Array<Record<string, unknown>>;
+    expect(recommendationGroups).toHaveLength(1);
+    expect(recommendationGroups[0]?.['label']).toBe('Ten urunu');
+
+    const styleVariations = rootProps['styleVariations'] as Array<Record<string, unknown>>;
+    expect(styleVariations).toHaveLength(1);
+    expect(styleVariations[0]?.['styleLabel']).toBe('Soft Glam');
+  });
+
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
     const raw = {
       type: 'productDetails',
