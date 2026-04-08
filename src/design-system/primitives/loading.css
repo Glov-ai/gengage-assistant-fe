@@ -45,13 +45,34 @@
 }
 
 :where(.gds-progress-loader-chat) {
+  display: flex;
   align-self: flex-start;
+  min-width: 0;
+  width: 100%;
   max-width: 85%;
+  box-sizing: border-box;
+}
+
+:where(.gds-progress-loader-chat) .gds-progress-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 :where(.gds-progress-loader-panel) {
+  display: flex;
+  align-items: center;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   justify-content: flex-start;
+}
+
+:where(.gds-progress-loader-panel) .gds-progress-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 :where(.gds-progress-label) {

@@ -85,4 +85,28 @@ describe('AITopPicks per-card spinner', () => {
     expect((spinners[0] as HTMLElement).style.display).toBe('none');
     expect((spinners[1] as HTMLElement).style.display).toBe('');
   });
+
+  it('mobil kompaktta CTA olmasa da yükleme eşleşince spinner görünür', () => {
+    const el = {
+      type: 'AITopPicks',
+      props: {
+        suggestions: [
+          makeSuggestion(),
+          {
+            product: { name: 'Alt', sku: 'SKU2', price: '50 TL' },
+            role: 'best_value',
+            action: { title: 'View', type: 'test', payload: {} },
+          },
+        ],
+      },
+    };
+    const result = renderAITopPicks(
+      el as never,
+      makeCtx({ isMobile: true, topPicksLoadingSku: 'SKU2' }),
+    );
+    expect(result.querySelectorAll('.gengage-chat-ai-toppick-cta')).toHaveLength(1);
+    const spinners = result.querySelectorAll('.gengage-chat-ai-toppick-spinner');
+    expect(spinners.length).toBe(2);
+    expect((spinners[1] as HTMLElement).style.display).toBe('');
+  });
 });

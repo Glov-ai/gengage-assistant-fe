@@ -137,7 +137,7 @@ describe('adaptBackendEvent', () => {
     expect(product['specifications']).toEqual({ Color: 'Black' });
   });
 
-  it('adapts productDetails with hide_side_panel to ProductSummaryCard and clearPanel', () => {
+  it('ignores legacy hide_side_panel on productDetails (client uses productDetailsExtended)', () => {
     const raw = {
       type: 'productDetails',
       payload: {
@@ -152,10 +152,10 @@ describe('adaptBackendEvent', () => {
     };
     const result = adaptBackendEvent(raw)!;
     expect(result.type).toBe('ui_spec');
-    expect((result as { panelHint?: string }).panelHint).toBeUndefined();
-    expect((result as { clearPanel?: boolean }).clearPanel).toBe(true);
+    expect((result as { panelHint?: string }).panelHint).toBe('panel');
+    expect((result as { clearPanel?: boolean }).clearPanel).toBeUndefined();
     const uiSpec = result as { spec: { elements: Record<string, { type: string }> } };
-    expect(uiSpec.spec.elements['root']!.type).toBe('ProductSummaryCard');
+    expect(uiSpec.spec.elements['root']!.type).toBe('ProductDetailsPanel');
   });
 
   it('adapts productDetailsSimilars to chat panel ui_spec', () => {

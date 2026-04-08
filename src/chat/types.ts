@@ -129,6 +129,14 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
    */
   isDemoWebsite?: boolean;
 
+  /**
+   * When `true`, full `ProductDetailsPanel` and PDP “benzer ürünler” (`similarsAppend` grid) use
+   * the assistant side panel; demo extended mode includes `productDetails`. Default `false`/omitted:
+   * PDP + benzer ürünler yalnızca sohbet akışında; yan panel bu parçalarda temizlenir.
+   * `ProductSummaryCard` stream ve grid seçiminde her zaman (sessiz mesajlar hariç).
+   */
+  productDetailsExtended?: boolean;
+
   // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
   // -------------------------------------------------------------------------

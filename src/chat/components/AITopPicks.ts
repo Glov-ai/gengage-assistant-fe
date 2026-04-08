@@ -70,7 +70,13 @@ function renderRatingRow(product: Record<string, unknown>): HTMLElement | null {
 }
 
 /** Image-focused media with the same lightweight hover actions as listing cards. */
-function appendTopPickMedia(item: AITopPickItem, alt: string, target: HTMLElement, ctx: ChatUISpecRenderContext): void {
+function appendTopPickMedia(
+  item: AITopPickItem,
+  alt: string,
+  target: HTMLElement,
+  ctx: ChatUISpecRenderContext,
+  options?: { skipOverlayActions?: boolean },
+): void {
   const media = document.createElement('div');
   media.className = 'gengage-chat-ai-toppick-media';
   media.dataset['gengagePart'] = 'ai-top-pick-media';
@@ -89,7 +95,7 @@ function appendTopPickMedia(item: AITopPickItem, alt: string, target: HTMLElemen
   }
 
   const sku = resolveActionSku(item);
-  if (sku) {
+  if (sku && !options?.skipOverlayActions) {
     const imgActions = document.createElement('div');
     imgActions.className = 'gengage-chat-product-card-img-actions';
 
@@ -226,12 +232,13 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
     });
   }
   const alt = (product['name'] as string) || 'Product image';
+  const compactMobile = !isWinner && ctx.isMobile === true;
 
   /* Lean: span.absolute.-top-2.5.left-3 — no wrapper */
   const roleLabel = isWinner
     ? (getRoleLabel(item.role, ctx.i18n) ?? ctx.i18n?.roleWinner ?? 'TOP MATCH')
     : getRoleLabel(item.role, ctx.i18n);
-  if (roleLabel) {
+  if (roleLabel && !compactMobile) {
     const badge = document.createElement('span');
     badge.className = 'gengage-chat-ai-toppick-badge gds-badge';
     badge.dataset['gengagePart'] = 'ai-top-pick-role-badge';
@@ -239,11 +246,22 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
     card.appendChild(badge);
   }
 
-  appendTopPickMedia(item, alt, card, ctx);
+  const topRow = document.createElement('div');
+  topRow.className = 'gengage-chat-ai-toppick-top-row';
+  topRow.dataset['gengagePart'] = 'ai-top-pick-top-row';
+  appendTopPickMedia(item, alt, topRow, ctx, { skipOverlayActions: compactMobile });
 
   const body = document.createElement('div');
   body.className = 'gengage-chat-ai-toppick-body';
   body.dataset['gengagePart'] = 'ai-top-pick-body';
+
+  if (roleLabel && compactMobile) {
+    const roleLine = document.createElement('div');
+    roleLine.className = 'gengage-chat-ai-toppick-role-line';
+    roleLine.dataset['gengagePart'] = 'ai-top-pick-role-line';
+    roleLine.textContent = roleLabel;
+    body.appendChild(roleLine);
+  }
 
   const name = product['name'] as string | undefined;
   if (name) {
@@ -264,44 +282,65 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
     body.appendChild(renderSentimentChips(item.labels));
   }
 
+  topRow.appendChild(body);
+  card.appendChild(topRow);
+
+  const detail = document.createElement('div');
+  detail.className = 'gengage-chat-ai-toppick-detail';
+  detail.dataset['gengagePart'] = 'ai-top-pick-detail';
   if (isWinner) {
-    appendWinnerEvidence(item, body);
+    appendWinnerEvidence(item, detail);
+  } else {
+    const snippet = typeof item.reason === 'string' ? item.reason.trim() : '';
+    if (snippet) {
+      const snippetEl = document.createElement('p');
+      snippetEl.className = 'gengage-chat-ai-toppick-snippet';
+      snippetEl.dataset['gengagePart'] = 'ai-top-pick-snippet';
+      snippetEl.textContent = snippet;
+      detail.appendChild(snippetEl);
+    }
+  }
+  if (detail.childNodes.length > 0) {
+    card.appendChild(detail);
   }
 
-  card.appendChild(body);
+  const wantSpinner = !!(sku && ctx.topPicksLoadingSku === sku);
+  const showCta = (hasCart || action) && !compactMobile;
 
-  if (hasCart || action) {
+  if (wantSpinner || hasCart || action) {
     const spinner = document.createElement('div');
     spinner.className = 'gengage-chat-ai-toppick-spinner';
     spinner.dataset['gengagePart'] = 'ai-top-pick-spinner';
-    spinner.style.display = sku && ctx.topPicksLoadingSku === sku ? '' : 'none';
+    spinner.style.display = wantSpinner ? '' : 'none';
     card.appendChild(spinner);
 
-    const cta = document.createElement('button');
-    cta.className = 'gengage-chat-ai-toppick-cta gds-btn gds-btn-primary';
-    cta.dataset['gengagePart'] = 'ai-top-pick-cta';
-    cta.type = 'button';
-    cta.textContent = hasCart
-      ? (ctx.i18n?.addToCartButton ?? 'Add to Cart')
-      : (ctx.i18n?.viewDetails ?? 'View Details');
-    cta.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (hasCart) {
-        ctx.onAction({
-          title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
-          type: 'addToCart',
-          payload: { sku: sku!, cartCode: cartCode!, quantity: 1 },
-        });
-        return;
-      }
-      if (!action) return;
-      if (action.type === 'findSimilar' && sku && ctx.onProductClick) {
-        ctx.onProductClick({ sku, url });
-        return;
-      }
-      ctx.onAction(action);
-    });
-    card.appendChild(cta);
+    if (showCta) {
+      const cta = document.createElement('button');
+      cta.className = 'gengage-chat-ai-toppick-cta gds-btn gds-btn-primary';
+      cta.dataset['gengagePart'] = 'ai-top-pick-cta';
+      cta.type = 'button';
+      cta.textContent = hasCart
+        ? (ctx.i18n?.addToCartButton ?? 'Add to Cart')
+        : (ctx.i18n?.viewDetails ?? 'View Details');
+      cta.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (hasCart) {
+          ctx.onAction({
+            title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+            type: 'addToCart',
+            payload: { sku: sku!, cartCode: cartCode!, quantity: 1 },
+          });
+          return;
+        }
+        if (!action) return;
+        if (action.type === 'findSimilar' && sku && ctx.onProductClick) {
+          ctx.onProductClick({ sku, url });
+          return;
+        }
+        ctx.onAction(action);
+      });
+      card.appendChild(cta);
+    }
   }
 
   return card;
@@ -325,10 +364,20 @@ export function renderAITopPicks(element: UIElement, ctx: ChatUISpecRenderContex
   scrollRow.className = 'gengage-chat-ai-top-picks-scroll';
   scrollRow.dataset['gengagePart'] = 'ai-top-picks-scroll';
 
-  for (let i = 0; i < suggestions.length; i++) {
-    const suggestion = suggestions[i]!;
-    const isWinner = suggestion.role === 'winner' || i === 0;
-    scrollRow.appendChild(renderPickCard(suggestion, ctx, isWinner));
+  const first = suggestions[0]!;
+  /* First suggestion always uses winner/highlight card chrome (parity: i === 0 in old loop). */
+  scrollRow.appendChild(renderPickCard(first, ctx, true));
+
+  if (suggestions.length > 1) {
+    const rest = document.createElement('div');
+    rest.className = 'gengage-chat-ai-top-picks-rest';
+    rest.dataset['gengagePart'] = 'ai-top-picks-rest';
+    for (let i = 1; i < suggestions.length; i++) {
+      const suggestion = suggestions[i]!;
+      const isWinner = suggestion.role === 'winner' || i === 0;
+      rest.appendChild(renderPickCard(suggestion, ctx, isWinner));
+    }
+    scrollRow.appendChild(rest);
   }
 
   container.appendChild(scrollRow);
