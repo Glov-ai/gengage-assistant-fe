@@ -1166,7 +1166,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
         btn.appendChild(priceEl);
       }
 
-      if (variantSku) {
+      if (variantSku && variantSku !== sku) {
         const productName = name ?? '';
         const variantHuman =
           (typeof variant['value'] === 'string' ? variant['value'].trim() : '') ||
