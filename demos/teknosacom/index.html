@@ -649,6 +649,12 @@
         if (launcherImg instanceof HTMLImageElement && launcherImg.getAttribute('src') !== avatarUrl) {
           launcherImg.src = avatarUrl;
         }
+        // The bootstrap placeholder launcher makes launcherImageUrl !== headerAvatarUrl, which
+        // causes ChatDrawer to apply logo styling to the header avatar. Restore circular treatment.
+        const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
+        if (headerAvatar instanceof HTMLImageElement) {
+          headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
+        }
         if (launcher.querySelector('.teknosa-launcher-label')) return true;
         launcher.setAttribute('aria-label', "Teknosa'ya Sor");
         const label = document.createElement('span');
