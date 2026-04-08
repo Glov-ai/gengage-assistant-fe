@@ -139,6 +139,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
   private _drawerVisible = false;
+  /** Host document scroll frozen (floating/overlay + drawer open). */
+  private _hostScrollLockActive = false;
+  private _hostScrollLockScrollY = 0;
+  private _hostScrollLockPriorStyles: Record<string, string> | null = null;
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
   // corruption when concurrent preservePanel streams write simultaneously.
@@ -388,7 +392,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Extended mode manager for host PDP maximize/minimize
     this._extendedModeManager = new ExtendedModeManager({
       onChange: (extended) => this._panel?.notifyExtension(extended),
-      productDetailsInPanel: config.isDemoWebsite ?? false,
+      productDetailsInPanel: (config.isDemoWebsite ?? false) && (config.productDetailsExtended ?? false),
     });
 
     // Panel manager for snapshot/topbar/navigation state
@@ -557,6 +561,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   protected onDestroy(): void {
+    this._releaseHostDocumentScrollLock();
     this._abortAllActiveRequests();
     this._activeTypewriter?.cancel();
     this._activeTypewriter = null;
@@ -722,6 +727,27 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._presentation.reset();
     this._drawer?.setPresentationFocus(null);
     this._drawer?.setFormerMessagesButtonVisible(false);
+  }
+
+  /**
+   * Same side effects as stream UISpec `clearPanel`: hide/clear the assistant panel without
+   * `restoreOrClearPanel()`. Used for `clearPanel` chunks and PDP chat layout (`productDetailsExtended` off).
+   */
+  private _clearAssistantPanelLikeStreamClearPanel(): void {
+    this._choicePrompterEl?.remove();
+    this._choicePrompterEl = null;
+    this._drawer?.clearPanel();
+    this._currentPanelSource = null;
+    this._thumbnailEntries = [];
+    this._drawer?.setThumbnails([]);
+    this._comparisonSelectMode = false;
+    this._comparisonSelectedSkus = [];
+    this._comparisonSelectionWarning = null;
+    if (this._panel) {
+      this._panel.currentType = null;
+      this._panel.updateExtendedMode('');
+      this._panel.updateTopBar('');
+    }
   }
 
   private _flushPresentationScroll(): void {
@@ -1174,6 +1200,73 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (this._backdropEl) {
       this._backdropEl.setAttribute('aria-hidden', this._drawerVisible ? 'false' : 'true');
     }
+    this._syncHostDocumentScrollLock();
+  }
+
+  private _syncHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined') return;
+    const variant = this.config.variant ?? 'floating';
+    if (variant === 'inline') {
+      this._releaseHostDocumentScrollLock();
+      return;
+    }
+    if (this._drawerVisible) {
+      this._applyHostDocumentScrollLock();
+    } else {
+      this._releaseHostDocumentScrollLock();
+    }
+  }
+
+  private _applyHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined' || this._hostScrollLockActive) return;
+    const html = document.documentElement;
+    const body = document.body;
+    if (!body) return;
+
+    this._hostScrollLockScrollY = window.scrollY ?? window.pageYOffset ?? 0;
+    this._hostScrollLockPriorStyles = {
+      htmlOverflow: html.style.overflow,
+      htmlOverscroll: html.style.overscrollBehavior,
+      bodyOverflow: body.style.overflow,
+      bodyOverscroll: body.style.overscrollBehavior,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width,
+    };
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    body.style.position = 'fixed';
+    body.style.top = `-${this._hostScrollLockScrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    this._hostScrollLockActive = true;
+  }
+
+  private _releaseHostDocumentScrollLock(): void {
+    if (typeof document === 'undefined' || !this._hostScrollLockActive) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const y = this._hostScrollLockScrollY;
+    const prior = this._hostScrollLockPriorStyles;
+    html.style.overflow = prior?.htmlOverflow ?? '';
+    html.style.overscrollBehavior = prior?.htmlOverscroll ?? '';
+    body.style.overflow = prior?.bodyOverflow ?? '';
+    body.style.overscrollBehavior = prior?.bodyOverscroll ?? '';
+    body.style.position = prior?.bodyPosition ?? '';
+    body.style.top = prior?.bodyTop ?? '';
+    body.style.left = prior?.bodyLeft ?? '';
+    body.style.right = prior?.bodyRight ?? '';
+    body.style.width = prior?.bodyWidth ?? '';
+    this._hostScrollLockActive = false;
+    this._hostScrollLockPriorStyles = null;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, y);
+    });
   }
 
   private _handleAttachment(file: File): void {
@@ -1627,28 +1720,25 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           if (widget !== 'chat') return;
 
-          // productDetails + hide_side_panel → StreamEventUISpec.clearPanel (see protocol-adapter).
-          // Always hide/clear the left panel; do not use restoreOrClearPanel() here — that path
-          // restores the pre-loading snapshot while the skeleton is shown, which breaks chat-only PDP.
+          // StreamEventUISpec.clearPanel: hide/clear the assistant panel. Do not use
+          // restoreOrClearPanel() here — that restores the pre-loading snapshot while the skeleton
+          // is shown and breaks intended panel-dismiss behavior.
           if (clearPanel) {
-            this._choicePrompterEl?.remove();
-            this._choicePrompterEl = null;
-            this._drawer?.clearPanel();
-            this._currentPanelSource = null;
+            this._clearAssistantPanelLikeStreamClearPanel();
             panelLoadingSeen = false;
-            this._thumbnailEntries = [];
-            this._drawer?.setThumbnails([]);
-            this._comparisonSelectMode = false;
-            this._comparisonSelectedSkus = [];
-            if (this._panel) {
-              this._panel.currentType = null;
-              this._panel.updateExtendedMode('');
-              this._panel.updateTopBar('');
-            }
           }
 
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
+          const similarsAppendGrid = componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
+          /** PDP akışında yan panel kapalı: tam detay + benzer ürün grid’i yalnızca sohbette. */
+          const skipSidePanelForUISpec =
+            this.config.productDetailsExtended !== true &&
+            (componentType === 'ProductDetailsPanel' || similarsAppendGrid);
+          if (skipSidePanelForUISpec && !clearPanel) {
+            this._clearAssistantPanelLikeStreamClearPanel();
+            panelLoadingSeen = false;
+          }
           const effectivePanelHint =
             componentType === 'ProductDetailsPanel' && panelHint !== 'panel' ? ('panel' as const) : panelHint;
           this.track(
@@ -1675,7 +1765,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
-          if (effectivePanelHint === 'panel' && this._panel) {
+          if (effectivePanelHint === 'panel' && this._panel && !skipSidePanelForUISpec) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
 
@@ -1779,6 +1869,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 }
                 inline.scrollIntoView({ behavior: 'auto', block: 'end' });
                 this._drawer?.refreshPresentationCollapsed();
+                panelContentReceived = true;
               }
             }
           }
@@ -1786,6 +1877,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const isAiAnalysisComponent = componentType === 'AITopPicks' || componentType === 'AIGroupingCards';
           let routeAiAnalysisToPanel = false;
           let deferAiPanelUntilGrid = false;
+          if (skipSidePanelForUISpec && similarsAppendGrid) {
+            renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
+          }
           if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
             if (panelListEligibleForAiZone) {
               const aiEl = this._renderUISpec(spec, renderContext);
@@ -1801,7 +1895,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const shouldRenderInline =
             !botMsg.silent &&
-            (effectivePanelHint !== 'panel' || componentType === 'ProductCard') &&
+            (effectivePanelHint !== 'panel' ||
+              componentType === 'ProductCard' ||
+              (skipSidePanelForUISpec && componentType === 'ProductGrid')) &&
             componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
@@ -1816,6 +1912,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               messagesContainer.appendChild(inline);
               inline.scrollIntoView({ behavior: 'auto', block: 'end' });
               this._drawer?.refreshPresentationCollapsed();
+              if (skipSidePanelForUISpec && componentType === 'ProductGrid') {
+                panelContentReceived = true;
+              }
             }
           }
 
@@ -1869,6 +1968,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (
             componentType === 'ProductGrid' &&
             effectivePanelHint === 'panel' &&
+            !skipSidePanelForUISpec &&
             productGridChildCount > 1 &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
@@ -2030,17 +2130,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
             // Panel loading indicator
             if (event.meta.panelLoading) {
-              panelLoadingSeen = true;
-              panelContentReceived = false;
-              // Snapshot current panel before replacing with skeleton
-              capturePanelSourceIfNeeded();
               const pendingType =
                 typeof event.meta.panelPendingType === 'string' ? event.meta.panelPendingType : undefined;
-              if (this._panel) this._panel.currentType = null;
-              this._drawer?.showPanelLoading(pendingType);
-              // Set panel topbar title immediately so it's not an empty white bar
-              if (pendingType) {
-                this._panel?.updateTopBarForLoading(pendingType);
+              const suppressProductDetailsSkeleton =
+                this.config.productDetailsExtended !== true &&
+                (pendingType === 'productDetails' || pendingType === 'productDetailsSimilars');
+              if (!suppressProductDetailsSkeleton) {
+                panelLoadingSeen = true;
+                panelContentReceived = false;
+                // Snapshot current panel before replacing with skeleton
+                capturePanelSourceIfNeeded();
+                if (this._panel) this._panel.currentType = null;
+                this._drawer?.showPanelLoading(pendingType);
+                // Set panel topbar title immediately so it's not an empty white bar
+                if (pendingType) {
+                  this._panel?.updateTopBarForLoading(pendingType);
+                }
               }
             }
 
@@ -2076,7 +2181,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
 
             // Analyze animation — show panel loading skeleton with pulse
-            if (event.meta.analyzeAnimation) {
+            if (event.meta.analyzeAnimation && this.config.productDetailsExtended === true) {
               panelLoadingSeen = true;
               panelContentReceived = false;
               capturePanelSourceIfNeeded();
@@ -3101,6 +3206,27 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._localPanelHistory.push({ source: this._currentPanelSource, title: currentTitle });
           if (this._localPanelHistory.length > GengageChat._MAX_PANEL_HISTORY) this._localPanelHistory.shift();
         }
+        const summaryCtx = this._buildRenderContext();
+        const summarySpec: import('../common/types.js').UISpec = {
+          root: 'root',
+          elements: {
+            root: { type: 'ProductSummaryCard', props: { product } },
+          },
+        };
+        const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
+        if (messagesContainer) {
+          const summaryEl = this._renderUISpec(summarySpec, summaryCtx);
+          if (this._currentThreadId) {
+            summaryEl.dataset['threadId'] = this._currentThreadId;
+          }
+          messagesContainer.appendChild(summaryEl);
+          summaryEl.scrollIntoView({ behavior: 'auto', block: 'end' });
+          this._drawer?.refreshPresentationCollapsed();
+        }
+        if (this.config.productDetailsExtended !== true) {
+          this._clearAssistantPanelLikeStreamClearPanel();
+          return;
+        }
         const detailSpec: import('../common/types.js').UISpec = {
           root: 'root',
           elements: {
@@ -3347,9 +3473,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // so we identify panel-only status by component type.
     // ProductDetailsPanel is panel-only but gets a compact ProductSummaryCard below.
     // ComparisonTable is always panel-only.
-    // ProductGrid with similarsAppend is panel-appended, not inline.
+    // ProductGrid with similarsAppend is panel-appended unless PDP is chat-only layout.
     if (componentType === 'ComparisonTable') return;
-    if (componentType === 'ProductGrid' && rootElement.props?.['similarsAppend'] === true) return;
+    if (
+      componentType === 'ProductGrid' &&
+      rootElement.props?.['similarsAppend'] === true &&
+      this.config.productDetailsExtended === true
+    )
+      return;
 
     const renderContext = this._buildRenderContext();
     const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');

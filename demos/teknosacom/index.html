@@ -490,6 +490,7 @@
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
       const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
+      const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
       const controller = await initOverlayWidgets({
         accountId: 'teknosacom',
@@ -516,11 +517,12 @@
           '--gengage-chat-launcher-size': '64px',
         },
         isDemoWebsite: true,
+        productDetailsExtended: true,
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Teknosa'ya Sor",
-          launcherImageUrl: avatarUrl,
+          launcherImageUrl: launcherBootstrapImage,
           headerAvatarUrl: avatarUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
@@ -643,9 +645,18 @@
         }
 
         const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
-        if (!(launcher instanceof HTMLButtonElement) || launcher.querySelector('.teknosa-launcher-label')) {
-          return launcher instanceof HTMLButtonElement;
+        if (!(launcher instanceof HTMLButtonElement)) return false;
+        const launcherImg = launcher.querySelector('img');
+        if (launcherImg instanceof HTMLImageElement && launcherImg.getAttribute('src') !== avatarUrl) {
+          launcherImg.src = avatarUrl;
         }
+        // The bootstrap placeholder launcher makes launcherImageUrl !== headerAvatarUrl, which
+        // causes ChatDrawer to apply logo styling to the header avatar. Restore circular treatment.
+        const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
+        if (headerAvatar instanceof HTMLImageElement) {
+          headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
+        }
+        if (launcher.querySelector('.teknosa-launcher-label')) return true;
         launcher.setAttribute('aria-label', "Teknosa'ya Sor");
         const label = document.createElement('span');
         label.className = 'teknosa-launcher-label';

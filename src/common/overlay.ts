@@ -98,6 +98,8 @@ export interface OverlayChatOptions {
   actionHandling?: ChatWidgetConfig['actionHandling'];
   /** UISpec renderer overrides for chat components. */
   renderer?: ChatWidgetConfig['renderer'];
+  /** When true, allow full product details in the assistant side panel; default is chat summary only. */
+  productDetailsExtended?: boolean;
 }
 
 export interface OverlayQNAOptions {
@@ -328,6 +330,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       config.actionHandling = this.options.chat.actionHandling;
     }
     if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
+    if (this.options.chat?.productDetailsExtended !== undefined) {
+      config.productDetailsExtended = this.options.chat.productDetailsExtended;
+    }
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
     }

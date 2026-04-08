@@ -663,8 +663,9 @@ Use `count: 0` to hide the badge.
 
 ## Product Detail Panel
 
-Clicking a product card in the chat stream opens a `ProductDetailsPanel` in the
-left-side panel area. The panel shows detailed product information:
+Clicking a product card in the chat stream shows a compact `ProductSummaryCard`
+inline. When `productDetailsExtended: true` is set, a full `ProductDetailsPanel`
+also opens in the left-side panel area. The panel shows detailed product information:
 
 - **Image** — full product image at the top.
 - **Name** — product title as an `<h3>`.

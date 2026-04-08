@@ -123,11 +123,19 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   // -------------------------------------------------------------------------
 
   /**
-   * Whether this is a demo website. When true, `productDetails` content
-   * triggers the extended panel (host PDP maximize). Regular accounts
-   * render product details inline in the chat pane.
+   * Whether this is a demo website. When combined with `productDetailsExtended: true`,
+   * `productDetails` content triggers the extended panel (host PDP maximize).
+   * Regular accounts render product details inline in the chat pane.
    */
   isDemoWebsite?: boolean;
+
+  /**
+   * When `true`, full `ProductDetailsPanel` and PDP similar products (`similarsAppend` grid) use
+   * the assistant side panel; demo extended mode includes `productDetails`. Default `false`/omitted:
+   * product details and similar products render only in the chat stream; the side panel is cleared.
+   * `ProductSummaryCard` always renders inline (except for silent messages).
+   */
+  productDetailsExtended?: boolean;
 
   // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
