@@ -588,6 +588,12 @@ describe('productToNormalized', () => {
       review_count: 100,
       cart_code: 'CC1',
       in_stock: true,
+      description: 'Long wearing color',
+      description_html: '<p>Long wearing color</p>',
+      features: [{ name: 'Renk', value: '003 ROSY GLOW' }],
+      specifications: { Hacim: '12 ML' },
+      facet_hits: { Renk: '003 ROSY GLOW' },
+      short_name: 'Color Master',
     };
 
     const result = productToNormalized(raw);
@@ -603,6 +609,12 @@ describe('productToNormalized', () => {
     expect(result.reviewCount).toBe(100);
     expect(result.cartCode).toBe('CC1');
     expect(result.inStock).toBe(true);
+    expect(result.description).toBe('Long wearing color');
+    expect(result.descriptionHtml).toBe('<p>Long wearing color</p>');
+    expect(result.features).toEqual([{ name: 'Renk', value: '003 ROSY GLOW' }]);
+    expect(result.specifications).toEqual({ Hacim: '12 ML' });
+    expect(result.facetHits).toEqual({ Renk: '003 ROSY GLOW' });
+    expect(result.shortName).toBe('Color Master');
   });
 
   it('does not duplicate brand in name if already present', () => {

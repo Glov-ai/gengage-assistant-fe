@@ -24,7 +24,12 @@ import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
-import { clampRating, clampDiscount, addImageErrorHandler } from '../../common/product-utils.js';
+import {
+  clampRating,
+  clampDiscount,
+  addImageErrorHandler,
+  createStarRatingElement,
+} from '../../common/product-utils.js';
 
 export type UISpecRenderContext = ChatUISpecRenderContext;
 
@@ -495,6 +500,304 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
 /* clampRating, clampDiscount, addImageErrorHandler, renderStarRating
    are imported from ../../common/product-utils.js */
 
+type ProductFeatureEntry = { key: string; value: string };
+type ProductDescriptionContent = { text: string; html?: string };
+
+const COLOR_VARIANT_NAMES = new Set(['color', 'colour', 'renk', 'renk kodu', 'color code']);
+const SIZE_VARIANT_NAMES = new Set(['size', 'beden', 'boyut']);
+const FINISH_VARIANT_NAMES = new Set(['finish', 'bitiş', 'bitişi']);
+const VARIANT_ARRAY_KEYS = [
+  'variants',
+  'variantOptions',
+  'variant_options',
+  'productVariants',
+  'product_variants',
+  'options',
+];
+const PRODUCT_DESCRIPTION_ALLOWED_TAGS = new Set([
+  'H2',
+  'H3',
+  'H4',
+  'P',
+  'BR',
+  'UL',
+  'OL',
+  'LI',
+  'STRONG',
+  'B',
+  'EM',
+  'I',
+]);
+const PRODUCT_DESCRIPTION_BLOCKED_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'OBJECT', 'EMBED']);
+
+function productString(product: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = product[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) return trimmed;
+    }
+  }
+  return undefined;
+}
+
+function productNumber(product: Record<string, unknown>, ...keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = product[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value.replace(',', '.'));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function productBoolean(product: Record<string, unknown>, ...keys: string[]): boolean | undefined {
+  for (const key of keys) {
+    const value = product[key];
+    if (typeof value === 'boolean') return value;
+  }
+  return undefined;
+}
+
+function productRecord(product: Record<string, unknown>, ...keys: string[]): Record<string, unknown> | undefined {
+  for (const key of keys) {
+    const value = product[key];
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+  }
+  return undefined;
+}
+
+function productStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+}
+
+function productImageList(product: Record<string, unknown>): string[] {
+  const urls = [
+    ...productStringArray(product['images']),
+    productString(product, 'imageUrl', 'image_url', 'image'),
+  ].filter((url): url is string => !!url && isSafeUrl(url));
+  return Array.from(new Set(urls));
+}
+
+function htmlToPlainText(html: string): string {
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function productDescription(product: Record<string, unknown>): ProductDescriptionContent | undefined {
+  const html = productString(product, 'description_html', 'descriptionHtml');
+  if (html) {
+    const text = htmlToPlainText(html);
+    if (text) return { text, html };
+  }
+
+  const description = productString(product, 'description');
+  return description ? { text: description } : undefined;
+}
+
+function normalizeProductFeatures(value: unknown): ProductFeatureEntry[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry): ProductFeatureEntry | null => {
+        if (!entry || typeof entry !== 'object') return null;
+        const record = entry as Record<string, unknown>;
+        const key = productString(record, 'key', 'name', 'label', 'title');
+        const rawValue = record['value'];
+        const val =
+          typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean'
+            ? String(rawValue).trim()
+            : undefined;
+        if (!key || !val) return null;
+        return { key, value: val };
+      })
+      .filter((entry): entry is ProductFeatureEntry => entry !== null);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, rawValue]): ProductFeatureEntry | null => {
+        const val =
+          typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean'
+            ? String(rawValue).trim()
+            : undefined;
+        if (!key || !val) return null;
+        return { key, value: val };
+      })
+      .filter((entry): entry is ProductFeatureEntry => entry !== null);
+  }
+
+  return [];
+}
+
+function productFeatureEntries(product: Record<string, unknown>): ProductFeatureEntry[] {
+  const features = normalizeProductFeatures(product['features']);
+  if (features.length > 0) return features;
+  return normalizeProductFeatures(product['specifications']);
+}
+
+function productSpecifications(
+  product: Record<string, unknown>,
+): Record<string, string> | Array<{ key: string; value: string }> | undefined {
+  const explicit = product['specifications'];
+  const explicitEntries = normalizeProductFeatures(explicit);
+  if (explicitEntries.length > 0) {
+    return Array.isArray(explicit)
+      ? explicitEntries
+      : Object.fromEntries(explicitEntries.map((item) => [item.key, item.value]));
+  }
+
+  const featureEntries = normalizeProductFeatures(product['features']);
+  return featureEntries.length > 0 ? featureEntries : undefined;
+}
+
+function variantString(variant: Record<string, unknown>, ...keys: string[]): string | undefined {
+  return productString(variant, ...keys);
+}
+
+function variantNumber(variant: Record<string, unknown>, ...keys: string[]): number | undefined {
+  return productNumber(variant, ...keys);
+}
+
+function variantDisplayLabel(variant: Record<string, unknown>): string | undefined {
+  return variantString(
+    variant,
+    'value',
+    'option_value',
+    'attribute_value',
+    'label',
+    'title',
+    'name',
+    'variant_name',
+    'sku',
+  );
+}
+
+function variantTypeName(variant: Record<string, unknown>): string | undefined {
+  const explicitType = variantString(variant, 'type', 'attribute', 'option_name', 'attribute_name');
+  if (explicitType) return explicitType;
+  return variantString(variant, 'value') ? variantString(variant, 'name', 'variant_name') : undefined;
+}
+
+function isColorVariant(variant: Record<string, unknown>): boolean {
+  const typeName = variantTypeName(variant)?.toLowerCase();
+  return !!(
+    productString(variant, 'color', 'colour', 'color_hex', 'hex', 'swatch', 'swatchColor') ||
+    (typeName && COLOR_VARIANT_NAMES.has(typeName))
+  );
+}
+
+function safeCssColor(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes(';')) return undefined;
+  if (typeof CSS !== 'undefined' && CSS.supports?.('color', trimmed)) return trimmed;
+  if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(trimmed)) return trimmed;
+  return undefined;
+}
+
+function variantSwatchColor(variant: Record<string, unknown>): string | undefined {
+  const explicit = safeCssColor(variantString(variant, 'swatchColor', 'swatch', 'color_hex', 'hex', 'color', 'colour'));
+  if (explicit) return explicit;
+  if (!isColorVariant(variant)) return undefined;
+  return safeCssColor(variantDisplayLabel(variant));
+}
+
+function variantImage(variant: Record<string, unknown>): string | undefined {
+  return variantString(variant, 'image', 'imageUrl', 'image_url', 'swatchImage', 'swatch_image');
+}
+
+function variantPrice(variant: Record<string, unknown>): number | string | undefined {
+  return (
+    variantNumber(variant, 'price_discounted', 'priceDiscounted') ??
+    variantString(variant, 'price_discounted', 'priceDiscounted') ??
+    variantNumber(variant, 'price') ??
+    variantString(variant, 'price')
+  );
+}
+
+function isVariantFacetName(key: string): boolean {
+  const normalized = key.trim().toLowerCase();
+  return (
+    COLOR_VARIANT_NAMES.has(normalized) || SIZE_VARIANT_NAMES.has(normalized) || FINISH_VARIANT_NAMES.has(normalized)
+  );
+}
+
+function canonicalVariantFacetName(key: string): string {
+  const normalized = key.trim().toLowerCase();
+  if (normalized === 'renk kodu') return 'Renk';
+  if (normalized === 'color code') return 'Color';
+  return key.trim();
+}
+
+function recordVariantArrays(product: Record<string, unknown>): Array<Record<string, unknown>> | undefined {
+  for (const key of VARIANT_ARRAY_KEYS) {
+    const value = product[key];
+    if (!Array.isArray(value)) continue;
+    const variants = value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object' && !Array.isArray(item),
+    );
+    if (variants.length > 0) return variants;
+  }
+  return undefined;
+}
+
+function productVariants(product: Record<string, unknown>): Array<Record<string, unknown>> {
+  const explicitVariants = recordVariantArrays(product);
+  if (explicitVariants) return explicitVariants;
+
+  const sku = productString(product, 'sku');
+  const inStock = productBoolean(product, 'inStock', 'in_stock');
+  const fallbackVariants: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+
+  const addVariant = (key: string, value: unknown) => {
+    if (!isVariantFacetName(key)) return;
+    if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') return;
+    const variantValue = String(value).trim();
+    if (!variantValue) return;
+    const variantName = canonicalVariantFacetName(key);
+    const dedupeKey = `${variantName.toLowerCase()}:${variantValue.toLowerCase()}`;
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    fallbackVariants.push({
+      name: variantName,
+      value: variantValue,
+      sku,
+      inStock,
+    });
+  };
+
+  const facetHits = productRecord(product, 'facetHits', 'facet_hits');
+  if (facetHits) {
+    for (const [key, value] of Object.entries(facetHits)) {
+      addVariant(key, value);
+    }
+  }
+
+  for (const feature of productFeatureEntries(product)) {
+    addVariant(feature.key, feature.value);
+  }
+
+  return fallbackVariants;
+}
+
+function variantSectionLabel(variants: Array<Record<string, unknown>>, ctx: UISpecRenderContext): string {
+  const types = Array.from(new Set(variants.map(variantTypeName).filter((label): label is string => !!label)));
+  if (types.length === 1) return `${variants.length} ${types[0]}`;
+  return ctx.i18n?.variantsLabel ?? 'Variants';
+}
+
 function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
   const panel = document.createElement('article');
   panel.className = 'gengage-chat-product-details-panel';
@@ -502,11 +805,21 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const product = (element.props?.['product'] ?? element.props) as Record<string, unknown> | undefined;
   if (!product) return panel;
 
-  // Image gallery or single image
-  const images = product['images'] as string[] | undefined;
-  const imageUrl = product['imageUrl'] as string | undefined;
+  const name = productString(product, 'name');
+  const brand = productString(product, 'brand');
+  const sku = productString(product, 'sku');
+  const cartCode = productString(product, 'cartCode', 'cart_code');
+  const price = productString(product, 'price');
+  const originalPrice = productString(product, 'originalPrice', 'price_original');
+  const priceAsync = productBoolean(product, 'price_async');
+  const inStock = productBoolean(product, 'inStock', 'in_stock');
+  const reviewCount = productNumber(product, 'reviewCount', 'review_count');
+  const rating = productNumber(product, 'rating');
+  const safeImages = productImageList(product);
+  const featureEntries = productFeatureEntries(product).slice(0, 4);
 
-  if (images && images.length > 1) {
+  // Image gallery or single image
+  if (safeImages.length > 1) {
     // Gallery with thumbnails + prev/next arrows
     const media = document.createElement('div');
     media.className =
@@ -514,10 +827,8 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
 
     const mainImg = document.createElement('img');
     mainImg.className = 'gengage-chat-product-details-img';
-    const firstSafe = images.find((u) => isSafeUrl(u));
-    if (firstSafe) safeSetAttribute(mainImg, 'src', firstSafe);
-    const name = product['name'] as string | undefined;
-    if (name) mainImg.alt = name;
+    safeSetAttribute(mainImg, 'src', safeImages[0]!);
+    mainImg.alt = name ?? 'Product image';
     addImageErrorHandler(mainImg);
     media.appendChild(mainImg);
 
@@ -525,7 +836,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     thumbStrip.className = 'gengage-chat-product-gallery-thumbs';
 
     const MAX_VISIBLE_THUMBNAILS = 6;
-    const safeImages = images.filter((u): u is string => !!u && isSafeUrl(u));
     let activeThumb: HTMLElement | null = null;
     let activeThumbIdx = 0;
 
@@ -642,17 +952,16 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     media.appendChild(thumbStrip);
 
     panel.appendChild(media);
-  } else if (imageUrl && isSafeUrl(imageUrl)) {
+  } else if (safeImages.length === 1) {
     // Single image fallback
     const media = document.createElement('div');
     media.className = 'gengage-chat-product-details-media gengage-chat-product-details-img-wrap';
     const img = document.createElement('img');
     img.className = 'gengage-chat-product-details-img';
     img.loading = 'lazy';
-    safeSetAttribute(img, 'src', imageUrl);
+    safeSetAttribute(img, 'src', safeImages[0]!);
     addImageErrorHandler(img);
-    const name = product['name'] as string | undefined;
-    if (name) img.alt = name;
+    img.alt = name ?? 'Product image';
     media.appendChild(img);
 
     panel.appendChild(media);
@@ -661,7 +970,13 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const content = document.createElement('div');
   content.className = 'gengage-chat-product-details-content';
 
-  const name = product['name'] as string | undefined;
+  if (brand && (!name || !name.toLowerCase().startsWith(brand.toLowerCase()))) {
+    const brandEl = document.createElement('div');
+    brandEl.className = 'gengage-chat-product-details-brand';
+    brandEl.textContent = brand;
+    content.appendChild(brandEl);
+  }
+
   if (name) {
     const title = document.createElement('h3');
     title.className = 'gengage-chat-product-details-title';
@@ -670,12 +985,26 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     content.appendChild(title);
   }
 
-  const rating = product['rating'];
-  const reviewCount = product['reviewCount'];
   if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
-    const ratingRow = document.createElement('div');
+    const ratingRow = document.createElement(sku ? 'button' : 'div');
     ratingRow.className = 'gengage-chat-product-details-rating';
-    ratingRow.textContent = `\u2605 ${clampRating(rating).toFixed(1)}`;
+    if (sku) {
+      (ratingRow as HTMLButtonElement).type = 'button';
+      ratingRow.classList.add('gengage-chat-product-details-rating--clickable');
+      ratingRow.setAttribute('aria-label', ctx.i18n?.groundingReviewCta ?? 'Read Reviews');
+      ratingRow.addEventListener('click', () => {
+        ctx.onAction({
+          title: ctx.i18n?.customerReviewsTitle ?? 'Customer Reviews',
+          type: 'reviewSummary',
+          payload: { sku },
+        });
+      });
+    }
+    ratingRow.appendChild(createStarRatingElement(rating));
+    const ratingValue = document.createElement('span');
+    ratingValue.className = 'gengage-chat-product-details-rating-value';
+    ratingValue.textContent = clampRating(rating).toFixed(1);
+    ratingRow.appendChild(ratingValue);
     if (typeof reviewCount === 'number' && Number.isFinite(reviewCount)) {
       const count = document.createElement('span');
       count.className = 'gengage-chat-product-details-review-count';
@@ -684,10 +1013,6 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     }
     content.appendChild(ratingRow);
   }
-
-  const price = product['price'] as string | undefined;
-  const originalPrice = product['originalPrice'] as string | undefined;
-  const priceAsync = product['price_async'] as boolean | undefined;
 
   if (priceAsync === true) {
     const priceRow = document.createElement('div');
@@ -722,10 +1047,16 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     currentPrice.className = 'gengage-chat-product-details-current-price';
     currentPrice.textContent = formatPrice(price, ctx.pricing);
     priceRow.appendChild(currentPrice);
+    const discountPercent = productNumber(product, 'discountPercent', 'price_discount_rate');
+    if (typeof discountPercent === 'number' && discountPercent > 0) {
+      const discountBadge = document.createElement('span');
+      discountBadge.className = 'gengage-chat-product-details-discount-badge';
+      discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
+      priceRow.appendChild(discountBadge);
+    }
     content.appendChild(priceRow);
   }
 
-  const inStock = product['inStock'];
   if (typeof inStock === 'boolean') {
     const stock = document.createElement('div');
     stock.className = `gengage-chat-product-details-stock ${inStock ? 'is-in-stock' : 'is-out-of-stock'}`;
@@ -751,41 +1082,92 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     if (promoBadges.childElementCount > 0) content.appendChild(promoBadges);
   }
 
+  if (featureEntries.length > 0) {
+    const facts = document.createElement('dl');
+    facts.className = 'gengage-chat-product-details-facts';
+    for (const feature of featureEntries) {
+      const item = document.createElement('div');
+      item.className = 'gengage-chat-product-details-fact';
+      const key = document.createElement('dt');
+      key.textContent = feature.key;
+      const val = document.createElement('dd');
+      val.textContent = feature.value;
+      item.appendChild(key);
+      item.appendChild(val);
+      facts.appendChild(item);
+    }
+    content.appendChild(facts);
+  }
+
   // Variant selector
-  const variants = product['variants'] as Array<Record<string, unknown>> | undefined;
-  if (variants && variants.length > 0) {
+  const variants = productVariants(product);
+  if (variants.length > 0) {
     const variantSection = document.createElement('div');
     variantSection.className = 'gengage-chat-product-variants';
 
-    const variantLabel = document.createElement('div');
-    variantLabel.className = 'gengage-chat-product-variants-label';
-    variantLabel.textContent = ctx.i18n?.variantsLabel ?? 'Variants';
-    variantSection.appendChild(variantLabel);
+    const variantHeading = document.createElement('div');
+    variantHeading.className = 'gengage-chat-product-variants-label';
+    variantHeading.textContent = variantSectionLabel(variants, ctx);
+    variantSection.appendChild(variantHeading);
 
     const variantList = document.createElement('div');
     variantList.className = 'gengage-chat-product-variants-list';
 
     for (const variant of variants) {
-      const variantValue = variant['value'] as string | undefined;
-      const variantName =
-        variantValue ?? (variant['name'] as string | undefined) ?? (variant['variant_name'] as string | undefined);
-      const variantSku = variant['sku'] as string | undefined;
+      const variantName = variantDisplayLabel(variant);
+      const variantSku = variantString(variant, 'sku');
       if (!variantName && !variantSku) continue;
 
       const btn = document.createElement('button');
       btn.className = 'gengage-chat-product-variant-btn gds-chip';
       btn.type = 'button';
-
       const labelText = variantName ?? variantSku ?? '';
-      const variantPrice = variant['price'] as number | string | undefined;
-      if (variantPrice && String(variantPrice) !== String(price)) {
-        btn.textContent = `${labelText} - ${formatPrice(String(variantPrice), ctx.pricing)}`;
+      btn.title = labelText;
+      const variantInStock = productBoolean(variant, 'in_stock', 'inStock');
+      if (variantSku && sku && variantSku === sku) {
+        btn.classList.add('gengage-chat-product-variant-btn--active');
+        btn.setAttribute('aria-pressed', 'true');
       } else {
-        btn.textContent = labelText;
+        btn.setAttribute('aria-pressed', 'false');
+      }
+      if (variantInStock === false) {
+        btn.classList.add('gengage-chat-product-variant-btn--out');
+        btn.disabled = true;
+      }
+
+      const swatchImage = variantImage(variant);
+      const swatchColor = variantSwatchColor(variant);
+      if (swatchImage && isSafeUrl(swatchImage)) {
+        const swatch = document.createElement('img');
+        swatch.className = 'gengage-chat-product-variant-swatch gengage-chat-product-variant-swatch--image';
+        safeSetAttribute(swatch, 'src', swatchImage);
+        swatch.alt = '';
+        swatch.setAttribute('aria-hidden', 'true');
+        addImageErrorHandler(swatch);
+        btn.appendChild(swatch);
+      } else if (swatchColor) {
+        const swatch = document.createElement('span');
+        swatch.className = 'gengage-chat-product-variant-swatch';
+        swatch.setAttribute('aria-hidden', 'true');
+        swatch.style.backgroundColor = swatchColor;
+        btn.appendChild(swatch);
+      }
+
+      const label = document.createElement('span');
+      label.className = 'gengage-chat-product-variant-label';
+      label.textContent = labelText;
+      btn.appendChild(label);
+
+      const nextVariantPrice = variantPrice(variant);
+      if (nextVariantPrice && String(nextVariantPrice) !== String(price)) {
+        const priceEl = document.createElement('span');
+        priceEl.className = 'gengage-chat-product-variant-price';
+        priceEl.textContent = formatPrice(String(nextVariantPrice), ctx.pricing);
+        btn.appendChild(priceEl);
       }
 
       if (variantSku) {
-        const productName = (product['name'] as string | undefined)?.trim() ?? '';
+        const productName = name ?? '';
         const variantHuman =
           (typeof variant['value'] === 'string' ? variant['value'].trim() : '') ||
           (typeof variant['name'] === 'string' ? variant['name'].trim() : '') ||
@@ -809,12 +1191,11 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
       variantList.appendChild(btn);
     }
 
-    variantSection.appendChild(variantList);
-    content.appendChild(variantSection);
+    if (variantList.childElementCount > 0) {
+      variantSection.appendChild(variantList);
+      content.appendChild(variantSection);
+    }
   }
-
-  const sku = product['sku'] as string | undefined;
-  const cartCode = product['cartCode'] as string | undefined;
 
   const actionRow = document.createElement('div');
   actionRow.className = 'gengage-chat-product-details-actions';
@@ -827,29 +1208,12 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     actionBtn.textContent = action.title || ctx.i18n?.productCtaLabel || 'View';
     actionBtn.addEventListener('click', () => ctx.onAction(action));
     actionRow.appendChild(actionBtn);
-  } else {
-    const url = product['url'] as string | undefined;
-    if (url && isSafeUrl(url)) {
-      const cta = document.createElement('a');
-      cta.className = 'gengage-chat-product-details-cta gds-btn gds-btn-primary';
-      safeSetAttribute(cta, 'href', url);
-      safeSetAttribute(cta, 'target', '_blank');
-      safeSetAttribute(cta, 'rel', 'noopener noreferrer');
-      cta.textContent = ctx.i18n?.viewOnSiteLabel ?? ctx.i18n?.productCtaLabel ?? 'View on Site';
-      cta.addEventListener('click', (e) => {
-        if (ctx.onProductClick && sku) {
-          e.preventDefault();
-          ctx.onProductClick({ sku, url });
-        }
-      });
-      actionRow.appendChild(cta);
-    }
   }
 
   // Add to Cart — direct add with quantity 1
   if (cartCode && sku && inStock !== false) {
     const addToCartBtn = document.createElement('button');
-    addToCartBtn.className = 'gengage-chat-product-details-atc-stepper gds-btn gds-btn-primary';
+    addToCartBtn.className = 'gengage-chat-product-details-atc gds-btn gds-btn-primary';
     addToCartBtn.type = 'button';
     addToCartBtn.textContent = ctx.i18n?.addToCartButton ?? 'Add to Cart';
     addToCartBtn.addEventListener('click', () => {
@@ -862,8 +1226,25 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     actionRow.appendChild(addToCartBtn);
   }
 
+  const url = productString(product, 'url');
+  if (!action && url && isSafeUrl(url)) {
+    const cta = document.createElement('a');
+    cta.className = 'gengage-chat-product-details-cta gds-btn gds-btn-secondary';
+    safeSetAttribute(cta, 'href', url);
+    safeSetAttribute(cta, 'target', '_blank');
+    safeSetAttribute(cta, 'rel', 'noopener noreferrer');
+    cta.textContent = ctx.i18n?.viewOnSiteLabel ?? ctx.i18n?.productCtaLabel ?? 'View on Site';
+    cta.addEventListener('click', (e) => {
+      if (ctx.onProductClick && sku) {
+        e.preventDefault();
+        ctx.onProductClick({ sku, url });
+      }
+    });
+    actionRow.appendChild(cta);
+  }
+
   // Share button — copies product URL or triggers native share
-  const shareUrl = product['url'] as string | undefined;
+  const shareUrl = url;
   if (shareUrl && isSafeUrl(shareUrl)) {
     const shareBtn = document.createElement('button');
     shareBtn.className = 'gengage-chat-product-details-share gds-btn gds-btn-ghost gds-icon-btn';
@@ -903,10 +1284,9 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     addLine('15.41', '6.51', '8.59', '10.49');
     shareBtn.appendChild(svg);
     shareBtn.addEventListener('click', async () => {
-      const productName = product['name'] as string | undefined;
       try {
         if (navigator.share) {
-          await navigator.share({ title: productName ?? '', url: shareUrl });
+          await navigator.share({ title: name ?? '', url: shareUrl });
         } else if (navigator.clipboard) {
           await navigator.clipboard.writeText(shareUrl);
           shareBtn.classList.add('gengage-chat-product-details-share--copied');
@@ -926,11 +1306,8 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   panel.appendChild(content);
 
   // Product detail tabs: "Product Info" / "Specifications"
-  const description = product['description'] as string | undefined;
-  const specifications = product['specifications'] as
-    | Record<string, string>
-    | Array<{ key: string; value: string }>
-    | undefined;
+  const description = productDescription(product);
+  const specifications = productSpecifications(product);
   if (description || specifications) {
     panel.appendChild(renderProductDetailTabs(description, specifications, ctx));
   }
@@ -938,8 +1315,69 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   return panel;
 }
 
+function sanitizeProductDescriptionNode(node: Node): Node | null {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return document.createTextNode(node.textContent ?? '');
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+  const element = node as Element;
+  const tagName = element.tagName.toUpperCase();
+  if (PRODUCT_DESCRIPTION_BLOCKED_TAGS.has(tagName)) return null;
+
+  if (!PRODUCT_DESCRIPTION_ALLOWED_TAGS.has(tagName)) {
+    const fragment = document.createDocumentFragment();
+    for (const child of Array.from(element.childNodes)) {
+      const sanitized = sanitizeProductDescriptionNode(child);
+      if (sanitized) fragment.appendChild(sanitized);
+    }
+    return fragment;
+  }
+
+  const sanitizedElement = document.createElement(tagName.toLowerCase());
+  for (const child of Array.from(element.childNodes)) {
+    const sanitized = sanitizeProductDescriptionNode(child);
+    if (sanitized) sanitizedElement.appendChild(sanitized);
+  }
+  return sanitizedElement;
+}
+
+function appendPlainProductDescription(target: HTMLElement, text: string): void {
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 0) return;
+
+  for (const paragraph of paragraphs) {
+    const p = document.createElement('p');
+    p.textContent = paragraph;
+    target.appendChild(p);
+  }
+}
+
+function appendProductDescription(target: HTMLElement, description: ProductDescriptionContent): void {
+  target.classList.add('gengage-chat-product-description');
+
+  if (description.html && typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(description.html, 'text/html');
+    const nodes = Array.from(doc.body.childNodes)
+      .map((node) => sanitizeProductDescriptionNode(node))
+      .filter((node): node is Node => !!node && (node.nodeType === Node.ELEMENT_NODE || !!node.textContent?.trim()));
+
+    if (nodes.length > 0) {
+      for (const node of nodes) target.appendChild(node);
+      return;
+    }
+  }
+
+  appendPlainProductDescription(target, description.text);
+}
+
 function renderProductDetailTabs(
-  description: string | undefined,
+  description: ProductDescriptionContent | undefined,
   specifications: Record<string, string> | Array<{ key: string; value: string }> | undefined,
   ctx: UISpecRenderContext,
 ): HTMLElement {
@@ -962,7 +1400,7 @@ function renderProductDetailTabs(
 
     const panel = document.createElement('div');
     panel.className = 'gengage-chat-product-detail-tab-panel';
-    panel.textContent = description;
+    appendProductDescription(panel, description);
     tabPanels.push(panel);
   }
 
