@@ -139,9 +139,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
   private _drawerVisible = false;
-  /** Host sayfası scroll’u dondurulduğunda (floating/overlay + drawer açık). */
+  /** Host document scroll frozen (floating/overlay + drawer open). */
   private _hostScrollLockActive = false;
   private _hostScrollLockScrollY = 0;
+  private _hostScrollLockPriorStyles: Record<string, string> | null = null;
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
   // corruption when concurrent preservePanel streams write simultaneously.
@@ -1223,6 +1224,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!body) return;
 
     this._hostScrollLockScrollY = window.scrollY ?? window.pageYOffset ?? 0;
+    this._hostScrollLockPriorStyles = {
+      htmlOverflow: html.style.overflow,
+      htmlOverscroll: html.style.overscrollBehavior,
+      bodyOverflow: body.style.overflow,
+      bodyOverscroll: body.style.overscrollBehavior,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width,
+    };
     html.style.overflow = 'hidden';
     html.style.overscrollBehavior = 'none';
     body.style.overflow = 'hidden';
@@ -1240,16 +1252,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const html = document.documentElement;
     const body = document.body;
     const y = this._hostScrollLockScrollY;
-    html.style.overflow = '';
-    html.style.overscrollBehavior = '';
-    body.style.overflow = '';
-    body.style.overscrollBehavior = '';
-    body.style.position = '';
-    body.style.top = '';
-    body.style.left = '';
-    body.style.right = '';
-    body.style.width = '';
+    const prior = this._hostScrollLockPriorStyles;
+    html.style.overflow = prior?.htmlOverflow ?? '';
+    html.style.overscrollBehavior = prior?.htmlOverscroll ?? '';
+    body.style.overflow = prior?.bodyOverflow ?? '';
+    body.style.overscrollBehavior = prior?.bodyOverscroll ?? '';
+    body.style.position = prior?.bodyPosition ?? '';
+    body.style.top = prior?.bodyTop ?? '';
+    body.style.left = prior?.bodyLeft ?? '';
+    body.style.right = prior?.bodyRight ?? '';
+    body.style.width = prior?.bodyWidth ?? '';
     this._hostScrollLockActive = false;
+    this._hostScrollLockPriorStyles = null;
     requestAnimationFrame(() => {
       window.scrollTo(0, y);
     });

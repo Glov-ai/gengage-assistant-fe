@@ -374,7 +374,7 @@ export function renderAITopPicks(element: UIElement, ctx: ChatUISpecRenderContex
     rest.dataset['gengagePart'] = 'ai-top-picks-rest';
     for (let i = 1; i < suggestions.length; i++) {
       const suggestion = suggestions[i]!;
-      const isWinner = suggestion.role === 'winner' || i === 0;
+      const isWinner = suggestion.role === 'winner';
       rest.appendChild(renderPickCard(suggestion, ctx, isWinner));
     }
     scrollRow.appendChild(rest);

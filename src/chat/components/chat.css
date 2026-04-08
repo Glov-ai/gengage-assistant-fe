@@ -1324,7 +1324,7 @@
   padding: 10px 12px 12px;
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-card);
-  /* Yukarı taşan ek menüsü mesaj listesinin altında kalmaması için */
+  /* Keep attach menu (overflows upward) below the message list */
   position: relative;
   z-index: 2;
 }
@@ -1340,7 +1340,7 @@
   border: 1px solid var(--border-default);
   border-radius: 16px;
   padding: 6px 6px 6px 14px;
-  /* overflow:visible — attach menüsü yukarı taşar; hidden menüyü keserdi */
+  /* overflow:visible — attach menu overflows upward; hidden would clip it */
   overflow: visible;
   transition:
     border-color 0.2s ease,
@@ -2316,7 +2316,7 @@ button.gengage-chat-product-card-cta {
   border-radius: 8px;
 }
 
-/* Skeleton variant: comparison — panel wrapper (içerik .gengage-chat-comparison ile aynı ölçü) */
+/* Skeleton variant: comparison — panel wrapper (matches .gengage-chat-comparison dimensions) */
 .gengage-chat-panel-skeleton--comparison {
   padding: 0;
   gap: 0;
@@ -2333,7 +2333,7 @@ button.gengage-chat-product-card-cta {
   box-sizing: border-box;
 }
 
-/* Shimmer — .gengage-chat-panel-skeleton-block ile aynı animasyon */
+/* Shimmer — same animation as .gengage-chat-panel-skeleton-block */
 .gengage-chat-comparison-skeleton-shimmer {
   background: linear-gradient(90deg, var(--ds-neutral-200) 25%, var(--ds-neutral-100) 50%, var(--ds-neutral-200) 75%);
   background-size: 200% 100%;
@@ -2596,8 +2596,8 @@ button.gengage-chat-product-card-cta {
 }
 
 /*
- * Mobil panel arama sonuçları: panel grid’i `minmax(176px)` ile dar ekranda tek sütuna düşüyordu.
- * `--mobile` ile iki eşit sütun; yatay kaydırma yok, dikey liste.
+ * Mobile panel search results: panel grid with `minmax(176px)` collapsed to single column on narrow screens.
+ * `--mobile` forces two equal columns; no horizontal scroll, vertical list.
  */
 .gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--mobile {
   display: grid;
@@ -3451,7 +3451,7 @@ button.gengage-chat-product-card-cta {
   font-size: 13px;
 }
 
-/* Mobile product grid: 2 sütun (--mobile) veya yatay şerit (eski, --mobile yoksa) */
+/* Mobile product grid: 2 columns (--mobile) or horizontal strip (legacy, when --mobile absent) */
 .gengage-chat-root--mobile .gengage-chat-product-grid:not(.gengage-chat-product-grid--mobile) {
   scroll-snap-type: x mandatory;
 }
@@ -3857,8 +3857,8 @@ button.gengage-chat-product-card-cta {
 }
 
 /*
- * th üzerinde display:grid kullanılmaz — table-cell bozulur, sütunlar dikey yığılır.
- * Grid yalnızca iç sarmalayıcıda; fiyatlar satır boyunca aynı yatay hizada kalır.
+ * display:grid must not be used on th — table-cell breaks and columns stack vertically.
+ * Grid is only on inner wrappers; prices stay horizontally aligned across the row.
  */
 .gengage-chat-comparison-table thead th:not(:first-child) {
   vertical-align: top;
@@ -4241,7 +4241,7 @@ button.gengage-chat-product-card-cta {
   display: contents;
 }
 
-/* Üst satır: görsel + (isim / puan / fiyat / chip’ler). Masaüstünde şeffaf — çocuklar kart akışına karışır. */
+/* Top row: image + (name / rating / price / chips). Transparent on desktop — children merge into card flow. */
 .gengage-chat-ai-toppick-top-row {
   display: contents;
 }
@@ -4736,12 +4736,12 @@ button.gengage-chat-product-card-cta {
   min-width: 0;
 }
 
-/* Mobil: üst satır (görsel + metin) — winner’da aşağıda detail + CTA */
+/* Mobile: top row (image + text) — winner gets detail + CTA below */
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-scroll > :first-child.gengage-chat-ai-toppick-card--winner {
   flex-direction: column;
 }
 
-/* Diğer öneriler: yatay kaydırmalı şerit (yalnız mobil) */
+/* Non-hero picks: horizontally scrollable strip (mobile only) */
 .gengage-chat-root--mobile .gengage-chat-ai-top-picks-rest {
   display: flex;
   flex-direction: row;
@@ -4802,7 +4802,7 @@ button.gengage-chat-product-card-cta {
   box-shadow: none;
 }
 
-/* Üst winner: solda kare görsel, sağda başlık / yıldız / fiyat */
+/* Winner top row: square image on the left, title / rating / price on the right */
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-top-row {
   display: flex;
   flex-direction: row;
@@ -4862,7 +4862,7 @@ button.gengage-chat-product-card-cta {
   background: var(--surface-card-muted);
 }
 
-/* Kompakt kartlar (yatay şerit): solda küçük kare, sağda metin; altta snippet */
+/* Compact cards (horizontal strip): small square on left, text on right; snippet below */
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-top-row {
   display: flex;
   flex-direction: row;
@@ -4938,7 +4938,7 @@ button.gengage-chat-product-card-cta {
   overflow: hidden;
 }
 
-/* Compact kartlarda fav + benzer — görsel köşede yukarı */
+/* Compact card fav + similar actions — top-right corner of image */
 .gengage-chat-root--mobile
   .gengage-chat-ai-toppick-card--compact
   .gengage-chat-ai-toppick-media
@@ -4957,7 +4957,7 @@ button.gengage-chat-product-card-cta {
   gap: 5px;
 }
 
-/* Winner rozeti: dolu client rengi + beyaz yazı; padding küçük — yazı boyutu aynı */
+/* Winner badge: solid client color + white text; smaller padding — font size unchanged */
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-badge {
   top: -14px;
   left: 8px;
@@ -5006,7 +5006,7 @@ button.gengage-chat-product-card-cta {
   font-size: 11px;
 }
 
-/* Mobil: duygu chip’lerini gizle; açıklama/yorum winner detail içinde gösterilir */
+/* Mobile: hide sentiment chips; reason/review shown inside winner detail instead */
 .gengage-chat-root--mobile .gengage-chat-ai-toppick-labels {
   display: none !important;
 }
@@ -6530,7 +6530,7 @@ button.gengage-chat-product-card-cta {
 }
 
 /* ── ThumbnailsColumn ──
- * Mantık/DOM korunur; ürün panelinde şerit gösterilmiyor (legacy parity). */
+ * Logic/DOM preserved; strip not shown in product panel (legacy parity). */
 .gengage-chat-thumbnails-column {
   display: none !important;
   pointer-events: none;
@@ -6838,7 +6838,7 @@ button.gengage-chat-product-card-cta {
   background: var(--ds-button-secondary-bg-hover);
 }
 
-/* ===== Mobile product grid (dar ekran: satırda 2 ürün, yatay kaydırma yok) ===== */
+/* ===== Mobile product grid (narrow screen: 2 products per row, no horizontal scroll) ===== */
 .gengage-chat-product-grid--mobile {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

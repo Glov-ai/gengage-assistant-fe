@@ -323,9 +323,9 @@
     line-height: 1.2;
   }
 
-  /* Aynı satır: input solda, Sor sağda (sütun düzeni kaldırıldı — dar ekranda da tek satır). */
+  /* Same row: input left, send right (column layout removed — single row even on narrow screens). */
   .gengage-qna-input {
-    font-size: 16px; /* iOS: odakta sayfa yakınlaştırmasını azaltır */
+    font-size: 16px; /* iOS: reduces page zoom on focus */
   }
 
   .gengage-qna-send {
