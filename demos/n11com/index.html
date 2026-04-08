@@ -500,6 +500,7 @@
       document.getElementById('summary-sku').textContent = skuDisplay;
       const n11LauncherIconUrl = new URL('./n11-launcher-icon.svg', import.meta.url).href;
       const n11HeaderLogoUrl = new URL('./n11-header-logo.png', import.meta.url).href;
+      const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
       const controller = await initOverlayWidgets({
         accountId: 'n11com',
@@ -531,7 +532,7 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "n11'e Sor",
-          launcherImageUrl: n11LauncherIconUrl,
+          launcherImageUrl: launcherBootstrapImage,
           headerAvatarUrl: n11HeaderLogoUrl,
           i18n: {
             inputPlaceholder: 'N11 asistanına sorun...',
@@ -652,9 +653,12 @@
         }
 
         const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
-        if (!(launcher instanceof HTMLButtonElement) || launcher.querySelector('.n11-launcher-label')) {
-          return launcher instanceof HTMLButtonElement;
+        if (!(launcher instanceof HTMLButtonElement)) return false;
+        const launcherImg = launcher.querySelector('img');
+        if (launcherImg instanceof HTMLImageElement && launcherImg.getAttribute('src') !== n11LauncherIconUrl) {
+          launcherImg.src = n11LauncherIconUrl;
         }
+        if (launcher.querySelector('.n11-launcher-label')) return true;
         launcher.setAttribute('aria-label', "n11'e Sor");
         const label = document.createElement('span');
         label.className = 'n11-launcher-label';
