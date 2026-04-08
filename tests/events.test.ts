@@ -40,7 +40,7 @@ describe('wireQNAToChat', () => {
     expect(openWithAction).toHaveBeenCalledWith(action);
   });
 
-  it('routes user_message action to chat.sendMessage', () => {
+  it('routes user_message action to chat.openWithAction when available', () => {
     const open = vi.fn();
     const sendMessage = vi.fn();
     const openWithAction = vi.fn();
@@ -49,18 +49,15 @@ describe('wireQNAToChat', () => {
     };
 
     cleanup = wireQNAToChat();
-    dispatch('gengage:qna:action', {
-      title: 'Bir soru',
-      type: 'user_message',
-      payload: 'Bu urun nefes alabilir mi?',
-    });
+    const action = { title: 'Bir soru', type: 'user_message', payload: 'Bu urun nefes alabilir mi?' };
+    dispatch('gengage:qna:action', action);
 
-    expect(open).toHaveBeenCalledOnce();
-    expect(sendMessage).toHaveBeenCalledWith('Bu urun nefes alabilir mi?');
-    expect(openWithAction).not.toHaveBeenCalled();
+    expect(openWithAction).toHaveBeenCalledWith(action);
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
   });
 
-  it('routes inputText action with payload.text to chat.sendMessage', () => {
+  it('routes inputText action via chat.openWithAction with injected flags', () => {
     const open = vi.fn();
     const sendMessage = vi.fn();
     const openWithAction = vi.fn();
@@ -75,9 +72,13 @@ describe('wireQNAToChat', () => {
       payload: { text: 'Metin from payload' },
     });
 
-    expect(open).toHaveBeenCalledOnce();
-    expect(sendMessage).toHaveBeenCalledWith('Metin from payload');
-    expect(openWithAction).not.toHaveBeenCalled();
+    expect(openWithAction).toHaveBeenCalledWith({
+      title: 'Baslik',
+      type: 'inputText',
+      payload: { text: 'Metin from payload', is_launcher: 1, is_suggested_text: 1 },
+    });
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
   });
 
   it('emits console.warn once when chat is not available', () => {

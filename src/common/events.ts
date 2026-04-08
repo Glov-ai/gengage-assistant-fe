@@ -137,11 +137,7 @@ export function wireQNAToChat(options?: WireQNAToChatOptions): () => void {
 
   function routeActionToChat(chat: WireableChatAPI, action: ActionPayload): void {
     if (chat.openWithAction) {
-      const routed =
-        action.type === 'inputText'
-          ? injectQnaLauncherSuggestedFlags(action)
-          : action;
-      chat.open?.();
+      const routed = action.type === 'inputText' ? injectQnaLauncherSuggestedFlags(action) : action;
       chat.openWithAction(routed);
       return;
     }
