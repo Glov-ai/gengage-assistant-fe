@@ -323,30 +323,14 @@
     line-height: 1.2;
   }
 
-  .gengage-qna-input-combo {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+  /* Aynı satır: input solda, Sor sağda (sütun düzeni kaldırıldı — dar ekranda da tek satır). */
   .gengage-qna-input {
-    width: 100%;
-    height: 52px;
-    padding-left: 42px;
-    font-size: 16px;
+    font-size: 16px; /* iOS: odakta sayfa yakınlaştırmasını azaltır */
   }
 
   .gengage-qna-send {
-    width: 100%;
-    min-height: 48px;
-    border-left: none;
-    border-top: 1px solid var(--_gengage-qna-send-divider);
-    font-size: 15px;
-  }
-
-  .gengage-qna-input-combo .gengage-qna-send.gds-btn,
-  .gengage-qna-input-combo .gengage-qna-send.gds-btn-primary {
-    border-left: none;
-    border-top: 1px solid var(--_gengage-qna-send-divider);
+    padding: 0 14px;
+    font-size: 14px;
   }
 }
 
