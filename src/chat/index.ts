@@ -1426,7 +1426,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Add user message to UI (skip for silent/auto-launch actions)
     if (!options?.silent) {
-      const userText = typeof action.payload === 'string' ? action.payload : action.title;
+      const userText =
+        typeof action.payload === 'string'
+          ? action.payload
+          : typeof (action.payload as Record<string, unknown>)?.['text'] === 'string'
+            ? ((action.payload as Record<string, unknown>)['text'] as string)
+            : action.title;
       // Retry deduplication: skip adding a duplicate user bubble when retrying
       const lastMsg = this._messages.length > 0 ? this._messages[this._messages.length - 1] : undefined;
       const isDuplicate = lastMsg !== undefined && lastMsg.role === 'user' && lastMsg.content === userText;
