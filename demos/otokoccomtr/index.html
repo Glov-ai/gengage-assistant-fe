@@ -408,8 +408,8 @@
         max-width: 400px;
         height: 70px;
         position: fixed;
-        bottom: 100px;
-        right: 25px;
+        bottom: 24px;
+        left: 24px;
         z-index: 1000;
         display: flex;
         flex-direction: column;
@@ -623,8 +623,9 @@
         .glov-voice-chat-container {
           min-width: auto; max-width: min(100vw - 24px, 360px);
           width: auto; height: 52px;
-          right: max(12px, env(safe-area-inset-right, 0px)) !important;
-          bottom: max(80px, calc(80px + env(safe-area-inset-bottom, 0px))) !important;
+          left: max(12px, env(safe-area-inset-left, 0px)) !important;
+          right: auto !important;
+          bottom: max(24px, calc(24px + env(safe-area-inset-bottom, 0px))) !important;
         }
 
         .glov-voice-chat-panel.glov-voice-chat-fullscreen {
