@@ -77,7 +77,7 @@ function extractFreeTextActionMessage(action: ActionPayload): string | null {
 }
 
 function injectQnaLauncherSuggestedFlags(action: ActionPayload): ActionPayload {
-  if (action.type !== 'inputText') {
+  if (action.type !== 'inputText' && action.type !== 'user_message') {
     return action;
   }
 
@@ -137,7 +137,10 @@ export function wireQNAToChat(options?: WireQNAToChatOptions): () => void {
 
   function routeActionToChat(chat: WireableChatAPI, action: ActionPayload): void {
     if (chat.openWithAction) {
-      const routed = action.type === 'inputText' ? injectQnaLauncherSuggestedFlags(action) : action;
+      const routed =
+        action.type === 'inputText' || action.type === 'user_message'
+          ? injectQnaLauncherSuggestedFlags(action)
+          : action;
       chat.openWithAction(routed);
       return;
     }
