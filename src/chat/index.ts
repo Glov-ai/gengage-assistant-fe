@@ -708,12 +708,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    */
   private _pruneEmptyStreamingAssistantPlaceholders(): void {
     const next: ChatMessage[] = [];
+    let thumbnailsChanged = false;
     for (const m of this._messages) {
-      const drop = m.role === 'assistant' && m.status === 'streaming' && (m.content == null || m.content.length === 0);
+      // Also catch status === 'done': the Stop button handler transitions streaming → done
+      // before _sendAction fires, so a stop-then-Enter sequence would otherwise leave an
+      // empty assistant turn in chatHistory and confuse the backend.
+      const drop =
+        m.role === 'assistant' &&
+        (m.status === 'streaming' || m.status === 'done') &&
+        (m.content == null || m.content.length === 0);
       if (drop) {
         if (m.threadId) {
           this._threadsWithFirstBot.delete(m.threadId);
           this._presentation.finalizeAssistantGroup(m.threadId);
+          // Remove inline UISpec nodes (data-thread-id but no data-message-id) that may
+          // have arrived before any outputText — removeMessageBubble only targets the bubble.
+          this._shadow
+            ?.querySelectorAll(`[data-thread-id="${CSS.escape(m.threadId)}"]:not([data-message-id])`)
+            .forEach((el) => el.remove());
+          if (this._panel) {
+            this._panel.threads = this._panel.threads.filter((t) => t !== m.threadId);
+          }
+          const before = this._thumbnailEntries.length;
+          this._thumbnailEntries = this._thumbnailEntries.filter((e) => e.threadId !== m.threadId);
+          if (this._thumbnailEntries.length !== before) thumbnailsChanged = true;
         }
         this._drawer?.removeMessageBubble(m.id);
         this._panel?.snapshots.delete(m.id);
@@ -724,6 +742,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._messages.length = 0;
     this._messages.push(...next);
+    if (thumbnailsChanged) this._drawer?.setThumbnails(this._thumbnailEntries);
   }
 
   /** Reset all chat state when navigating to a different SKU/page. */
