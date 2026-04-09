@@ -30,7 +30,7 @@ import {
   basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
-import { validateImageFile } from './attachment-utils.js';
+import { normalizeBeautyAttachmentFile, validateImageFile } from './attachment-utils.js';
 import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
 import { createLauncher } from './components/Launcher.js';
@@ -73,6 +73,7 @@ import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
 import { createDefaultExpertModeController } from './expert-mode/controller.js';
+import { getBeautyPhotoProgressMessage } from './expert-mode/beauty-photo-progress.js';
 import { isLikelyConnectivityIssue } from '../common/global-error-toast.js';
 import { debugLog } from '../common/debug.js';
 import {
@@ -103,6 +104,26 @@ type SendActionOptions = {
   isPdpPrime?: boolean;
   preservePills?: boolean;
 };
+
+const BEAUTY_ATTACHMENT_FALLBACK_TEXT = 'Fotografimi analiz edebilir misiniz?';
+const BEAUTY_PROMO_TITLE = 'Selfie ile kisisellestir';
+const BEAUTY_PROMO_DESCRIPTION = 'Isterseniz net bir selfie yukleyin, onerileri daha iyi eslestirelim.';
+const BEAUTY_PROMO_CTA = 'Fotograf Yukle';
+const BEAUTY_PROMO_IMAGE_URL = `data:image/svg+xml;utf8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="136" height="136" viewBox="0 0 136 136"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe5ee"/><stop offset="100%" stop-color="#f3d2ff"/></linearGradient><linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a1b24"/><stop offset="100%" stop-color="#3c2530"/></linearGradient></defs><rect width="136" height="136" rx="28" fill="url(#bg)"/><circle cx="68" cy="74" r="30" fill="#f7c7b0"/><path d="M36 70c0-20 14-36 32-36s32 16 32 36v9H36v-9z" fill="url(#hair)"/><ellipse cx="55" cy="75" rx="4" ry="3" fill="#3a2430"/><ellipse cx="81" cy="75" rx="4" ry="3" fill="#3a2430"/><path d="M55 89c5 5 21 5 26 0" stroke="#cf5c7b" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="31" cy="105" r="13" fill="#ffffff" fill-opacity=".9"/><path d="M31 98v14M24 105h14" stroke="#e85d8f" stroke-width="3" stroke-linecap="round"/><circle cx="109" cy="27" r="7" fill="#fff"/><path d="M109 20v14M102 27h14" stroke="#e85d8f" stroke-width="2.5" stroke-linecap="round"/></svg>',
+)}`;
+
+function logBeautyPhoto(event: string, detail?: Record<string, unknown>): void {
+  try {
+    if (detail) {
+      console.warn(`[gengage:beauty-photo] ${event}`, detail);
+    } else {
+      console.warn(`[gengage:beauty-photo] ${event}`);
+    }
+  } catch {
+    /* no-op */
+  }
+}
 
 /** Validate that a string is a safe CSS color value (no url(), expression(), etc.). */
 function isSafeCSSColor(value: string): boolean {
@@ -288,6 +309,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   } | null = null;
   /** Shared expert-mode capability state (beauty/watch/future expert flows). */
   private readonly _expertModes = createDefaultExpertModeController();
+  private _beautyPhotoPromoDismissed = false;
   /** Consecutive identical error counter for account-inactive detection. */
   private _consecutiveErrorCount = 0;
   /** Last error message text for deduplication. */
@@ -1339,8 +1361,37 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _handleAttachment(file: File): void {
+    const activeMode = this._expertModes.getActiveModeId() ?? 'shopping';
+    const isBeautyMode = activeMode === 'beauty_consulting';
+    logBeautyPhoto('file_selected', {
+      name: file.name,
+      type: file.type || 'unknown',
+      size: file.size,
+      mode: activeMode,
+    });
     const result = validateImageFile(file);
     if (!result.ok) {
+      if (
+        result.reason === 'invalid_type' &&
+        isBeautyMode &&
+        typeof file.type === 'string' &&
+        file.type.toLowerCase().startsWith('image/')
+      ) {
+        logBeautyPhoto('file_validation_bypassed_for_beauty', {
+          name: file.name,
+          type: file.type || 'unknown',
+          size: file.size,
+        });
+        this._drawer?.stageAttachment(file);
+        this._syncBeautyPhotoPromoCard();
+        return;
+      }
+      logBeautyPhoto('file_validation_failed', {
+        reason: result.reason,
+        name: file.name,
+        type: file.type || 'unknown',
+        size: file.size,
+      });
       const message = result.reason === 'invalid_type' ? this._i18n.invalidFileType : this._i18n.fileTooLarge;
       dispatch('gengage:global:error', {
         message,
@@ -1349,6 +1400,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       return;
     }
     this._drawer?.stageAttachment(file);
+    this._syncBeautyPhotoPromoCard();
   }
 
   private _sendMessage(text: string, attachment?: File): void {
@@ -1357,12 +1409,80 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       return;
     }
 
-    ga.trackMessageSent();
-    // Track conversation start on first user message in a new thread
-    const hasUserMessages = this._messages.some((m) => m.role === 'user');
-    if (!hasUserMessages) {
-      ga.trackConversationStart();
+    const trackSend = () => {
+      ga.trackMessageSent();
+      // Track conversation start on first user message in a new thread
+      const hasUserMessages = this._messages.some((m) => m.role === 'user');
+      if (!hasUserMessages) {
+        ga.trackConversationStart();
+      }
+    };
+
+    const isBeautyAttachment = attachment !== undefined && this._expertModes.getActiveModeId() === 'beauty_consulting';
+    if (isBeautyAttachment) {
+      const originalAttachment = attachment;
+      void (async () => {
+        const startedAt = Date.now();
+        try {
+          logBeautyPhoto('normalize_start', {
+            name: originalAttachment.name,
+            type: originalAttachment.type || 'unknown',
+            size: originalAttachment.size,
+          });
+          const resolvedAttachment = await normalizeBeautyAttachmentFile(originalAttachment);
+          logBeautyPhoto('normalize_done', {
+            elapsedMs: Date.now() - startedAt,
+            before: {
+              type: originalAttachment.type || 'unknown',
+              size: originalAttachment.size,
+            },
+            after: {
+              type: resolvedAttachment.type || 'unknown',
+              size: resolvedAttachment.size,
+            },
+          });
+          const beautyText = text.trim() || BEAUTY_ATTACHMENT_FALLBACK_TEXT;
+          this._beautyPhotoPromoDismissed = true;
+          this._syncBeautyPhotoPromoCard();
+          trackSend();
+          const action: ActionPayload = {
+            title: beautyText,
+            type: 'inputText',
+            payload: { text: beautyText },
+          };
+          logBeautyPhoto('send_beauty_attachment', {
+            actionType: action.type,
+            text: beautyText,
+            attachment: {
+              name: resolvedAttachment.name,
+              type: resolvedAttachment.type || 'unknown',
+              size: resolvedAttachment.size,
+            },
+          });
+          this._sendAction(action, { attachment: resolvedAttachment });
+        } catch (error) {
+          logBeautyPhoto('normalize_failed', {
+            error: error instanceof Error ? error.message : String(error),
+            name: originalAttachment.name,
+            type: originalAttachment.type || 'unknown',
+            size: originalAttachment.size,
+          });
+          const beautyText = text.trim() || BEAUTY_ATTACHMENT_FALLBACK_TEXT;
+          trackSend();
+          this._sendAction(
+            {
+              title: beautyText,
+              type: 'inputText',
+              payload: { text: beautyText },
+            },
+            { attachment: originalAttachment },
+          );
+        }
+      })();
+      return;
     }
+
+    trackSend();
     // Image upload from Chat Input uses findSimilar (not inputText) per wire protocol
     const action: ActionPayload =
       attachment !== undefined
@@ -1504,6 +1624,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const definition = this._expertModes.getActiveDefinition();
     if (!activeSession || !definition) {
       this._drawer?.setExpertModeShell(null);
+      this._drawer?.setBeautyPhotoPromoCard(null);
       return;
     }
     const subtitle =
@@ -1514,6 +1635,53 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       title: definition.headerTitle,
       subtitle,
       exitLabel: 'Alisverise Don',
+    });
+    this._syncBeautyPhotoPromoCard(activeSession);
+  }
+
+  private _hasBeautyPhotoFindings(session: ExpertModeSessionState): boolean {
+    const candidateValues = [
+      session.extra?.['photo_findings'],
+      session.extra?.['photoFindings'],
+      session.fields['photo_findings'],
+      session.fields['photoFindings'],
+    ];
+    return candidateValues.some((value) => typeof value === 'string' && value.trim().length > 0);
+  }
+
+  private _shouldShowBeautyPhotoPromo(session: ExpertModeSessionState): boolean {
+    if (session.modeId !== 'beauty_consulting') return false;
+    if (this._beautyPhotoPromoDismissed) return false;
+    if (this._drawer?.getPendingAttachment()) return false;
+
+    const status = (session.status ?? '').trim().toLowerCase();
+    if (status && status !== 'collecting' && status !== 'handoff') return false;
+
+    const skinProfile = session.fields['skin_profile'];
+    const hasSkinProfile = typeof skinProfile === 'string' && skinProfile.trim().length > 0;
+    if (hasSkinProfile) return false;
+
+    if (this._hasBeautyPhotoFindings(session)) return false;
+    return true;
+  }
+
+  private _syncBeautyPhotoPromoCard(session?: ExpertModeSessionState | null): void {
+    const activeSession = session ?? this._expertModes.getActiveSession();
+    if (!activeSession || !this._shouldShowBeautyPhotoPromo(activeSession)) {
+      this._drawer?.setBeautyPhotoPromoCard(null);
+      return;
+    }
+
+    this._drawer?.setBeautyPhotoPromoCard({
+      title: BEAUTY_PROMO_TITLE,
+      description: BEAUTY_PROMO_DESCRIPTION,
+      ctaLabel: BEAUTY_PROMO_CTA,
+      imageUrl: BEAUTY_PROMO_IMAGE_URL,
+      onAction: () => this._drawer?.openAttachmentPicker(),
+      onDismiss: () => {
+        this._beautyPhotoPromoDismissed = true;
+        this._syncBeautyPhotoPromoCard(activeSession);
+      },
     });
   }
 
@@ -1603,6 +1771,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       ...(extra ? { extra } : {}),
     };
 
+    this._beautyPhotoPromoDismissed = false;
     this._expertModes.enterSession(session);
     this._debugExpertMode('session_entered', {
       modeId: session.modeId,
@@ -1741,6 +1910,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private async _exitActiveExpertMode(): Promise<void> {
     const previousSession = this._expertModes.exitSession();
     if (!previousSession) return;
+    this._beautyPhotoPromoDismissed = false;
 
     this._drawer?.setPills([]);
     this._drawer?.clearInputAreaChips();
@@ -1842,6 +2012,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Reuse the dedicated expert thread while an expert mode session is active.
     const expertThreadId = this._expertModes.getVisibleThreadId();
     const threadId = expertThreadId ?? uuidv7();
+    const hadThreadHistory = this._messages.some((message) => message.threadId === threadId);
     this._currentThreadId = threadId;
     if (!expertThreadId) {
       this._lastThreadId = threadId;
@@ -1856,6 +2027,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const isPreservePanel = options?.preservePanel === true;
     const isPdpAutoLaunch =
       action.type === 'launchSingleProduct' && options?.silent === true && options?.isPdpPrime === true;
+    const requestHasAttachment = options?.attachment !== undefined;
+    const isBeautyAttachmentRequest = requestHasAttachment && this._expertModes.getActiveModeId() === 'beauty_consulting';
+    if (requestHasAttachment) {
+      logBeautyPhoto('request_dispatch', {
+        actionType: action.type,
+        threadId,
+        preservePanel: isPreservePanel,
+        silent: options?.silent === true,
+        assistantMode: this._expertModes.getActiveModeId() ?? 'shopping',
+        attachment: {
+          name: options?.attachment?.name ?? '',
+          type: options?.attachment?.type || 'unknown',
+          size: options?.attachment?.size ?? 0,
+        },
+      });
+    }
     if (!isPreservePanel) {
       this._activeRequestThreadId = threadId;
     }
@@ -1947,7 +2134,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._messages.push(botMsg);
 
     this._presentation.registerAssistantActivity(threadId);
-    this._presentation.requestThreadFocus(threadId, 'smooth');
+    if (hadThreadHistory) {
+      this._presentation.requestScrollToBottom('smooth');
+    } else {
+      this._presentation.requestThreadFocus(threadId, 'smooth');
+    }
     this._drawer?.setPresentationFocus(threadId);
     this._drawer?.setFormerMessagesButtonVisible(false);
     setTimeout(() => this._flushPresentationScroll(), 40);
@@ -2634,22 +2825,44 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
 
             // Panel loading indicator
-            if (event.meta.panelLoading && !this._shouldSuppressExpertArtifacts('panelLoading')) {
+            if (event.meta.panelLoading) {
               const pendingType =
                 typeof event.meta.panelPendingType === 'string' ? event.meta.panelPendingType : undefined;
-              const suppressProductDetailsSkeleton =
-                this.config.productDetailsExtended !== true &&
-                (pendingType === 'productDetails' || pendingType === 'productDetailsSimilars');
-              if (!suppressProductDetailsSkeleton) {
-                panelLoadingSeen = true;
-                panelContentReceived = false;
-                // Snapshot current panel before replacing with skeleton
-                capturePanelSourceIfNeeded();
-                if (this._panel) this._panel.currentType = null;
-                this._drawer?.showPanelLoading(pendingType);
-                // Set panel topbar title immediately so it's not an empty white bar
-                if (pendingType) {
-                  this._panel?.updateTopBarForLoading(pendingType);
+
+              if (isBeautyAttachmentRequest || this._expertModes.getActiveModeId() === 'beauty_consulting') {
+                logBeautyPhoto('panel_loading', {
+                  threadId,
+                  pendingType: pendingType ?? null,
+                });
+              }
+
+              if (this._expertModes.getActiveModeId() === 'beauty_consulting') {
+                const progressText = getBeautyPhotoProgressMessage(pendingType);
+                if (progressText) {
+                  logBeautyPhoto('panel_progress_text', {
+                    threadId,
+                    pendingType: pendingType ?? null,
+                    progressText,
+                  });
+                  this._bridge?.send('loadingMessage', { text: progressText });
+                }
+              }
+
+              if (!this._shouldSuppressExpertArtifacts('panelLoading')) {
+                const suppressProductDetailsSkeleton =
+                  this.config.productDetailsExtended !== true &&
+                  (pendingType === 'productDetails' || pendingType === 'productDetailsSimilars');
+                if (!suppressProductDetailsSkeleton) {
+                  panelLoadingSeen = true;
+                  panelContentReceived = false;
+                  // Snapshot current panel before replacing with skeleton
+                  capturePanelSourceIfNeeded();
+                  if (this._panel) this._panel.currentType = null;
+                  this._drawer?.showPanelLoading(pendingType);
+                  // Set panel topbar title immediately so it's not an empty white bar
+                  if (pendingType) {
+                    this._panel?.updateTopBarForLoading(pendingType);
+                  }
                 }
               }
             }
@@ -2757,6 +2970,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip error handling for aborted/superseded requests (including when no active request)
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          if (isBeautyAttachmentRequest || this._expertModes.getActiveModeId() === 'beauty_consulting') {
+            logBeautyPhoto('request_error', {
+              threadId,
+              actionType: action.type,
+              message: err.message,
+            });
+          }
           streamDone = true;
           syncPanelAiAnalysisZone();
           pendingPanelAiSpec = null;
@@ -2856,6 +3076,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (streamController) this._abortControllers.delete(streamController);
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
+          if (isBeautyAttachmentRequest || this._expertModes.getActiveModeId() === 'beauty_consulting') {
+            logBeautyPhoto('request_done', {
+              threadId,
+              actionType: action.type,
+              hadPanelLoading: panelLoadingSeen,
+              hadPanelContent: panelContentReceived,
+            });
+          }
           streamDone = true;
           syncPanelAiAnalysisZone();
           // product_list never arrived but AI Top Picks / groupings were deferred — show in chat

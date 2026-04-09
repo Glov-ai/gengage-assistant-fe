@@ -3,80 +3,61 @@
 ## Scope
 
 - Repository: `gengage-assistant-fe`
-- Reviewed against: `origin/main`
-- Note: this repo has no `dev` branch on remote, so `main` was used as baseline.
-- Focus: expert-mode redirect flow, state persistence, expert product rendering contract, and packaging readiness.
+- Reviewed against: `origin/main` (repo has no remote `dev` branch)
+- Branch: `codex/expert-mode-packaging`
+- Review date: 2026-04-09
+- Focus: expert-mode redirect quality, beauty photo upload UX/transport, state persistence, and transcript stability.
 
-## Findings and Resolution Plan
+## Findings (Ordered by Severity)
 
 | ID | Severity | Area | Finding | Status |
 |---|---|---|---|---|
-| FE-01 | Critical | Expert mode panel context | Beauty mode panel key was `beauty_consulting_state`, but backend uses `redirected_agent_state`; this would drop collected beauty state across turns. | Fixed |
-| FE-02 | High | Test coverage | No focused regression tests for expert-mode state sync and expert product payload adaptation. | Fixed |
-| FE-03 | Medium | Lint quality | Unused type import in `src/chat/index.ts` produced lint warning. | Fixed |
-| FE-04 | Medium | Docs accuracy | Migration notes referenced outdated backend file path (`text_action_watch_expert.py.py`) and stale beauty state key naming. | Fixed |
+| FE-01 | Critical | `src/chat/expert-mode/definitions/beauty.ts` | Beauty panel state key mismatched backend contract (`beauty_consulting_state` vs `redirected_agent_state`), causing state loss risk. | Fixed |
+| FE-02 | Critical | `src/chat/index.ts`, `src/chat/api.ts` | Beauty image upload was sent in a shape that backend rejected (`inputText + attachment` path mismatch in practical flow). | Fixed |
+| FE-03 | High | `src/chat/index.ts` | Transcript jumped upward on new responses in reused expert thread due forced `requestThreadFocus` (top anchoring older bubble). | Fixed |
+| FE-04 | High | `tests/*` | Missing deterministic coverage for beauty upload normalization/progress and attachment send behavior. | Fixed |
+| FE-05 | Medium | `src/chat/api.ts`, `src/chat/index.ts` | Beauty diagnostic logs are always-on (`console.warn/error`) and may leak noisy payload metadata in production consoles. | Open |
+| FE-06 | Medium | docs | Migration docs drifted from actual backend naming and current beauty transfer behavior. | Fixed |
 
----
+## Resolution Plan Per Finding
 
-## Detailed Resolution Plan (Executed)
+### FE-01 (Fixed): Beauty state key mismatch
+1. Align beauty expert definition with backend context key `redirected_agent_state`.
+2. Keep sync/build logic mode-aware to avoid cross-mode state contamination.
+3. Lock with controller tests.
 
-### FE-01 (Critical): Beauty state key mismatch
+### FE-02 (Fixed): Beauty upload transport mismatch
+1. Route beauty attachment send through `inputText` payload with multipart attachment.
+2. Normalize beauty attachment file client-side (jpeg fallback + resize threshold).
+3. Add explicit request-level logging to verify raw/mapped action type and attachment metadata during debugging.
 
-Plan executed:
-1. Align beauty expert definition context key with backend contract.
-2. Use `redirected_agent_state` for panel sync/build so:
-   - FE sends correct panel state back to backend
-   - FE can sync updated beauty state from backend context
-3. Verify with focused controller test.
+### FE-03 (Fixed): Upward scroll jump
+1. Detect whether current request reuses an existing thread.
+2. For existing thread, request bottom scroll (`requestScrollToBottom`) instead of thread-top focus scroll.
+3. Keep thread-focus behavior for first message of a new thread only.
 
-Files:
-- `src/chat/expert-mode/definitions/beauty.ts`
-- `tests/expert-mode-controller.test.ts`
+### FE-04 (Fixed): Missing tests
+1. Add tests for beauty attachment normalization behavior.
+2. Add tests for beauty attachment send path + payload shape.
+3. Add tests for beauty photo progress-step mapping.
 
-### FE-02 (High): Missing regression tests
+### FE-05 (Open): Always-on beauty debug logs
+Plan:
+1. Gate beauty debug logs behind existing debug flag plumbing (e.g., `chat_debug` / localStorage switch).
+2. Keep production default quiet, but preserve structured logs for troubleshooting.
+3. Add one unit test validating logger no-op when debug is off.
 
-Plan executed:
-1. Add expert-mode controller unit tests:
-   - sync from `redirected_agent_state`
-   - ignore mismatched `assistant_mode`
-2. Add protocol adapter test for expert `productList` payload:
-   - `source`
-   - `product_list_w_reason` mapping
-   - `recommendation_groups`
-   - `style_variations`
-3. Extend persistence test to assert `expertModeState` is saved.
+### FE-06 (Fixed): Documentation drift
+1. Update migration analysis to match backend file names and active beauty state contract.
+2. Document current beauty upload + expert handoff behavior and integration expectations.
 
-Files:
-- `tests/expert-mode-controller.test.ts`
-- `tests/protocol-adapter.test.ts`
-- `tests/session-persistence.test.ts`
-
-### FE-03 (Medium): Lint warning
-
-Plan executed:
-1. Remove unused `ExpertModeId` type import from chat index.
-
-File:
-- `src/chat/index.ts`
-
-### FE-04 (Medium): Documentation drift
-
-Plan executed:
-1. Update migration analysis references to current backend watch file naming.
-2. Replace stale beauty state key references with `redirected_agent_state` to reflect actual integration contract.
-
-File:
-- `docs/beauty-expert-migration-analysis.md`
-
-## Validation Checklist
+## Validation Completed
 
 - `npm run lint` ✅
-- `npm run typecheck` ✅
-- `npm run test` ✅ (122 files, 1254 tests passed)
+- `npm run test` ✅ (123 files, 1260 tests passed)
 - `npm run build` ✅
 
-## Residual Risk / Follow-Up
+## Additional Follow-Up (Non-blocking)
 
-- Add a full end-to-end redirect-flow integration test in `tests/chat-*`:
-  - shopping message -> redirect -> expert init -> follow-up turn with persisted context.
-  - This is not a blocker for current merge but would further harden behavior against regressions.
+- Add one high-level integration test for complete redirect flow:
+  - shopping user turn -> `redirect` -> expert init -> expert follow-up turn with persisted state and attachment.

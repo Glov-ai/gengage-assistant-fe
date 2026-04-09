@@ -54,6 +54,56 @@ describe('GengageChat attachment send', () => {
     expect(fetchCalls.length).toBeGreaterThan(0);
     const lastInit = fetchCalls[fetchCalls.length - 1]![1] as RequestInit;
     expect(lastInit.body).toBeInstanceOf(FormData);
+    const requestRaw = (lastInit.body as FormData).get('request');
+    expect(typeof requestRaw).toBe('string');
+    const parsed = JSON.parse(requestRaw as string);
+    expect(parsed.type).toBe('findSimilar');
+  });
+
+  it('routes beauty expert attachment as inputText with default analysis prompt', async () => {
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'test',
+      middlewareUrl: 'https://test.example.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    (
+      chat as unknown as {
+        _expertModes: {
+          enterSession: (session: {
+            modeId: 'beauty_consulting';
+            threadId: string | null;
+            previousThreadId: string | null;
+            fields: Record<string, unknown>;
+            missingFields: string[];
+          }) => void;
+        };
+      }
+    )._expertModes.enterSession({
+      modeId: 'beauty_consulting',
+      threadId: 'expert-thread',
+      previousThreadId: null,
+      fields: {},
+      missingFields: [],
+    });
+
+    const file = new File(['img-bytes'], 'face.jpg', { type: 'image/jpeg' });
+    (chat as unknown as { _sendMessage(t: string, a?: File): void })._sendMessage('', file);
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    const fetchCalls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(fetchCalls.length).toBeGreaterThan(0);
+    const lastInit = fetchCalls[fetchCalls.length - 1]![1] as RequestInit;
+    expect(lastInit.body).toBeInstanceOf(FormData);
+    const requestRaw = (lastInit.body as FormData).get('request');
+    expect(typeof requestRaw).toBe('string');
+    const parsed = JSON.parse(requestRaw as string);
+    expect(parsed.type).toBe('inputText');
+    expect(parsed.payload?.text).toBe('Fotografimi analiz edebilir misiniz?');
   });
 
   it('sends JSON when no attachment', async () => {

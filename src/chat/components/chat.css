@@ -6637,6 +6637,100 @@ button.gengage-chat-product-details-rating {
   color: var(--client-primary);
 }
 
+.gengage-chat-beauty-promo {
+  padding: 4px 12px 2px;
+}
+
+.gengage-chat-beauty-promo-card {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
+  background: color-mix(in srgb, var(--client-primary) 7%, white);
+}
+
+.gengage-chat-beauty-promo-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+.gengage-chat-beauty-promo-action {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.gengage-chat-beauty-promo-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.gengage-chat-beauty-promo-media {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--client-primary) 10%, white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gengage-chat-beauty-promo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gengage-chat-beauty-promo-fallback {
+  font-size: 24px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--client-primary) 72%, var(--text-primary));
+}
+
+.gengage-chat-beauty-promo-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 20px;
+}
+
+.gengage-chat-beauty-promo-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.gengage-chat-beauty-promo-description {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.gengage-chat-beauty-promo-cta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--client-primary);
+}
+
 /* Suggested action icons */
 .gengage-chat-icon {
   width: 14px;

@@ -198,6 +198,34 @@ export function sendChatMessage(
 
       // Use FormData only when an attachment is present; otherwise send JSON.
       const useFormData = transport.attachment !== undefined;
+      const rawType = request.type ?? request.action?.type ?? 'inputText';
+      const mappedType = ACTION_TYPE_MAP[rawType] ?? rawType;
+      const shouldLogBeautyFlow =
+        request.meta?.assistantMode === 'beauty_consulting' || transport.attachment !== undefined;
+      if (shouldLogBeautyFlow) {
+        console.warn('[gengage:beauty-photo] process_action_request', {
+          endpoint: url,
+          assistantMode: request.meta?.assistantMode ?? 'shopping',
+          requestTypeRaw: rawType,
+          requestTypeMapped: mappedType,
+          payloadShape:
+            request.payload == null
+              ? null
+              : typeof request.payload === 'string'
+                ? 'string'
+                : Array.isArray(request.payload)
+                  ? 'array'
+                  : 'object',
+          hasAttachment: transport.attachment !== undefined,
+          attachment: transport.attachment
+            ? {
+                name: transport.attachment.name,
+                type: transport.attachment.type || 'unknown',
+                size: transport.attachment.size,
+              }
+            : null,
+        });
+      }
 
       let fetchInit: RequestInit;
       if (useFormData) {
@@ -233,6 +261,16 @@ export function sendChatMessage(
           if (typeof msg === 'string') detail = msg;
         } catch {
           /* body not JSON — keep statusText */
+        }
+        if (shouldLogBeautyFlow) {
+          console.error('[gengage:beauty-photo] process_action_http_error', {
+            endpoint: url,
+            status: response.status,
+            detail,
+            requestTypeRaw: rawType,
+            requestTypeMapped: mappedType,
+            assistantMode: request.meta?.assistantMode ?? 'shopping',
+          });
         }
         callbacks.onError(new Error(`HTTP ${response.status}: ${detail}`));
         return;

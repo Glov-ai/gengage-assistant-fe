@@ -31,6 +31,22 @@ The redirect starts in normal shopping chat. If the backend detects a guided bea
 
 The old FE renders those structures with custom UI. The new FE can already receive redirects and backend context, but it does not yet have the guided-mode state machine or the beauty-specific product grid behavior.
 
+## Implementation Status in `codex/expert-mode-packaging`
+
+The branch now implements the core migration requirements:
+
+- Shared expert-mode capability exists and supports at least:
+  - `beauty_consulting`
+  - `watch_expert`
+- Beauty state contract is aligned to backend:
+  - `redirected_agent_state` is used for panel sync/persistence.
+- Beauty attachment flow is integrated:
+  - user image upload in beauty mode is normalized client-side
+  - request is sent as multipart attachment with `inputText`
+  - progress text mapping is rendered while waiting for backend responses.
+- Transcript behavior is stabilized for expert threads:
+  - same-thread follow-up requests use bottom anchoring instead of thread-start anchoring to avoid upward jump.
+
 ## Requirements Analysis
 
 This section maps the 4 transfer requirements directly.

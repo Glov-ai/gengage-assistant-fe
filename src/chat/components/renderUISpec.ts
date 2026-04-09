@@ -133,7 +133,8 @@ function resolveRemoteConfigAssetCandidates(assetPath: string | null | undefined
   const candidates: string[] = [];
 
   try {
-    if (window.localStorage.getItem('use_local_config') === 'true') {
+    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalHost && window.localStorage.getItem('use_local_config') === 'true') {
       candidates.push(`http://localhost:8888${trimmed.replace(/^\/remoteConfig/, '')}`);
     }
   } catch {

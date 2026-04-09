@@ -150,6 +150,7 @@ export class ChatDrawer {
   private _userScrolledUp = false;
   private _scrollLockedUntil = 0;
   private _inputChipsEl: HTMLElement;
+  private _beautyPhotoPromoEl: HTMLElement;
   private _thumbnailsColumn: ThumbnailsColumn;
   private _panelFloatingEl: HTMLElement;
   /** Mobile: overlay host for comparison dock (above panel scroll; avoids transformed panel containing block). */
@@ -795,6 +796,12 @@ export class ChatDrawer {
     this._inputChipsEl.style.display = 'none';
     conversation.appendChild(this._inputChipsEl);
 
+    this._beautyPhotoPromoEl = document.createElement('div');
+    this._beautyPhotoPromoEl.className = 'gengage-chat-beauty-promo';
+    this._beautyPhotoPromoEl.dataset['gengagePart'] = 'chat-beauty-photo-promo';
+    this._beautyPhotoPromoEl.style.display = 'none';
+    conversation.appendChild(this._beautyPhotoPromoEl);
+
     // Input area
     const inputArea = document.createElement('div');
     inputArea.className = 'gengage-chat-input-area';
@@ -1323,6 +1330,95 @@ export class ChatDrawer {
     this._expertModeShellEl.style.display = '';
   }
 
+  setBeautyPhotoPromoCard(
+    payload:
+      | {
+          title: string;
+          description?: string | null;
+          ctaLabel?: string | null;
+          imageUrl?: string | null;
+          processing?: boolean;
+          onAction: () => void;
+          onDismiss?: (() => void) | undefined;
+        }
+      | null,
+  ): void {
+    if (!payload) {
+      this._beautyPhotoPromoEl.innerHTML = '';
+      this._beautyPhotoPromoEl.style.display = 'none';
+      return;
+    }
+
+    this._beautyPhotoPromoEl.innerHTML = '';
+    this._beautyPhotoPromoEl.style.display = '';
+
+    const card = document.createElement('div');
+    card.className = 'gengage-chat-beauty-promo-card gds-card-soft';
+    card.dataset['gengagePart'] = 'chat-beauty-photo-promo-card';
+
+    if (payload.onDismiss) {
+      const dismissBtn = document.createElement('button');
+      dismissBtn.type = 'button';
+      dismissBtn.className = 'gengage-chat-beauty-promo-dismiss gds-btn gds-btn-ghost';
+      dismissBtn.dataset['gengagePart'] = 'chat-beauty-photo-promo-dismiss';
+      dismissBtn.setAttribute('aria-label', this.i18n.dismissAriaLabel);
+      dismissBtn.textContent = '\u00D7';
+      dismissBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        payload.onDismiss?.();
+      });
+      card.appendChild(dismissBtn);
+    }
+
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'gengage-chat-beauty-promo-action';
+    actionBtn.dataset['gengagePart'] = 'chat-beauty-photo-promo-action';
+    actionBtn.disabled = payload.processing === true;
+    actionBtn.addEventListener('click', () => payload.onAction());
+
+    const media = document.createElement('div');
+    media.className = 'gengage-chat-beauty-promo-media';
+    const allowInlineDataImage = typeof payload.imageUrl === 'string' && payload.imageUrl.startsWith('data:image/');
+    if (payload.imageUrl && (isSafeImageUrl(payload.imageUrl) || allowInlineDataImage)) {
+      const image = document.createElement('img');
+      image.className = 'gengage-chat-beauty-promo-image';
+      image.alt = '';
+      image.src = payload.imageUrl;
+      media.appendChild(image);
+    } else {
+      const fallback = document.createElement('div');
+      fallback.className = 'gengage-chat-beauty-promo-fallback';
+      fallback.textContent = '\u2728';
+      media.appendChild(fallback);
+    }
+    actionBtn.appendChild(media);
+
+    const content = document.createElement('div');
+    content.className = 'gengage-chat-beauty-promo-content';
+
+    const title = document.createElement('div');
+    title.className = 'gengage-chat-beauty-promo-title';
+    title.textContent = payload.title;
+    content.appendChild(title);
+
+    if (payload.description?.trim()) {
+      const description = document.createElement('div');
+      description.className = 'gengage-chat-beauty-promo-description';
+      description.textContent = payload.description.trim();
+      content.appendChild(description);
+    }
+
+    const cta = document.createElement('div');
+    cta.className = 'gengage-chat-beauty-promo-cta';
+    cta.textContent = payload.processing === true ? 'Fotograf isleniyor...' : payload.ctaLabel?.trim() || 'Fotograf Yukle';
+    content.appendChild(cta);
+
+    actionBtn.appendChild(content);
+    card.appendChild(actionBtn);
+    this._beautyPhotoPromoEl.appendChild(card);
+  }
+
   /** Replace suggestion pills. Pass empty array to hide. */
   setPills(
     pills: Array<{ label: string; onAction: () => void; icon?: string; image?: string; description?: string }>,
@@ -1511,6 +1607,10 @@ export class ChatDrawer {
   /** Get the currently staged attachment file, or null. */
   getPendingAttachment(): File | null {
     return this._pendingAttachment;
+  }
+
+  openAttachmentPicker(): void {
+    this._fileInput.click();
   }
 
   /**

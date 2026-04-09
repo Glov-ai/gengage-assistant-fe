@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { validateImageFile, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../src/chat/attachment-utils.js';
+import {
+  validateImageFile,
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+  BEAUTY_ATTACHMENT_MAX_BYTES,
+  normalizeBeautyAttachmentFile,
+} from '../src/chat/attachment-utils.js';
 
 describe('validateImageFile', () => {
   it('accepts a valid JPEG file', () => {
@@ -48,5 +54,14 @@ describe('validateImageFile', () => {
   it('exports correct constants', () => {
     expect(ALLOWED_MIME_TYPES).toEqual(['image/jpeg', 'image/png', 'image/webp']);
     expect(MAX_FILE_SIZE).toBe(5 * 1024 * 1024);
+  });
+});
+
+describe('normalizeBeautyAttachmentFile', () => {
+  it('returns original file when size is already within beauty threshold', async () => {
+    const data = new Uint8Array(BEAUTY_ATTACHMENT_MAX_BYTES - 1);
+    const file = new File([data], 'small.jpg', { type: 'image/jpeg' });
+    const normalized = await normalizeBeautyAttachmentFile(file);
+    expect(normalized).toBe(file);
   });
 });
