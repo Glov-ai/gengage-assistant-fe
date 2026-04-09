@@ -139,10 +139,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
   private _drawerVisible = false;
-  /** Host document scroll frozen (floating/overlay + drawer open). */
+  /**
+   * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault.
+   * Does not set `overflow` on html/body (avoids breaking host layouts).
+   */
   private _hostScrollLockActive = false;
-  private _hostScrollLockScrollY = 0;
-  private _hostScrollLockPriorStyles: Record<string, string> | null = null;
+  private readonly _preventHostDocumentTouchMove = (e: TouchEvent): void => {
+    if (!this._hostScrollLockActive) return;
+    if (this._hostScrollEventShouldReachChatScroller(e)) return;
+    e.preventDefault();
+  };
+  private readonly _preventHostDocumentWheel = (e: WheelEvent): void => {
+    if (!this._hostScrollLockActive) return;
+    if (this._hostScrollEventShouldReachChatScroller(e)) return;
+    e.preventDefault();
+  };
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
   // corruption when concurrent preservePanel streams write simultaneously.
@@ -317,6 +328,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onAttachment: (file) => this._handleAttachment(file),
       onPanelToggle: () => {
         this._drawer?.persistPanelState(config.accountId);
+      },
+      onHostShellSync: () => {
+        this._applyOpenStateClasses();
       },
       onRollback: (messageId) => this._handleRollback(messageId),
       onPanelBack: () => this._navigatePanelBack(),
@@ -1190,15 +1204,31 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._applyOpenStateClasses();
   }
 
+  /**
+   * Scroll lock + dimming backdrop apply only in this state:
+   * - overlay: drawer open (full-screen modal)
+   * - floating: drawer open and side panel visible (split / “maximized” layout)
+   */
+  private _isMaximizedForHostChrome(): boolean {
+    if (!this._drawerVisible) return false;
+    const variant = this.config.variant ?? 'floating';
+    if (variant === 'inline') return false;
+    if (variant === 'overlay') return true;
+    return this._drawer?.isPanelVisible() ?? false;
+  }
+
   private _applyOpenStateClasses(): void {
     if (!this._rootEl) return;
     const mobileHalf = this._drawerVisible && this._isMobileViewport && this._openState === 'half';
     const mobileFull = this._drawerVisible && this._isMobileViewport && this._openState === 'full';
+    const maximizedHost = this._isMaximizedForHostChrome();
     this._rootEl.classList.toggle('gengage-chat-root--open', this._drawerVisible);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-half', mobileHalf);
     this._rootEl.classList.toggle('gengage-chat-root--mobile-full', mobileFull);
+    this._rootEl.classList.toggle('gengage-chat-root--maximized-host-chrome', maximizedHost);
     if (this._backdropEl) {
-      this._backdropEl.setAttribute('aria-hidden', this._drawerVisible ? 'false' : 'true');
+      const backdropIsScrim = maximizedHost && (this.config.variant ?? 'floating') !== 'inline';
+      this._backdropEl.setAttribute('aria-hidden', backdropIsScrim ? 'false' : 'true');
     }
     this._syncHostDocumentScrollLock();
   }
@@ -1210,63 +1240,54 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._releaseHostDocumentScrollLock();
       return;
     }
-    if (this._drawerVisible) {
+    if (this._isMaximizedForHostChrome()) {
       this._applyHostDocumentScrollLock();
     } else {
       this._releaseHostDocumentScrollLock();
     }
   }
 
+  /**
+   * When true, we do not preventDefault — the event may drive chat-internal scrolling.
+   * Full-viewport backdrop sits inside the shadow tree, so `composedPath()` always hits
+   * the host; we must not treat "inside widget" as "allow scroll" for that case.
+   */
+  private _hostScrollEventShouldReachChatScroller(ev: Event): boolean {
+    try {
+      const path = ev.composedPath();
+      if (!path.includes(this.root)) return false;
+
+      for (const n of path) {
+        if (n === this.root) break;
+        if (!(n instanceof HTMLElement)) continue;
+
+        if (this._backdropEl && (n === this._backdropEl || this._backdropEl.contains(n))) {
+          return false;
+        }
+
+        const cs = window.getComputedStyle(n);
+        const canY = (cs.overflowY === 'auto' || cs.overflowY === 'scroll') && n.scrollHeight > n.clientHeight + 1;
+        const canX = (cs.overflowX === 'auto' || cs.overflowX === 'scroll') && n.scrollWidth > n.clientWidth + 1;
+        if (canY || canX) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   private _applyHostDocumentScrollLock(): void {
     if (typeof document === 'undefined' || this._hostScrollLockActive) return;
-    const html = document.documentElement;
-    const body = document.body;
-    if (!body) return;
-
-    this._hostScrollLockScrollY = window.scrollY ?? window.pageYOffset ?? 0;
-    this._hostScrollLockPriorStyles = {
-      htmlOverflow: html.style.overflow,
-      htmlOverscroll: html.style.overscrollBehavior,
-      bodyOverflow: body.style.overflow,
-      bodyOverscroll: body.style.overscrollBehavior,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyLeft: body.style.left,
-      bodyRight: body.style.right,
-      bodyWidth: body.style.width,
-    };
-    html.style.overflow = 'hidden';
-    html.style.overscrollBehavior = 'none';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
-    body.style.position = 'fixed';
-    body.style.top = `-${this._hostScrollLockScrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
+    document.addEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true, passive: false });
+    document.addEventListener('wheel', this._preventHostDocumentWheel, { capture: true, passive: false });
     this._hostScrollLockActive = true;
   }
 
   private _releaseHostDocumentScrollLock(): void {
     if (typeof document === 'undefined' || !this._hostScrollLockActive) return;
-    const html = document.documentElement;
-    const body = document.body;
-    const y = this._hostScrollLockScrollY;
-    const prior = this._hostScrollLockPriorStyles;
-    html.style.overflow = prior?.htmlOverflow ?? '';
-    html.style.overscrollBehavior = prior?.htmlOverscroll ?? '';
-    body.style.overflow = prior?.bodyOverflow ?? '';
-    body.style.overscrollBehavior = prior?.bodyOverscroll ?? '';
-    body.style.position = prior?.bodyPosition ?? '';
-    body.style.top = prior?.bodyTop ?? '';
-    body.style.left = prior?.bodyLeft ?? '';
-    body.style.right = prior?.bodyRight ?? '';
-    body.style.width = prior?.bodyWidth ?? '';
+    document.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
+    document.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
     this._hostScrollLockActive = false;
-    this._hostScrollLockPriorStyles = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y);
-    });
   }
 
   private _handleAttachment(file: File): void {

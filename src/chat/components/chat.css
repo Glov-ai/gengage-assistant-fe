@@ -69,7 +69,8 @@
   --_gengage-ghost-border: var(--gengage-ghost-border, color-mix(in srgb, var(--client-primary) 16%, transparent));
 }
 
-/* Full-viewport scrim: slight dim outside chat; click closes (see index.ts) */
+/* Full-viewport layer: dim + click-outside only when `.gengage-chat-root--maximized-host-chrome`
+   (floating + side panel open, or overlay modal). Otherwise transparent and pointer-events none. */
 .gengage-chat-backdrop {
   display: none;
   position: fixed;
@@ -78,7 +79,7 @@
   margin: 0;
   padding: 0;
   border: none;
-  background: var(--gengage-chat-float-backdrop, color-mix(in srgb, var(--surface-overlay) 72%, transparent));
+  background: transparent;
   pointer-events: none;
   cursor: pointer;
   box-sizing: border-box;
@@ -87,11 +88,18 @@
 
 .gengage-chat-root--open:not(.gengage-chat--inline) .gengage-chat-backdrop {
   display: block;
-  pointer-events: auto;
+  pointer-events: none;
+  background: var(--gengage-chat-float-backdrop, transparent);
 }
 
-.gengage-chat--overlay .gengage-chat-backdrop {
+.gengage-chat-root--open.gengage-chat-root--maximized-host-chrome:not(.gengage-chat--inline) .gengage-chat-backdrop {
+  pointer-events: auto;
+  background: var(--gengage-chat-float-backdrop, color-mix(in srgb, var(--surface-overlay) 72%, transparent));
+}
+
+.gengage-chat-root.gengage-chat--overlay.gengage-chat-root--open .gengage-chat-backdrop {
   background: var(--gengage-chat-overlay-backdrop, var(--surface-overlay));
+  pointer-events: auto;
 }
 
 /* Launcher container — fixed-positioned wrapper for button + content areas */
