@@ -2438,8 +2438,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 }
               : undefined,
           );
-          // Make the bot message bubble clickable to restore its panel state
-          this._panel?.attachClickHandler(botMsg.id);
 
           this.track(
             streamDoneEvent(this.analyticsContext(), {
@@ -2830,7 +2828,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         if (uiSpec) {
           chatMsg.uiSpec = uiSpec;
           this._restoreInlineUISpec(chatMsg);
-          this._panel?.attachClickHandler(chatMsg.id);
           // Clear after render to maintain lean pattern
           delete chatMsg.uiSpec;
         }

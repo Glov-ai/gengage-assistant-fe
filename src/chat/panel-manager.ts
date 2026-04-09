@@ -64,18 +64,6 @@ export class PanelManager {
   }
 
   /**
-   * Attach a click handler to a bot message bubble so clicking it restores
-   * the panel content that was active when that message was received.
-   */
-  attachClickHandler(messageId: string): void {
-    const shadow = this.deps.shadow();
-    const bubble = shadow?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
-    if (!bubble) return;
-    (bubble as HTMLElement).classList.add('gds-clickable');
-    bubble.addEventListener('click', () => this.restoreForMessage(messageId));
-  }
-
-  /**
    * Restore the panel content snapshot associated with a given message ID.
    * Highlights the active message and de-highlights the previous one.
    * Also restores the panel topbar title for the snapshot's component type.
