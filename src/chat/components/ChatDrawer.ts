@@ -34,6 +34,8 @@ export interface ChatDrawerOptions {
   onClose: () => void;
   onAttachment?: (file: File) => void;
   onPanelToggle?: () => void;
+  /** Fired when side panel show/hide changes — host uses this to sync scroll lock / backdrop. */
+  onHostDocumentChromeChange?: () => void;
   onRollback?: (messageId: string) => void;
   headerTitle?: string | undefined;
   headerAvatarUrl?: string | undefined;
@@ -136,6 +138,7 @@ export class ChatDrawer {
   private _dividerEl: HTMLElement;
   private _dividerPreviewEl: HTMLElement;
   private _onPanelToggle: (() => void) | undefined = undefined;
+  private _onHostDocumentChromeChange: (() => void) | undefined = undefined;
   private _pendingAttachment: File | null = null;
   private _fileInput: HTMLInputElement;
   private _previewStrip: HTMLElement;
@@ -195,6 +198,9 @@ export class ChatDrawer {
     this.onSend = options.onSend;
     if (options.onPanelToggle !== undefined) {
       this._onPanelToggle = options.onPanelToggle;
+    }
+    if (options.onHostDocumentChromeChange !== undefined) {
+      this._onHostDocumentChromeChange = options.onHostDocumentChromeChange;
     }
     if (options.onAttachment !== undefined) {
       this._onAttachment = options.onAttachment;
@@ -1495,6 +1501,10 @@ export class ChatDrawer {
     this._panelAiZoneEl.setAttribute('hidden', '');
   }
 
+  private _emitHostDocumentChromeChange(): void {
+    this._onHostDocumentChromeChange?.();
+  }
+
   private _syncPanelTopBarFromContent(contentEl: HTMLElement): void {
     const gridHead = contentEl.querySelector<HTMLElement>('.gengage-chat-product-grid-head');
     if (gridHead) {
@@ -1570,6 +1580,7 @@ export class ChatDrawer {
     });
     // New content always reopens the panel — hide the reopen button
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
+    this._emitHostDocumentChromeChange();
   }
 
   /** Append content to the panel without replacing existing content. */
@@ -1585,6 +1596,7 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._syncDividerPreview();
+    this._emitHostDocumentChromeChange();
   }
 
   /** Return the panel element's content child (after topbar), or null. */
@@ -1809,6 +1821,7 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._syncDividerPreview();
+    this._emitHostDocumentChromeChange();
   }
 
   /** Update the panel top bar navigation state. */
@@ -1863,6 +1876,7 @@ export class ChatDrawer {
     this._syncDividerPreview();
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
     this.setComparisonDockContent(null);
+    this._emitHostDocumentChromeChange();
   }
 
   /**
@@ -1883,6 +1897,7 @@ export class ChatDrawer {
     this._panelVisible = false;
     this._panelEl.classList.remove('gengage-chat-panel--visible');
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'flex';
+    this._emitHostDocumentChromeChange();
   }
 
   private _showMobilePanelFromBtn(): void {
@@ -1890,6 +1905,7 @@ export class ChatDrawer {
     this._panelVisible = true;
     this._panelEl.classList.add('gengage-chat-panel--visible');
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
+    this._emitHostDocumentChromeChange();
   }
 
   /** Expand panel without locking — user can still toggle via divider. */
@@ -1902,6 +1918,7 @@ export class ChatDrawer {
       this.root.classList.add('gengage-chat-drawer--with-panel');
     }
     this._syncDividerPreview();
+    this._emitHostDocumentChromeChange();
   }
 
   /**
@@ -1919,6 +1936,7 @@ export class ChatDrawer {
     }
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._syncDividerPreview();
+    this._emitHostDocumentChromeChange();
   }
 
   /**
