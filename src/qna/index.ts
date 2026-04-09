@@ -30,7 +30,7 @@ import {
   defaultQnaUnknownUISpecRenderer,
   renderQnaUISpec,
 } from './components/renderUISpec.js';
-import { mergeStandaloneFindSimilarIntoQuickPills } from './normalize-ui-specs.js';
+import { mergeStandaloneFindSimilarIntoQuickPills, resolveQnaSkuListForPayload } from './normalize-ui-specs.js';
 import type { QNAWidgetConfig, QNAI18n, QNAUISpecRenderContext } from './types.js';
 import { QNA_I18N_TR, resolveQnaLocale } from './locales/index.js';
 
@@ -244,9 +244,12 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       if (effectivePlaceholders !== undefined) renderContext.inputPlaceholder = effectivePlaceholders;
 
       const fallbackSpec = this._buildFallbackActionsSpec(result.actions);
+      const quickPillSkuList = resolveQnaSkuListForPayload(this.config.pageContext);
       const specsToRender =
         result.uiSpecs.length > 0
-          ? mergeStandaloneFindSimilarIntoQuickPills(result.uiSpecs, this._i18n)
+          ? mergeStandaloneFindSimilarIntoQuickPills(result.uiSpecs, this._i18n, {
+              skuList: quickPillSkuList,
+            })
           : [fallbackSpec];
       const nonEmptySpecs = specsToRender.filter((spec) => Object.keys(spec.elements).length > 0);
 
