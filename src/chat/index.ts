@@ -709,10 +709,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _pruneEmptyStreamingAssistantPlaceholders(): void {
     const next: ChatMessage[] = [];
     for (const m of this._messages) {
-      const drop =
-        m.role === 'assistant' &&
-        m.status === 'streaming' &&
-        (m.content == null || m.content.length === 0);
+      const drop = m.role === 'assistant' && m.status === 'streaming' && (m.content == null || m.content.length === 0);
       if (drop) {
         if (m.threadId) {
           this._threadsWithFirstBot.delete(m.threadId);
