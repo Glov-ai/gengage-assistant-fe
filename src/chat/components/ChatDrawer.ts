@@ -1145,6 +1145,15 @@ export class ChatDrawer {
     this._scrollToBottom(message.role === 'user');
   }
 
+  /** Remove one transcript bubble (e.g. superseded empty assistant placeholder). */
+  removeMessageBubble(messageId: string): void {
+    this._firstBotMessageIds.delete(messageId);
+    this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)?.remove();
+    if (this._presentationFocusThreadId) {
+      this._applyPresentationCollapsed();
+    }
+  }
+
   showTypingIndicator(searchText?: string): void {
     this.removeTypingIndicator();
     const initialSteps =
@@ -2186,6 +2195,14 @@ export class ChatDrawer {
     const text = this.inputEl.value.trim();
     const attachment = this._pendingAttachment;
     if (!text && !attachment) return;
+    // Match send-button behaviour: while "Stop generating" is active, Enter must run
+    // the same abort + cleanup as Stop before starting a new request. Otherwise the
+    // prior stream's placeholder and bridge state drift from _sendAction's abort.
+    if (this._sendStopHandler) {
+      const onStop = this._sendStopHandler;
+      this.hideStopButton();
+      onStop();
+    }
     this.onSend(text, attachment ?? undefined);
     this.inputEl.value = '';
     this.inputEl.style.height = 'auto'; // Reset textarea height after submit
@@ -2280,7 +2297,18 @@ export class ChatDrawer {
    * Used by centralized presentation scroll requests.
    */
   scrollThreadIntoView(threadId: string, behavior: ScrollBehavior = 'smooth'): boolean {
-    const target = this.messagesEl.querySelector(`[data-thread-id="${CSS.escape(threadId)}"]`) as HTMLElement | null;
+    const matches = this.messagesEl.querySelectorAll(`[data-thread-id="${CSS.escape(threadId)}"]`);
+    let target: HTMLElement | null = null;
+    for (let i = 0; i < matches.length; i++) {
+      const el = matches[i];
+      if (!(el instanceof HTMLElement)) continue;
+      if (el.classList.contains('gengage-chat-bubble--presentation-collapsed')) continue;
+      target = el;
+      break;
+    }
+    if (!target && matches.length > 0 && matches[0] instanceof HTMLElement) {
+      target = matches[0];
+    }
     if (!target) return false;
     const topInset = 20;
     const nextTop = Math.max(target.offsetTop - topInset, 0);

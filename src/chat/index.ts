@@ -700,6 +700,51 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._abortControllers.clear();
   }
 
+  /**
+   * Drop assistant rows that are still "streaming" with no text when the user starts
+   * a new turn. Otherwise each superseded request leaves an empty model message in
+   * `_messages` — it is included in `chatHistory` and can confuse the backend and
+   * delay or distort the next response.
+   */
+  private _pruneEmptyStreamingAssistantPlaceholders(): void {
+    const next: ChatMessage[] = [];
+    let thumbnailsChanged = false;
+    for (const m of this._messages) {
+      // Also catch status === 'done': the Stop button handler transitions streaming → done
+      // before _sendAction fires, so a stop-then-Enter sequence would otherwise leave an
+      // empty assistant turn in chatHistory and confuse the backend.
+      const drop =
+        m.role === 'assistant' &&
+        (m.status === 'streaming' || m.status === 'done') &&
+        (m.content == null || m.content.length === 0);
+      if (drop) {
+        if (m.threadId) {
+          this._threadsWithFirstBot.delete(m.threadId);
+          this._presentation.finalizeAssistantGroup(m.threadId);
+          // Remove inline UISpec nodes (data-thread-id but no data-message-id) that may
+          // have arrived before any outputText — removeMessageBubble only targets the bubble.
+          this._shadow
+            ?.querySelectorAll(`[data-thread-id="${CSS.escape(m.threadId)}"]:not([data-message-id])`)
+            .forEach((el) => el.remove());
+          if (this._panel) {
+            this._panel.threads = this._panel.threads.filter((t) => t !== m.threadId);
+          }
+          const before = this._thumbnailEntries.length;
+          this._thumbnailEntries = this._thumbnailEntries.filter((e) => e.threadId !== m.threadId);
+          if (this._thumbnailEntries.length !== before) thumbnailsChanged = true;
+        }
+        this._drawer?.removeMessageBubble(m.id);
+        this._panel?.snapshots.delete(m.id);
+        this._panel?.snapshotTypes.delete(m.id);
+        continue;
+      }
+      next.push(m);
+    }
+    this._messages.length = 0;
+    this._messages.push(...next);
+    if (thumbnailsChanged) this._drawer?.setThumbnails(this._thumbnailEntries);
+  }
+
   /** Reset all chat state when navigating to a different SKU/page. */
   private _resetForNewPage(): void {
     // Invalidate any in-flight stream callbacks so they discard themselves
@@ -1424,6 +1469,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._activeRequestThreadId = threadId;
     }
 
+    // Align presentation focus with this thread *before* appending the user bubble.
+    // Otherwise addMessage()'s collapse pass uses the previous focus and marks the
+    // new bubble as presentation-collapsed until a later setPresentationFocus — which
+    // can yield wrong scroll targets (offsetTop on display:none) and “empty” transcript.
+    if (!options?.silent && !isPreservePanel) {
+      this._drawer?.setPresentationFocus(threadId);
+    }
+
     // Add user message to UI (skip for silent/auto-launch actions)
     if (!options?.silent) {
       const userText =
@@ -1458,6 +1511,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._messages.push(botMsg);
       this._ensureAssistantMessageRendered(botMsg);
       this._drawer?.updateBotMessage(botMsg.id, fallback);
+      this._drawer?.setPresentationFocus(threadId);
       this._bridge?.send('isResponding', false);
       this.emit('message', botMsg);
       this._persistToIndexedDB().catch(() => {
@@ -1499,6 +1553,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._panel?.updateTopBarForLoading('comparisonTable');
     }
 
+    if (!options?.silent && !isPreservePanel) {
+      this._pruneEmptyStreamingAssistantPlaceholders();
+    }
+
     // Show typing indicator
     this._drawer?.showTypingIndicator();
     // Use a local text accumulator per stream invocation to prevent corruption
@@ -1515,7 +1573,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     this._presentation.registerAssistantActivity(threadId);
     this._presentation.requestThreadFocus(threadId, 'smooth');
-    this._drawer?.setPresentationFocus(threadId);
+    // User-visible non-preservePanel: focus was already set before the user bubble.
+    if (options?.silent || isPreservePanel) {
+      this._drawer?.setPresentationFocus(threadId);
+    }
     this._drawer?.setFormerMessagesButtonVisible(false);
     setTimeout(() => this._flushPresentationScroll(), 40);
 
