@@ -654,6 +654,7 @@
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>account:</strong> <span>otokoccomtr</span></span>
         <span class="dev-header__item"><strong>backend:</strong> <span id="dev-backend">—</span></span>
+        <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -701,6 +702,12 @@
     <!-- Main content -->
     <main class="host-shell">
 
+      <!-- PDP view (populated by JS when ?sku= is present) -->
+      <div id="pdp-section" style="display:none;"></div>
+
+      <!-- Catalog view -->
+      <div id="catalog-section">
+
       <!-- Brand filters -->
       <div class="brand-filters" id="brand-filters" role="group" aria-label="Marka filtresi">
         <button class="brand-pill active" data-brand="">Tümü</button>
@@ -742,6 +749,7 @@
         </div>
       </div>
 
+      </div><!-- /catalog-section -->
     </main>
 
     <script type="module">
@@ -751,8 +759,10 @@
       // ── Config from URL params ──────────────────────────────────────────
       const params = new URLSearchParams(location.search);
       const middlewareUrl = params.get('middlewareUrl') ?? 'http://localhost:5990/api';
+      const sku = params.get('sku') ?? undefined;
 
       document.getElementById('dev-backend').textContent = middlewareUrl;
+      document.getElementById('dev-sku').textContent = sku ?? '—';
 
       const launcherUrl = new URL('./glov-otokoccomtr-launcher.svg', import.meta.url).href;
 
@@ -761,6 +771,8 @@
         accountId: 'otokoccomtr',
         middlewareUrl,
         locale: 'tr',
+        sku,
+        pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
           primaryColor: '#0f2b5b',
           primaryForeground: '#ffffff',
@@ -803,20 +815,58 @@
       const voiceLauncher = createVoiceLauncher(middlewareUrl);
       document.body.appendChild(voiceLauncher);
 
-      // ── Vehicle demo grid ───────────────────────────────────────────────
+      // ── Vehicle demo grid (SKUs from backend catalog.json) ─────────────
       const VEHICLES = [
-        { brand: 'Ford', emoji: '🚙', name: 'Ford Focus 1.5 EcoBoost Titanium', specs: ['1.5L Benzin', '182 hp', 'Otomatik'] },
-        { brand: 'Ford', emoji: '🚗', name: 'Ford Puma 1.0 EcoBoost ST-Line X', specs: ['1.0L Benzin', '125 hp', 'Manuel'] },
-        { brand: 'Volvo', emoji: '🚘', name: 'Volvo XC60 B5 AWD R-Design', specs: ['2.0L Hybrid', '250 hp', 'Otomatik'] },
-        { brand: 'Volvo', emoji: '🚗', name: 'Volvo V60 B4 Inscription', specs: ['2.0L Benzin', '197 hp', 'Otomatik'] },
-        { brand: 'Jeep', emoji: '🛻', name: 'Jeep Compass 1.3 T270 Limited', specs: ['1.3L Benzin', '150 hp', 'Otomatik'] },
-        { brand: 'Fiat', emoji: '🚗', name: 'Fiat Egea 1.4 Fire Easy', specs: ['1.4L Benzin', '95 hp', 'Manuel'] },
-        { brand: 'Alfa Romeo', emoji: '🏎️', name: 'Alfa Romeo Stelvio 2.0T Q4 Sprint', specs: ['2.0L Benzin', '280 hp', 'Otomatik'] },
-        { brand: 'Maserati', emoji: '🏎️', name: 'Maserati Ghibli 2.0 Hybrid GT', specs: ['2.0L Hybrid', '330 hp', 'Otomatik'] },
+        { sku: '108349333', brand: 'Ford', emoji: '🚙', name: 'Ford Focus 1.5 EcoBoost Titanium', specs: ['1.5L Benzin', '182 hp', 'Otomatik'] },
+        { sku: '105216848', brand: 'Ford', emoji: '🚗', name: 'Ford Puma ST-Line', specs: ['1.0L Benzin', '125 hp', 'Manuel'] },
+        { sku: '109769470', brand: 'Volvo', emoji: '🚘', name: 'Volvo XC60 Plus Dark', specs: ['2.0L Hybrid', '250 hp', 'Otomatik'] },
+        { sku: '114430160', brand: 'Volvo', emoji: '🚗', name: 'Volvo XC60 Plus Bright', specs: ['2.0L Benzin', '197 hp', 'Otomatik'] },
+        { sku: '100517803', brand: 'Jeep', emoji: '🛻', name: 'Jeep Compass Limited', specs: ['1.3L Benzin', '150 hp', 'Otomatik'] },
+        { sku: '102796531', brand: 'Fiat', emoji: '🚗', name: 'Fiat 500 Dolcevita', specs: ['1.0L Benzin', '70 hp', 'Manuel'] },
+        { sku: '100281185', brand: 'Alfa Romeo', emoji: '🏎️', name: 'Alfa Romeo Stelvio Veloce', specs: ['2.0L Benzin', '280 hp', 'Otomatik'] },
+        { sku: '105053261', brand: 'Maserati', emoji: '🏎️', name: 'Maserati Ghibli 2.0 Hybrid GT', specs: ['2.0L Hybrid', '330 hp', 'Otomatik'] },
       ];
 
       const grid = document.getElementById('vehicle-grid');
+      const pdpSection = document.getElementById('pdp-section');
+      const catalogSection = document.getElementById('catalog-section');
       let activeBrand = '';
+
+      // ── PDP view (when ?sku= is present) ────────────────────────────────
+      const activeVehicle = sku ? VEHICLES.find(v => v.sku === sku) : undefined;
+      if (sku) {
+        catalogSection.style.display = 'none';
+        const v = activeVehicle ?? { brand: '—', emoji: '🚗', name: `Araç SKU: ${sku}`, specs: [] };
+        pdpSection.innerHTML = `
+          <a href="?middlewareUrl=${encodeURIComponent(middlewareUrl)}" style="display:inline-block;margin-bottom:16px;color:var(--brand-primary);font-size:13px;font-weight:600;text-decoration:none;">← Tüm Araçlar</a>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+            <div style="background:linear-gradient(145deg,#eef2f8,#f6f8fc);border-radius:16px;height:320px;display:grid;place-items:center;font-size:100px;">${v.emoji}</div>
+            <div>
+              <span class="vehicle-brand-badge" style="font-size:13px;">${v.brand}</span>
+              <h1 style="margin:6px 0 12px;font-size:26px;font-weight:800;color:var(--brand-text);">${v.name}</h1>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--brand-muted);margin-bottom:20px;">
+                ${v.specs.map(s => `<span>• ${s}</span>`).join('')}
+              </div>
+              <p style="font-size:13px;color:var(--brand-muted);margin-bottom:6px;">SKU: <strong>${sku}</strong></p>
+              <div style="display:flex;gap:10px;margin-top:24px;">
+                <button class="btn btn--accent" type="button" style="padding:12px 28px;">Test Sürüşü Randevusu</button>
+                <button class="btn btn--ghost" type="button" style="padding:12px 28px;color:var(--brand-primary);border-color:var(--brand-primary);">Bayileri Gör</button>
+              </div>
+              <p style="margin-top:20px;font-size:12px;color:var(--brand-muted);">
+                Sağ alttaki <strong>Otokoç AI</strong> butonuna tıklayarak bu araç hakkında sorular sorabilirsiniz.
+              </p>
+            </div>
+          </div>
+        `;
+        pdpSection.style.display = 'block';
+      }
+
+      // ── Catalog grid ────────────────────────────────────────────────────
+      function navigateToSku(vehicleSku) {
+        const url = new URL(location.href);
+        url.searchParams.set('sku', vehicleSku);
+        location.href = url.toString();
+      }
 
       function renderGrid() {
         const filtered = activeBrand
@@ -824,7 +874,7 @@
           : VEHICLES;
 
         grid.innerHTML = filtered.map(v => `
-          <article class="vehicle-card" data-brand="${v.brand}">
+          <article class="vehicle-card" data-brand="${v.brand}" data-sku="${v.sku}">
             <div class="vehicle-card-image">${v.emoji}</div>
             <div class="vehicle-card-body">
               <span class="vehicle-brand-badge">${v.brand}</span>
@@ -834,14 +884,17 @@
               </div>
               <div class="vehicle-card-actions">
                 <button class="vehicle-btn vehicle-btn--primary" type="button">Test Sürüşü</button>
-                <button class="vehicle-btn vehicle-btn--ghost" type="button">Detaylar</button>
+                <button class="vehicle-btn vehicle-btn--ghost" type="button" onclick="window.__navigateToSku('${v.sku}')">Detaylar</button>
               </div>
             </div>
           </article>
         `).join('');
       }
 
-      renderGrid();
+      // Expose navigation for inline onclick handlers
+      window.__navigateToSku = navigateToSku;
+
+      if (!sku) renderGrid();
 
       // Brand filter clicks
       document.getElementById('brand-filters').addEventListener('click', e => {
