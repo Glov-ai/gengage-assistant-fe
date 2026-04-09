@@ -52,7 +52,15 @@ describe('wireQNAToChat', () => {
     const action = { title: 'Bir soru', type: 'user_message', payload: 'Bu urun nefes alabilir mi?' };
     dispatch('gengage:qna:action', action);
 
-    expect(openWithAction).toHaveBeenCalledWith(action);
+    expect(openWithAction).toHaveBeenCalledWith({
+      title: 'Bir soru',
+      type: 'user_message',
+      payload: {
+        text: 'Bu urun nefes alabilir mi?',
+        is_launcher: 1,
+        is_suggested_text: 1,
+      },
+    });
     expect(sendMessage).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
   });
