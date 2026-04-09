@@ -69,7 +69,7 @@ describe('ProductSummaryCard', () => {
     expect(nameEl?.textContent).toBe('Bosch Hammer Drill');
   });
 
-  it('shows original price with strikethrough when discounted', () => {
+  it('shows original list price when discounted (default strikethrough)', () => {
     const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), makeContext());
     const orig = card.querySelector('.gengage-chat-product-summary__price-original');
     expect(orig).toBeTruthy();

@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+Chat ve ilişkili widget’lar üzerinde çalışıyorsun. Proje yapısını ve mevcut prensipleri koru.
+
+**Kod yorumları ve repoda yazılan metin:** Kaynak dosya yorumları, commit mesajları ve PR açıklamalarında Türkçe kullanma; İngilizce yaz. İlgili dosyada zaten yorum neredeyse yoksa, gereksiz yorum ekleme.
+
+**Ürün metinleri / i18n:** Locale dosyaları, demo sayfalarındaki kullanıcıya dönük metinler vb. için Türkçe (ve diğer diller) kullanımı normaldir; bu, yukarıdaki “kod yorumunda Türkçe yok” kuralını ihlal etmez.
+
+**Cursor sohbeti:** Kullanıcı Türkçe yazıyorsa yanıtları Türkçe verebilirsin; bu, kod içi yorumda Türkçe kullanmama kuralından bağımsızdır.
+
+Değişiklikleri en az dosyada tut, yalnızca istenenle sınırlı kal. İstenmeyen özellik veya refactor ekleme. Kritik veya iyileştirme fikirlerini önce sohbette özetle; kullanıcı isterse koda uygula.

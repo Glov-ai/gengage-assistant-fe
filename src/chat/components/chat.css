@@ -55,6 +55,13 @@
   /* Tonal layering: borders defined by background shift, not strokes    */
   --_gengage-border-color: var(--border-default);
   --_gengage-discount-color: var(--gengage-discount-color, var(--client-primary));
+  /* Discounted price color: init sets --gengage-discounted-price-color on host when discountedPriceColor === 'client' */
+  /* Campaign line above prices: solid or gradient via optional --gengage-campaign-reason-color-end */
+  --_gengage-campaign-reason-start: var(--gengage-campaign-reason-color, var(--client-primary));
+  --_gengage-campaign-reason-end: var(
+    --gengage-campaign-reason-color-end,
+    var(--gengage-campaign-reason-color, var(--client-primary))
+  );
   --_gengage-success-color: var(--success);
   --_gengage-text-primary: var(--text-primary);
   --_gengage-text-secondary: var(--text-secondary);
@@ -1677,7 +1684,7 @@
 .gengage-chat-product-card-current-price {
   font: inherit;
   font-weight: 800;
-  color: inherit;
+  color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 .gengage-chat-product-card-original-price {
@@ -1686,6 +1693,65 @@
   font-weight: 400;
   font-size: 11px;
   margin-right: 0;
+}
+
+.gengage-chat-campaign-reason {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 4px;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, var(--_gengage-campaign-reason-start), var(--_gengage-campaign-reason-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@supports not (background-clip: text) {
+  .gengage-chat-campaign-reason {
+    background: none;
+    color: var(--_gengage-campaign-reason-start);
+  }
+}
+
+.gengage-chat-product-card-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+.gengage-chat-product-card-price-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.gengage-chat-product-card-price-sep {
+  display: inline-block;
+  width: 1px;
+  height: 0.95em;
+  margin: 0 1px;
+  background: var(--border-subtle);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-product-card-price-block--inline .gengage-chat-product-card-original-price {
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gengage-inline-original-price-color, var(--text-secondary));
+}
+
+.gengage-chat-product-card-price-block--inline .gengage-chat-product-card-current-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 /* Price row + compact rating (★ 4.5) */
@@ -1903,7 +1969,51 @@ button.gengage-chat-product-card-cta {
   font-size: 11px;
 }
 .gengage-chat-product-summary__price-current {
-  color: var(--client-primary);
+  color: var(--gengage-discounted-price-color, var(--text-primary));
+}
+
+.gengage-chat-product-summary__price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.gengage-chat-product-summary__price-stack .gengage-chat-campaign-reason {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gengage-chat-product-summary__price--inline {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.gengage-chat-product-summary__price-sep {
+  display: inline-block;
+  width: 1px;
+  height: 0.9em;
+  margin: 0 1px;
+  background: var(--border-subtle);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-product-summary__price--inline .gengage-chat-product-summary__price-original {
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gengage-inline-original-price-color, var(--text-secondary));
+}
+
+.gengage-chat-product-summary__price--inline .gengage-chat-product-summary__price-current {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 .gengage-chat-product-summary__cta {
@@ -2670,7 +2780,7 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-panel .gengage-chat-product-card-current-price {
-  color: var(--client-primary);
+  color: var(--gengage-discounted-price-color, var(--text-primary));
   font-weight: 600;
   font-size: 15px;
 }
@@ -2872,11 +2982,55 @@ button.gengage-chat-product-card-cta {
   text-decoration: line-through;
 }
 
+.gengage-chat-product-details-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+}
+
+.gengage-chat-product-details-price-stack .gengage-chat-campaign-reason {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.gengage-chat-product-details-price--inline {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-price-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin: 0 4px;
+  background: var(--border-subtle);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-original-price {
+  text-decoration: none;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  order: 0;
+}
+
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-current-price {
+  font-size: 22px;
+  font-weight: 800;
+  order: 0;
+  color: var(--gengage-discounted-price-color, var(--text-primary));
+}
+
 .gengage-chat-product-details-current-price {
   font-size: 22px;
   font-weight: 800;
   line-height: 1.1;
-  color: var(--text-primary);
+  color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 .gengage-chat-product-details-stock {
@@ -3484,6 +3638,11 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-root--mobile .gengage-chat-product-details-current-price {
+  font-size: 18px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-product-details-price--inline .gengage-chat-product-details-original-price,
+.gengage-chat-root--mobile .gengage-chat-product-details-price--inline .gengage-chat-product-details-current-price {
   font-size: 18px;
 }
 
@@ -4681,11 +4840,58 @@ button.gengage-chat-product-card-cta {
   margin-top: 4px;
 }
 
+.gengage-chat-ai-toppick-price-current {
+  color: var(--gengage-discounted-price-color, var(--text-primary));
+}
+
 .gengage-chat-ai-toppick-original-price {
   text-decoration: line-through;
   color: var(--text-secondary);
   font-weight: 400;
   font-size: 12px;
+}
+
+.gengage-chat-ai-toppick-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.gengage-chat-ai-toppick-price-stack .gengage-chat-campaign-reason {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gengage-chat-ai-toppick-price--inline {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.gengage-chat-ai-toppick-price-sep {
+  display: inline-block;
+  width: 1px;
+  height: 0.85em;
+  margin: 0 1px;
+  background: var(--border-subtle);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.gengage-chat-ai-toppick-price--inline .gengage-chat-ai-toppick-original-price {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gengage-chat-ai-toppick-price--inline .gengage-chat-ai-toppick-price-current {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 /* CTA — clear margin from the content above (View Details) */
@@ -5554,6 +5760,16 @@ button.gengage-chat-product-details-rating {
   color: color-mix(in srgb, var(--error) 84%, var(--text-primary));
   font-size: 12px;
   font-weight: 800;
+}
+
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-original-price,
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-current-price {
+  order: 0;
+  font-size: 30px;
+}
+
+.gengage-chat-product-details-price--inline .gengage-chat-product-details-original-price {
+  font-weight: 500;
 }
 
 .gengage-chat-product-details-facts {

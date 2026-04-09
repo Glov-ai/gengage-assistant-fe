@@ -137,6 +137,12 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
    */
   productDetailsExtended?: boolean;
 
+  /**
+   * Product price presentation (card, summary, details, AI Top Picks).
+   * Campaign label colors: `theme['--gengage-campaign-reason-color']`, optional `...-color-end` for gradient.
+   */
+  productPriceUi?: ProductPriceUiConfig;
+
   // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
   // -------------------------------------------------------------------------
@@ -311,12 +317,41 @@ export interface ChatContextualCopyByContext {
   default?: string;
 }
 
+/** List vs discounted price row: strike-through (legacy) or inline with separator (retail). */
+export type ProductPriceOriginalStyle = 'strikethrough' | 'inline';
+
+/** Current (discounted) price text: body text color vs client primary. */
+export type DiscountedPriceColor = 'default' | 'client';
+
+export interface ProductPriceUiConfig {
+  /**
+   * How to show the list/original price when it differs from current.
+   * Set via `chat.productPriceUi` or `GengageChat.init({ productPriceUi })`.
+   * - `strikethrough` (default): struck-through list price.
+   * - `inline`: no strike; current | separator | muted list price.
+   * Product payload `originalPriceStyle` / `price_original_style` overrides this.
+   */
+  originalPriceStyle?: ProductPriceOriginalStyle;
+  /**
+   * When `true`, render campaign / discount reason line (`discount_reason`, etc.).
+   * Omitted or `false`: never show that line.
+   */
+  showCampaignReason?: boolean;
+  /**
+   * Current price color; sets `--gengage-discounted-price-color` on the mount host at init.
+   * - `default` (omitted): `--text-primary`.
+   * - `client`: `--client-primary`.
+   */
+  discountedPriceColor?: DiscountedPriceColor;
+}
+
 export interface ChatUISpecRenderContext {
   onAction: (action: ActionPayload) => void;
   onProductClick?: (params: { sku: string; url: string; name?: string }) => void;
   onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
   onProductSelect?: (product: Record<string, unknown>) => void;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig | undefined;
+  productPriceUi?: ProductPriceUiConfig | undefined;
   i18n?: Pick<
     ChatI18n,
     | 'productCtaLabel'
