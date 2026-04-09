@@ -329,7 +329,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       onPanelToggle: () => {
         this._drawer?.persistPanelState(config.accountId);
       },
-      onHostDocumentChromeChange: () => {
+      onHostShellSync: () => {
         this._applyOpenStateClasses();
       },
       onRollback: (messageId) => this._handleRollback(messageId),
