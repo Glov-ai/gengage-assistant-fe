@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Dev — otokoccomtr</title>
+
+    <style>
+      /* ── Brand tokens ── */
+      :root {
+        --brand-primary: #0f2b5b;
+        --brand-primary-hover: #1a3d7a;
+        --brand-accent: #f97d1a;
+        --brand-bg: #f4f6f9;
+        --brand-surface: #ffffff;
+        --brand-text: #1a1a2e;
+        --brand-muted: #5a6475;
+        --brand-border: #dde3ec;
+        --brand-font: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--brand-bg);
+        color: var(--brand-text);
+        font-family: var(--brand-font);
+        line-height: 1.4;
+      }
+
+      /* ── Dev header ── */
+      .dev-header {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: #0a1628;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1e2d45;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 10px 16px;
+      }
+
+      .dev-header__title {
+        color: #f8fafc;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 5px;
+        letter-spacing: 0.02em;
+      }
+
+      .dev-header__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+      }
+
+      .dev-header__item strong { color: #94a3b8; font-weight: 400; }
+      .dev-header__item span { color: #e2e8f0; }
+
+      /* ── Header / Nav ── */
+      .host-header {
+        background: var(--brand-primary);
+        color: #fff;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 64px;
+      }
+
+      .host-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+      }
+
+      .host-logo-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--brand-accent);
+      }
+
+      .host-nav {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.82);
+        white-space: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .host-nav::-webkit-scrollbar { display: none; }
+
+      .host-nav span {
+        cursor: pointer;
+        padding: 4px 0;
+        transition: color 0.15s;
+      }
+
+      .host-nav span:hover { color: #fff; }
+
+      .host-nav span.active {
+        color: #fff;
+        border-bottom: 2px solid var(--brand-accent);
+      }
+
+      .host-header-cta {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 9px 16px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+      }
+
+      .btn--ghost {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .btn--ghost:hover { background: rgba(255, 255, 255, 0.18); }
+
+      .btn--accent {
+        background: var(--brand-accent);
+        color: #fff;
+      }
+
+      .btn--accent:hover {
+        background: #e66f15;
+        transform: translateY(-1px);
+      }
+
+      /* ── Hero banner ── */
+      .host-hero {
+        background: linear-gradient(135deg, #0f2b5b 0%, #1a3d7a 55%, #0f2b5b 100%);
+        color: #fff;
+        padding: 40px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+
+      .hero-text h1 {
+        margin: 0 0 10px;
+        font-size: clamp(22px, 3vw, 36px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+
+      .hero-text p {
+        margin: 0 0 20px;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 460px;
+        line-height: 1.55;
+      }
+
+      .hero-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .hero-visual {
+        font-size: clamp(60px, 8vw, 100px);
+        line-height: 1;
+        user-select: none;
+      }
+
+      /* ── Shell ── */
+      .host-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 20px 120px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: clamp(18px, 2.2vw, 24px);
+        font-weight: 700;
+        color: var(--brand-text);
+        letter-spacing: -0.01em;
+      }
+
+      .section-link {
+        font-size: 13px;
+        color: var(--brand-primary);
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      /* ── Brand filter row ── */
+      .brand-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+      }
+
+      .brand-pill {
+        border: 1.5px solid var(--brand-border);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--brand-muted);
+        background: var(--brand-surface);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .brand-pill:hover {
+        border-color: var(--brand-primary);
+        color: var(--brand-primary);
+      }
+
+      .brand-pill.active {
+        background: var(--brand-primary);
+        border-color: var(--brand-primary);
+        color: #fff;
+      }
+
+      /* ── Vehicle grid ── */
+      .vehicle-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+      }
+
+      .vehicle-card {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow 0.2s, transform 0.2s;
+        cursor: pointer;
+      }
+
+      .vehicle-card:hover {
+        box-shadow: 0 8px 24px rgba(15, 43, 91, 0.14);
+        transform: translateY(-2px);
+      }
+
+      .vehicle-card-image {
+        height: 160px;
+        background: linear-gradient(145deg,
+          color-mix(in srgb, var(--brand-primary) 8%, white),
+          color-mix(in srgb, var(--brand-primary) 4%, white));
+        display: grid;
+        place-items: center;
+        font-size: 48px;
+      }
+
+      .vehicle-card-body {
+        padding: 14px 16px 16px;
+      }
+
+      .vehicle-brand-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--brand-primary);
+        margin-bottom: 6px;
+      }
+
+      .vehicle-name {
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--brand-text);
+      }
+
+      .vehicle-specs {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--brand-muted);
+        margin-bottom: 12px;
+      }
+
+      .vehicle-spec-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .vehicle-card-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .vehicle-btn {
+        flex: 1;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .vehicle-btn--primary {
+        background: var(--brand-primary);
+        color: #fff;
+      }
+
+      .vehicle-btn--primary:hover { background: var(--brand-primary-hover); }
+
+      .vehicle-btn--ghost {
+        background: color-mix(in srgb, var(--brand-primary) 8%, white);
+        color: var(--brand-primary);
+        border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, white);
+      }
+
+      .vehicle-btn--ghost:hover {
+        background: color-mix(in srgb, var(--brand-primary) 14%, white);
+      }
+
+      /* ── Info bar ── */
+      .info-bar {
+        display: flex;
+        gap: 0;
+        border: 1px solid var(--brand-border);
+        border-radius: 12px;
+        background: var(--brand-surface);
+        overflow: hidden;
+        margin-top: 28px;
+      }
+
+      .info-bar-item {
+        flex: 1;
+        padding: 18px 20px;
+        text-align: center;
+        border-right: 1px solid var(--brand-border);
+      }
+
+      .info-bar-item:last-child { border-right: none; }
+
+      .info-bar-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--brand-primary);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .info-bar-label {
+        font-size: 12px;
+        color: var(--brand-muted);
+        font-weight: 500;
+      }
+
+      /* ── Voice chat CSS (from robot-engine-lean/voiceChat.css) ── */
+      .glov-voice-chat-container {
+        width: auto;
+        min-width: 300px;
+        max-width: 400px;
+        height: 70px;
+        position: fixed;
+        bottom: 100px;
+        right: 25px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        border-radius: 16px;
+        overflow: visible;
+        background: transparent;
+      }
+
+      .glov-voice-chat-container.glov-voice-chat-expanded { height: 620px; max-width: 420px; }
+
+      .glov-voice-chat-container.glov-voice-chat-desktop-launcher {
+        min-width: auto; max-width: 260px; height: 52px;
+      }
+
+      .glov-voice-chat-container-inner {
+        width: 100%;
+        height: 70px;
+        background: linear-gradient(180deg, #2e2e2e 0%, #1e1e1e 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        gap: 10px;
+        flex-shrink: 0;
+        box-shadow: 0 16px 30px rgba(0,0,0,0.24);
+        transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
+        position: relative;
+        z-index: 2;
+      }
+
+      .glov-voice-chat-container.glov-voice-chat-desktop-launcher .glov-voice-chat-container-inner {
+        height: 52px; padding: 5px 10px;
+      }
+
+      .glov-voice-chat-container.glov-voice-chat-panel-open .glov-voice-chat-container-inner {
+        opacity: 0; transform: scale(0.98); pointer-events: none; visibility: hidden;
+      }
+
+      .glov-voice-chat-call-button {
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 8px 18px;
+        border: none; border-radius: 9999px;
+        background-color: #f97d1a; color: #fff;
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+      }
+
+      .glov-voice-chat-call-button:hover { background-color: #e66f15; transform: translateY(-1px); }
+      .glov-voice-chat-call-button:active { transform: translateY(0); background-color: #d46212; }
+
+      .glov-voice-chat-btn-avatar-wrap { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+      .glov-voice-chat-btn-avatar { display: none; }
+      .glov-voice-chat-btn-live-dot { display: none; }
+      .glov-voice-chat-btn-phone-icon { flex-shrink: 0; }
+
+      .glov-voice-chat-container.glov-voice-chat-desktop-launcher .glov-voice-chat-btn-avatar {
+        display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.35);
+      }
+      .glov-voice-chat-container.glov-voice-chat-desktop-launcher .glov-voice-chat-btn-live-dot {
+        display: block; position: absolute; bottom: 1px; right: 1px;
+        width: 10px; height: 10px; border-radius: 50%;
+        background-color: #4ade80; border: 2px solid #f97d1a;
+        animation: glov-live-pulse 2s ease-in-out infinite;
+      }
+      .glov-voice-chat-container.glov-voice-chat-desktop-launcher .glov-voice-chat-btn-phone-icon { display: none; }
+      .glov-voice-chat-container:not(.glov-voice-chat-desktop-launcher) .glov-voice-chat-btn-avatar {
+        display: block; width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.35);
+      }
+      .glov-voice-chat-container:not(.glov-voice-chat-desktop-launcher) .glov-voice-chat-btn-live-dot {
+        display: block; position: absolute; bottom: 0; right: 0;
+        width: 9px; height: 9px; border-radius: 50%;
+        background-color: #4ade80; border: 2px solid #f97d1a;
+      }
+      .glov-voice-chat-container:not(.glov-voice-chat-desktop-launcher) .glov-voice-chat-btn-phone-icon { display: none; }
+
+      .glov-voice-chat-panel {
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(circle at top, rgba(249,125,26,0.16), transparent 40%),
+          linear-gradient(180deg, #131313 0%, #1b1b1b 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px;
+        box-shadow: 0 22px 48px rgba(0,0,0,0.34);
+        transition: transform 0.18s ease, opacity 0.18s ease;
+        transform: translateY(12px) scale(0.985);
+        opacity: 0; pointer-events: none; overflow: hidden;
+      }
+
+      .glov-voice-chat-panel.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+
+      .glov-voice-chat-panel-hit-layer { display: none; }
+
+      .glov-voice-chat-panel-content {
+        width: 100%; height: 100%;
+        display: grid; grid-template-rows: auto minmax(0,1fr) auto auto;
+        gap: 16px; padding: 22px; box-sizing: border-box; color: #fff;
+      }
+
+      .glov-voice-chat-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .glov-voice-chat-panel-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.72); }
+      .glov-voice-chat-panel-actions { display: flex; align-items: center; gap: 10px; }
+
+      .glov-voice-chat-icon-button {
+        width: 38px; height: 38px; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06);
+        color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+      }
+      .glov-voice-chat-icon-button:hover { background: rgba(255,255,255,0.12); }
+
+      .glov-voice-chat-hero { display: flex; align-items: stretch; }
+
+      .glov-voice-chat-orb-shell {
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; min-height: 100%; padding: 24px 20px 22px;
+        border-radius: 24px;
+        background: radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 55%), rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+
+      .glov-voice-chat-orb-container {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: min(100%, 300px); gap: 16px; text-align: center;
+      }
+
+      .glov-voice-chat-status-row { display: grid; gap: 10px; justify-items: center; }
+
+      .glov-voice-chat-status-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: fit-content; min-height: 30px; padding: 0 12px; border-radius: 999px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+        font-size: 12px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+      }
+
+      .glov-voice-chat-status-copy { font-size: 15px; line-height: 1.4; color: rgba(255,255,255,0.9); text-align: center; }
+
+      .orb {
+        width: 118px; height: 118px; border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ffb074, #f97d1a, #d46212);
+        animation: pulse 1.8s ease-in-out infinite;
+        box-shadow: 0 0 0 12px rgba(249,125,26,0.08), 0 0 28px rgba(249,125,26,0.42);
+        position: relative;
+      }
+
+      .orb::before {
+        content: ''; position: absolute; inset: 0; border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.34), transparent 68%);
+        pointer-events: none;
+      }
+
+      .glov-voice-chat-panel[data-state='speaking'] .orb {
+        background: radial-gradient(circle at 30% 30%, #ffc372, #f97d1a, #cc5200);
+        box-shadow: 0 0 0 16px rgba(249,125,26,0.12), 0 0 36px rgba(249,125,26,0.48);
+      }
+
+      .glov-voice-chat-panel[data-state='listening'] .orb {
+        background: radial-gradient(circle at 30% 30%, #ffb074, #f97d1a, #b04d12);
+      }
+
+      .glov-voice-chat-panel[data-state='error'] .orb {
+        background: radial-gradient(circle at 30% 30%, #ffaaa5, #ff6b57, #c63c2c);
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.08); opacity: 0.86; }
+      }
+
+      @keyframes glov-live-pulse {
+        0%, 100% { box-shadow: 0 0 0 1px rgba(74,222,128,0.25); }
+        50% { box-shadow: 0 0 0 4px rgba(74,222,128,0.15); }
+      }
+
+      .glov-voice-chat-title { font-size: 21px; font-weight: 700; line-height: 1.15; color: #fff; text-align: center; }
+      .glov-voice-chat-live-copy { font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.72); max-width: 250px; }
+
+      .glov-audio-waveform { width: min(100%, 220px); height: 44px; display: block; }
+
+      .glov-voice-chat-security-notice {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 12px 14px; border-radius: 16px;
+        background: rgba(249,125,26,0.12); border: 1px solid rgba(249,125,26,0.18);
+        color: rgba(255,255,255,0.86);
+      }
+
+      .glov-security-icon { flex-shrink: 0; color: #f8b270; margin-top: 1px; }
+      .glov-voice-chat-security-notice p { margin: 0; font-size: 13px; line-height: 1.45; }
+
+      .glov-voice-chat-panel-controls { display: flex; }
+
+      .glov-voice-chat-panel-button {
+        min-height: 48px; padding: 0 18px; border-radius: 9999px; border: none;
+        color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+      }
+
+      .glov-voice-chat-panel-button-primary { background: #f97d1a; width: 100%; }
+      .glov-voice-chat-panel-button-primary:hover { background: #e66f15; }
+
+      html.glov-voice-fullscreen-open,
+      body.glov-voice-fullscreen-open { overflow: hidden !important; }
+
+      @media (max-width: 768px) {
+        .glov-voice-chat-container {
+          min-width: auto; max-width: min(100vw - 24px, 360px);
+          width: auto; height: 52px;
+          right: max(12px, env(safe-area-inset-right, 0px)) !important;
+          bottom: max(80px, calc(80px + env(safe-area-inset-bottom, 0px))) !important;
+        }
+
+        .glov-voice-chat-panel.glov-voice-chat-fullscreen {
+          position: fixed !important; inset: 0 !important;
+          width: 100% !important; height: 100dvh !important;
+          z-index: 2147483000 !important; border-radius: 0 !important;
+          border: none !important;
+        }
+
+        .glov-voice-chat-panel.glov-voice-chat-fullscreen .glov-voice-chat-panel-content {
+          position: relative; z-index: 1; flex: 1 1 auto;
+          padding: calc(12px + env(safe-area-inset-top, 0px))
+            max(12px, env(safe-area-inset-right, 0px))
+            calc(12px + env(safe-area-inset-bottom, 0px))
+            max(12px, env(safe-area-inset-left, 0px));
+          display: flex; flex-direction: column; gap: 10px;
+          overflow-y: auto;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Dev header -->
+    <div class="dev-header">
+      <p class="dev-header__title">Gengage Dev — otokoccomtr</p>
+      <div class="dev-header__row">
+        <span class="dev-header__item"><strong>account:</strong> <span>otokoccomtr</span></span>
+        <span class="dev-header__item"><strong>backend:</strong> <span id="dev-backend">—</span></span>
+        <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
+      </div>
+    </div>
+
+    <!-- Dealer header -->
+    <header class="host-header">
+      <div class="host-logo">
+        <span class="host-logo-dot"></span>
+        <span>Otokoç Otomotiv</span>
+      </div>
+      <nav class="host-nav" aria-label="Ana menü">
+        <span class="active">Araçlar</span>
+        <span>Ford</span>
+        <span>Volvo</span>
+        <span>Fiat</span>
+        <span>Jeep</span>
+        <span>Alfa Romeo</span>
+        <span>Maserati</span>
+        <span>Servis</span>
+        <span>İletişim</span>
+      </nav>
+      <div class="host-header-cta">
+        <button class="btn btn--ghost" type="button">Servis Randevusu</button>
+        <button class="btn btn--accent" type="button">Test Sürüşü</button>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="host-hero">
+      <div class="hero-text">
+        <h1>Türkiye'nin En Büyük<br>Yetkili Otomobil Bayisi</h1>
+        <p>
+          Ford, Volvo, Fiat, Jeep, Alfa Romeo ve Maserati araçlarını keşfedin.
+          AI asistanımız araç seçiminde ve servis rezervasyonunda size yardımcı olur.
+        </p>
+        <div class="hero-badges">
+          <span class="hero-badge">🏆 95+ Araç Modeli</span>
+          <span class="hero-badge">📍 Türkiye Geneli Bayi</span>
+          <span class="hero-badge">⚡ 7 Marka</span>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">🚗</div>
+    </section>
+
+    <!-- Main content -->
+    <main class="host-shell">
+
+      <!-- Brand filters -->
+      <div class="brand-filters" id="brand-filters" role="group" aria-label="Marka filtresi">
+        <button class="brand-pill active" data-brand="">Tümü</button>
+        <button class="brand-pill" data-brand="Ford">Ford</button>
+        <button class="brand-pill" data-brand="Volvo">Volvo</button>
+        <button class="brand-pill" data-brand="Fiat">Fiat</button>
+        <button class="brand-pill" data-brand="Jeep">Jeep</button>
+        <button class="brand-pill" data-brand="Alfa Romeo">Alfa Romeo</button>
+        <button class="brand-pill" data-brand="Maserati">Maserati</button>
+      </div>
+
+      <!-- Vehicle grid -->
+      <div class="section-header">
+        <h2 class="section-title">Öne Çıkan Araçlar</h2>
+        <span class="section-link">Tüm araçları gör →</span>
+      </div>
+
+      <div class="vehicle-grid" id="vehicle-grid">
+        <!-- Populated by JS below -->
+      </div>
+
+      <!-- Stats bar -->
+      <div class="info-bar">
+        <div class="info-bar-item">
+          <span class="info-bar-value">95+</span>
+          <span class="info-bar-label">Araç Modeli</span>
+        </div>
+        <div class="info-bar-item">
+          <span class="info-bar-value">6</span>
+          <span class="info-bar-label">Marka</span>
+        </div>
+        <div class="info-bar-item">
+          <span class="info-bar-value">50+</span>
+          <span class="info-bar-label">Yetki Belgeli Bayi</span>
+        </div>
+        <div class="info-bar-item">
+          <span class="info-bar-value">24/7</span>
+          <span class="info-bar-label">AI Asistan</span>
+        </div>
+      </div>
+
+    </main>
+
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createVoiceLauncher } from './voice-launcher.ts';
+
+      // ── Config from URL params ──────────────────────────────────────────
+      const params = new URLSearchParams(location.search);
+      const middlewareUrl = params.get('middlewareUrl') ?? 'http://localhost:5990/api';
+
+      document.getElementById('dev-backend').textContent = middlewareUrl;
+
+      const launcherUrl = new URL('./glov-otokoccomtr-launcher.svg', import.meta.url).href;
+
+      // ── Gengage chat widget ─────────────────────────────────────────────
+      const controller = await initOverlayWidgets({
+        accountId: 'otokoccomtr',
+        middlewareUrl,
+        locale: 'tr',
+        theme: {
+          primaryColor: '#0f2b5b',
+          primaryForeground: '#ffffff',
+          backgroundColor: '#ffffff',
+          foregroundColor: '#1a1a2e',
+          borderRadius: '8px',
+          fontFamily: '"Segoe UI", "Helvetica Neue", Arial, sans-serif',
+          fontSize: '14px',
+          zIndex: '900',
+          '--client-primary': '#0f2b5b',
+          '--client-primary-hover': 'color-mix(in srgb, #0f2b5b 88%, white 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #0f2b5b 78%, white 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #0f2b5b 10%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #0f2b5b 18%, white)',
+          '--client-on-primary': '#ffffff',
+          '--client-focus-ring': 'color-mix(in srgb, #0f2b5b 28%, transparent)',
+          '--gengage-chat-launcher-size': '60px',
+        },
+        isDemoWebsite: true,
+        chat: {
+          variant: 'floating',
+          mobileBreakpoint: 768,
+          headerTitle: 'Otokoç AI Asistan',
+          launcherImageUrl: launcherUrl,
+          i18n: {
+            inputPlaceholder: 'Araç sor, test sürüşü al, servis randevusu...',
+            poweredBy: 'Otokoç AI',
+          },
+        },
+        onProductNavigate: (url, _sku, sid) => {
+          if (sid) controller.chat?.saveSession(sid, _sku ?? '');
+          window.location.href = url;
+        },
+      });
+
+      document.getElementById('dev-session').textContent =
+        controller.session.sessionId.slice(0, 12) + '…';
+
+      // ── ElevenLabs voice launcher ───────────────────────────────────────
+      const voiceLauncher = createVoiceLauncher(middlewareUrl);
+      document.body.appendChild(voiceLauncher);
+
+      // ── Vehicle demo grid ───────────────────────────────────────────────
+      const VEHICLES = [
+        { brand: 'Ford', emoji: '🚙', name: 'Ford Focus 1.5 EcoBoost Titanium', specs: ['1.5L Benzin', '182 hp', 'Otomatik'] },
+        { brand: 'Ford', emoji: '🚗', name: 'Ford Puma 1.0 EcoBoost ST-Line X', specs: ['1.0L Benzin', '125 hp', 'Manuel'] },
+        { brand: 'Volvo', emoji: '🚘', name: 'Volvo XC60 B5 AWD R-Design', specs: ['2.0L Hybrid', '250 hp', 'Otomatik'] },
+        { brand: 'Volvo', emoji: '🚗', name: 'Volvo V60 B4 Inscription', specs: ['2.0L Benzin', '197 hp', 'Otomatik'] },
+        { brand: 'Jeep', emoji: '🛻', name: 'Jeep Compass 1.3 T270 Limited', specs: ['1.3L Benzin', '150 hp', 'Otomatik'] },
+        { brand: 'Fiat', emoji: '🚗', name: 'Fiat Egea 1.4 Fire Easy', specs: ['1.4L Benzin', '95 hp', 'Manuel'] },
+        { brand: 'Alfa Romeo', emoji: '🏎️', name: 'Alfa Romeo Stelvio 2.0T Q4 Sprint', specs: ['2.0L Benzin', '280 hp', 'Otomatik'] },
+        { brand: 'Maserati', emoji: '🏎️', name: 'Maserati Ghibli 2.0 Hybrid GT', specs: ['2.0L Hybrid', '330 hp', 'Otomatik'] },
+      ];
+
+      const grid = document.getElementById('vehicle-grid');
+      let activeBrand = '';
+
+      function renderGrid() {
+        const filtered = activeBrand
+          ? VEHICLES.filter(v => v.brand === activeBrand)
+          : VEHICLES;
+
+        grid.innerHTML = filtered.map(v => `
+          <article class="vehicle-card" data-brand="${v.brand}">
+            <div class="vehicle-card-image">${v.emoji}</div>
+            <div class="vehicle-card-body">
+              <span class="vehicle-brand-badge">${v.brand}</span>
+              <h3 class="vehicle-name">${v.name}</h3>
+              <div class="vehicle-specs">
+                ${v.specs.map(s => `<span class="vehicle-spec-item">• ${s}</span>`).join('')}
+              </div>
+              <div class="vehicle-card-actions">
+                <button class="vehicle-btn vehicle-btn--primary" type="button">Test Sürüşü</button>
+                <button class="vehicle-btn vehicle-btn--ghost" type="button">Detaylar</button>
+              </div>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      renderGrid();
+
+      // Brand filter clicks
+      document.getElementById('brand-filters').addEventListener('click', e => {
+        const pill = e.target.closest('[data-brand]');
+        if (!pill) return;
+        document.querySelectorAll('.brand-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeBrand = pill.dataset.brand;
+        renderGrid();
+      });
+    </script>
+  </body>
+</html>

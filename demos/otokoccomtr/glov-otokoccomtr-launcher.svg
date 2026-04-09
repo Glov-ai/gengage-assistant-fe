@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="#0F2B5B"/>
+  <!-- Stylised "O" with car silhouette inside -->
+  <circle cx="32" cy="32" r="20" stroke="white" stroke-width="4" fill="none"/>
+  <!-- Car body -->
+  <path d="M16 34 C16 30 20 28 24 27 L28 24 L36 24 L40 27 C44 28 48 30 48 34 L48 38 C48 39.1 47.1 40 46 40 L44 40 A4 4 0 0 1 36 40 L28 40 A4 4 0 0 1 20 40 L18 40 C16.9 40 16 39.1 16 38 Z"
+    fill="white"/>
+  <!-- Windshield -->
+  <path d="M27 27 L29 24 L35 24 L37 27 Z" fill="#0F2B5B"/>
+  <!-- Left wheel -->
+  <circle cx="24" cy="40" r="3.5" fill="#0F2B5B" stroke="white" stroke-width="1.5"/>
+  <!-- Right wheel -->
+  <circle cx="40" cy="40" r="3.5" fill="#0F2B5B" stroke="white" stroke-width="1.5"/>
+</svg>
