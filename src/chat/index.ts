@@ -1869,7 +1869,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // ProductDetailsPanel goes to the panel, but also render a compact
           // horizontal ProductSummaryCard in chat messages (production parity
           // with the prior engine's LaunchSingleProduct component).
-          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && effectivePanelHint === 'panel') {
+          // Silent PDP auto-prime (`isPdpAutoLaunch`) still uses a silent bot row for
+          // history, but users should see the same inline summary + chip row as when
+          // they open a product from chat (non-silent launchSingleProduct).
+          if (
+            componentType === 'ProductDetailsPanel' &&
+            effectivePanelHint === 'panel' &&
+            (!botMsg.silent || isPdpAutoLaunch)
+          ) {
             const product = rootElement?.props?.['product'] as Record<string, unknown> | undefined;
             if (product) {
               const inlineSpec: UISpec = {
