@@ -416,6 +416,44 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       poweredBy: 'Skechers AI Asistan',
     },
   },
+
+  'ozdilekteyimcom-magaza': {
+    accountId: 'ozdilekteyimcom-magaza',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#F08A2B',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#2c2528',
+      borderRadius: '10px',
+      fontFamily: '"Montserrat", sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Mağazada ne aramıştınız? (Örn: Sabahlık, Parfüm...)',
+      poweredBy: 'Özdilekteyim AI Asistan',
+      headerTitle: 'Alışveriş Asistanı',
+    },
+  },
+
+  'ozdilekteyimcom-market': {
+    accountId: 'ozdilekteyimcom-market',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#1BB407',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#212529',
+      borderRadius: '10px',
+      fontFamily: '"Montserrat", sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: "Market'te ne aramıştınız? (Örn: Domates, süt...)",
+      poweredBy: 'Özdilekteyim Market AI Asistanı',
+      headerTitle: 'Market Asistanı',
+    },
+  },
 };
 
 /** Returns the config for a known merchant, or undefined. */
