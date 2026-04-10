@@ -133,7 +133,7 @@ async function fileFromClipboardItems(items: ClipboardItem[]): Promise<File | nu
       const html = await blob.text();
       const matches = html.match(CLIPBOARD_DATA_URL_IN_HTML);
       const dataUrl = matches?.[0];
-      if (!dataUrl) continue;
+      if (!dataUrl || dataUrl.length > 5_000_000) continue;
       const res = await fetch(dataUrl);
       const out = await res.blob();
       if (!out || out.size === 0) continue;
@@ -157,6 +157,9 @@ async function fileFromClipboardItems(items: ClipboardItem[]): Promise<File | nu
  */
 async function readClipboardImageAsFile(readPromise?: Promise<ClipboardItem[]>): Promise<File | null> {
   try {
+    // readPromise is always supplied by the click handler (started synchronously for Chromium
+    // user-activation). The fallback only fires in non-Chromium environments where activation
+    // is not required, so it will never be reached on the browsers that need the fix.
     const p = readPromise ?? (typeof navigator.clipboard?.read === 'function' ? navigator.clipboard.read() : null);
     if (!p) return null;
     const items = await p;

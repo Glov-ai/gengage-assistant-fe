@@ -2477,8 +2477,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
           if (isPdpAutoLaunch) {
             this._pdpPrimingInFlight = false;
+            const hadQueuedMessages = this._queuedUserMessages.length > 0;
             this._flushQueuedUserMessages();
-            this._ensurePdpPrimeSuggestedUiIfNeeded();
+            if (!hadQueuedMessages) {
+              this._ensurePdpPrimeSuggestedUiIfNeeded();
+            }
           }
 
           if (botMsg.status === 'streaming') {
@@ -2655,6 +2658,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _ensurePdpPrimeSuggestedUiIfNeeded(): void {
     const sku = this.config.pageContext?.sku;
     if (!sku || !this._drawer) return;
+    if (this._hasUnavailableProductContext()) return;
 
     const contextKey: OpeningContextKey = 'product';
     const configured = this._resolveContextualOpeningActions(contextKey);
