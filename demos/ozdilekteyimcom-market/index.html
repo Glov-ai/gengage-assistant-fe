@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="./market.svg" />
+    <title>Gengage Dev — ozdilekteyimcom-market</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+      :root {
+        --brand-primary: #1bb407;
+        --brand-secondary: #212529;
+        --brand-bg: #f5fbf3;
+        --brand-surface: #ffffff;
+        --brand-text: #212529;
+        --brand-muted: #5a675e;
+        --brand-border: #d8ead4;
+        --brand-font: 'Montserrat', sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--brand-bg);
+        color: var(--brand-text);
+        font-family: var(--brand-font);
+        line-height: 1.45;
+      }
+
+      .dev-header {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        background: #111827;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1f2937;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 10px 16px;
+      }
+
+      .dev-header__title {
+        color: #f8fafc;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 6px;
+        letter-spacing: 0.02em;
+      }
+
+      .dev-header__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+      }
+
+      .dev-header__item strong {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+
+      .dev-header__item span {
+        color: #e2e8f0;
+      }
+
+      .host-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+
+      .host-topbar {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .host-topbar__brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--brand-text);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .host-topbar__logo {
+        width: 148px;
+        max-width: 42vw;
+        height: 28px;
+        object-fit: contain;
+      }
+
+      .host-topbar__tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--brand-primary) 12%, white);
+        color: var(--brand-primary);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .host-nav {
+        display: flex;
+        gap: 14px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        white-space: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .host-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .host-nav span {
+        padding: 4px 0;
+      }
+
+      .host-nav span:first-child {
+        color: var(--brand-primary);
+        font-weight: 700;
+        border-bottom: 2px solid var(--brand-primary);
+      }
+
+      .host-breadcrumb {
+        font-size: 12px;
+        color: var(--brand-muted);
+        margin: 10px 4px 14px;
+      }
+
+      .host-breadcrumb strong {
+        color: var(--brand-text);
+      }
+
+      .hero-banner {
+        background: linear-gradient(135deg, #f3fceb, #ffffff 55%, #f8fff7);
+        border: 1px solid var(--brand-border);
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .hero-banner__eyebrow {
+        margin: 0 0 6px;
+        color: var(--brand-primary);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero-banner__title {
+        margin: 0 0 6px;
+        font-size: clamp(22px, 2.2vw, 32px);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .hero-banner__text {
+        margin: 0;
+        max-width: 720px;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
+      .hero-banner__link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 16px;
+        border-radius: 999px;
+        background: var(--brand-primary);
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .pdp-layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(360px, 480px);
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 22px;
+      }
+
+      .gallery-card,
+      .summary-card,
+      .content-card,
+      .simrel-card {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .gallery-card {
+        padding: 16px;
+      }
+
+      .gallery-main {
+        height: clamp(220px, 28vw, 340px);
+        border-radius: 12px;
+        border: 1px solid var(--brand-border);
+        background:
+          radial-gradient(circle at 22% 20%, color-mix(in srgb, var(--brand-primary) 12%, white), transparent 42%),
+          radial-gradient(circle at 74% 64%, color-mix(in srgb, var(--brand-secondary) 10%, white), transparent 46%),
+          linear-gradient(145deg, #ffffff, #f6fbf4 62%, #eef7eb);
+        display: grid;
+        place-items: center;
+        color: var(--brand-secondary);
+        font-weight: 700;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .gallery-main img {
+        display: block;
+        width: min(220px, 100%);
+        height: auto;
+        margin: 0 auto 10px;
+        filter: drop-shadow(0 12px 18px rgba(33, 37, 41, 0.12));
+      }
+
+      .gallery-main small {
+        display: block;
+        font-weight: 500;
+        color: var(--brand-muted);
+        margin-top: 8px;
+      }
+
+      .gallery-thumbs {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .gallery-thumb {
+        border: 1px solid var(--brand-border);
+        border-radius: 10px;
+        height: 72px;
+        background: linear-gradient(140deg, #fff, color-mix(in srgb, var(--brand-primary) 4%, white));
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .gallery-thumb img {
+        width: 34px;
+        height: auto;
+        opacity: 0.92;
+      }
+
+      .summary-card {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 430px;
+      }
+
+      .badge-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--brand-primary);
+      }
+
+      .summary-title {
+        margin: 0;
+        font-size: clamp(20px, 2.2vw, 30px);
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+
+      .summary-meta {
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .price-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .price-main {
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--brand-primary);
+        letter-spacing: -0.02em;
+      }
+
+      .price-old {
+        font-size: 16px;
+        color: var(--brand-muted);
+        text-decoration: line-through;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 16px;
+        cursor: pointer;
+      }
+
+      .btn--primary {
+        background: var(--brand-primary);
+        color: #fff;
+      }
+
+      .btn--ghost {
+        background: color-mix(in srgb, var(--brand-primary) 8%, white);
+        color: var(--brand-primary);
+        border-color: color-mix(in srgb, var(--brand-primary) 34%, white);
+      }
+
+      .feature-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .content-card,
+      .simrel-card {
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .tab-pill {
+        border: 1px solid var(--brand-border);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 13px;
+        color: var(--brand-muted);
+        background: #fff;
+      }
+
+      .tab-pill--active {
+        color: var(--brand-primary);
+        border-color: color-mix(in srgb, var(--brand-primary) 38%, white);
+        background: color-mix(in srgb, var(--brand-primary) 8%, white);
+      }
+
+      .content-card p {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+
+      .simrel-mount {
+        min-height: 180px;
+      }
+
+      .qna-section {
+        margin-top: 14px;
+        min-height: 72px;
+      }
+
+      @media (max-width: 1060px) {
+        .pdp-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-card {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .host-shell {
+          padding: 12px;
+        }
+
+        .host-topbar,
+        .hero-banner,
+        .gallery-card,
+        .summary-card,
+        .content-card,
+        .simrel-card {
+          border-radius: 10px;
+        }
+
+        .host-topbar {
+          flex-wrap: wrap;
+        }
+
+        .host-topbar__logo {
+          width: 132px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dev-header">
+      <p class="dev-header__title">Gengage Dev — ozdilekteyimcom-market</p>
+      <div class="dev-header__row">
+        <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>ozdilekteyimcom-market</span></span>
+        <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
+      </div>
+    </div>
+
+    <main class="host-shell">
+      <section class="host-topbar">
+        <a class="host-topbar__brand" href="https://www.ozdilekteyim.com/market" target="_blank" rel="noreferrer">
+          <img class="host-topbar__logo" src="demos/ozdilekteyimcom-market/ozdilekteyimLogo.svg" alt="Özdilekteyim Market" />
+          <span class="host-topbar__tag">Market</span>
+        </a>
+        <nav class="host-nav" aria-label="Main navigation">
+          <span>Meyve &amp; Sebze</span>
+          <span>Et &amp; Tavuk &amp; Şarküteri</span>
+          <span>Süt &amp; Kahvaltılık</span>
+          <span>Temel Gıda</span>
+          <span>Temizlik</span>
+        </nav>
+      </section>
+
+      <p class="host-breadcrumb">Anasayfa / Market / Öne Çıkanlar / <strong id="breadcrumb-sku">—</strong></p>
+
+      <section class="hero-banner">
+        <div>
+          <p class="hero-banner__eyebrow">Gengage demo</p>
+          <h1 class="hero-banner__title">Özdilekteyim Market için alışveriş asistanı önizlemesi</h1>
+          <p class="hero-banner__text">
+            Bu sayfa, market alışverişinde ürün keşfi, soru-cevap ve benzer ürün önerileri deneyimini canlı SKU ile test
+            etmek için hazırlanmış marka uyumlu bir demo PDP kabuğudur.
+          </p>
+        </div>
+        <a class="hero-banner__link" href="https://www.ozdilekteyim.com/market" target="_blank" rel="noreferrer"
+          >Markete Git</a
+        >
+      </section>
+
+      <section class="pdp-layout">
+        <article class="gallery-card">
+          <div class="gallery-main">
+            <span>
+              <img src="./market.svg" alt="Özdilekteyim Market demo ürün görseli" />
+              <small>Widget verileri backend tarafından gerçek SKU veya ürün adı üzerinden yüklenir</small>
+            </span>
+          </div>
+          <div class="gallery-thumbs" aria-hidden="true">
+            <div class="gallery-thumb"><img src="./market.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./market.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./market.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./market.svg" alt="" /></div>
+          </div>
+        </article>
+
+        <article class="summary-card">
+          <div class="badge-chip">Hızlı Teslimat</div>
+          <h1 class="summary-title">Özdilekteyim Market Demo Sepeti</h1>
+          <div class="summary-meta">
+            <span>Ürün/Arama: <span id="summary-sku">—</span></span>
+            <span>&bull;</span>
+            <span>Taze ürün, kahvaltılık ve temel gıda önerileri</span>
+          </div>
+
+          <div class="price-wrap">
+            <div class="price-main">329,90 ₺</div>
+            <div class="price-old">389,90 ₺</div>
+          </div>
+
+          <div class="cta-row">
+            <button class="btn btn--primary" type="button">Sepete Ekle</button>
+            <button class="btn btn--ghost" type="button">Alışveriş Listeme Ekle</button>
+          </div>
+
+          <ul class="feature-list">
+            <li>Örnek aramalar: Salkım Domates, Günlük Süt, Ayçiçek Yağı</li>
+            <li>Canlı SKU/ürün adı ile sohbet, Q&amp;A ve benzer ürün önerileri</li>
+            <li>KVKK bilgilendirme bağlantısı ve TRY para birimi hazır</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="content-card">
+        <div class="tabs">
+          <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
+          <span class="tab-pill">Teslimat &amp; İade</span>
+          <span class="tab-pill">Kampanyalar</span>
+        </div>
+        <p>
+          Bu örnek ürün detay sayfası, Özdilekteyim Market entegrasyonunda Gengage Assistant bileşenlerinin nasıl
+          görüneceğini test etmek için hazırlanmıştır. Sohbet bileşeni market ürünleriyle ilgili soruları yanıtlar;
+          aşağıdaki alanlar ise QNA ve benzer ürün modüllerini gösterir.
+        </p>
+      </section>
+
+      <div id="ozdilekteyimcom-market-qna-section" class="qna-section"></div>
+
+      <section class="simrel-card">
+        <h2 class="section-title">Benzer Ürünler</h2>
+        <div id="ozdilekteyimcom-market-similar-products" class="simrel-mount"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
+      
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const chatIconUrl = new URL('./market.svg', import.meta.url).href;
+
+      const skuDisplay = sku;
+      document.getElementById('dev-sku').textContent = skuDisplay;
+      document.getElementById('breadcrumb-sku').textContent = skuDisplay;
+      document.getElementById('summary-sku').textContent = skuDisplay;
+
+      const controller = await initOverlayWidgets({
+        accountId: 'ozdilekteyimcom-market',
+        middlewareUrl,
+        locale: 'tr',
+        sku,
+        pageContext: { pageType: sku ? 'pdp' : 'other', sku },
+        pricing: {
+          currencySymbol: '₺',
+          currencyPosition: 'suffix',
+        },
+        theme: {
+          primaryColor: '#1BB407',
+          primaryForeground: '#ffffff',
+          backgroundColor: '#ffffff',
+          foregroundColor: '#212529',
+          borderRadius: '10px',
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: '14px',
+          zIndex: '1000',
+          '--client-primary': '#1BB407',
+          '--client-primary-hover': 'color-mix(in srgb, #1BB407 88%, black 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #1BB407 78%, black 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #1BB407 10%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #1BB407 18%, white)',
+          '--client-on-primary': '#ffffff',
+          '--client-focus-ring': 'color-mix(in srgb, #1BB407 32%, transparent)',
+          '--surface-card': '#ffffff',
+          '--surface-card-soft': '#f6fbf4',
+          '--text-primary': '#212529',
+          '--text-secondary': '#5a675e',
+          '--border-default': 'rgba(33, 37, 41, 0.12)',
+          '--gengage-chat-launcher-size': '104px',
+        },
+        chat: {
+          variant: 'floating',
+          mobileBreakpoint: 768,
+          headerTitle: 'Market Asistanı',
+          launcherImageUrl: chatIconUrl,
+          headerAvatarUrl: chatIconUrl,
+          i18n: {
+            inputPlaceholder: "Market'te ne aramıştınız? (Örn: Domates, süt...)",
+            poweredBy: 'Özdilekteyim Market AI Asistanı',
+          },
+        },
+        qna: {
+          mountTarget: '#ozdilekteyimcom-market-qna-section',
+          ctaText: 'Markette başka bir şey sor',
+        },
+        simrel: {
+          mountTarget: '#ozdilekteyimcom-market-similar-products',
+        },
+        kvkk: {
+          message: 'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
+          linkUrl: 'https://www.ozdilekteyim.com/market/kvkk-aydinlatma-metni',
+          linkText: 'KVKK Aydınlatma Metni',
+        },
+        onAddToCart: (p) => {
+          console.log('[ozdilekteyimcom-market] add-to-cart', p);
+          alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
+        },
+        onProductNavigate: (url, prodSku, sid) => {
+          controller.chat?.saveSession(sid ?? '', prodSku);
+          window.location.href = url;
+        },
+      });
+
+      document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      document.querySelector('.cta-row .btn--primary')?.addEventListener('click', function () {
+        const btn = /** @type {HTMLButtonElement} */ (this);
+        if (btn.disabled) return;
+        const original = btn.textContent ?? '';
+        btn.textContent = '✓ Sepete Eklendi';
+        btn.disabled = true;
+        btn.style.background = '#15803d';
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.disabled = false;
+          btn.style.background = '';
+        }, 1800);
+      });
+
+      if (controller.chat) {
+        controller.chat.addCallback('gengage-cart-add', (detail) => {
+          console.log('[ozdilekteyimcom-market:callback] gengage-cart-add', detail);
+          return true;
+        });
+      }
+    </script>
+  </body>
+</html>
