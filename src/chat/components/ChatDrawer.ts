@@ -105,22 +105,65 @@ interface LoadingSequenceBinding {
   intervalId: ReturnType<typeof setInterval> | null;
 }
 
-/** Clipboard API (async read) — Chrome/Edge; Safari may require permission. */
-async function readClipboardImageAsFile(): Promise<File | null> {
-  try {
-    if (navigator.clipboard?.read) {
-      const items = await navigator.clipboard.read();
-      for (const clipItem of items) {
-        for (const type of clipItem.types) {
-          if (type.startsWith('image/')) {
-            const blob = await clipItem.getType(type);
-            const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg';
-            const name = `paste-${Date.now()}.${ext}`;
-            return new File([blob], name, { type: type || blob.type || 'image/png' });
-          }
-        }
+const CLIPBOARD_DATA_URL_IN_HTML = /data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+/gi;
+
+/** Turn clipboard items into an image File (PNG/JPEG/WebP). */
+async function fileFromClipboardItems(items: ClipboardItem[]): Promise<File | null> {
+  for (const clipItem of items) {
+    for (const type of clipItem.types) {
+      if (!type.startsWith('image/')) continue;
+      try {
+        const blob = await clipItem.getType(type);
+        if (!blob || blob.size === 0) continue;
+        const mime = type || blob.type || 'image/png';
+        const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+        const name = `paste-${Date.now()}.${ext}`;
+        return new File([blob], name, { type: mime });
+      } catch {
+        continue;
       }
     }
+  }
+
+  // Windows / Office / browser copy sometimes exposes images only inside text/html (data URLs).
+  for (const clipItem of items) {
+    if (!clipItem.types.includes('text/html')) continue;
+    try {
+      const blob = await clipItem.getType('text/html');
+      const html = await blob.text();
+      const matches = html.match(CLIPBOARD_DATA_URL_IN_HTML);
+      const dataUrl = matches?.[0];
+      if (!dataUrl || dataUrl.length > 5_000_000) continue;
+      const res = await fetch(dataUrl);
+      const out = await res.blob();
+      if (!out || out.size === 0) continue;
+      const mime = out.type || 'image/png';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) continue;
+      const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+      return new File([out], `paste-${Date.now()}.${ext}`, { type: mime });
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Read image from system clipboard.
+ * @param readPromise - Pass `navigator.clipboard.read()` from the **synchronous** click handler.
+ *   Chromium on Windows often requires starting `read()` in the same turn as the user gesture;
+ *   awaiting other work first can clear activation so `read()` yields nothing / rejects.
+ */
+async function readClipboardImageAsFile(readPromise?: Promise<ClipboardItem[]>): Promise<File | null> {
+  try {
+    // readPromise is always supplied by the click handler (started synchronously for Chromium
+    // user-activation). The fallback only fires in non-Chromium environments where activation
+    // is not required, so it will never be reached on the browsers that need the fix.
+    const p = readPromise ?? (typeof navigator.clipboard?.read === 'function' ? navigator.clipboard.read() : null);
+    if (!p) return null;
+    const items = await p;
+    return fileFromClipboardItems(items);
   } catch {
     /* unsupported or permission denied */
   }
@@ -906,7 +949,9 @@ export class ChatDrawer {
       `<span class="gengage-chat-attach-menu-label">${this.i18n.attachMenuPaste}</span>`;
     pasteBtn.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      void this._pasteImageFromClipboardMenu();
+      // Start Clipboard API read synchronously in this handler (Chromium user-activation rule).
+      const clipRead = typeof navigator.clipboard?.read === 'function' ? navigator.clipboard.read() : undefined;
+      void this._pasteImageFromClipboardMenu(clipRead);
     });
 
     attachMenu.appendChild(selectPhotoBtn);
@@ -1268,6 +1313,15 @@ export class ChatDrawer {
   /** Show error with recovery action pills ("Try again" + "Ask something else"). */
   showErrorWithRecovery(message: string, actions: { onRetry: () => void; onNewQuestion: () => void }): void {
     this.showError(message);
+    this.setRecoveryPills(actions);
+  }
+
+  /** Recovery pills only — error copy is shown as a normal assistant message. */
+  showRecoveryPillsOnly(actions: { onRetry: () => void; onNewQuestion: () => void }): void {
+    this.setRecoveryPills(actions);
+  }
+
+  private setRecoveryPills(actions: { onRetry: () => void; onNewQuestion: () => void }): void {
     this.setPills([
       { label: this.i18n.tryAgainButton, onAction: actions.onRetry },
       { label: this.i18n.askSomethingElseButton, onAction: actions.onNewQuestion },
@@ -1452,8 +1506,8 @@ export class ChatDrawer {
     }
   }
 
-  private async _pasteImageFromClipboardMenu(): Promise<void> {
-    const file = await readClipboardImageAsFile();
+  private async _pasteImageFromClipboardMenu(clipRead?: Promise<ClipboardItem[]>): Promise<void> {
+    const file = await readClipboardImageAsFile(clipRead);
     if (file) {
       this._routeAttachmentFile(file);
       this._closeAttachMenu();

@@ -102,6 +102,17 @@ describe('ChatDrawer.showErrorWithRecovery', () => {
 
     container.remove();
   });
+
+  it('showRecoveryPillsOnly sets pills without red error strip', () => {
+    const { container, drawer } = createDrawer();
+    drawer.showRecoveryPillsOnly({ onRetry: vi.fn(), onNewQuestion: vi.fn() });
+
+    expect(container.querySelector('.gengage-chat-error')).toBeNull();
+    const pills = container.querySelectorAll('.gengage-chat-pill');
+    expect(pills.length).toBe(2);
+
+    container.remove();
+  });
 });
 
 describe('ChatDrawer.showError scroll behavior', () => {
