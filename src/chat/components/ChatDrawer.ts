@@ -105,8 +105,7 @@ interface LoadingSequenceBinding {
   intervalId: ReturnType<typeof setInterval> | null;
 }
 
-const CLIPBOARD_DATA_URL_IN_HTML =
-  /data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+/gi;
+const CLIPBOARD_DATA_URL_IN_HTML = /data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+/gi;
 
 /** Turn clipboard items into an image File (PNG/JPEG/WebP). */
 async function fileFromClipboardItems(items: ClipboardItem[]): Promise<File | null> {
@@ -948,8 +947,7 @@ export class ChatDrawer {
     pasteBtn.addEventListener('click', (ev) => {
       ev.stopPropagation();
       // Start Clipboard API read synchronously in this handler (Chromium user-activation rule).
-      const clipRead =
-        typeof navigator.clipboard?.read === 'function' ? navigator.clipboard.read() : undefined;
+      const clipRead = typeof navigator.clipboard?.read === 'function' ? navigator.clipboard.read() : undefined;
       void this._pasteImageFromClipboardMenu(clipRead);
     });
 

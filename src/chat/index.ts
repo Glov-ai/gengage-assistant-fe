@@ -1987,8 +1987,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
-          const inlineOkWhenSilentPrime =
-            isPdpAutoLaunch && componentType === 'GroundingReviewCard';
+          const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
           const shouldRenderInline =
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
