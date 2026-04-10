@@ -363,7 +363,7 @@
           name: 'Özdilekteyim Mağaza',
           color: '#f08a2b',
           domain: 'www.ozdilekteyim.com',
-          logo: 'https://www.ozdilekteyim.com/Themes/Ozdilekteyim/Content/assets/images/logo.svg',
+          faviconUrl: 'https://www.google.com/s2/favicons?domain=www.ozdilekteyim.com&sz=32',
           nav: ['Ev Tekstili', 'Kadın & Erkek', 'Ayakkabı', 'Spor & Outdoor', 'Kozmetik & Parfüm'],
           skus: ['PR-CC70040462700048MAVI', 'PR-1010BRD0139300001BORDO', 'PR-70147SBH.MVI0082300048MAVI'],
         },
@@ -372,7 +372,7 @@
           name: 'Özdilekteyim Market',
           color: '#1bb407',
           domain: 'www.ozdilekteyim.com/market',
-          logo: 'https://www.ozdilekteyim.com/Themes/Ozdilekteyim/Content/assets/images/logo.svg',
+          faviconUrl: 'https://www.google.com/s2/favicons?domain=www.ozdilekteyim.com&sz=32',
           nav: ['Meyve & Sebze', 'Et & Tavuk & Şarküteri', 'Süt & Kahvaltılık', 'Temel Gıda', 'Temizlik'],
           skus: ['10005724', '14017298', '13971848'],
         },
@@ -414,8 +414,8 @@
       function renderMerchantCard(m) {
         const firstSku = m.skus[0];
         const href = `${m.id}/?sku=${firstSku}`;
-        const brandImageUrl = m.logo ?? `https://www.google.com/s2/favicons?domain=${m.domain}&sz=32`;
-        const swatchClassName = m.logo ? 'card-swatch card-swatch--logo' : 'card-swatch';
+        const brandImageUrl = m.faviconUrl ?? m.logo ?? `https://www.google.com/s2/favicons?domain=${m.domain}&sz=32`;
+        const swatchClassName = m.logo && !m.faviconUrl ? 'card-swatch card-swatch--logo' : 'card-swatch';
         return `
           <a class="card" href="${href}" style="--brand: ${m.color}">
             <div class="card-top">
