@@ -1295,9 +1295,11 @@ function adaptAiSuggestedSearches(event: V1AiSuggestedSearches): StreamEventUISp
 }
 
 function adaptGetGroundingReview(event: V1GetGroundingReview): StreamEventUISpec | StreamEventMetadata {
+  const p = event.payload;
+  const requestDetails = p.requestDetails ?? p['request_details'];
   const action = requestDetailsToAction(
-    event.payload.requestDetails,
-    firstNonEmptyString(event.payload.review_count, event.payload.text, event.payload.title) ?? 'Show product reviews',
+    requestDetails,
+    firstNonEmptyString(p.review_count, p['reviewCount'], p.text, p.title) ?? 'Show product reviews',
   );
   if (!action) {
     return {
@@ -1305,15 +1307,16 @@ function adaptGetGroundingReview(event: V1GetGroundingReview): StreamEventUISpec
       sessionId: '',
       model: '',
       meta: {
-        groundingReview: event.payload,
+        groundingReview: p,
       },
     };
   }
 
   const props: Record<string, unknown> = { action };
-  if (event.payload.title) props['title'] = event.payload.title;
-  if (event.payload.text) props['text'] = event.payload.text;
-  if (event.payload.review_count) props['reviewCount'] = event.payload.review_count;
+  if (p.title) props['title'] = p.title;
+  if (p.text) props['text'] = p.text;
+  if (p.review_count) props['reviewCount'] = p.review_count;
+  else if (typeof p['reviewCount'] === 'string' && p['reviewCount'].trim()) props['reviewCount'] = p['reviewCount'];
 
   return {
     type: 'ui_spec',
