@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="data:," />
+    <link rel="icon" href="./magaza.svg" />
     <title>Gengage Dev — ozdilecteyimcom-magaza</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
@@ -235,6 +235,14 @@
         padding: 20px;
       }
 
+      .gallery-main img {
+        display: block;
+        width: min(220px, 100%);
+        height: auto;
+        margin: 0 auto 10px;
+        filter: drop-shadow(0 12px 18px rgba(44, 37, 40, 0.12));
+      }
+
       .gallery-main small {
         display: block;
         font-weight: 500;
@@ -254,6 +262,15 @@
         border-radius: 10px;
         height: 72px;
         background: linear-gradient(140deg, #fff, color-mix(in srgb, var(--brand-primary) 4%, white));
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .gallery-thumb img {
+        width: 34px;
+        height: auto;
+        opacity: 0.92;
       }
 
       .summary-card {
@@ -444,11 +461,7 @@
     <main class="host-shell">
       <section class="host-topbar">
         <a class="host-topbar__brand" href="https://www.ozdilekteyim.com/magaza" target="_blank" rel="noreferrer">
-          <img
-            class="host-topbar__logo"
-            src="https://www.ozdilekteyim.com/Themes/Ozdilekteyim/Content/assets/images/logo.svg"
-            alt="Özdilekteyim Mağaza"
-          />
+          <img class="host-topbar__logo" src="./ozdilekteyimLogo.svg" alt="Özdilekteyim Mağaza" />
           <span class="host-topbar__tag">Mağaza</span>
         </a>
         <nav class="host-nav" aria-label="Main navigation">
@@ -480,15 +493,15 @@
         <article class="gallery-card">
           <div class="gallery-main">
             <span>
-              Özdilekteyim Demo Ürün Görseli
+              <img src="./magaza.svg" alt="Özdilekteyim Mağaza demo ürün görseli" />
               <small>Widget verileri backend tarafından gerçek SKU üzerinden yüklenir</small>
             </span>
           </div>
           <div class="gallery-thumbs" aria-hidden="true">
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"><img src="./magaza.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./magaza.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./magaza.svg" alt="" /></div>
+            <div class="gallery-thumb"><img src="./magaza.svg" alt="" /></div>
           </div>
         </article>
 
@@ -546,7 +559,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const logoUrl = 'https://www.ozdilekteyim.com/Themes/Ozdilekteyim/Content/assets/images/logo.svg';
+      const chatIconUrl = new URL('./magaza.svg', import.meta.url).href;
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -590,8 +603,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Alışveriş Asistanı',
-          launcherImageUrl: logoUrl,
-          headerAvatarUrl: logoUrl,
+          launcherImageUrl: chatIconUrl,
+          headerAvatarUrl: chatIconUrl,
           i18n: {
             inputPlaceholder: 'Mağazada ne aramıştınız? (Örn: Sabahlık, Parfüm...)',
             poweredBy: 'Özdilekteyim AI Asistan',
