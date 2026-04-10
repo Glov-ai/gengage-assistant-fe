@@ -376,6 +376,8 @@
 
       #teknosa-qna-section .gengage-qna-panel {
         padding: 20px 22px 20px;
+        display: flex;
+        flex-direction: column;
       }
 
       #teknosa-qna-section .gengage-qna-heading {
@@ -389,6 +391,26 @@
         display: flex;
         flex-direction: column;
         gap: 14px;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-heading) {
+        order: 0;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-input-wrapper) {
+        order: 1;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-buttons) {
+        order: 2;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-input-wrapper {
+        order: 1;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-buttons {
+        order: 2;
       }
 
       #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-heading {
@@ -503,8 +525,8 @@
         <article class="gallery-card">
           <div class="gallery-main">
             <span>
-              Demo Ürün Görseli
-              <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
+              <span id="gallery-main-title">Demo Ürün Görseli</span>
+              <small id="gallery-main-note">Bu sayfa bir yer tutucu PDP kabuğudur</small>
             </span>
           </div>
           <div class="gallery-thumbs" aria-hidden="true">
@@ -517,7 +539,7 @@
 
         <article class="summary-card">
           <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <h1 id="summary-title" class="summary-title">Lorem Ipsum Demo Ürünü</h1>
           <div class="summary-meta">
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
@@ -570,13 +592,39 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSkus = ['125077817', '125077816', '125077820'];
+      const sku = params.get('sku') ?? defaultSkus[0];
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      let shouldRewriteUrl = false;
+      ['glov_force_account', 'nd_debug'].forEach((key) => {
+        if (params.has(key)) {
+          params.delete(key);
+          shouldRewriteUrl = true;
+        }
+      });
+      if (!params.get('sku') && sku) {
+        params.set('sku', sku);
+        shouldRewriteUrl = true;
+      }
+      if (shouldRewriteUrl) {
+        const query = params.toString();
+        const nextUrl = `${location.pathname}${query ? `?${query}` : ''}${location.hash}`;
+        history.replaceState(null, '', nextUrl);
+      }
 
+      const demoProductsBySku = {
+        125077817: 'iPhone 12 128gb Akıllı Telefon Beyaz',
+        125077816: 'iPhone 12 128gb Akıllı Telefon Siyah',
+        125077820: 'iPhone 12 128gb Akıllı Telefon Yeşil',
+      };
       const skuDisplay = sku ?? '—';
+      const productTitle = demoProductsBySku[skuDisplay] ?? `Demo Ürün (${skuDisplay})`;
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
+      document.getElementById('summary-title').textContent = productTitle;
+      document.getElementById('gallery-main-title').textContent = productTitle;
+      document.title = `Gengage Dev — teknosacom • ${skuDisplay}`;
       const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
       const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
@@ -637,7 +685,7 @@
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
 
-      const normalizeTeknosaQna = () => {
+      const normalizeTeknosaQnaHeading = () => {
         const qnaRoot = document.getElementById('teknosa-qna-section');
         if (!qnaRoot) return;
 
@@ -647,60 +695,17 @@
             heading.textContent = "Teknosa'ya Sor";
           }
         });
-
-        qnaRoot.querySelectorAll('.gengage-qna-panel').forEach((panel) => {
-          if (!(panel instanceof HTMLElement)) return;
-
-          const headingEl = panel.querySelector('.gengage-qna-heading');
-          const inputEl = panel.querySelector('.gengage-qna-input-wrapper');
-          const buttonsEl = panel.querySelector('.gengage-qna-buttons');
-
-          const headingHost = headingEl?.closest('.gengage-qna-uispec');
-          const inputHost = inputEl?.closest('.gengage-qna-uispec');
-          const buttonsHost = buttonsEl?.closest('.gengage-qna-uispec');
-
-          const panelChildSet = new Set(Array.from(panel.children));
-          const isPanelChild = (node) => !!node && panelChildSet.has(node);
-
-          const headingTarget = isPanelChild(headingHost) ? headingHost : isPanelChild(headingEl) ? headingEl : null;
-          const inputTarget = isPanelChild(inputHost) ? inputHost : isPanelChild(inputEl) ? inputEl : null;
-          const buttonsTarget = isPanelChild(buttonsHost) ? buttonsHost : isPanelChild(buttonsEl) ? buttonsEl : null;
-
-          if (headingTarget) {
-            panel.insertBefore(headingTarget, panel.firstChild);
-          }
-
-          if (inputTarget) {
-            const anchor =
-              headingTarget && headingTarget.parentElement === panel ? headingTarget.nextSibling : panel.firstChild;
-            panel.insertBefore(inputTarget, anchor);
-          }
-
-          if (buttonsTarget && inputTarget && buttonsTarget !== inputTarget) {
-            panel.insertBefore(buttonsTarget, inputTarget.nextSibling);
-          }
-        });
-
-        qnaRoot.querySelectorAll('.gengage-qna-uispec').forEach((spec) => {
-          if (!(spec instanceof HTMLElement)) return;
-          const input = spec.querySelector(':scope > .gengage-qna-input-wrapper');
-          const buttons = spec.querySelector(':scope > .gengage-qna-buttons');
-          if (!input || !buttons) return;
-          if (input.nextElementSibling !== buttons) {
-            spec.insertBefore(input, buttons);
-          }
-        });
       };
 
-      normalizeTeknosaQna();
+      normalizeTeknosaQnaHeading();
       const qnaRootEl = document.getElementById('teknosa-qna-section');
       if (qnaRootEl) {
         const prevObserver = window.__teknosaQnaObserver;
         if (prevObserver instanceof MutationObserver) {
           prevObserver.disconnect();
         }
-        const qnaObserver = new MutationObserver(() => normalizeTeknosaQna());
-        qnaObserver.observe(qnaRootEl, { childList: true, subtree: true });
+        const qnaObserver = new MutationObserver(() => normalizeTeknosaQnaHeading());
+        qnaObserver.observe(qnaRootEl, { childList: true, subtree: false });
         window.__teknosaQnaObserver = qnaObserver;
       }
 
