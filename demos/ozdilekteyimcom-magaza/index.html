@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="./magaza.svg" />
-    <title>Gengage Dev — ozdilecteyimcom-magaza</title>
+    <title>Gengage Dev — ozdilekteyimcom-magaza</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
@@ -450,10 +450,10 @@
   </head>
   <body>
     <div class="dev-header">
-      <p class="dev-header__title">Gengage Dev — ozdilecteyimcom-magaza</p>
+      <p class="dev-header__title">Gengage Dev — ozdilekteyimcom-magaza</p>
       <div class="dev-header__row">
         <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
-        <span class="dev-header__item"><strong>account:</strong> <span>ozdilecteyimcom-magaza</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>ozdilekteyimcom-magaza</span></span>
         <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
       </div>
     </div>
@@ -461,7 +461,7 @@
     <main class="host-shell">
       <section class="host-topbar">
         <a class="host-topbar__brand" href="https://www.ozdilekteyim.com/magaza" target="_blank" rel="noreferrer">
-          <img class="host-topbar__logo" src="./ozdilekteyimLogo.svg" alt="Özdilekteyim Mağaza" />
+          <img class="host-topbar__logo" src="demos/ozdilekteyimcom-magaza/ozdilekteyimLogo.svg" alt="Özdilekteyim Mağaza" />
           <span class="host-topbar__tag">Mağaza</span>
         </a>
         <nav class="host-nav" aria-label="Main navigation">
@@ -545,11 +545,11 @@
         </p>
       </section>
 
-      <div id="ozdilecteyimcom-magaza-qna-section" class="qna-section"></div>
+      <div id="ozdilekteyimcom-magaza-qna-section" class="qna-section"></div>
 
       <section class="simrel-card">
         <h2 class="section-title">Benzer Ürünler</h2>
-        <div id="ozdilecteyimcom-magaza-similar-products" class="simrel-mount"></div>
+        <div id="ozdilekteyimcom-magaza-similar-products" class="simrel-mount"></div>
       </section>
     </main>
 
@@ -567,7 +567,7 @@
       document.getElementById('summary-sku').textContent = skuDisplay;
 
       const controller = await initOverlayWidgets({
-        accountId: 'ozdilecteyimcom-magaza',
+        accountId: 'ozdilekteyimcom-magaza',
         middlewareUrl,
         locale: 'tr',
         sku,
@@ -611,11 +611,11 @@
           },
         },
         qna: {
-          mountTarget: '#ozdilecteyimcom-magaza-qna-section',
+          mountTarget: '#ozdilekteyimcom-magaza-qna-section',
           ctaText: 'Başka bir şey sor',
         },
         simrel: {
-          mountTarget: '#ozdilecteyimcom-magaza-similar-products',
+          mountTarget: '#ozdilekteyimcom-magaza-similar-products',
         },
         kvkk: {
           message: 'Kişisel verileriniz, size daha iyi hizmet sunabilmek amacıyla KVKK kapsamında işlenmektedir.',
@@ -623,7 +623,7 @@
           linkText: 'KVKK Aydınlatma Metni',
         },
         onAddToCart: (p) => {
-          console.log('[ozdilecteyimcom-magaza] add-to-cart', p);
+          console.log('[ozdilekteyimcom-magaza] add-to-cart', p);
           alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
         },
         onProductNavigate: (url, prodSku, sid) => {
@@ -650,7 +650,7 @@
 
       if (controller.chat) {
         controller.chat.addCallback('gengage-cart-add', (detail) => {
-          console.log('[ozdilecteyimcom-magaza:callback] gengage-cart-add', detail);
+          console.log('[ozdilekteyimcom-magaza:callback] gengage-cart-add', detail);
           return true;
         });
       }
