@@ -351,6 +351,116 @@
         min-height: 72px;
       }
 
+      #teknosa-qna-section .gengage-qna-container {
+        --gengage-font-family: var(--brand-font);
+        --gengage-font-size: 14px;
+        --gengage-qna-panel-bg: #f7f7f9;
+        --gengage-qna-panel-radius: 14px;
+        --gengage-qna-panel-margin-top: 4px;
+        --gengage-qna-panel-margin-bottom: 0;
+        --gengage-qna-pill-radius: 999px;
+        --gengage-qna-input-radius: 14px;
+        --gengage-qna-pill-bg: #fff;
+        --gengage-qna-pill-bg-hover: color-mix(in srgb, var(--brand-primary) 10%, white);
+        --gengage-qna-pill-fg: var(--brand-primary);
+        --gengage-qna-pill-border: color-mix(in srgb, var(--brand-primary) 64%, white);
+        --gengage-qna-pill-border-hover: color-mix(in srgb, var(--brand-primary) 78%, white);
+        --gengage-qna-input-bg: #fff;
+        --gengage-qna-input-border: color-mix(in srgb, var(--brand-primary) 58%, white);
+        --gengage-qna-icon-color: var(--brand-primary);
+        --gengage-qna-clear-color: var(--brand-primary);
+        --gengage-qna-send-color: var(--brand-primary);
+        --gengage-qna-send-color-disabled: color-mix(in srgb, var(--brand-primary) 36%, #b3b8c8);
+        --gengage-qna-action-icon-bg-hover: color-mix(in srgb, var(--brand-primary) 12%, white);
+      }
+
+      #teknosa-qna-section .gengage-qna-panel {
+        padding: 20px 22px 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #teknosa-qna-section .gengage-qna-heading {
+        font-size: clamp(24px, 2.3vw, 38px);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        margin-bottom: 6px;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-heading) {
+        order: 0;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-input-wrapper) {
+        order: 1;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-buttons) {
+        order: 2;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-input-wrapper {
+        order: 1;
+      }
+
+      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-buttons {
+        order: 2;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-heading {
+        order: 0;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-input-wrapper {
+        order: 1;
+        padding-top: 2px;
+        margin-bottom: 4px;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
+        order: 2;
+        padding-top: 10px;
+        gap: 14px 12px;
+      }
+
+      #teknosa-qna-section .gengage-qna-button,
+      #teknosa-qna-section .gengage-qna-cta {
+        min-height: 42px;
+        font-size: 15px;
+        padding: 9px 16px;
+        line-height: 1.2;
+      }
+
+      #teknosa-qna-section .gengage-qna-input {
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      #teknosa-qna-section .gengage-qna-input::placeholder {
+        color: #6b7280;
+      }
+
+      @media (max-width: 900px) {
+        #teknosa-qna-section .gengage-qna-panel {
+          padding: 16px 16px 16px;
+        }
+
+        #teknosa-qna-section .gengage-qna-uispec {
+          gap: 12px;
+        }
+
+        #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
+          padding-top: 8px;
+          gap: 10px;
+        }
+      }
+
       /* ── Responsive ── */
       @media (max-width: 1060px) {
         .pdp-layout {
@@ -415,8 +525,8 @@
         <article class="gallery-card">
           <div class="gallery-main">
             <span>
-              Demo Ürün Görseli
-              <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
+              <span id="gallery-main-title">Demo Ürün Görseli</span>
+              <small id="gallery-main-note">Bu sayfa bir yer tutucu PDP kabuğudur</small>
             </span>
           </div>
           <div class="gallery-thumbs" aria-hidden="true">
@@ -429,7 +539,7 @@
 
         <article class="summary-card">
           <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <h1 id="summary-title" class="summary-title">Lorem Ipsum Demo Ürünü</h1>
           <div class="summary-meta">
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
@@ -482,13 +592,39 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSkus = ['125077817', '125077816', '125077820'];
+      const sku = params.get('sku') ?? defaultSkus[0];
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      let shouldRewriteUrl = false;
+      ['glov_force_account', 'nd_debug'].forEach((key) => {
+        if (params.has(key)) {
+          params.delete(key);
+          shouldRewriteUrl = true;
+        }
+      });
+      if (!params.get('sku') && sku) {
+        params.set('sku', sku);
+        shouldRewriteUrl = true;
+      }
+      if (shouldRewriteUrl) {
+        const query = params.toString();
+        const nextUrl = `${location.pathname}${query ? `?${query}` : ''}${location.hash}`;
+        history.replaceState(null, '', nextUrl);
+      }
 
+      const demoProductsBySku = {
+        125077817: 'iPhone 12 128gb Akıllı Telefon Beyaz',
+        125077816: 'iPhone 12 128gb Akıllı Telefon Siyah',
+        125077820: 'iPhone 12 128gb Akıllı Telefon Yeşil',
+      };
       const skuDisplay = sku ?? '—';
+      const productTitle = demoProductsBySku[skuDisplay] ?? `Demo Ürün (${skuDisplay})`;
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
+      document.getElementById('summary-title').textContent = productTitle;
+      document.getElementById('gallery-main-title').textContent = productTitle;
+      document.title = `Gengage Dev — teknosacom • ${skuDisplay}`;
       const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
       const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
@@ -532,6 +668,7 @@
         qna: {
           mountTarget: '#teknosa-qna-section',
           ctaText: 'Başka bir şey sor',
+          inputPlaceholder: true,
         },
         simrel: {
           mountTarget: '#teknosa-similar-products',
@@ -547,6 +684,30 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      const normalizeTeknosaQnaHeading = () => {
+        const qnaRoot = document.getElementById('teknosa-qna-section');
+        if (!qnaRoot) return;
+
+        qnaRoot.querySelectorAll('.gengage-qna-heading').forEach((heading) => {
+          if (!(heading instanceof HTMLElement)) return;
+          if (heading.textContent !== "Teknosa'ya Sor") {
+            heading.textContent = "Teknosa'ya Sor";
+          }
+        });
+      };
+
+      normalizeTeknosaQnaHeading();
+      const qnaRootEl = document.getElementById('teknosa-qna-section');
+      if (qnaRootEl) {
+        const prevObserver = window.__teknosaQnaObserver;
+        if (prevObserver instanceof MutationObserver) {
+          prevObserver.disconnect();
+        }
+        const qnaObserver = new MutationObserver(() => normalizeTeknosaQnaHeading());
+        qnaObserver.observe(qnaRootEl, { childList: true, subtree: false });
+        window.__teknosaQnaObserver = qnaObserver;
+      }
 
       const teknosaLauncherCss = `
         .gengage-chat-launcher-container {
@@ -566,18 +727,28 @@
           justify-content: space-between;
           gap: 12px;
           border-radius: 999px;
-          border: 1px solid color-mix(in srgb, var(--brand-secondary) 6%, white);
+          border: 1px solid color-mix(in srgb, var(--brand-primary) 58%, white);
           background: #ffffff;
           box-shadow:
             0 18px 46px color-mix(in srgb, var(--brand-secondary) 17%, transparent),
             0 4px 14px color-mix(in srgb, var(--brand-secondary) 8%, transparent);
+          transition:
+            border-color 0.16s ease,
+            box-shadow 0.16s ease,
+            transform 0.16s ease;
         }
 
         .gengage-chat-launcher.gengage-chat-launcher--image-mode:hover {
+          border-color: color-mix(in srgb, var(--brand-primary) 78%, white);
           transform: translateY(-1px);
           box-shadow:
             0 22px 52px color-mix(in srgb, var(--brand-secondary) 22%, transparent),
             0 6px 18px color-mix(in srgb, var(--brand-secondary) 12%, transparent);
+        }
+
+        .gengage-chat-launcher.gengage-chat-launcher--image-mode:focus-visible {
+          outline: 2px solid color-mix(in srgb, var(--brand-primary) 28%, transparent);
+          outline-offset: 2px;
         }
 
         .teknosa-launcher-label {
