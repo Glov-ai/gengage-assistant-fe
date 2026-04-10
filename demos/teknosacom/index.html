@@ -351,6 +351,94 @@
         min-height: 72px;
       }
 
+      #teknosa-qna-section .gengage-qna-container {
+        --gengage-font-family: var(--brand-font);
+        --gengage-font-size: 14px;
+        --gengage-qna-panel-bg: #f7f7f9;
+        --gengage-qna-panel-radius: 14px;
+        --gengage-qna-panel-margin-top: 4px;
+        --gengage-qna-panel-margin-bottom: 0;
+        --gengage-qna-pill-radius: 999px;
+        --gengage-qna-input-radius: 14px;
+        --gengage-qna-pill-bg: #fff;
+        --gengage-qna-pill-bg-hover: color-mix(in srgb, var(--brand-primary) 10%, white);
+        --gengage-qna-pill-fg: var(--brand-primary);
+        --gengage-qna-pill-border: color-mix(in srgb, var(--brand-primary) 64%, white);
+        --gengage-qna-pill-border-hover: color-mix(in srgb, var(--brand-primary) 78%, white);
+        --gengage-qna-input-bg: #fff;
+        --gengage-qna-input-border: color-mix(in srgb, var(--brand-primary) 58%, white);
+        --gengage-qna-icon-color: var(--brand-primary);
+        --gengage-qna-clear-color: var(--brand-primary);
+        --gengage-qna-send-color: var(--brand-primary);
+        --gengage-qna-send-color-disabled: color-mix(in srgb, var(--brand-primary) 36%, #b3b8c8);
+        --gengage-qna-action-icon-bg-hover: color-mix(in srgb, var(--brand-primary) 12%, white);
+      }
+
+      #teknosa-qna-section .gengage-qna-panel {
+        padding: 20px 22px 20px;
+      }
+
+      #teknosa-qna-section .gengage-qna-heading {
+        font-size: clamp(24px, 2.3vw, 38px);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        margin-bottom: 6px;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-heading {
+        order: 0;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-input-wrapper {
+        order: 1;
+        padding-top: 2px;
+        margin-bottom: 4px;
+      }
+
+      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
+        order: 2;
+        padding-top: 10px;
+        gap: 14px 12px;
+      }
+
+      #teknosa-qna-section .gengage-qna-button,
+      #teknosa-qna-section .gengage-qna-cta {
+        min-height: 42px;
+        font-size: 15px;
+        padding: 9px 16px;
+        line-height: 1.2;
+      }
+
+      #teknosa-qna-section .gengage-qna-input {
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      #teknosa-qna-section .gengage-qna-input::placeholder {
+        color: #6b7280;
+      }
+
+      @media (max-width: 900px) {
+        #teknosa-qna-section .gengage-qna-panel {
+          padding: 16px 16px 16px;
+        }
+
+        #teknosa-qna-section .gengage-qna-uispec {
+          gap: 12px;
+        }
+
+        #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
+          padding-top: 8px;
+          gap: 10px;
+        }
+      }
+
       /* ── Responsive ── */
       @media (max-width: 1060px) {
         .pdp-layout {
@@ -532,6 +620,7 @@
         qna: {
           mountTarget: '#teknosa-qna-section',
           ctaText: 'Başka bir şey sor',
+          inputPlaceholder: true,
         },
         simrel: {
           mountTarget: '#teknosa-similar-products',
@@ -547,6 +636,73 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+
+      const normalizeTeknosaQna = () => {
+        const qnaRoot = document.getElementById('teknosa-qna-section');
+        if (!qnaRoot) return;
+
+        qnaRoot.querySelectorAll('.gengage-qna-heading').forEach((heading) => {
+          if (!(heading instanceof HTMLElement)) return;
+          if (heading.textContent !== "Teknosa'ya Sor") {
+            heading.textContent = "Teknosa'ya Sor";
+          }
+        });
+
+        qnaRoot.querySelectorAll('.gengage-qna-panel').forEach((panel) => {
+          if (!(panel instanceof HTMLElement)) return;
+
+          const headingEl = panel.querySelector('.gengage-qna-heading');
+          const inputEl = panel.querySelector('.gengage-qna-input-wrapper');
+          const buttonsEl = panel.querySelector('.gengage-qna-buttons');
+
+          const headingHost = headingEl?.closest('.gengage-qna-uispec');
+          const inputHost = inputEl?.closest('.gengage-qna-uispec');
+          const buttonsHost = buttonsEl?.closest('.gengage-qna-uispec');
+
+          const panelChildSet = new Set(Array.from(panel.children));
+          const isPanelChild = (node) => !!node && panelChildSet.has(node);
+
+          const headingTarget = isPanelChild(headingHost) ? headingHost : isPanelChild(headingEl) ? headingEl : null;
+          const inputTarget = isPanelChild(inputHost) ? inputHost : isPanelChild(inputEl) ? inputEl : null;
+          const buttonsTarget = isPanelChild(buttonsHost) ? buttonsHost : isPanelChild(buttonsEl) ? buttonsEl : null;
+
+          if (headingTarget) {
+            panel.insertBefore(headingTarget, panel.firstChild);
+          }
+
+          if (inputTarget) {
+            const anchor =
+              headingTarget && headingTarget.parentElement === panel ? headingTarget.nextSibling : panel.firstChild;
+            panel.insertBefore(inputTarget, anchor);
+          }
+
+          if (buttonsTarget && inputTarget && buttonsTarget !== inputTarget) {
+            panel.insertBefore(buttonsTarget, inputTarget.nextSibling);
+          }
+        });
+
+        qnaRoot.querySelectorAll('.gengage-qna-uispec').forEach((spec) => {
+          if (!(spec instanceof HTMLElement)) return;
+          const input = spec.querySelector(':scope > .gengage-qna-input-wrapper');
+          const buttons = spec.querySelector(':scope > .gengage-qna-buttons');
+          if (!input || !buttons) return;
+          if (input.nextElementSibling !== buttons) {
+            spec.insertBefore(input, buttons);
+          }
+        });
+      };
+
+      normalizeTeknosaQna();
+      const qnaRootEl = document.getElementById('teknosa-qna-section');
+      if (qnaRootEl) {
+        const prevObserver = window.__teknosaQnaObserver;
+        if (prevObserver instanceof MutationObserver) {
+          prevObserver.disconnect();
+        }
+        const qnaObserver = new MutationObserver(() => normalizeTeknosaQna());
+        qnaObserver.observe(qnaRootEl, { childList: true, subtree: true });
+        window.__teknosaQnaObserver = qnaObserver;
+      }
 
       const teknosaLauncherCss = `
         .gengage-chat-launcher-container {
@@ -566,18 +722,28 @@
           justify-content: space-between;
           gap: 12px;
           border-radius: 999px;
-          border: 1px solid color-mix(in srgb, var(--brand-secondary) 6%, white);
+          border: 1px solid color-mix(in srgb, var(--brand-primary) 58%, white);
           background: #ffffff;
           box-shadow:
             0 18px 46px color-mix(in srgb, var(--brand-secondary) 17%, transparent),
             0 4px 14px color-mix(in srgb, var(--brand-secondary) 8%, transparent);
+          transition:
+            border-color 0.16s ease,
+            box-shadow 0.16s ease,
+            transform 0.16s ease;
         }
 
         .gengage-chat-launcher.gengage-chat-launcher--image-mode:hover {
+          border-color: color-mix(in srgb, var(--brand-primary) 78%, white);
           transform: translateY(-1px);
           box-shadow:
             0 22px 52px color-mix(in srgb, var(--brand-secondary) 22%, transparent),
             0 6px 18px color-mix(in srgb, var(--brand-secondary) 12%, transparent);
+        }
+
+        .gengage-chat-launcher.gengage-chat-launcher--image-mode:focus-visible {
+          outline: 2px solid color-mix(in srgb, var(--brand-primary) 28%, transparent);
+          outline-offset: 2px;
         }
 
         .teknosa-launcher-label {

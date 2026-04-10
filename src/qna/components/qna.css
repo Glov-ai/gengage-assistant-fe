@@ -19,9 +19,26 @@
   --_gengage-text-primary: var(--text-primary);
   --_gengage-text-secondary: var(--text-secondary);
   --_gengage-qna-panel-surface: var(--gengage-qna-panel-bg, var(--surface-card));
-  --_gengage-qna-icon-color: var(--text-muted);
-  --_gengage-qna-send-divider: color-mix(in srgb, var(--client-primary) 22%, var(--border-default) 78%);
+  --_gengage-qna-icon-color: var(--gengage-qna-icon-color, var(--text-muted));
   --_gengage-qna-transition-overlay: color-mix(in srgb, var(--surface-card) 78%, transparent);
+  --_gengage-qna-pill-bg: var(--gengage-qna-pill-bg, var(--ds-button-primary-bg));
+  --_gengage-qna-pill-bg-hover: var(--gengage-qna-pill-bg-hover, var(--ds-button-primary-bg-hover));
+  --_gengage-qna-pill-fg: var(--gengage-qna-pill-fg, var(--ds-button-primary-fg));
+  --_gengage-qna-pill-border: var(--gengage-qna-pill-border, var(--ds-button-primary-border));
+  --_gengage-qna-pill-border-hover: var(--gengage-qna-pill-border-hover, var(--_gengage-qna-pill-border));
+  --_gengage-qna-input-bg: var(--gengage-qna-input-bg, var(--ds-input-bg));
+  --_gengage-qna-input-border: var(--gengage-qna-input-border, var(--ds-input-border));
+  --_gengage-qna-action-icon-bg-hover: var(
+    --gengage-qna-action-icon-bg-hover,
+    color-mix(in srgb, var(--client-primary) 10%, transparent)
+  );
+  --_gengage-qna-clear-color: var(--gengage-qna-clear-color, var(--text-muted));
+  --_gengage-qna-send-color: var(--gengage-qna-send-color, var(--client-primary));
+  --_gengage-qna-send-color-disabled: var(
+    --gengage-qna-send-color-disabled,
+    color-mix(in srgb, var(--text-muted) 60%, transparent)
+  );
+  --_gengage-qna-action-icon-size: var(--gengage-qna-action-icon-size, 20px);
 }
 
 .gengage-qna-panel {
@@ -82,23 +99,26 @@
   justify-content: center;
   min-height: 40px;
   padding: 8px 14px;
-  border: 1px solid var(--ds-button-primary-border);
+  border: 1px solid var(--_gengage-qna-pill-border);
   border-radius: var(--radius-pill, var(--gengage-qna-pill-radius, 999px));
-  background: var(--ds-button-primary-bg);
-  color: var(--ds-button-primary-fg);
+  background: var(--_gengage-qna-pill-bg);
+  color: var(--_gengage-qna-pill-fg);
   font-size: 13px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition:
-    filter 0.14s ease,
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease,
     transform 0.12s ease;
   text-align: left;
   line-height: 1.25;
 }
 
 .gengage-qna-button:hover {
-  background: var(--ds-button-primary-bg-hover);
+  background: var(--_gengage-qna-pill-bg-hover);
+  border-color: var(--_gengage-qna-pill-border-hover);
   transform: translateY(-1px);
 }
 
@@ -149,11 +169,11 @@
   position: relative;
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
   min-height: 48px;
-  border: 1px solid var(--ds-input-border);
+  border: 1px solid var(--_gengage-qna-input-border);
   border-radius: var(--gengage-qna-input-radius, var(--ds-input-radius));
-  background: var(--ds-input-bg);
+  background: var(--_gengage-qna-input-bg);
   box-shadow: var(--ds-input-highlight);
   overflow: hidden;
   transition:
@@ -198,7 +218,7 @@
   flex: 1;
   min-width: 0;
   height: 48px;
-  padding: 0 12px 0 40px;
+  padding: 0 10px 0 40px;
   border: none;
   border-radius: 0;
   font-size: 15px;
@@ -216,52 +236,87 @@
   opacity: 0;
 }
 
-.gengage-qna-send {
+.gengage-qna-input-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+  padding-left: 4px;
   flex-shrink: 0;
-  align-self: stretch;
-  min-width: 52px;
-  min-height: 0;
+}
+
+.gengage-qna-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   margin: 0;
-  padding: 0 18px;
+  padding: 0;
   border: none;
-  border-radius: 0;
-  border-left: 1px solid var(--_gengage-qna-send-divider);
-  background: var(--ds-button-primary-bg);
-  color: var(--ds-button-primary-fg);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
+  border-radius: 999px;
+  background: transparent;
   cursor: pointer;
-  transition: filter 0.12s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.gengage-qna-icon-btn svg {
+  width: var(--_gengage-qna-action-icon-size);
+  height: var(--_gengage-qna-action-icon-size);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: opacity 0.12s ease;
+}
+
+.gengage-qna-icon-btn:hover {
+  background: var(--_gengage-qna-action-icon-bg-hover);
+}
+
+.gengage-qna-icon-btn:focus-visible {
+  outline: 2px solid var(--client-focus-ring);
+  outline-offset: 1px;
+}
+
+.gengage-qna-icon-btn--hidden {
+  display: none;
+}
+
+.gengage-qna-clear {
+  color: var(--_gengage-qna-clear-color);
+}
+
+.gengage-qna-clear svg {
+  stroke: currentColor;
+}
+
+.gengage-qna-send {
+  color: var(--_gengage-qna-send-color-disabled);
+}
+
+.gengage-qna-send svg {
+  stroke: currentColor;
+}
+
+.gengage-qna-send.gengage-qna-send--active {
+  color: var(--_gengage-qna-send-color);
+}
+
+.gengage-qna-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-}
-
-/* Inline in combo: flush with shell edges (gds-btn defaults would inset the control). */
-.gengage-qna-input-combo .gengage-qna-send.gds-btn {
-  min-height: 0;
-  border-radius: 0;
-  border: none;
-  border-left: 1px solid var(--_gengage-qna-send-divider);
-  box-shadow: none;
-}
-
-.gengage-qna-input-combo .gengage-qna-send.gds-btn-primary {
-  border: none;
-  border-left: 1px solid var(--_gengage-qna-send-divider);
-}
-
-.gengage-qna-send:hover {
-  background: var(--ds-button-primary-bg-hover);
-}
-
-.gengage-qna-send:focus-visible {
-  outline: 2px solid var(--client-primary);
-  outline-offset: -2px;
-  z-index: 1;
-}
-
-.gengage-qna-send:active {
-  background: var(--ds-button-primary-bg-active);
+  border: 0;
 }
 
 .gengage-qna-heading {
@@ -328,9 +383,14 @@
     font-size: 16px; /* iOS: reduces page zoom on focus */
   }
 
-  .gengage-qna-send {
-    padding: 0 14px;
-    font-size: 14px;
+  .gengage-qna-input-actions {
+    gap: 4px;
+    padding-right: 8px;
+  }
+
+  .gengage-qna-icon-btn {
+    width: 30px;
+    height: 30px;
   }
 }
 
