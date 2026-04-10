@@ -299,6 +299,11 @@
   color: var(--_gengage-qna-send-color-disabled);
 }
 
+.gengage-qna-send:disabled {
+  opacity: 1;
+  cursor: pointer;
+}
+
 .gengage-qna-send svg {
   stroke: currentColor;
 }

@@ -82,7 +82,7 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
   sendBtn.type = 'button';
   sendBtn.dataset['gengagePart'] = 'qna-send';
   sendBtn.setAttribute('aria-label', options.sendQuestionAriaLabel ?? 'Send question');
-  sendBtn.setAttribute('aria-disabled', 'true');
+  sendBtn.disabled = true;
   sendBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 2L11 13" /><path d="M22 2L15 22L11 13L2 9L22 2Z" /></svg><span class="gengage-qna-sr-only">${options.ctaLabel ?? options.sendButtonText ?? 'Ask'}</span>`;
 
   const updateActionButtons = () => {
@@ -90,7 +90,7 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
     clearBtn.classList.toggle('gengage-qna-icon-btn--hidden', !hasValue);
     sendBtn.classList.toggle('gengage-qna-icon-btn--hidden', !hasValue);
     sendBtn.classList.toggle('gengage-qna-send--active', hasValue);
-    sendBtn.setAttribute('aria-disabled', hasValue ? 'false' : 'true');
+    sendBtn.disabled = !hasValue;
   };
 
   const submit = () => {
@@ -107,13 +107,10 @@ export function renderTextInput(options: TextInputOptions): HTMLElement {
     startPlaceholderRotation();
   };
 
-  clearBtn.addEventListener('click', (event) => {
-    event.preventDefault();
+  clearBtn.addEventListener('click', () => {
     input.value = '';
     updateActionButtons();
     input.focus({ preventScroll: true });
-    input.placeholder = '';
-    startPlaceholderRotation();
   });
 
   sendBtn.addEventListener('click', submit);
