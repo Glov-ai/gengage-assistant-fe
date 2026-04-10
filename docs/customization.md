@@ -326,6 +326,19 @@ For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork re
 | `--gengage-chat-input-height` | `48px` | Chat input row control height |
 | `--gengage-qna-pill-radius` | `999px` | QNA quick-action pill radius |
 | `--gengage-qna-input-radius` | `0.75rem` | QNA input + send button radius |
+| `--gengage-qna-pill-bg` | `var(--ds-button-primary-bg)` | QNA quick-action pill background |
+| `--gengage-qna-pill-bg-hover` | `var(--ds-button-primary-bg-hover)` | QNA quick-action pill hover background |
+| `--gengage-qna-pill-fg` | `var(--ds-button-primary-fg)` | QNA quick-action pill text color |
+| `--gengage-qna-pill-border` | `var(--ds-button-primary-border)` | QNA quick-action pill border color |
+| `--gengage-qna-pill-border-hover` | `var(--gengage-qna-pill-border)` | QNA quick-action pill hover border color |
+| `--gengage-qna-input-bg` | `var(--ds-input-bg)` | QNA input shell background |
+| `--gengage-qna-input-border` | `var(--ds-input-border)` | QNA input shell border color |
+| `--gengage-qna-icon-color` | `var(--text-muted)` | QNA search icon color |
+| `--gengage-qna-clear-color` | `var(--text-muted)` | QNA clear icon color |
+| `--gengage-qna-send-color` | `var(--client-primary)` | QNA send icon active color |
+| `--gengage-qna-send-color-disabled` | `color-mix(in srgb, var(--text-muted) 60%, transparent)` | QNA send icon inactive color |
+| `--gengage-qna-action-icon-bg-hover` | `color-mix(in srgb, var(--client-primary) 10%, transparent)` | QNA icon button hover background |
+| `--gengage-qna-action-icon-size` | `20px` | QNA clear/send icon size |
 | `--gengage-simrel-card-radius` | `0.75rem` | Similar product card radius |
 | `--gengage-keyboard-offset` | `0px` | iOS virtual keyboard offset (set via JS internally) |
 | `--gengage-chat-header-bg` | `var(--surface-card)` → `#ffffff` | Chat header background (light by default; falls through design-system tokens) |
