@@ -1987,8 +1987,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
+          const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
           const shouldRenderInline =
-            !botMsg.silent &&
+            (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
               (skipSidePanelForUISpec && componentType === 'ProductGrid')) &&
@@ -2476,7 +2477,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
           if (isPdpAutoLaunch) {
             this._pdpPrimingInFlight = false;
+            const hadQueuedMessages = this._queuedUserMessages.length > 0;
             this._flushQueuedUserMessages();
+            if (!hadQueuedMessages) {
+              this._ensurePdpPrimeSuggestedUiIfNeeded();
+            }
           }
 
           if (botMsg.status === 'streaming') {
@@ -2648,6 +2653,48 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const msg = this._messages.find((m) => m.id === messageId);
     if (!msg?.threadId) return;
     this._rollbackToThread(msg.threadId);
+  }
+
+  private _ensurePdpPrimeSuggestedUiIfNeeded(): void {
+    const sku = this.config.pageContext?.sku;
+    if (!sku || !this._drawer) return;
+    if (this._hasUnavailableProductContext()) return;
+
+    const contextKey: OpeningContextKey = 'product';
+    const configured = this._resolveContextualOpeningActions(contextKey);
+    if (configured.length > 0) {
+      this._drawer.setInputAreaChips(
+        configured.map((chip) => ({
+          label: chip.title,
+          onAction: () => this._sendAction(this._resolveContextualOpeningAction(chip, contextKey)),
+          ...(chip.icon ? { icon: chip.icon } : {}),
+        })),
+      );
+      return;
+    }
+
+    this._drawer.setInputAreaChips([
+      {
+        label: this._i18n.groundingReviewCta,
+        icon: 'review',
+        onAction: () =>
+          this._sendAction({
+            title: this._i18n.customerReviewsTitle,
+            type: 'reviewSummary',
+            payload: { sku },
+          }),
+      },
+      {
+        label: this._i18n.findSimilarLabel,
+        icon: 'similar',
+        onAction: () =>
+          this._sendAction({
+            title: this._i18n.findSimilarLabel,
+            type: 'findSimilar',
+            payload: { sku },
+          }),
+      },
+    ]);
   }
 
   /** Rewind the conversation to the given thread. */
