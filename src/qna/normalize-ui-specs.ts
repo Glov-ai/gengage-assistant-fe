@@ -1,5 +1,30 @@
-import type { ActionPayload, UISpec, UIElement } from '../common/types.js';
+import type { ActionPayload, PageContext, UISpec, UIElement } from '../common/types.js';
 import type { QNAI18n } from './types.js';
+
+/** SKUs to send with the product-context quick pill (`user_message` + sku_list). */
+export type MergeQuickPillsOptions = {
+  skuList?: string[] | undefined;
+};
+
+/**
+ * Resolve SKU list for QNA → chat payloads: current PDP sku, or `visible_skus` on listings.
+ */
+export function resolveQnaSkuListForPayload(pageContext: PageContext | undefined): string[] | undefined {
+  if (!pageContext) return undefined;
+  const extra = pageContext.extra;
+  if (extra && typeof extra === 'object' && !Array.isArray(extra)) {
+    const raw = extra['visible_skus'] ?? extra['visibleSkus'];
+    if (Array.isArray(raw)) {
+      const list = raw
+        .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+        .map((s) => s.trim())
+        .slice(0, 200);
+      if (list.length > 0) return list;
+    }
+  }
+  const sku = typeof pageContext.sku === 'string' && pageContext.sku.trim() ? pageContext.sku.trim() : undefined;
+  return sku ? [sku] : undefined;
+}
 
 function actionFromProps(props: Record<string, unknown> | undefined, labelFallback?: string): ActionPayload | null {
   if (!props) return null;
@@ -139,12 +164,16 @@ function findFirstPillRowSpec(specs: UISpec[]): UISpec | undefined {
   });
 }
 
-function heroReplacementAction(i18n: QNAI18n): ActionPayload {
+function heroReplacementAction(i18n: QNAI18n, skuList?: string[]): ActionPayload {
   const text = i18n.productContextQuickPillLabel;
+  const payload: Record<string, unknown> = { text };
+  if (skuList && skuList.length > 0) {
+    payload['sku_list'] = skuList;
+  }
   return {
     title: text,
     type: 'user_message',
-    payload: text,
+    payload,
   };
 }
 
@@ -152,7 +181,12 @@ function heroReplacementAction(i18n: QNAI18n): ActionPayload {
  * Removes standalone hero `ActionButton` blocks for `findSimilar` (e.g. from `text_image`)
  * and merges a product-context quick question pill instead (same row as other questions).
  */
-export function mergeStandaloneFindSimilarIntoQuickPills(specs: UISpec[], i18n: QNAI18n): UISpec[] {
+export function mergeStandaloneFindSimilarIntoQuickPills(
+  specs: UISpec[],
+  i18n: QNAI18n,
+  options?: MergeQuickPillsOptions,
+): UISpec[] {
+  const skuList = options?.skuList;
   const extracted: ActionPayload[] = [];
   const filtered: UISpec[] = [];
 
@@ -163,7 +197,7 @@ export function mergeStandaloneFindSimilarIntoQuickPills(specs: UISpec[], i18n: 
       const label = typeof props?.['label'] === 'string' ? props['label'] : undefined;
       const action = actionFromProps(props, label);
       if (action?.type === 'findSimilar') {
-        extracted.push(heroReplacementAction(i18n));
+        extracted.push(heroReplacementAction(i18n, skuList));
         continue;
       }
     }
@@ -174,7 +208,7 @@ export function mergeStandaloneFindSimilarIntoQuickPills(specs: UISpec[], i18n: 
     return specs;
   }
 
-  const replacement = heroReplacementAction(i18n);
+  const replacement = heroReplacementAction(i18n, skuList);
   const target = findFirstPillRowSpec(filtered);
 
   if (!target) {
