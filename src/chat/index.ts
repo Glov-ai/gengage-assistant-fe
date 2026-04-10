@@ -2371,7 +2371,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             if (idx >= 0) this._messages.splice(idx, 1);
           };
 
-          let removedAssistantPlaceholderForStrip = false;
+          let placeholderBubbleRemoved = false;
 
           const applyStreamErrorRecovery = (): void => {
             if (shouldSuppressOfflineError) return;
@@ -2383,9 +2383,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._consecutiveErrorCount = 1;
               this._lastErrorMessage = errMsg;
             }
-            const backendDetail = typeof err.message === 'string' ? err.message.trim() : '';
-            const displayText =
-              backendDetail.length > 0 ? backendDetail : this._i18n.errorMessage;
+            const backendDetail = err.message.trim();
+            const displayText = backendDetail.length > 0 ? backendDetail : this._i18n.errorMessage;
             const recoveryActions = {
               onRetry: () => {
                 if (this._lastSentAction) {
@@ -2399,14 +2398,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
             if (this._consecutiveErrorCount >= 2) {
               removeAssistantPlaceholderBubble();
-              removedAssistantPlaceholderForStrip = true;
+              placeholderBubbleRemoved = true;
               this._drawer?.showErrorWithRecovery(this._i18n.accountInactiveMessage, recoveryActions);
               return;
             }
 
             if (shouldShowStreamErrorAsRedStrip(err, displayText)) {
               removeAssistantPlaceholderBubble();
-              removedAssistantPlaceholderForStrip = true;
+              placeholderBubbleRemoved = true;
               this._drawer?.showErrorWithRecovery(displayText, recoveryActions);
               return;
             }
@@ -2445,18 +2444,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             this._pdpPrimingInFlight = false;
             this._flushQueuedUserMessages();
           }
-          if (!removedAssistantPlaceholderForStrip && botMsg.status === 'streaming') {
+          if (!placeholderBubbleRemoved && botMsg.status === 'streaming') {
             botMsg.status = 'error';
           }
 
-          this.track(
-            streamErrorEvent(this.analyticsContext(), {
-              request_id: requestId,
-              error_code: 'STREAM_ERROR',
-              error_message: err.message,
-              widget: 'chat',
-            }),
-          );
+          // Skip analytics for suppressed offline errors (consistent with the
+          // early return in the !hasContent branch above).
+          if (!shouldSuppressOfflineError) {
+            this.track(
+              streamErrorEvent(this.analyticsContext(), {
+                request_id: requestId,
+                error_code: 'STREAM_ERROR',
+                error_message: err.message,
+                widget: 'chat',
+              }),
+            );
+          }
         },
         onDone: () => {
           if (streamController) this._abortControllers.delete(streamController);
