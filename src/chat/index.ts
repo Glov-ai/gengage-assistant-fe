@@ -1818,16 +1818,23 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
           const similarsAppendGrid = componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
-          /** PDP akışında yan panel kapalı: tam detay + benzer ürün grid’i yalnızca sohbette. */
+          // productDetailsSimilars: show for user_message/inputText & findSimilar; omit for PDP open (launchSingleProduct).
+          if (similarsAppendGrid && action.type === 'launchSingleProduct') {
+            return;
+          }
+          /** PDP akışında yan panel kapalı: tam detay yalnızca sohbette; benzer ürün grid’i her zaman yan panelde. */
           const skipSidePanelForUISpec =
-            this.config.productDetailsExtended !== true &&
-            (componentType === 'ProductDetailsPanel' || similarsAppendGrid);
+            this.config.productDetailsExtended !== true && componentType === 'ProductDetailsPanel';
           if (skipSidePanelForUISpec && !clearPanel) {
             this._clearAssistantPanelLikeStreamClearPanel();
             panelLoadingSeen = false;
           }
           const effectivePanelHint =
-            componentType === 'ProductDetailsPanel' && panelHint !== 'panel' ? ('panel' as const) : panelHint;
+            componentType === 'ProductDetailsPanel' && panelHint !== 'panel'
+              ? ('panel' as const)
+              : similarsAppendGrid
+                ? ('panel' as const)
+                : panelHint;
           this.track(
             streamUiSpecEvent(this.analyticsContext(), {
               request_id: requestId,
@@ -1971,9 +1978,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const isAiAnalysisComponent = componentType === 'AITopPicks' || componentType === 'AIGroupingCards';
           let routeAiAnalysisToPanel = false;
           let deferAiPanelUntilGrid = false;
-          if (skipSidePanelForUISpec && similarsAppendGrid) {
-            renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
-          }
           if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
             if (panelListEligibleForAiZone) {
               const aiEl = this._renderUISpec(spec, renderContext);
@@ -1990,9 +1994,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
           const shouldRenderInline =
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
-            (effectivePanelHint !== 'panel' ||
-              componentType === 'ProductCard' ||
-              (skipSidePanelForUISpec && componentType === 'ProductGrid')) &&
+            !similarsAppendGrid &&
+            (effectivePanelHint !== 'panel' || componentType === 'ProductCard') &&
             componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
@@ -2007,9 +2010,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               messagesContainer.appendChild(inline);
               inline.scrollIntoView({ behavior: 'auto', block: 'end' });
               this._drawer?.refreshPresentationCollapsed();
-              if (skipSidePanelForUISpec && componentType === 'ProductGrid') {
-                panelContentReceived = true;
-              }
             }
           }
 
@@ -3615,14 +3615,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // so we identify panel-only status by component type.
     // ProductDetailsPanel is panel-only but gets a compact ProductSummaryCard below.
     // ComparisonTable is always panel-only.
-    // ProductGrid with similarsAppend is panel-appended unless PDP is chat-only layout.
+    // ProductGrid with similarsAppend is always panel content, never the message transcript.
     if (componentType === 'ComparisonTable') return;
-    if (
-      componentType === 'ProductGrid' &&
-      rootElement.props?.['similarsAppend'] === true &&
-      this.config.productDetailsExtended === true
-    )
-      return;
+    if (componentType === 'ProductGrid' && rootElement.props?.['similarsAppend'] === true) return;
 
     const renderContext = this._buildRenderContext();
     const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');

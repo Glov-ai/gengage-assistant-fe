@@ -130,9 +130,10 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   isDemoWebsite?: boolean;
 
   /**
-   * When `true`, full `ProductDetailsPanel` and PDP similar products (`similarsAppend` grid) use
-   * the assistant side panel; demo extended mode includes `productDetails`. Default `false`/omitted:
-   * product details and similar products render only in the chat stream; the side panel is cleared.
+   * When `true`, full `ProductDetailsPanel` uses the assistant side panel; demo extended mode
+   * includes `productDetails`. Default `false`/omitted: full product details render only in the chat
+   * stream and the side panel is cleared for that spec — but PDP similar products (`similarsAppend`
+   * grid) always use the side panel, not the chat transcript.
    * `ProductSummaryCard` always renders inline (except for silent messages).
    */
   productDetailsExtended?: boolean;
