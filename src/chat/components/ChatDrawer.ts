@@ -1313,6 +1313,15 @@ export class ChatDrawer {
   /** Show error with recovery action pills ("Try again" + "Ask something else"). */
   showErrorWithRecovery(message: string, actions: { onRetry: () => void; onNewQuestion: () => void }): void {
     this.showError(message);
+    this.setRecoveryPills(actions);
+  }
+
+  /** Recovery pills only — error copy is shown as a normal assistant message. */
+  showRecoveryPillsOnly(actions: { onRetry: () => void; onNewQuestion: () => void }): void {
+    this.setRecoveryPills(actions);
+  }
+
+  private setRecoveryPills(actions: { onRetry: () => void; onNewQuestion: () => void }): void {
     this.setPills([
       { label: this.i18n.tryAgainButton, onAction: actions.onRetry },
       { label: this.i18n.askSomethingElseButton, onAction: actions.onNewQuestion },
