@@ -555,7 +555,14 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      
+
+      const params = new URLSearchParams(location.search);
+      if (!params.get('sku')) {
+        params.set('sku', '10005724');
+        history.replaceState(null, '', `${location.pathname}?${params.toString()}${location.hash}`);
+      }
+
+      const sku = params.get('sku') ?? '10005724';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
       const chatIconUrl = new URL('./market.svg', import.meta.url).href;
 
