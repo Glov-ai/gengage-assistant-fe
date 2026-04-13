@@ -496,6 +496,23 @@ describe('adaptBackendEvent', () => {
     expect(props?.['action']).toBeDefined();
   });
 
+  it('adapts getGroundingReview with snake_case request_details and reviewCount', () => {
+    const result = adaptBackendEvent({
+      type: 'getGroundingReview',
+      payload: {
+        title: 'Kullanıcılar ne diyor:',
+        reviewCount: 'Değerlendirmeler (986)',
+        text: 'Değerlendirmeler',
+        request_details: { type: 'reviewSummary', payload: { sku: '681747352' } },
+      },
+    }) as { type: string; spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> } };
+    expect(result.type).toBe('ui_spec');
+    expect(result.spec?.elements['root']?.type).toBe('GroundingReviewCard');
+    const act = result.spec?.elements['root']?.props?.['action'] as { type: string; payload?: { sku?: string } };
+    expect(act?.type).toBe('reviewSummary');
+    expect(act?.payload?.sku).toBe('681747352');
+  });
+
   it('adapts prosAndCons to ProsAndCons ui_spec', () => {
     const result = adaptBackendEvent({
       type: 'prosAndCons',

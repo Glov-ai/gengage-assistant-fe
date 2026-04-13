@@ -8,12 +8,14 @@ function makeContext(overrides: Partial<QNAUISpecRenderContext> = {}): QNAUISpec
     onAction: vi.fn(),
     onOpenChat: vi.fn(),
     i18n: {
-      quickQuestionsAriaLabel: 'Hizli sorular',
+      quickQuestionsAriaLabel: 'Hızlı sorular',
       askQuestionAriaLabel: 'Soru sor',
-      defaultInputPlaceholder: 'Merak ettigini sor',
+      defaultInputPlaceholder: 'Merak ettiğini sor',
       sendButton: 'Sor',
-      sendQuestionAriaLabel: 'Soruyu gonder',
-      defaultCtaText: 'Baska bir sey sor',
+      sendQuestionAriaLabel: 'Soruyu gönder',
+      defaultCtaText: 'Başka bir şey sor',
+      redirectingToChat: 'Sohbete yönlendiriliyor...',
+      productContextQuickPillLabel: 'Bu ürün hakkında ne bilmeliyim?',
     },
     ...overrides,
   };
@@ -61,13 +63,13 @@ describe('renderQnaUISpec', () => {
       spec,
       makeContext({
         ctaText: 'Soru Sor',
-        inputPlaceholder: ['Montaj nasil?', 'Urun iade edilir mi?'],
+        inputPlaceholder: ['Montaj nasıl?', 'Ürün iade edilir mi?'],
       }),
     );
 
     const input = result.querySelector('.gengage-qna-input') as HTMLInputElement;
     const send = result.querySelector('.gengage-qna-send') as HTMLButtonElement;
-    expect(input.placeholder).toBe('Montaj nasil?');
+    expect(input.placeholder).toBe('Montaj nasıl?');
     expect(send.textContent).toBe('Sor');
   });
 
@@ -84,13 +86,14 @@ describe('renderQnaUISpec', () => {
     const input = result.querySelector('.gengage-qna-input') as HTMLInputElement;
     const send = result.querySelector('.gengage-qna-send') as HTMLButtonElement;
 
-    input.value = 'Bu urun nefes alabilir mi?';
+    input.value = 'Bu ürün nefes alabilir mi?';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
     send.click();
 
     expect(onAction).toHaveBeenCalledWith({
-      title: 'Bu urun nefes alabilir mi?',
+      title: 'Bu ürün nefes alabilir mi?',
       type: 'user_message',
-      payload: 'Bu urun nefes alabilir mi?',
+      payload: 'Bu ürün nefes alabilir mi?',
     });
   });
 

@@ -71,6 +71,7 @@ import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
 import { isLikelyConnectivityIssue } from '../common/global-error-toast.js';
+import { shouldShowStreamErrorAsRedStrip } from './stream-error-display.js';
 import {
   containsKvkk,
   isKvkkShown,
@@ -698,6 +699,51 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       controller.abort();
     }
     this._abortControllers.clear();
+  }
+
+  /**
+   * Drop assistant rows that are still "streaming" with no text when the user starts
+   * a new turn. Otherwise each superseded request leaves an empty model message in
+   * `_messages` — it is included in `chatHistory` and can confuse the backend and
+   * delay or distort the next response.
+   */
+  private _pruneEmptyStreamingAssistantPlaceholders(): void {
+    const next: ChatMessage[] = [];
+    let thumbnailsChanged = false;
+    for (const m of this._messages) {
+      // Also catch status === 'done': the Stop button handler transitions streaming → done
+      // before _sendAction fires, so a stop-then-Enter sequence would otherwise leave an
+      // empty assistant turn in chatHistory and confuse the backend.
+      const drop =
+        m.role === 'assistant' &&
+        (m.status === 'streaming' || m.status === 'done') &&
+        (m.content == null || m.content.length === 0);
+      if (drop) {
+        if (m.threadId) {
+          this._threadsWithFirstBot.delete(m.threadId);
+          this._presentation.finalizeAssistantGroup(m.threadId);
+          // Remove inline UISpec nodes (data-thread-id but no data-message-id) that may
+          // have arrived before any outputText — removeMessageBubble only targets the bubble.
+          this._shadow
+            ?.querySelectorAll(`[data-thread-id="${CSS.escape(m.threadId)}"]:not([data-message-id])`)
+            .forEach((el) => el.remove());
+          if (this._panel) {
+            this._panel.threads = this._panel.threads.filter((t) => t !== m.threadId);
+          }
+          const before = this._thumbnailEntries.length;
+          this._thumbnailEntries = this._thumbnailEntries.filter((e) => e.threadId !== m.threadId);
+          if (this._thumbnailEntries.length !== before) thumbnailsChanged = true;
+        }
+        this._drawer?.removeMessageBubble(m.id);
+        this._panel?.snapshots.delete(m.id);
+        this._panel?.snapshotTypes.delete(m.id);
+        continue;
+      }
+      next.push(m);
+    }
+    this._messages.length = 0;
+    this._messages.push(...next);
+    if (thumbnailsChanged) this._drawer?.setThumbnails(this._thumbnailEntries);
   }
 
   /** Reset all chat state when navigating to a different SKU/page. */
@@ -1424,6 +1470,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._activeRequestThreadId = threadId;
     }
 
+    // Align presentation focus with this thread *before* appending the user bubble.
+    // Otherwise addMessage()'s collapse pass uses the previous focus and marks the
+    // new bubble as presentation-collapsed until a later setPresentationFocus — which
+    // can yield wrong scroll targets (offsetTop on display:none) and “empty” transcript.
+    if (!options?.silent && !isPreservePanel) {
+      this._drawer?.setPresentationFocus(threadId);
+    }
+
     // Add user message to UI (skip for silent/auto-launch actions)
     if (!options?.silent) {
       const userText =
@@ -1458,6 +1512,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._messages.push(botMsg);
       this._ensureAssistantMessageRendered(botMsg);
       this._drawer?.updateBotMessage(botMsg.id, fallback);
+      this._drawer?.setPresentationFocus(threadId);
       this._bridge?.send('isResponding', false);
       this.emit('message', botMsg);
       this._persistToIndexedDB().catch(() => {
@@ -1499,6 +1554,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._panel?.updateTopBarForLoading('comparisonTable');
     }
 
+    if (!options?.silent && !isPreservePanel) {
+      this._pruneEmptyStreamingAssistantPlaceholders();
+    }
+
     // Show typing indicator
     this._drawer?.showTypingIndicator();
     // Use a local text accumulator per stream invocation to prevent corruption
@@ -1515,7 +1574,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     this._presentation.registerAssistantActivity(threadId);
     this._presentation.requestThreadFocus(threadId, 'smooth');
-    this._drawer?.setPresentationFocus(threadId);
+    // User-visible non-preservePanel: focus was already set before the user bubble.
+    if (options?.silent || isPreservePanel) {
+      this._drawer?.setPresentationFocus(threadId);
+    }
     this._drawer?.setFormerMessagesButtonVisible(false);
     setTimeout(() => this._flushPresentationScroll(), 40);
 
@@ -1869,7 +1931,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // ProductDetailsPanel goes to the panel, but also render a compact
           // horizontal ProductSummaryCard in chat messages (production parity
           // with the prior engine's LaunchSingleProduct component).
-          if (componentType === 'ProductDetailsPanel' && !botMsg.silent && effectivePanelHint === 'panel') {
+          // Silent PDP auto-prime (`isPdpAutoLaunch`) still uses a silent bot row for
+          // history, but users should see the same inline summary + chip row as when
+          // they open a product from chat (non-silent launchSingleProduct).
+          if (
+            componentType === 'ProductDetailsPanel' &&
+            effectivePanelHint === 'panel' &&
+            (!botMsg.silent || isPdpAutoLaunch)
+          ) {
             const product = rootElement?.props?.['product'] as Record<string, unknown> | undefined;
             if (product) {
               const inlineSpec: UISpec = {
@@ -1919,8 +1988,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
+          const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
           const shouldRenderInline =
-            !botMsg.silent &&
+            (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
               (skipSidePanelForUISpec && componentType === 'ProductGrid')) &&
@@ -2272,26 +2342,85 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Skip error handling for aborted/superseded requests (including when no active request)
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           streamDone = true;
+          this._activeTypewriter?.cancel();
+          this._activeTypewriter = null;
           syncPanelAiAnalysisZone();
           pendingPanelAiSpec = null;
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
+          this._drawer?.clearInputAreaChips();
           // Capture panel state before resetting — needed for error gating below
           const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
           panelContentReceived = false;
-          // Skip error toast when the stream already delivered user-facing content
-          // (bot text, panel content, or silent auto-launch). Showing a generic
-          // error on top of an already-rendered assistant response is confusing.
+          // When the stream already delivered partial content (bot text, panel, etc.),
+          // still show backend error text + recovery pills — not only clear stale chips.
           const hasContent =
             botMsg.silent ||
             (botMsg.content != null && botMsg.content.length > 0) ||
             localBotText.length > 0 ||
             hadPanelContent;
+          const shouldSuppressOfflineError =
+            typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
+
+          const removeAssistantPlaceholderBubble = (): void => {
+            this._shadow?.querySelector(`[data-message-id="${CSS.escape(botMsg.id)}"]`)?.remove();
+            const idx = this._messages.indexOf(botMsg);
+            if (idx >= 0) this._messages.splice(idx, 1);
+          };
+
+          let placeholderBubbleRemoved = false;
+
+          const applyStreamErrorRecovery = (): void => {
+            if (shouldSuppressOfflineError) return;
+            this.emit('error', err);
+            const errMsg = err.message;
+            if (errMsg === this._lastErrorMessage) {
+              this._consecutiveErrorCount++;
+            } else {
+              this._consecutiveErrorCount = 1;
+              this._lastErrorMessage = errMsg;
+            }
+            const backendDetail = err.message.trim();
+            const displayText = backendDetail.length > 0 ? backendDetail : this._i18n.errorMessage;
+            const recoveryActions = {
+              onRetry: () => {
+                if (this._lastSentAction) {
+                  this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
+                }
+              },
+              onNewQuestion: () => {
+                this._drawer?.focusInput();
+              },
+            };
+
+            if (this._consecutiveErrorCount >= 2) {
+              removeAssistantPlaceholderBubble();
+              placeholderBubbleRemoved = true;
+              this._drawer?.showErrorWithRecovery(this._i18n.accountInactiveMessage, recoveryActions);
+              return;
+            }
+
+            if (shouldShowStreamErrorAsRedStrip(err, displayText)) {
+              removeAssistantPlaceholderBubble();
+              placeholderBubbleRemoved = true;
+              this._drawer?.showErrorWithRecovery(displayText, recoveryActions);
+              return;
+            }
+
+            botMsg.content = displayText;
+            botMsg.status = 'done';
+            const bubbleHtml = sanitizeHtml(displayText.replace(/\r\n/g, '\n').split('\n').join('<br />'));
+            this._ensureAssistantMessageRendered(botMsg);
+            this._drawer?.updateBotMessage(botMsg.id, bubbleHtml);
+            this._drawer?.showRecoveryPillsOnly(recoveryActions);
+          };
+
           if (!hasContent) {
             if (isPdpAutoLaunch || this._hasUnavailableProductContext()) {
+              this._drawer?.setPills([]);
               // Show soft fallback instead of generic error for auto-launch
               const fallback = this._i18n.productNotFoundMessage;
               botMsg.content = fallback;
@@ -2300,71 +2429,37 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._drawer?.updateBotMessage(botMsg.id, fallback);
               this._markUnavailableProductContext();
             } else {
-              // Show error inline in the chat — not as a global toast.
-              // The user is in an active conversation; a toast on top of the
-              // chat is confusing and can overlap with prior bot messages.
-              this.emit('error', err);
-
-              const shouldSuppressOfflineError =
-                typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
+              applyStreamErrorRecovery();
               if (shouldSuppressOfflineError) {
                 return;
               }
-
-              // Track consecutive identical errors — repeated failures suggest
-              // the account is inactive or backend is unreachable.
-              const errMsg = err.message;
-              if (errMsg === this._lastErrorMessage) {
-                this._consecutiveErrorCount++;
-              } else {
-                this._consecutiveErrorCount = 1;
-                this._lastErrorMessage = errMsg;
-              }
-
-              if (this._consecutiveErrorCount >= 2) {
-                // Escalate: show account-inactive message with recovery pills
-                this._drawer?.showErrorWithRecovery(this._i18n.accountInactiveMessage, {
-                  onRetry: () => {
-                    if (this._lastSentAction) {
-                      this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
-                    }
-                  },
-                  onNewQuestion: () => {
-                    this._drawer?.focusInput();
-                  },
-                });
-              } else {
-                // First error: show standard error with retry + recovery pills
-                this._drawer?.showErrorWithRecovery(this._i18n.errorMessage, {
-                  onRetry: () => {
-                    if (this._lastSentAction) {
-                      this._sendAction(this._lastSentAction.action, this._lastSentAction.options);
-                    }
-                  },
-                  onNewQuestion: () => {
-                    this._drawer?.focusInput();
-                  },
-                });
-              }
+            }
+          } else {
+            this._drawer?.setPills([]);
+            if (!botMsg.silent) {
+              applyStreamErrorRecovery();
             }
           }
           if (isPdpAutoLaunch) {
             this._pdpPrimingInFlight = false;
             this._flushQueuedUserMessages();
           }
-          // Only overwrite status if message hasn't already completed (isFinal text chunk sets 'done')
-          if (botMsg.status === 'streaming') {
+          if (!placeholderBubbleRemoved && botMsg.status === 'streaming') {
             botMsg.status = 'error';
           }
 
-          this.track(
-            streamErrorEvent(this.analyticsContext(), {
-              request_id: requestId,
-              error_code: 'STREAM_ERROR',
-              error_message: err.message,
-              widget: 'chat',
-            }),
-          );
+          // Skip analytics for suppressed offline errors (consistent with the
+          // early return in the !hasContent branch above).
+          if (!shouldSuppressOfflineError) {
+            this.track(
+              streamErrorEvent(this.analyticsContext(), {
+                request_id: requestId,
+                error_code: 'STREAM_ERROR',
+                error_message: err.message,
+                widget: 'chat',
+              }),
+            );
+          }
         },
         onDone: () => {
           if (streamController) this._abortControllers.delete(streamController);
@@ -2408,7 +2503,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
           if (isPdpAutoLaunch) {
             this._pdpPrimingInFlight = false;
+            const hadQueuedMessages = this._queuedUserMessages.length > 0;
             this._flushQueuedUserMessages();
+            if (!hadQueuedMessages) {
+              this._ensurePdpPrimeSuggestedUiIfNeeded();
+            }
           }
 
           if (botMsg.status === 'streaming') {
@@ -2578,6 +2677,48 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const msg = this._messages.find((m) => m.id === messageId);
     if (!msg?.threadId) return;
     this._rollbackToThread(msg.threadId);
+  }
+
+  private _ensurePdpPrimeSuggestedUiIfNeeded(): void {
+    const sku = this.config.pageContext?.sku;
+    if (!sku || !this._drawer) return;
+    if (this._hasUnavailableProductContext()) return;
+
+    const contextKey: OpeningContextKey = 'product';
+    const configured = this._resolveContextualOpeningActions(contextKey);
+    if (configured.length > 0) {
+      this._drawer.setInputAreaChips(
+        configured.map((chip) => ({
+          label: chip.title,
+          onAction: () => this._sendAction(this._resolveContextualOpeningAction(chip, contextKey)),
+          ...(chip.icon ? { icon: chip.icon } : {}),
+        })),
+      );
+      return;
+    }
+
+    this._drawer.setInputAreaChips([
+      {
+        label: this._i18n.groundingReviewCta,
+        icon: 'review',
+        onAction: () =>
+          this._sendAction({
+            title: this._i18n.customerReviewsTitle,
+            type: 'reviewSummary',
+            payload: { sku },
+          }),
+      },
+      {
+        label: this._i18n.findSimilarLabel,
+        icon: 'similar',
+        onAction: () =>
+          this._sendAction({
+            title: this._i18n.findSimilarLabel,
+            type: 'findSimilar',
+            payload: { sku },
+          }),
+      },
+    ]);
   }
 
   /** Rewind the conversation to the given thread. */
