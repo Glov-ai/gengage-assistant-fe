@@ -3253,14 +3253,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _parseAddToCartActionPayload(payload: unknown): { sku: string; cartCode: string; quantity: number } | null {
     if (typeof payload !== 'object' || payload === null) return null;
     const rec = payload as Record<string, unknown>;
-    const sku = typeof rec['sku'] === 'string' ? rec['sku'] : '';
-    const cartCode = typeof rec['cart_code'] === 'string' ? rec['cart_code'] : '';
+    const sku = this._coerceAddToCartString(rec['sku']);
+    const cartCode = this._coerceAddToCartString(rec['cartCode'] ?? rec['cart_code']);
     let quantity = 1;
     if (typeof rec['quantity'] === 'number' && Number.isFinite(rec['quantity']) && rec['quantity'] > 0) {
       quantity = Math.max(1, Math.floor(rec['quantity']));
     }
     if (!sku || !cartCode) return null;
     return { sku, cartCode, quantity };
+  }
+
+  private _coerceAddToCartString(value: unknown): string {
+    if (typeof value === 'string' && value.length > 0) return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    return '';
   }
 
   private _runChatAddToCartFlow(params: { sku: string; cartCode: string; quantity: number }): void {
