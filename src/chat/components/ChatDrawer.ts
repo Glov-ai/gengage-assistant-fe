@@ -1414,6 +1414,11 @@ export class ChatDrawer {
     this._kvkkSlot.innerHTML = '';
   }
 
+  /** True when the KVKK banner is mounted (user has not dismissed it yet). */
+  isKvkkBannerVisible(): boolean {
+    return this._kvkkSlot.childNodes.length > 0;
+  }
+
   getElement(): HTMLElement {
     return this.root;
   }

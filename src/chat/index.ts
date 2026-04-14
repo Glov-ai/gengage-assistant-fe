@@ -1372,6 +1372,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       return;
     }
 
+    // First outgoing user message: mark KVKK accepted so `kvkkApproved` is true on this request;
+    // if banner is still visible on a later send, dismiss it without requiring ×.
+    const isFirstUserMessage = !this._messages.some((m) => m.role === 'user');
+    if (isFirstUserMessage || this._drawer?.isKvkkBannerVisible()) {
+      markKvkkShown(this.config.accountId);
+      this._drawer?.hideKvkkBanner();
+    }
+
     ga.trackMessageSent();
     // Track conversation start on first user message in a new thread
     const hasUserMessages = this._messages.some((m) => m.role === 'user');
