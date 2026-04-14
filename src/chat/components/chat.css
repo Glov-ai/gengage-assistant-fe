@@ -5288,7 +5288,7 @@ button.gengage-chat-product-card-cta {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 86px;
+  min-height: 104px;
 }
 
 .gengage-chat-consulting-group-label {
@@ -5315,6 +5315,11 @@ button.gengage-chat-product-card-cta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
+  align-items: stretch;
+}
+
+.gengage-chat-consulting-group-grid .gengage-chat-product-card {
+  height: 100%;
 }
 
 .gengage-chat-beauty-photo-step {
