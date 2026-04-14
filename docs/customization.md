@@ -298,6 +298,22 @@ await chatWidget.init({
 });
 ```
 
+Beauty consultant screen titles are also localizable:
+
+```js
+await chatWidget.init({
+  locale: 'tr',
+  i18n: {
+    beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
+    watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+  },
+});
+```
+
+`{count}` placeholder is replaced at runtime with the number of generated styles.
+
+When `assistant_mode = beauty_consulting`, the floating compare prompt (`choicePrompter`) is intentionally suppressed to reduce distraction during guided consulting.
+
 For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork required).
 
 ---
