@@ -1,6 +1,7 @@
 import { consumeStream } from '../common/streaming.js';
 import { adaptBackendEvent } from '../common/protocol-adapter.js';
 import { buildChatEndpointUrl } from '../common/api-paths.js';
+import { debugLog } from '../common/debug.js';
 import type { StreamEvent, UISpec, PageContext } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 
@@ -53,6 +54,34 @@ export interface ProcessActionRequest {
     messages?: Array<{ role: string; content: string }>;
     [key: string]: unknown;
   };
+}
+
+export interface BeautyConsultingInitRequest {
+  account_id: string;
+  session_id: string;
+  correlation_id: string;
+  user_id?: string;
+  view_id?: string;
+  locale?: string;
+  meta?: BackendRequestMeta;
+  context?: {
+    messages?: Array<{ role: string; content: string }>;
+    [key: string]: unknown;
+  };
+  scenario?: string;
+  assistant_mode?: string;
+  redirected_agent_state?: Record<string, unknown>;
+}
+
+export interface BeautyConsultingInitResponse {
+  assistant_reply?: string;
+  message?: string;
+  text?: string;
+  scenario?: string;
+  missing_fields?: string[];
+  beauty_consulting_state?: Record<string, unknown>;
+  redirected_agent_state?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface ActionEnrichmentContext {
@@ -296,4 +325,47 @@ export function sendChatMessage(
 
   void run();
   return controller;
+}
+
+export async function sendBeautyConsultingInit(
+  request: BeautyConsultingInitRequest,
+  transport: ChatTransportConfig,
+): Promise<BeautyConsultingInitResponse> {
+  const url = buildChatEndpointUrl('beauty_consulting_init', transport);
+  debugLog('beauty', 'calling beauty_consulting_init', {
+    url,
+    accountId: request.account_id,
+    scenario: request.scenario,
+    mode: request.assistant_mode,
+  });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const body = (await response.json()) as Record<string, unknown>;
+      const message = body.detail ?? body.message ?? body.error;
+      if (typeof message === 'string' && message.trim().length > 0) detail = message;
+    } catch {
+      /* body is not JSON */
+    }
+    throw new Error(`HTTP ${response.status}: ${detail}`);
+  }
+
+  let body: unknown = null;
+  try {
+    body = await response.json();
+  } catch {
+    debugLog('beauty', 'beauty_consulting_init response was empty JSON body');
+    return {};
+  }
+  if (body == null || typeof body !== 'object' || Array.isArray(body)) return {};
+  debugLog('beauty', 'beauty_consulting_init success', {
+    keys: Object.keys(body as Record<string, unknown>),
+  });
+  return body as BeautyConsultingInitResponse;
 }

@@ -18,7 +18,13 @@ describe('normalizeMiddlewareUrl', () => {
 });
 
 describe('buildChatEndpointUrl', () => {
-  const endpoints: ChatEndpointName[] = ['process_action', 'launcher_action', 'similar_products', 'product_groupings'];
+  const endpoints: ChatEndpointName[] = [
+    'process_action',
+    'launcher_action',
+    'similar_products',
+    'product_groupings',
+    'beauty_consulting_init',
+  ];
 
   for (const endpoint of endpoints) {
     it(`builds /chat/${endpoint}`, () => {
