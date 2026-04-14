@@ -4882,11 +4882,7 @@ button.gengage-chat-product-card-cta {
   border: 1px solid transparent;
   background-image:
     linear-gradient(var(--gengage-campaign-price-badge-fill, #ffffff) 0 0),
-    linear-gradient(
-      135deg,
-      var(--_gengage-campaign-reason-start),
-      var(--_gengage-campaign-reason-end)
-    );
+    linear-gradient(135deg, var(--_gengage-campaign-reason-start), var(--_gengage-campaign-reason-end));
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }

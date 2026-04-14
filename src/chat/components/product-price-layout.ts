@@ -5,10 +5,7 @@ import { addImageErrorHandler } from '../../common/product-utils.js';
 export function discountReasonFromProduct(product: Record<string, unknown> | undefined): string | undefined {
   if (!product) return undefined;
   const raw =
-    product['discountReason'] ??
-    product['discount_reason'] ??
-    product['campaignReason'] ??
-    product['campaign_reason'];
+    product['discountReason'] ?? product['discount_reason'] ?? product['campaignReason'] ?? product['campaign_reason'];
   if (typeof raw !== 'string') return undefined;
   const t = raw.trim();
   return t.length > 0 ? t : undefined;
@@ -48,12 +45,7 @@ export function resolveCampaignBadgeLogoUrl(
   ctx: ChatUISpecRenderContext,
   product: Record<string, unknown> | undefined,
 ): string | undefined {
-  const keys = [
-    'campaignReasonLogoUrl',
-    'campaign_reason_logo_url',
-    'discountBadgeLogoUrl',
-    'discount_badge_logo_url',
-  ];
+  const keys = ['campaignReasonLogoUrl', 'campaign_reason_logo_url', 'discountBadgeLogoUrl', 'discount_badge_logo_url'];
   for (const k of keys) {
     const v = product?.[k];
     if (typeof v === 'string' && v.trim()) {

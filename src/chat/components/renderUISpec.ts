@@ -472,13 +472,7 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     setTimeout(() => {
       if (!skeleton.parentElement) return;
       if (price && parseFloat(price) > 0) {
-        fillProductCardPriceBlock(
-          priceBlock,
-          ctx,
-          product,
-          price,
-          product['originalPrice'] as string | undefined,
-        );
+        fillProductCardPriceBlock(priceBlock, ctx, product, price, product['originalPrice'] as string | undefined);
       } else {
         skeleton.remove();
       }
@@ -1218,15 +1212,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
         }
       }, 300);
     } else if (price && parseFloat(price) > 0) {
-      fillProductDetailsPriceRow(
-        priceRow,
-        ctx,
-        product,
-        price,
-        originalPrice,
-        priceStyleDetails,
-        hasDiscountDetails,
-      );
+      fillProductDetailsPriceRow(priceRow, ctx, product, price, originalPrice, priceStyleDetails, hasDiscountDetails);
       priceAppendTarget.appendChild(priceRow);
     } else if (campaignReason) {
       const host = priceAppendTarget;
