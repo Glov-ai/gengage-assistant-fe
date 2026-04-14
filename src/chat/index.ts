@@ -1559,8 +1559,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._messages.some(
         (message) =>
           message.role === 'user' &&
-          !!message.attachment &&
-          (!message.threadId || message.threadId === this._currentThreadId),
+          !!message.attachment,
       );
 
     const hasSkinProfile = typeof fields['skin_profile'] === 'string' && String(fields['skin_profile']).trim().length > 0;

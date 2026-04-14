@@ -242,9 +242,21 @@ export class ChatDrawer {
 
   private _isPhotoAnalysisMessage(content: string): boolean {
     const normalized = content.toLocaleLowerCase('tr-TR');
+    const hasPhotoCue = normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie');
+    const hasBeautyCue =
+      normalized.includes('analiz') ||
+      normalized.includes('cilt') ||
+      normalized.includes('skin') ||
+      normalized.includes('ten') ||
+      normalized.includes('göz') ||
+      normalized.includes('dudak') ||
+      normalized.includes('parlama') ||
+      normalized.includes('kızarıklık') ||
+      normalized.includes('alt ton');
     return (
-      (normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie')) &&
-      (normalized.includes('analiz') || normalized.includes('cilt') || normalized.includes('skin'))
+      hasPhotoCue &&
+      hasBeautyCue &&
+      normalized.length > 80
     );
   }
 
