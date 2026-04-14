@@ -240,6 +240,62 @@ export class ChatDrawer {
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
   private _beautyPhotoStepEl: HTMLElement | null = null;
 
+  private _isPhotoAnalysisMessage(content: string): boolean {
+    const normalized = content.toLocaleLowerCase('tr-TR');
+    return (
+      (normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie')) &&
+      (normalized.includes('analiz') || normalized.includes('cilt') || normalized.includes('skin'))
+    );
+  }
+
+  private _renderPhotoAnalysisMessageCard(container: HTMLElement, content: string): void {
+    container.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'gengage-chat-photo-analysis-card';
+
+    const badge = document.createElement('div');
+    badge.className = 'gengage-chat-photo-analysis-badge';
+    badge.textContent = 'Cilt Analizi';
+
+    const body = document.createElement('div');
+    body.className = 'gengage-chat-photo-analysis-body';
+
+    const parts = content
+      .split(/(?<=[.!?])\s+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    const summary = document.createElement('p');
+    summary.className = 'gengage-chat-photo-analysis-summary';
+    summary.textContent = parts[0] ?? content;
+    body.appendChild(summary);
+
+    const clues = parts.slice(1).filter((part) => !part.includes('?')).slice(0, 4);
+    if (clues.length > 0) {
+      const list = document.createElement('ul');
+      list.className = 'gengage-chat-photo-analysis-points';
+      for (const clue of clues) {
+        const item = document.createElement('li');
+        item.textContent = clue;
+        list.appendChild(item);
+      }
+      body.appendChild(list);
+    }
+
+    const question = parts.find((part) => part.includes('?'));
+    if (question) {
+      const next = document.createElement('p');
+      next.className = 'gengage-chat-photo-analysis-next';
+      next.textContent = question;
+      body.appendChild(next);
+    }
+
+    card.appendChild(badge);
+    card.appendChild(body);
+    container.appendChild(card);
+  }
+
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
     this.i18n = { ...DEFAULT_I18N, ...options.i18n };
@@ -1154,7 +1210,12 @@ export class ChatDrawer {
       text.className = 'gengage-chat-bubble-text';
       text.dataset['gengagePart'] = 'chat-message-text';
       if (message.role === 'assistant') {
-        text.innerHTML = sanitizeHtml(message.content);
+        if (this._isPhotoAnalysisMessage(message.content)) {
+          bubble.classList.add('gengage-chat-bubble--photo-analysis');
+          this._renderPhotoAnalysisMessageCard(text, message.content);
+        } else {
+          text.innerHTML = sanitizeHtml(message.content);
+        }
         // Intercept all links in bot HTML
         if (this._onLinkClick) {
           const links = text.querySelectorAll('a[href]');
@@ -2398,7 +2459,13 @@ export class ChatDrawer {
       textEl.className = 'gengage-chat-bubble-text';
       bubble.appendChild(textEl);
     }
-    textEl.innerHTML = sanitizeHtml(html);
+    if (this._isPhotoAnalysisMessage(html)) {
+      bubble.classList.add('gengage-chat-bubble--photo-analysis');
+      this._renderPhotoAnalysisMessageCard(textEl as HTMLElement, html);
+    } else {
+      bubble.classList.remove('gengage-chat-bubble--photo-analysis');
+      textEl.innerHTML = sanitizeHtml(html);
+    }
     this._scrollToBottom(false);
   }
 

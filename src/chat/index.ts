@@ -127,6 +127,7 @@ interface BeautyConsultingSessionState {
   knownFields?: Record<string, unknown>;
   status?: string;
   photoFindings?: string;
+  photoUploaded?: boolean;
   photoStepState?: 'idle' | 'processing' | 'skipped' | 'completed';
   missingFields?: string[];
   initialized: boolean;
@@ -1440,6 +1441,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     if (this._assistantMode === 'beauty_consulting') {
       if (this._beautyConsultingState) {
+        this._beautyConsultingState.photoUploaded = true;
         this._beautyConsultingState.photoStepState = 'processing';
         const patch = {
           ...(this._beautyConsultingState.beautyConsultingState ?? {}),
@@ -1552,6 +1554,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const missingFields = state.missingFields ?? asStringArray(state.beautyConsultingState?.['missing_fields']) ?? [];
     const photoFindings = state.photoFindings ?? firstString(state.beautyConsultingState?.['photo_findings']);
     const photoStepState = state.photoStepState ?? (photoFindings ? 'completed' : 'idle');
+    const hasUploadedPhoto =
+      state.photoUploaded === true ||
+      this._messages.some(
+        (message) =>
+          message.role === 'user' &&
+          !!message.attachment &&
+          (!message.threadId || message.threadId === this._currentThreadId),
+      );
 
     const hasSkinProfile = typeof fields['skin_profile'] === 'string' && String(fields['skin_profile']).trim().length > 0;
     const needsSkinProfile = missingFields.includes('skin_profile') || !hasSkinProfile;
@@ -1559,6 +1569,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       status === 'collecting' &&
       needsSkinProfile &&
       !photoFindings &&
+      !hasUploadedPhoto &&
       photoStepState !== 'processing' &&
       photoStepState !== 'skipped' &&
       photoStepState !== 'completed';
@@ -1607,6 +1618,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const photoFindings = firstString(beautyState['photo_findings']);
     if (photoFindings) {
       this._beautyConsultingState.photoFindings = photoFindings;
+      this._beautyConsultingState.photoUploaded = true;
       this._beautyConsultingState.photoStepState = 'completed';
     } else if (this._beautyConsultingState.photoStepState === 'processing') {
       this._beautyConsultingState.photoStepState = 'idle';
@@ -1717,6 +1729,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     if (this._beautyConsultingState?.photoFindings) {
       nextBeautyState.photoFindings = this._beautyConsultingState.photoFindings;
+    }
+    if (this._beautyConsultingState?.photoUploaded) {
+      nextBeautyState.photoUploaded = this._beautyConsultingState.photoUploaded;
     }
     if (this._beautyConsultingState?.photoStepState) {
       nextBeautyState.photoStepState = this._beautyConsultingState.photoStepState;
