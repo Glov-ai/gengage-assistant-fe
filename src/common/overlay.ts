@@ -102,6 +102,10 @@ export interface OverlayChatOptions {
   productDetailsExtended?: boolean;
   /** Pill launcher — forwarded to `chat.pillLauncher` (applied inside GengageChat). */
   pillLauncher?: ChatWidgetConfig['pillLauncher'];
+  /** Called when the chat panel opens. */
+  onOpen?: () => void;
+  /** Called when the chat panel closes. */
+  onClose?: () => void;
 }
 
 export interface OverlayQNAOptions {
@@ -351,6 +355,12 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     }
     if (this.options.onAddToCart !== undefined) {
       config.onAddToCart = this.options.onAddToCart;
+    }
+    if (this.options.chat?.onOpen !== undefined) {
+      config.onOpen = this.options.chat.onOpen;
+    }
+    if (this.options.chat?.onClose !== undefined) {
+      config.onClose = this.options.chat.onClose;
     }
 
     this._chat = new GengageChat();
