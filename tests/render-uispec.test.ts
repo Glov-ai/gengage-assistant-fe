@@ -103,6 +103,91 @@ describe('renderUISpec', () => {
       expect(cta.target).toBe('_blank');
     });
 
+    it('renders campaign reason and inline prices with separator when discount_reason is set', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-C',
+                name: 'Camp',
+                imageUrl: 'https://example.com/i.jpg',
+                price: '99.99',
+                originalPrice: '149.99',
+                discount_reason: "Oliz'e Özel",
+                url: 'https://example.com/p',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(
+        spec,
+        makeContext({
+          productPriceUi: { showCampaignReason: true, originalPriceStyle: 'inline' },
+        }),
+      );
+      const card = result.querySelector('.gengage-chat-product-card')!;
+      expect(card.querySelector('.gengage-chat-campaign-reason')?.textContent).toBe("Oliz'e Özel");
+      expect(card.querySelector('.gengage-chat-product-card-price-sep')).toBeTruthy();
+      expect(card.querySelector('.gengage-chat-product-card-price-block--inline')).toBeTruthy();
+    });
+
+    it('hides campaign reason by default even when discount_reason is set', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-E',
+                name: 'No reason UI',
+                imageUrl: 'https://example.com/i.jpg',
+                price: '99.99',
+                originalPrice: '149.99',
+                discount_reason: 'Gizli kampanya',
+                url: 'https://example.com/p',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+      const card = result.querySelector('.gengage-chat-product-card')!;
+      expect(card.querySelector('.gengage-chat-campaign-reason')).toBeNull();
+    });
+
+    it('defaults to strikethrough list price without inline layout', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-D',
+                name: 'Strike',
+                imageUrl: 'https://example.com/i.jpg',
+                price: '99.99',
+                originalPrice: '149.99',
+                url: 'https://example.com/p',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+      const card = result.querySelector('.gengage-chat-product-card')!;
+      expect(card.querySelector('.gengage-chat-product-card-price-block--inline')).toBeNull();
+      expect(card.querySelector('.gengage-chat-product-card-price-sep')).toBeNull();
+    });
+
     it('renders product card with flat props (direct props instead of nested product)', () => {
       const spec: UISpec = {
         root: 'root',

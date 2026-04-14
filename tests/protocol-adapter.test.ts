@@ -381,6 +381,36 @@ describe('adaptBackendEvent', () => {
     expect(item['action']).toBeDefined();
   });
 
+  it('merges aiProductSuggestions discount_reason into normalized product', () => {
+    const result = adaptBackendEvent({
+      type: 'aiProductSuggestions',
+      payload: {
+        product_suggestions: [
+          {
+            sku: 'SKU1',
+            short_name: 'Model 1',
+            role: 'winner',
+            discount_reason: "Oliz'e Özel",
+            product_item: {
+              sku: 'SKU1',
+              name: 'Model 1',
+              url: 'https://example.com/1',
+              price: 1000,
+            },
+            requestDetails: { type: 'launchSingleProduct', payload: { sku: 'SKU1' } },
+          },
+        ],
+      },
+    }) as {
+      type: string;
+      spec?: { elements: Record<string, { props?: Record<string, unknown> }> };
+    };
+    const suggestions = result.spec?.elements['root']?.props?.['suggestions'] as
+      | Array<{ product?: { discountReason?: string } }>
+      | undefined;
+    expect(suggestions?.[0]?.product?.discountReason).toBe("Oliz'e Özel");
+  });
+
   it('adapts aiProductGroupings to AIGroupingCards ui_spec', () => {
     const groupings = adaptBackendEvent({
       type: 'aiProductGroupings',

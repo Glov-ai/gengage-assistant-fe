@@ -10,6 +10,13 @@ import type { ChatUISpecRenderContext } from '../types.js';
 import { formatPrice } from '../../common/price-formatter.js';
 import { isSafeImageUrl, safeSetAttribute } from '../../common/safe-html.js';
 import { addImageErrorHandler } from '../../common/product-utils.js';
+import {
+  campaignReasonForDisplay,
+  createCampaignPriceBadge,
+  createCampaignReasonElement,
+  resolveCampaignBadgeLogoUrl,
+  resolveOriginalPriceStyle,
+} from './product-price-layout.js';
 
 interface SentimentLabel {
   label: string;
@@ -159,20 +166,86 @@ function appendPriceRow(product: Record<string, unknown>, body: HTMLElement, ctx
   const price = product['price'] as string | undefined;
   const originalPrice = product['originalPrice'] as string | undefined;
   if (!price) return;
+
+  const campaignReason = campaignReasonForDisplay(ctx, product);
+  const listStyle = resolveOriginalPriceStyle(ctx, product);
+  const hasDiscount = !!(originalPrice && originalPrice !== price);
+  const frameDiscounted = !!(campaignReason && hasDiscount);
+  const logoUrl = resolveCampaignBadgeLogoUrl(ctx, product);
+
   const priceRow = document.createElement('div');
   priceRow.className = 'gengage-chat-ai-toppick-price';
   priceRow.dataset['gengagePart'] = 'ai-top-pick-price';
-  if (originalPrice && originalPrice !== price) {
+
+  if (frameDiscounted) {
+    const badge = createCampaignPriceBadge({
+      reasonText: campaignReason!,
+      salePriceFormatted: formatPrice(price, ctx.pricing),
+      ...(logoUrl !== undefined ? { logoUrl } : {}),
+    });
+    if (hasDiscount && listStyle === 'inline') {
+      priceRow.classList.add('gengage-chat-ai-toppick-price--inline');
+      priceRow.appendChild(badge);
+      const sep = document.createElement('span');
+      sep.className = 'gengage-chat-ai-toppick-price-sep';
+      sep.setAttribute('aria-hidden', 'true');
+      const orig = document.createElement('span');
+      orig.className = 'gengage-chat-ai-toppick-original-price';
+      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+      priceRow.appendChild(sep);
+      priceRow.appendChild(orig);
+    } else {
+      const orig = document.createElement('span');
+      orig.className = 'gengage-chat-ai-toppick-original-price';
+      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+      priceRow.appendChild(orig);
+      priceRow.appendChild(document.createTextNode(' '));
+      priceRow.appendChild(badge);
+    }
+    body.appendChild(priceRow);
+    return;
+  }
+
+  if (hasDiscount && listStyle === 'inline') {
+    priceRow.classList.add('gengage-chat-ai-toppick-price--inline');
+    const cur = document.createElement('span');
+    cur.className = 'gengage-chat-ai-toppick-price-current';
+    cur.textContent = formatPrice(price, ctx.pricing);
+    const sep = document.createElement('span');
+    sep.className = 'gengage-chat-ai-toppick-price-sep';
+    sep.setAttribute('aria-hidden', 'true');
     const orig = document.createElement('span');
     orig.className = 'gengage-chat-ai-toppick-original-price';
-    orig.textContent = formatPrice(originalPrice, ctx.pricing);
+    orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+    priceRow.appendChild(cur);
+    priceRow.appendChild(sep);
+    priceRow.appendChild(orig);
+  } else if (hasDiscount) {
+    const orig = document.createElement('span');
+    orig.className = 'gengage-chat-ai-toppick-original-price';
+    orig.textContent = formatPrice(originalPrice!, ctx.pricing);
     priceRow.appendChild(orig);
     priceRow.appendChild(document.createTextNode(' '));
+    const current = document.createElement('span');
+    current.className = 'gengage-chat-ai-toppick-price-current';
+    current.textContent = formatPrice(price, ctx.pricing);
+    priceRow.appendChild(current);
+  } else {
+    const current = document.createElement('span');
+    current.className = 'gengage-chat-ai-toppick-price-current';
+    current.textContent = formatPrice(price, ctx.pricing);
+    priceRow.appendChild(current);
   }
-  const current = document.createElement('span');
-  current.textContent = formatPrice(price, ctx.pricing);
-  priceRow.appendChild(current);
-  body.appendChild(priceRow);
+
+  if (campaignReason) {
+    const stack = document.createElement('div');
+    stack.className = 'gengage-chat-ai-toppick-price-stack';
+    stack.appendChild(createCampaignReasonElement(campaignReason));
+    stack.appendChild(priceRow);
+    body.appendChild(stack);
+  } else {
+    body.appendChild(priceRow);
+  }
 }
 
 function appendWinnerEvidence(item: AITopPickItem, body: HTMLElement): void {
