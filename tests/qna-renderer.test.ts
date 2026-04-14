@@ -89,6 +89,40 @@ describe('renderQnaUISpec', () => {
     expect(heading?.textContent).toBe("Teknosa'ya Sor");
   });
 
+
+  it('QuestionHeading falls back to stream text when headingTitleOverride is absent', () => {
+    const spec: UISpec = {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'QuestionHeading',
+          props: { text: '👋 Bu ürünü birlikte inceleyelim' },
+        },
+      },
+    };
+
+    const result = renderQnaUISpec(spec, makeContext());
+    const heading = result.querySelector('.gengage-qna-heading');
+    expect(heading?.textContent).toBe('👋 Bu ürünü birlikte inceleyelim');
+  });
+
+  it('QuestionHeading falls back to stream text when headingTitleOverride is empty string', () => {
+    const spec: UISpec = {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'QuestionHeading',
+          props: { text: 'Stream başlığı' },
+        },
+      },
+    };
+
+    const result = renderQnaUISpec(spec, makeContext({ headingTitleOverride: '   ' }));
+    const heading = result.querySelector('.gengage-qna-heading');
+    expect(heading?.textContent).toBe('Stream başlığı');
+  });
+
+
   it('submits TextInput as plain-string user_message payload', () => {
     const onAction = vi.fn();
     const spec: UISpec = {
