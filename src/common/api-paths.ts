@@ -5,7 +5,12 @@
  * request-level compatibility params or feature-toggle params.
  */
 
-export type ChatEndpointName = 'process_action' | 'launcher_action' | 'similar_products' | 'product_groupings';
+export type ChatEndpointName =
+  | 'process_action'
+  | 'launcher_action'
+  | 'similar_products'
+  | 'product_groupings'
+  | 'beauty_consulting_init';
 
 export interface ChatTransportConfig {
   middlewareUrl: string;
@@ -19,6 +24,7 @@ const CHAT_ENDPOINT_PATHS: Record<ChatEndpointName, `/${string}`> = {
   launcher_action: '/launcher_action',
   similar_products: '/similar_products',
   product_groupings: '/product_groupings',
+  beauty_consulting_init: '/beauty_consulting_init',
 };
 
 export function normalizeMiddlewareUrl(input?: string): string {

@@ -2405,6 +2405,10 @@ export class ChatDrawer {
     }
   }
 
+  setInputPlaceholder(placeholder: string): void {
+    this.inputEl.placeholder = placeholder;
+  }
+
   private _applyPresentationCollapsed(): void {
     const focus = this._presentationFocusThreadId;
     this.messagesEl.querySelectorAll<HTMLElement>('[data-thread-id]').forEach((el) => {

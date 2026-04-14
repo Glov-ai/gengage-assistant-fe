@@ -1704,15 +1704,45 @@ function renderProductGrid(
   renderElement: (elementId: string) => HTMLElement | null,
   ctx?: UISpecRenderContext,
 ): HTMLElement {
+  type StyleVariationProduct = Record<string, unknown>;
+  type StyleVariation = {
+    style_label?: string;
+    style_mood?: string;
+    image_url?: string;
+    product_list?: StyleVariationProduct[];
+    recommendation_groups?: Array<{ label?: string; reason?: string; skus?: string[] }>;
+  };
+
+  const toConsultingImageUrls = (input: unknown): string[] => {
+    if (typeof input !== 'string') return [];
+    const raw = input.trim();
+    if (!raw) return [];
+
+    if (raw.startsWith('/remoteConfig/')) return [raw, `https://configs.glov.ai${raw}`];
+    if (raw.startsWith('remoteConfig/')) return [`/${raw}`, `https://configs.glov.ai/${raw}`];
+    if (raw.startsWith('beauty-styles/')) return [`/remoteConfig/${raw}`, `https://configs.glov.ai/remoteConfig/${raw}`];
+    return [raw];
+  };
+
   const wrapper = document.createElement('div');
   wrapper.className = 'gengage-chat-product-grid-wrapper';
+
+  const source = typeof element.props?.['source'] === 'string' ? element.props['source'] : undefined;
+  const styleVariationsRaw = Array.isArray(element.props?.['styleVariations'])
+    ? (element.props?.['styleVariations'] as StyleVariation[])
+    : [];
+  const styleVariations = styleVariationsRaw.filter(
+    (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
+  );
+  const hasConsultingVariations =
+    (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
 
   const childIds = element.children ?? [];
   const grid = document.createElement('div');
   grid.className = 'gengage-chat-product-grid';
 
   const inlineHead = ctx?.panelProductListHeading;
-  const hasSortToolbar = childIds.length > 1 && ctx?.onSortChange;
+  const hasSortToolbar = !hasConsultingVariations && childIds.length > 1 && ctx?.onSortChange;
 
   // Sort + compare toolbar (only when >1 children and context has sort support)
   if (hasSortToolbar) {
@@ -1926,13 +1956,177 @@ function renderProductGrid(
     wrapper.appendChild(head);
   }
 
-  const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
-  for (const childId of sortedIds) {
-    if (!spec.elements[childId]) continue;
-    const rendered = renderElement(childId);
-    if (rendered) {
-      rendered.dataset['elementId'] = childId;
-      grid.appendChild(rendered);
+  if (hasConsultingVariations) {
+    const picker = document.createElement('div');
+    picker.className = 'gengage-chat-consulting-style-picker';
+    const pickerTitle = document.createElement('div');
+    pickerTitle.className = 'gengage-chat-consulting-style-picker-title';
+    pickerTitle.textContent =
+      source === 'watch_expert'
+        ? `Prepared ${styleVariations.length} style directions for you`
+        : `Prepared ${styleVariations.length} beauty styles for you`;
+    picker.appendChild(pickerTitle);
+
+    const pickerGrid = document.createElement('div');
+    pickerGrid.className = 'gengage-chat-consulting-style-grid';
+    picker.appendChild(pickerGrid);
+
+    const renderVariationProducts = (variation: StyleVariation): void => {
+      grid.innerHTML = '';
+      const products = Array.isArray(variation.product_list) ? variation.product_list : [];
+      const recommendationGroups = Array.isArray(variation.recommendation_groups) ? variation.recommendation_groups : [];
+
+      if (recommendationGroups.length > 0) {
+        const productBySku = new Map<string, StyleVariationProduct>();
+        for (const product of products) {
+          const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : undefined;
+          if (sku) productBySku.set(sku, product);
+        }
+
+        const renderedSkus = new Set<string>();
+        for (const group of recommendationGroups) {
+          const skus = Array.isArray(group.skus)
+            ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
+            : [];
+          const groupedProducts = skus
+            .map((sku) => {
+              renderedSkus.add(sku);
+              return productBySku.get(sku);
+            })
+            .filter((product): product is StyleVariationProduct => !!product);
+          if (groupedProducts.length === 0) continue;
+
+          const section = document.createElement('section');
+          section.className = 'gengage-chat-consulting-group';
+
+          const header = document.createElement('div');
+          header.className = 'gengage-chat-consulting-group-header';
+
+          const label = document.createElement('h4');
+          label.className = 'gengage-chat-consulting-group-label';
+          label.textContent = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
+          header.appendChild(label);
+
+          if (typeof group.reason === 'string' && group.reason.trim().length > 0) {
+            const reason = document.createElement('p');
+            reason.className = 'gengage-chat-consulting-group-reason';
+            reason.textContent = group.reason;
+            header.appendChild(reason);
+          }
+
+          section.appendChild(header);
+
+          const groupGrid = document.createElement('div');
+          groupGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+          for (const product of groupedProducts) {
+            const cardElement: UIElement = {
+              type: 'ProductCard',
+              props: { product },
+            };
+            const card = renderProductCard(cardElement, ctx ?? ({ onAction: () => undefined } as UISpecRenderContext));
+            groupGrid.appendChild(card);
+          }
+          section.appendChild(groupGrid);
+          grid.appendChild(section);
+        }
+
+        const leftovers = products.filter((product) => {
+          const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : '';
+          return sku.length > 0 && !renderedSkus.has(sku);
+        });
+        if (leftovers.length > 0) {
+          const fallbackGrid = document.createElement('div');
+          fallbackGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+          for (const product of leftovers) {
+            const cardElement: UIElement = {
+              type: 'ProductCard',
+              props: { product },
+            };
+            const card = renderProductCard(cardElement, ctx ?? ({ onAction: () => undefined } as UISpecRenderContext));
+            fallbackGrid.appendChild(card);
+          }
+          grid.appendChild(fallbackGrid);
+        }
+        return;
+      }
+
+      for (const product of products) {
+        const cardElement: UIElement = {
+          type: 'ProductCard',
+          props: { product },
+        };
+        const card = renderProductCard(cardElement, ctx ?? ({ onAction: () => undefined } as UISpecRenderContext));
+        grid.appendChild(card);
+      }
+    };
+
+    let selectedVariationIndex = 0;
+    styleVariations.forEach((variation, index) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gengage-chat-consulting-style-btn gds-card';
+      if (index === 0) btn.classList.add('gengage-chat-consulting-style-btn--active');
+
+      const candidateImageUrls = toConsultingImageUrls(variation.image_url);
+      const firstImageUrl = candidateImageUrls.find((url) => isSafeUrl(url));
+      if (firstImageUrl) {
+        const img = document.createElement('img');
+        img.className = 'gengage-chat-consulting-style-image';
+        safeSetAttribute(img, 'src', firstImageUrl);
+        img.alt = variation.style_label ?? `Style ${index + 1}`;
+        img.loading = 'lazy';
+        if (candidateImageUrls.length > 1) {
+          let fallbackIndex = 1;
+          img.addEventListener('error', () => {
+            while (fallbackIndex < candidateImageUrls.length) {
+              const next = candidateImageUrls[fallbackIndex++];
+              if (!next || !isSafeUrl(next)) continue;
+              if (img.src === next) continue;
+              safeSetAttribute(img, 'src', next);
+              return;
+            }
+            img.style.display = 'none';
+          });
+        } else {
+          addImageErrorHandler(img);
+        }
+        btn.appendChild(img);
+      }
+
+      const label = document.createElement('span');
+      label.className = 'gengage-chat-consulting-style-label';
+      label.textContent = variation.style_label ?? `Style ${index + 1}`;
+      btn.appendChild(label);
+
+      const mood = document.createElement('span');
+      mood.className = 'gengage-chat-consulting-style-mood';
+      mood.textContent = variation.style_mood ?? '';
+      btn.appendChild(mood);
+
+      btn.addEventListener('click', () => {
+        if (selectedVariationIndex === index) return;
+        selectedVariationIndex = index;
+        pickerGrid
+          .querySelectorAll('.gengage-chat-consulting-style-btn')
+          .forEach((el, btnIndex) =>
+            (el as HTMLElement).classList.toggle('gengage-chat-consulting-style-btn--active', btnIndex === index),
+          );
+        renderVariationProducts(variation);
+      });
+      pickerGrid.appendChild(btn);
+    });
+
+    wrapper.appendChild(picker);
+    renderVariationProducts(styleVariations[0] ?? {});
+  } else {
+    const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
+    for (const childId of sortedIds) {
+      if (!spec.elements[childId]) continue;
+      const rendered = renderElement(childId);
+      if (rendered) {
+        rendered.dataset['elementId'] = childId;
+        grid.appendChild(rendered);
+      }
     }
   }
 
@@ -1945,7 +2139,7 @@ function renderProductGrid(
 
   // "View More" button (only when endOfList is not true)
   const endOfList = element.props?.['endOfList'] as boolean | undefined;
-  if (endOfList !== true && childIds.length > 0) {
+  if (!hasConsultingVariations && endOfList !== true && childIds.length > 0) {
     const viewMoreTitle = ctx?.i18n?.viewMoreLabel ?? 'Show More';
     const viewMoreBtn = document.createElement('button');
     viewMoreBtn.className = 'gengage-chat-product-grid-view-more';

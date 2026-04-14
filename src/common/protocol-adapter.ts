@@ -108,6 +108,25 @@ interface V1ProductList {
     offset?: number;
     page_size?: number;
     end_of_list?: boolean;
+    recommendation_groups?: Array<{
+      label?: string;
+      reason?: string;
+      skus?: string[];
+      [key: string]: unknown;
+    }>;
+    style_variations?: Array<{
+      style_label?: string;
+      style_mood?: string;
+      image_url?: string | null;
+      recommendation_groups?: Array<{
+        label?: string;
+        reason?: string;
+        skus?: string[];
+        [key: string]: unknown;
+      }>;
+      product_list?: V1Product[];
+      [key: string]: unknown;
+    }>;
     [key: string]: unknown;
   };
 }
@@ -579,7 +598,49 @@ function adaptSuggestedActions(event: V1SuggestedActions): StreamEventUISpec {
 }
 
 function adaptProductList(event: V1ProductList): StreamEventUISpec {
-  const spec = buildProductGridUISpec(event.payload.product_list ?? [], 'chat');
+  const rawStyleVariations = Array.isArray(event.payload.style_variations) ? event.payload.style_variations : [];
+  const normalizedStyleVariations = rawStyleVariations
+    .map((variation) => {
+      const styleLabel = firstNonEmptyString(variation.style_label);
+      const styleMood = firstNonEmptyString(variation.style_mood);
+      const imageUrl = firstNonEmptyString(variation.image_url ?? undefined);
+      const productList = Array.isArray(variation.product_list) ? variation.product_list : [];
+      const normalizedProducts = productList
+        .map((entry) => {
+          const entryRecord = asRecord(entry);
+          if (!entryRecord) return null;
+          const productRecord = asRecord(entryRecord['product_detail']) ?? asRecord(entryRecord['product']) ?? entryRecord;
+          return productRecordToNormalized(productRecord) as unknown as Record<string, unknown> | null;
+        })
+        .filter(isNonNullable);
+      const recommendationGroups = Array.isArray(variation.recommendation_groups)
+        ? variation.recommendation_groups.map((group) => ({
+            label: firstNonEmptyString(group.label) ?? '',
+            reason: firstNonEmptyString(group.reason) ?? '',
+            skus: Array.isArray(group.skus)
+              ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
+              : [],
+          }))
+        : [];
+
+      return {
+        style_label: styleLabel ?? '',
+        style_mood: styleMood ?? '',
+        ...(imageUrl ? { image_url: imageUrl } : {}),
+        product_list: normalizedProducts,
+        recommendation_groups: recommendationGroups,
+      };
+    })
+    .filter((variation) => variation.product_list.length > 0);
+
+  const fallbackProducts = event.payload.product_list ?? [];
+  const firstVariationProducts =
+    rawStyleVariations.length > 0 && Array.isArray(rawStyleVariations[0]?.product_list)
+      ? (rawStyleVariations[0]!.product_list as V1Product[])
+      : [];
+  const effectiveProducts = firstVariationProducts.length > 0 ? firstVariationProducts : fallbackProducts;
+
+  const spec = buildProductGridUISpec(effectiveProducts, 'chat');
   spec.panelHint = 'panel';
   // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
@@ -588,6 +649,10 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
     if (typeof event.payload.end_of_list === 'boolean')
       root.props = { ...root.props, endOfList: event.payload.end_of_list };
     if (typeof event.payload.title === 'string') root.props = { ...root.props, panelTitle: event.payload.title };
+    if (typeof event.payload.source === 'string') root.props = { ...root.props, source: event.payload.source };
+    if (normalizedStyleVariations.length > 0) {
+      root.props = { ...root.props, styleVariations: normalizedStyleVariations };
+    }
   }
   return spec;
 }

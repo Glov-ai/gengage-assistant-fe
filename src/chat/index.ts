@@ -29,8 +29,9 @@ import {
   basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
+import { debugLog } from '../common/debug.js';
 import { validateImageFile } from './attachment-utils.js';
-import { sendChatMessage, enrichActionPayload } from './api.js';
+import { sendChatMessage, enrichActionPayload, sendBeautyConsultingInit } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
@@ -113,6 +114,38 @@ function isSafeCSSColor(value: string): boolean {
 /** Lightweight runtime check: value looks like an ActionPayload (has a string `type`). */
 function isActionLike(value: unknown): value is ActionPayload {
   return typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).type === 'string';
+}
+
+type AssistantMode = 'shopping' | 'booking' | 'beauty_consulting' | 'watch_expert';
+
+interface BeautyConsultingSessionState {
+  scenario?: string;
+  redirectedAgentState?: Record<string, unknown>;
+  beautyConsultingState?: Record<string, unknown>;
+  missingFields?: string[];
+  initialized: boolean;
+  initializing: boolean;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function firstString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) return trimmed;
+    }
+  }
+  return undefined;
+}
+
+function asStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  return list.length > 0 ? list : undefined;
 }
 
 /**
@@ -242,6 +275,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _consecutiveErrorCount = 0;
   /** Last error message text for deduplication. */
   private _lastErrorMessage = '';
+  private _assistantMode: AssistantMode = 'shopping';
+  private _beautyConsultingState: BeautyConsultingSessionState | null = null;
+  private _beautyInitRequestId = 0;
 
   protected async onInit(config: ChatWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
@@ -815,6 +851,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._presentation.reset();
     this._drawer?.setPresentationFocus(null);
     this._drawer?.setFormerMessagesButtonVisible(false);
+    this._assistantMode = 'shopping';
+    this._beautyConsultingState = null;
+    this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
   }
 
   /**
@@ -1397,9 +1436,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!hasUserMessages) {
       ga.trackConversationStart();
     }
-    // Image upload from Chat Input uses findSimilar (not inputText) per wire protocol
-    const action: ActionPayload =
-      attachment !== undefined
+    const isBeautyMode = this._assistantMode === 'beauty_consulting';
+    debugLog('beauty', 'sendMessage', {
+      mode: this._assistantMode,
+      hasAttachment: attachment !== undefined,
+      textLength: text.length,
+    });
+    const beautyPayload = this._buildBeautyInputPayload(text);
+    const action: ActionPayload = isBeautyMode
+      ? { title: text, type: 'user_message', payload: beautyPayload }
+      : attachment !== undefined
         ? { title: text, type: 'findSimilar', payload: text ? { text } : {} }
         : { title: text, type: 'user_message', payload: text };
     if (attachment !== undefined) {
@@ -1415,6 +1461,230 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._queuedUserMessages = [];
     for (const item of queued) {
       this._sendMessage(item.text, item.attachment);
+    }
+  }
+
+  private _buildBeautyInputPayload(text: string): Record<string, unknown> {
+    const payload: Record<string, unknown> = {
+      assistant_mode: 'beauty_consulting',
+    };
+    if (text.trim().length > 0) payload['text'] = text;
+    const scenario = this._beautyConsultingState?.scenario;
+    if (scenario) payload['scenario'] = scenario;
+    if (this._beautyConsultingState?.redirectedAgentState) {
+      payload['redirected_agent_state'] = this._beautyConsultingState.redirectedAgentState;
+    }
+    if (this._beautyConsultingState?.beautyConsultingState) {
+      payload['beauty_consulting_state'] = this._beautyConsultingState.beautyConsultingState;
+    }
+    return payload;
+  }
+
+  private _beautyInputPlaceholder(): string {
+    const locale = (this.config.locale ?? 'tr').toLowerCase();
+    if (locale.startsWith('tr')) return 'Cilt tipini yaz veya bir fotoğraf yükle';
+    return 'Ask a beauty question or upload a photo';
+  }
+
+  private async _handleRedirectMetadata(redirectPayload: unknown): Promise<void> {
+    const payload = asRecord(redirectPayload);
+    if (!payload) return;
+    debugLog('beauty', 'redirect metadata received', payload);
+
+    const mode = firstString(payload['assistant_mode'], payload['assistantMode']);
+    if (mode !== 'beauty_consulting') return;
+
+    const scenario = firstString(payload['scenario']);
+    const redirectedAgentState =
+      asRecord(payload['redirected_agent_state']) ?? asRecord(payload['beauty_consulting_state']) ?? undefined;
+    const modeOptions: { scenario?: string; redirectedAgentState?: Record<string, unknown> } = {};
+    if (scenario) modeOptions.scenario = scenario;
+    if (redirectedAgentState) modeOptions.redirectedAgentState = redirectedAgentState;
+    await this._switchAssistantMode('beauty_consulting', modeOptions);
+  }
+
+  private async _switchAssistantMode(
+    mode: AssistantMode,
+    options?: { scenario?: string; redirectedAgentState?: Record<string, unknown> },
+  ): Promise<void> {
+    const prevMode = this._assistantMode;
+    const wasBeauty = this._assistantMode === 'beauty_consulting';
+    this._assistantMode = mode;
+    debugLog('beauty', 'assistant mode switched', {
+      from: prevMode,
+      to: mode,
+      scenario: options?.scenario,
+      hasRedirectedState: !!options?.redirectedAgentState,
+    });
+    if (mode !== 'beauty_consulting') {
+      this._beautyConsultingState = null;
+      this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
+      return;
+    }
+
+    this._drawer?.setInputPlaceholder(this._beautyInputPlaceholder());
+    const nextBeautyState: BeautyConsultingSessionState = {
+      initialized: this._beautyConsultingState?.initialized ?? false,
+      initializing: this._beautyConsultingState?.initializing ?? false,
+    };
+    const nextScenario = options?.scenario ?? this._beautyConsultingState?.scenario;
+    if (nextScenario) nextBeautyState.scenario = nextScenario;
+    const nextRedirectedState = options?.redirectedAgentState ?? this._beautyConsultingState?.redirectedAgentState;
+    if (nextRedirectedState) nextBeautyState.redirectedAgentState = nextRedirectedState;
+    if (this._beautyConsultingState?.beautyConsultingState) {
+      nextBeautyState.beautyConsultingState = this._beautyConsultingState.beautyConsultingState;
+    }
+    if (this._beautyConsultingState?.missingFields) {
+      nextBeautyState.missingFields = this._beautyConsultingState.missingFields;
+    }
+    this._beautyConsultingState = nextBeautyState;
+
+    if (!wasBeauty) {
+      const handoffMsg = this._createMessage('assistant', this._i18n.handoffHeading);
+      handoffMsg.threadId = this._currentThreadId ?? uuidv7();
+      this._messages.push(handoffMsg);
+      this._ensureAssistantMessageRendered(handoffMsg);
+      this.emit('message', handoffMsg);
+    }
+
+    const beautyState = this._beautyConsultingState;
+    if (!beautyState || beautyState.initialized || beautyState.initializing) return;
+    await this._initBeautyConsultingSession();
+  }
+
+  private async _initBeautyConsultingSession(): Promise<void> {
+    if (!this._beautyConsultingState) return;
+    this._beautyConsultingState.initializing = true;
+    const initRequestId = ++this._beautyInitRequestId;
+    const threadId = uuidv7();
+    this._currentThreadId = threadId;
+    this._lastThreadId = threadId;
+    this._presentation.registerAssistantActivity(threadId);
+    this._presentation.requestThreadFocus(threadId, 'smooth');
+    this._drawer?.setPresentationFocus(threadId);
+    this._drawer?.setFormerMessagesButtonVisible(false);
+
+    const transport: ChatTransportConfig = {
+      middlewareUrl: this.config.middlewareUrl,
+      ...(this.config.accountId ? { accountId: this.config.accountId } : {}),
+    };
+
+    const visibleMessages = this._getVisibleMessages();
+    const chatHistory = visibleMessages
+      .filter((m) => m.content && m.role !== 'assistant')
+      .slice(-30)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        content: m.content ?? '',
+      }));
+
+    const meta: BackendRequestMeta = {
+      outputLanguage: localeToOutputLanguage(this.config.locale),
+      parentUrl: window.location.href,
+      windowWidth: String(window.innerWidth),
+      windowHeight: String(window.innerHeight),
+      selfUrl: '',
+      id: this.config.session?.sessionId ?? '',
+      userId: this.config.session?.userId ?? '',
+      appId: this.config.accountId,
+      threads: [],
+      createdAt: this._chatCreatedAt,
+      kvkkApproved: isKvkkShown(this.config.accountId),
+      voiceEnabled: this.config.voiceEnabled ?? false,
+      threadId,
+      isControlGroup: this.config.session?.abTestVariant === 'control',
+      isMobile: this._isMobileViewport,
+    };
+    (meta as unknown as Record<string, unknown>)['assistantMode'] = this._assistantMode;
+    if (this.config.session?.viewId !== undefined) {
+      meta.viewId = this.config.session.viewId;
+    }
+
+    const request: import('./api.js').BeautyConsultingInitRequest = {
+      account_id: this.config.accountId,
+      session_id: this.config.session?.sessionId ?? '',
+      correlation_id: this.config.session?.sessionId ?? '',
+      locale: this.config.locale ?? 'tr',
+      assistant_mode: 'beauty_consulting',
+      meta,
+      context: {
+        ...(this._lastBackendContext ?? {}),
+        messages: chatHistory,
+        session_id: this.config.session?.sessionId ?? '',
+      },
+    };
+    if (this._beautyConsultingState.scenario) {
+      request.scenario = this._beautyConsultingState.scenario;
+    }
+    if (this._beautyConsultingState.redirectedAgentState) {
+      request.redirected_agent_state = this._beautyConsultingState.redirectedAgentState;
+    }
+    if (this.config.session?.userId !== undefined) {
+      request.user_id = this.config.session.userId;
+    }
+    if (this.config.session?.viewId !== undefined) {
+      request.view_id = this.config.session.viewId;
+    }
+    debugLog('beauty', 'beauty init request', {
+      threadId,
+      scenario: request.scenario,
+      mode: request.assistant_mode,
+      hasRedirectedState: !!request.redirected_agent_state,
+      historyCount: chatHistory.length,
+    });
+
+    try {
+      const result = await sendBeautyConsultingInit(request, transport);
+      if (initRequestId !== this._beautyInitRequestId || this._assistantMode !== 'beauty_consulting') return;
+
+      this._beautyConsultingState.initializing = false;
+      this._beautyConsultingState.initialized = true;
+      if (typeof result.scenario === 'string' && result.scenario.trim().length > 0) {
+        this._beautyConsultingState.scenario = result.scenario;
+      }
+      const updatedState =
+        asRecord(result.beauty_consulting_state) ?? asRecord(result.redirected_agent_state) ?? undefined;
+      if (updatedState) {
+        this._beautyConsultingState.beautyConsultingState = updatedState;
+      }
+      const missingFields = asStringArray(result.missing_fields);
+      if (missingFields) this._beautyConsultingState.missingFields = missingFields;
+      debugLog('beauty', 'beauty init response', {
+        scenario: this._beautyConsultingState.scenario,
+        missingFields: this._beautyConsultingState.missingFields ?? [],
+        hasState: !!this._beautyConsultingState.beautyConsultingState,
+      });
+
+      const text =
+        firstString(
+          result.assistant_reply,
+          result.message,
+          result.text,
+          asRecord(result.payload)?.['assistant_reply'],
+          asRecord(result.payload)?.['message'],
+          asRecord(result.payload)?.['text'],
+        ) ?? 'Beauty Expert is ready. Tell me your skin type or upload a selfie.';
+
+      const botMsg = this._createMessage('assistant', text);
+      botMsg.threadId = threadId;
+      botMsg.status = 'done';
+      this._messages.push(botMsg);
+      this._ensureAssistantMessageRendered(botMsg);
+      this.emit('message', botMsg);
+      this._flushPresentationScroll();
+      this._persistToIndexedDB().catch(() => {
+        /* non-fatal */
+      });
+    } catch (err) {
+      if (initRequestId !== this._beautyInitRequestId) return;
+      this._beautyConsultingState.initializing = false;
+      debugLog('beauty', 'beauty init failed', {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      dispatch('gengage:global:error', {
+        source: 'chat',
+        message: err instanceof Error ? err.message : this._i18n.errorMessage,
+      });
     }
   }
 
@@ -1538,6 +1808,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const shouldShortCircuitUnavailableContext =
       !options?.silent &&
+      this._assistantMode !== 'beauty_consulting' &&
       this._hasUnavailableProductContext() &&
       (action.type === 'user_message' || action.type === 'inputText');
     if (shouldShortCircuitUnavailableContext) {
@@ -1660,6 +1931,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isControlGroup: this.config.session?.abTestVariant === 'control',
       isMobile: this._isMobileViewport,
     };
+    (meta as unknown as Record<string, unknown>)['assistantMode'] = this._assistantMode;
     if (this.config.session?.viewId !== undefined) {
       meta.viewId = this.config.session.viewId;
     }
@@ -2310,6 +2582,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 target: event.meta.redirectTarget ?? null,
                 payload: event.meta.redirect ?? null,
               });
+              debugLog('beauty', 'redirect dispatched', {
+                target: event.meta.redirectTarget ?? null,
+              });
+              void this._handleRedirectMetadata(event.meta.redirect);
             }
 
             // Analyze animation — show panel loading skeleton with pulse
