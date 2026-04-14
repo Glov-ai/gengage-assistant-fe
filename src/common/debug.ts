@@ -26,7 +26,7 @@ export function debugLog(category: string, message: string, data?: unknown): voi
   const args: unknown[] = [`[gengage:${category}]`, message];
   if (data !== undefined) args.push(data);
   // eslint-disable-next-line no-console -- debug utility, gated by localStorage flag
-  console.log(...args);
+  console.debug(...args);
 }
 
 /** Reset the cached enabled state (for testing). */
