@@ -476,6 +476,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-screwfixcom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -512,6 +513,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Screwfix Assistant',
+          launcherImageUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandRemoteLogoUrl,
           i18n: {
             inputPlaceholder: 'Search products or ask a question',
             poweredBy: 'Screwfix AI Assistant',
@@ -519,6 +522,7 @@
         },
         qna: {
           mountTarget: '#screwfix-qna-section',
+          headerTitle: 'Screwfix Assistant',
           ctaText: 'Ask another question',
         },
         simrel: {

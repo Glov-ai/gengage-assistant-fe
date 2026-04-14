@@ -142,12 +142,19 @@ const DEFAULT_QNA_UI_SPEC_REGISTRY: QNAUISpecRegistry = {
     return renderTextInput(options);
   },
 
-  QuestionHeading: ({ element }) => {
+  QuestionHeading: ({ element, context }) => {
     const heading = document.createElement('h3');
     heading.className = 'gengage-qna-heading';
     heading.dataset['gengagePart'] = 'qna-heading';
-    const text = element.props?.['text'];
-    heading.textContent = typeof text === 'string' ? text : '';
+    const fromStream = element.props?.['text'];
+    const override = context.headingTitleOverride;
+    const text =
+      typeof override === 'string' && override.trim().length > 0
+        ? override
+        : typeof fromStream === 'string'
+          ? fromStream
+          : '';
+    heading.textContent = text;
     return heading;
   },
 

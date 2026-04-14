@@ -485,6 +485,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-pazaramacom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -521,6 +522,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Pazarama Asistan',
+          launcherImageUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandRemoteLogoUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara veya soru sor',
             poweredBy: 'Pazarama AI Asistan',
@@ -528,6 +531,7 @@
         },
         qna: {
           mountTarget: '#pazarama-qna-section',
+          headerTitle: "Pazarama'ya Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

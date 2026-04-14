@@ -129,6 +129,14 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     this._abortController = null;
   }
 
+  /** `headerTitle` wins over deprecated `headingTitle`. */
+  private _resolvedQnaHeaderTitle(): string | undefined {
+    const raw = this.config.headerTitle ?? this.config.headingTitle;
+    if (typeof raw !== 'string') return undefined;
+    const t = raw.trim();
+    return t.length > 0 ? t : undefined;
+  }
+
   /** Clean up TextInput placeholder rotation timers to prevent interval leaks. */
   private _cleanupTextInputTimers(): void {
     if (!this._contentEl) return;
@@ -211,11 +219,15 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
       const hasQuestionHeading = this._specIncludesType(result.uiSpecs, 'QuestionHeading');
 
+      const staticHeadingText =
+        this._resolvedQnaHeaderTitle() ??
+        (this.config.showStaticQuestion && this.config.staticQuestionText ? this.config.staticQuestionText : undefined);
+
       // Render heading if configured and backend didn't provide one
-      if (!hasQuestionHeading && this.config.showStaticQuestion && this.config.staticQuestionText) {
+      if (!hasQuestionHeading && staticHeadingText) {
         const heading = document.createElement('h3');
         heading.className = 'gengage-qna-heading';
-        heading.textContent = this.config.staticQuestionText;
+        heading.textContent = staticHeadingText;
         panel.appendChild(heading);
       }
 
@@ -237,6 +249,10 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
         onAction: this._actionHandler,
         i18n: this._i18n,
       };
+      const resolvedHeader = this._resolvedQnaHeaderTitle();
+      if (resolvedHeader !== undefined) {
+        renderContext.headingTitleOverride = resolvedHeader;
+      }
       if (!this.config.hideButtonRowCta) {
         renderContext.onOpenChat = this._openChatHandler;
         if (this.config.ctaText !== undefined) renderContext.ctaText = this.config.ctaText;
@@ -264,7 +280,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
       const shouldRenderStandaloneInput = !this._specIncludesType(nonEmptySpecs, 'TextInput');
       if (shouldRenderStandaloneInput) {
-        this._appendStandaloneInput(renderContext, effectivePlaceholders, panel);
+        this._insertStandaloneInputBeforePills(panel, renderContext, effectivePlaceholders);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -300,6 +316,10 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
           i18n: this._i18n,
           onOpenChat: this._openChatHandler,
         };
+        const errHeader = this._resolvedQnaHeaderTitle();
+        if (errHeader !== undefined) {
+          fallbackContext.headingTitleOverride = errHeader;
+        }
         if (this.config.ctaText !== undefined) fallbackContext.ctaText = this.config.ctaText;
         this._appendStandaloneInput(fallbackContext, fallbackPlaceholders, errPanel);
       }
@@ -390,6 +410,49 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
       root: 'root',
       elements,
     };
+  }
+
+  /**
+   * Free-text field when the launcher stream has no TextInput. Must sit **above** the
+   * quick-question pills (heading → search → chips), not below — see `render` order above.
+   */
+  private _insertStandaloneInputBeforePills(
+    panel: HTMLElement,
+    context: QNAUISpecRenderContext,
+    placeholder?: string | string[],
+  ): void {
+    const inputSpec: UISpec = {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'TextInput',
+          props: {
+            placeholder,
+          },
+        },
+      },
+    };
+    const standaloneRoot = this._renderUISpec(inputSpec, context);
+    const inputWrapper = standaloneRoot.querySelector('.gengage-qna-input-wrapper');
+    if (!inputWrapper) return;
+
+    const firstUispec = panel.querySelector('.gengage-qna-uispec');
+    const buttons = firstUispec?.querySelector(':scope > .gengage-qna-buttons');
+
+    if (firstUispec && buttons) {
+      firstUispec.insertBefore(inputWrapper, buttons);
+    } else if (firstUispec) {
+      const heading = firstUispec.querySelector(':scope > .gengage-qna-heading');
+      if (heading) {
+        heading.insertAdjacentElement('afterend', inputWrapper);
+      } else {
+        firstUispec.prepend(inputWrapper);
+      }
+    } else {
+      panel.appendChild(standaloneRoot);
+      return;
+    }
+    standaloneRoot.remove();
   }
 
   private _appendStandaloneInput(

@@ -18,7 +18,8 @@ export const DEFAULT_WIDGET_THEME_TOKENS: WidgetTheme = {
   '--gengage-chat-input-height': '48px',
 
   '--gengage-qna-pill-radius': '999px' /* roundedness-full */,
-  '--gengage-qna-input-radius': '0.75rem' /* md roundedness */,
+  /** Rounded rect (not full pill) — matches `src/qna/components/qna.css` */
+  '--gengage-qna-input-radius': '12px',
 
   '--gengage-simrel-card-radius': '0.75rem' /* md roundedness */,
 

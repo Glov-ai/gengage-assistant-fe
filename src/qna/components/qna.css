@@ -1,6 +1,10 @@
 @import '../../design-system/index.css';
 
 .gengage-qna-container {
+  /* Spacing when embedded in merchant layout (overridable) */
+  margin-top: var(--gengage-qna-container-margin-top, 16px);
+  margin-bottom: var(--gengage-qna-container-margin-bottom, 32px);
+
   font-family: var(
     --gengage-font-family,
     'Plus Jakarta Sans',
@@ -14,29 +18,41 @@
   color: var(--text-primary);
   position: relative;
 
-  /* Semantic color tokens (overridable by customers) */
+  /* Semantic color tokens (overridable by customers) — default: light panel + outline pills */
   --_gengage-border-color: var(--border-default);
   --_gengage-text-primary: var(--text-primary);
   --_gengage-text-secondary: var(--text-secondary);
-  --_gengage-qna-panel-surface: var(--gengage-qna-panel-bg, var(--surface-card));
-  --_gengage-qna-icon-color: var(--gengage-qna-icon-color, var(--text-muted));
+  --_gengage-qna-panel-surface: var(--gengage-qna-panel-bg, #f7f7f9);
+  --_gengage-qna-icon-color: var(--gengage-qna-icon-color, var(--client-primary));
   --_gengage-qna-transition-overlay: color-mix(in srgb, var(--surface-card) 78%, transparent);
-  --_gengage-qna-pill-bg: var(--gengage-qna-pill-bg, var(--ds-button-primary-bg));
-  --_gengage-qna-pill-bg-hover: var(--gengage-qna-pill-bg-hover, var(--ds-button-primary-bg-hover));
-  --_gengage-qna-pill-fg: var(--gengage-qna-pill-fg, var(--ds-button-primary-fg));
-  --_gengage-qna-pill-border: var(--gengage-qna-pill-border, var(--ds-button-primary-border));
-  --_gengage-qna-pill-border-hover: var(--gengage-qna-pill-border-hover, var(--_gengage-qna-pill-border));
-  --_gengage-qna-input-bg: var(--gengage-qna-input-bg, var(--ds-input-bg));
-  --_gengage-qna-input-border: var(--gengage-qna-input-border, var(--ds-input-border));
+  --_gengage-qna-pill-bg: var(--gengage-qna-pill-bg, #fff);
+  --_gengage-qna-pill-bg-hover: var(
+    --gengage-qna-pill-bg-hover,
+    color-mix(in srgb, var(--client-primary) 10%, white)
+  );
+  --_gengage-qna-pill-fg: var(--gengage-qna-pill-fg, var(--client-primary));
+  --_gengage-qna-pill-border: var(
+    --gengage-qna-pill-border,
+    color-mix(in srgb, var(--client-primary) 64%, white)
+  );
+  --_gengage-qna-pill-border-hover: var(
+    --gengage-qna-pill-border-hover,
+    color-mix(in srgb, var(--client-primary) 78%, white)
+  );
+  --_gengage-qna-input-bg: var(--gengage-qna-input-bg, #fff);
+  --_gengage-qna-input-border: var(
+    --gengage-qna-input-border,
+    color-mix(in srgb, var(--client-primary) 58%, white)
+  );
   --_gengage-qna-action-icon-bg-hover: var(
     --gengage-qna-action-icon-bg-hover,
-    color-mix(in srgb, var(--client-primary) 10%, transparent)
+    color-mix(in srgb, var(--client-primary) 12%, white)
   );
-  --_gengage-qna-clear-color: var(--gengage-qna-clear-color, var(--text-muted));
+  --_gengage-qna-clear-color: var(--gengage-qna-clear-color, var(--client-primary));
   --_gengage-qna-send-color: var(--gengage-qna-send-color, var(--client-primary));
   --_gengage-qna-send-color-disabled: var(
     --gengage-qna-send-color-disabled,
-    color-mix(in srgb, var(--text-muted) 60%, transparent)
+    color-mix(in srgb, var(--client-primary) 36%, #b3b8c8)
   );
   --_gengage-qna-action-icon-size: var(--gengage-qna-action-icon-size, 20px);
 }
@@ -45,13 +61,27 @@
   position: relative;
   z-index: 0;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
   background: var(--_gengage-qna-panel-surface);
-  border: 1px solid var(--_gengage-border-color);
-  border-radius: var(--gengage-qna-panel-radius, var(--ds-panel-radius));
-  padding: 16px 16px 14px;
-  margin-bottom: var(--gengage-qna-panel-margin-bottom, 18px);
-  margin-top: var(--gengage-qna-panel-margin-top, 18px);
-  box-shadow: var(--ds-panel-shadow);
+  border: var(--gengage-qna-panel-border, 1px solid var(--_gengage-border-color));
+  border-radius: var(--gengage-qna-panel-radius, 14px);
+  padding: var(--gengage-qna-panel-padding, 18px 20px 24px);
+  margin-bottom: var(--gengage-qna-panel-margin-bottom, 0);
+  margin-top: var(--gengage-qna-panel-margin-top, 0);
+  box-shadow: var(
+    --gengage-qna-panel-shadow,
+    0 2px 14px color-mix(in srgb, var(--_gengage-text-primary) 7%, transparent),
+    0 1px 2px color-mix(in srgb, var(--_gengage-text-primary) 5%, transparent)
+  );
+}
+
+/* Static heading (outside uispec) stays above streamed uispec blocks */
+.gengage-qna-panel > .gengage-qna-heading {
+  order: 0;
+}
+.gengage-qna-panel > .gengage-qna-uispec {
+  order: 1;
 }
 
 /* Keep pills/input below the transition overlay (transform on buttons creates stacking contexts) */
@@ -67,7 +97,18 @@
 .gengage-qna-uispec {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--gengage-qna-uispec-gap, 12px);
+}
+
+/* Stable visual order when backend emits children in a different sequence */
+.gengage-qna-uispec > .gengage-qna-heading {
+  order: 0;
+}
+.gengage-qna-uispec > .gengage-qna-input-wrapper {
+  order: 1;
+}
+.gengage-qna-uispec > .gengage-qna-buttons {
+  order: 2;
 }
 
 .gengage-qna-uispec > * {
@@ -89,21 +130,22 @@
 .gengage-qna-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px 0 10px;
+  gap: var(--gengage-qna-buttons-gap, 10px);
+  padding: var(--gengage-qna-buttons-padding, 2px 0 2px);
+  align-content: flex-start;
 }
 
 .gengage-qna-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 8px 14px;
+  min-height: var(--gengage-qna-button-min-height, 34px);
+  padding: var(--gengage-qna-button-padding, 6px 12px);
   border: 1px solid var(--_gengage-qna-pill-border);
   border-radius: var(--radius-pill, var(--gengage-qna-pill-radius, 999px));
   background: var(--_gengage-qna-pill-bg);
   color: var(--_gengage-qna-pill-fg);
-  font-size: 13px;
+  font-size: var(--gengage-qna-button-font-size, 14px);
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -113,7 +155,7 @@
     color 0.14s ease,
     transform 0.12s ease;
   text-align: left;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .gengage-qna-button:hover {
@@ -134,13 +176,13 @@
 .gengage-qna-cta {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 8px 14px;
+  min-height: var(--gengage-qna-button-min-height, 34px);
+  padding: var(--gengage-qna-button-padding, 6px 12px);
   border: 1px solid var(--ds-button-secondary-border);
   border-radius: var(--radius-pill, var(--gengage-qna-pill-radius, 999px));
   background: var(--ds-button-secondary-bg);
   color: var(--ds-button-secondary-fg);
-  font-size: 13px;
+  font-size: var(--gengage-qna-button-font-size, 14px);
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -162,7 +204,8 @@
 }
 
 .gengage-qna-input-wrapper {
-  padding: 6px 0 0;
+  padding: var(--gengage-qna-input-wrapper-padding, 0);
+  margin-bottom: var(--gengage-qna-input-wrapper-margin-bottom, 14px);
 }
 
 .gengage-qna-input-combo {
@@ -172,9 +215,9 @@
   align-items: center;
   min-height: 48px;
   border: 1px solid var(--_gengage-qna-input-border);
-  border-radius: var(--gengage-qna-input-radius, var(--ds-input-radius));
+  border-radius: var(--gengage-qna-input-radius, 12px);
   background: var(--_gengage-qna-input-bg);
-  box-shadow: var(--ds-input-highlight);
+  box-shadow: var(--gengage-qna-input-inner-shadow, var(--ds-input-highlight));
   overflow: hidden;
   transition:
     border-color 0.14s ease,
@@ -221,7 +264,8 @@
   padding: 0 10px 0 40px;
   border: none;
   border-radius: 0;
-  font-size: 15px;
+  font-size: var(--gengage-qna-input-font-size, 14px);
+  font-weight: var(--gengage-qna-input-font-weight, 500);
   font-family: inherit;
   outline: none;
   background: transparent;
@@ -229,6 +273,7 @@
 }
 
 .gengage-qna-input::placeholder {
+  color: var(--gengage-qna-input-placeholder-color, #6b7280);
   transition: opacity 0.18s ease;
 }
 
@@ -325,10 +370,12 @@
 }
 
 .gengage-qna-heading {
-  font-size: 1.04em;
-  font-weight: 700;
-  margin: 0 0 6px;
-  color: var(--_gengage-text-primary);
+  font-size: var(--gengage-qna-heading-font-size, clamp(16px, 1.15vw, 19px));
+  line-height: var(--gengage-qna-heading-line-height, 1.3);
+  letter-spacing: var(--gengage-qna-heading-letter-spacing, -0.012em);
+  font-weight: var(--gengage-qna-heading-font-weight, 700);
+  margin: var(--gengage-qna-heading-margin, 0 0 8px);
+  color: var(--gengage-qna-heading-color, var(--_gengage-text-primary));
 }
 
 .gengage-qna-loading {
@@ -366,6 +413,21 @@
   40% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .gengage-qna-panel {
+    padding: var(--gengage-qna-panel-padding-tablet, 14px 16px 18px);
+  }
+
+  .gengage-qna-uispec {
+    gap: var(--gengage-qna-uispec-gap-tablet, 12px);
+  }
+
+  .gengage-qna-uispec > .gengage-qna-buttons {
+    padding-top: var(--gengage-qna-buttons-padding-top-tablet, 2px);
+    gap: var(--gengage-qna-buttons-gap-tablet, 8px);
   }
 }
 

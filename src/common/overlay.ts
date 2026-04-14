@@ -111,6 +111,13 @@ export interface OverlayQNAOptions {
   i18n?: QNAWidgetConfig['i18n'];
   /** UISpec renderer overrides for QNA components. */
   renderer?: QNAWidgetConfig['renderer'];
+  /**
+   * Q&A panel heading (e.g. "Koçtaş'a Sor"). Independent from `chat.headerTitle`.
+   * If omitted, overlay falls back to `headingTitle` then `chat.headerTitle`.
+   */
+  headerTitle?: string;
+  /** @deprecated Use `headerTitle` */
+  headingTitle?: string;
 }
 
 export interface OverlaySimRelOptions {
@@ -388,6 +395,11 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
           }
           if (this.options.qna?.i18n !== undefined) qnaConfig.i18n = this.options.qna.i18n;
           if (this.options.qna?.renderer !== undefined) qnaConfig.renderer = this.options.qna.renderer;
+          const qnaHeading =
+            this.options.qna?.headerTitle ??
+            this.options.qna?.headingTitle ??
+            this.options.chat?.headerTitle;
+          if (qnaHeading !== undefined) qnaConfig.headerTitle = qnaHeading;
           await qna.init(qnaConfig);
           this._qna = qna;
         } else {

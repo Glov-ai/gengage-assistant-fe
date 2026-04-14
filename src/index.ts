@@ -76,6 +76,7 @@ export {
   extractSkuFromUrl,
   autoDetectPageContext,
   configureConnectionWarning,
+  makePillLauncher,
 } from './common/index.js';
 
 // Types (re-exported for consumers who want to type their own code)
@@ -133,6 +134,8 @@ export type {
   VoiceInputOptions,
   DetectablePageType,
   PageDetectionRule,
+  PillLauncherOptions,
+  PillLauncherKit,
 } from './common/index.js';
 
 export type { ChatWidgetConfig, ChatMessage, ChatSession, ChatI18n, ChatRendererConfig } from './chat/index.js';
