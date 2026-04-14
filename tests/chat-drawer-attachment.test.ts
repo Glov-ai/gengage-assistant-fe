@@ -108,6 +108,31 @@ describe('ChatDrawer attachment staging', () => {
     expect(container.querySelector('.gengage-chat-attachment-name')?.textContent).toBe('second.png');
     container.remove();
   });
+
+  it('can hide attachment controls for guided modes', () => {
+    const { container, drawer } = createDrawer();
+    drawer.setAttachmentControlsVisible(false);
+    const wrap = container.querySelector('.gengage-chat-attach-wrap') as HTMLElement | null;
+    expect(wrap?.style.display).toBe('none');
+    drawer.setAttachmentControlsVisible(true);
+    expect(wrap?.style.display).toBe('');
+    container.remove();
+  });
+
+  it('renders beauty photo helper card and calls skip callback', () => {
+    const skipSpy = vi.fn();
+    const { container, drawer } = createDrawer();
+    drawer.setBeautyPhotoStepCard({ visible: true, onSkip: skipSpy });
+    const card = container.querySelector('.gengage-chat-beauty-photo-step-card');
+    expect(card).not.toBeNull();
+    const skipBtn = container.querySelector('.gengage-chat-beauty-photo-step-skip') as HTMLButtonElement | null;
+    skipBtn?.click();
+    expect(skipSpy).toHaveBeenCalledTimes(1);
+    drawer.setBeautyPhotoStepCard({ visible: false });
+    const host = container.querySelector('.gengage-chat-beauty-photo-step') as HTMLElement | null;
+    expect(host?.hidden).toBe(true);
+    container.remove();
+  });
 });
 
 describe('ChatDrawer attach-menu timer race condition', () => {

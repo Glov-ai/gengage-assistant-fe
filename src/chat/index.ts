@@ -120,6 +120,12 @@ interface BeautyConsultingSessionState {
   scenario?: string;
   redirectedAgentState?: Record<string, unknown>;
   beautyConsultingState?: Record<string, unknown>;
+  transferText?: string;
+  handoffSummary?: string;
+  knownFields?: Record<string, unknown>;
+  status?: string;
+  photoFindings?: string;
+  photoStepState?: 'idle' | 'processing' | 'skipped' | 'completed';
   missingFields?: string[];
   initialized: boolean;
   initializing: boolean;
@@ -144,6 +150,23 @@ function asStringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const list = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
   return list.length > 0 ? list : undefined;
+}
+
+function normalizeKnownFields(value: unknown): Record<string, unknown> | undefined {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  const result: Record<string, unknown> = {};
+  for (const [key, fieldValue] of Object.entries(record)) {
+    if (fieldValue == null) continue;
+    if (typeof fieldValue === 'string') {
+      const trimmed = fieldValue.trim();
+      if (!trimmed) continue;
+      result[key] = trimmed;
+      continue;
+    }
+    result[key] = fieldValue;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 /**
@@ -420,6 +443,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         onReleasePresentationFocus: () => this._releasePresentationFocus(),
       },
     });
+    this._syncBeautyUiHints();
 
     // Extended mode manager for host PDP maximize/minimize
     this._extendedModeManager = new ExtendedModeManager({
@@ -761,6 +785,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._assistantMode = 'shopping';
     this._beautyConsultingState = null;
     this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
+    this._syncBeautyUiHints();
   }
 
   private _flushPresentationScroll(): void {
@@ -1225,6 +1250,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       });
       return;
     }
+    if (this._assistantMode === 'beauty_consulting') {
+      if (this._beautyConsultingState) {
+        this._beautyConsultingState.photoStepState = 'processing';
+        const patch = {
+          ...(this._beautyConsultingState.beautyConsultingState ?? {}),
+          photo_step_state: 'processing',
+        };
+        this._beautyConsultingState.beautyConsultingState = patch;
+      }
+      this._syncBeautyUiHints();
+      this._sendMessage('Fotoğrafımı analiz edebilir misiniz?', file);
+      return;
+    }
     this._drawer?.stageAttachment(file);
   }
 
@@ -1284,6 +1322,91 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return payload;
   }
 
+  private _shouldKeepTypingIndicator(): boolean {
+    return this._assistantMode === 'beauty_consulting' && this._beautyConsultingState?.initializing === true;
+  }
+
+  private _syncBeautyUiHints(): void {
+    const isBeautyMode = this._assistantMode === 'beauty_consulting';
+    this._drawer?.setAttachmentControlsVisible(!isBeautyMode);
+    if (!isBeautyMode) {
+      this._drawer?.setBeautyPhotoStepCard({ visible: false });
+      return;
+    }
+
+    const state = this._beautyConsultingState;
+    if (!state) {
+      this._drawer?.setBeautyPhotoStepCard({ visible: false });
+      return;
+    }
+
+    const status = state.status ?? firstString(state.beautyConsultingState?.['status']) ?? 'collecting';
+    const fields = normalizeKnownFields(state.knownFields) ?? normalizeKnownFields(state.beautyConsultingState?.['fields']) ?? {};
+    const missingFields = state.missingFields ?? asStringArray(state.beautyConsultingState?.['missing_fields']) ?? [];
+    const photoFindings = state.photoFindings ?? firstString(state.beautyConsultingState?.['photo_findings']);
+    const photoStepState = state.photoStepState ?? (photoFindings ? 'completed' : 'idle');
+
+    const hasSkinProfile = typeof fields['skin_profile'] === 'string' && String(fields['skin_profile']).trim().length > 0;
+    const needsSkinProfile = missingFields.includes('skin_profile') || !hasSkinProfile;
+    const isVisible =
+      status === 'collecting' &&
+      needsSkinProfile &&
+      !photoFindings &&
+      photoStepState !== 'skipped' &&
+      photoStepState !== 'completed';
+
+    this._drawer?.setBeautyPhotoStepCard({
+      visible: isVisible,
+      processing: photoStepState === 'processing',
+      onSkip: () => {
+        if (!this._beautyConsultingState) return;
+        this._beautyConsultingState.photoStepState = 'skipped';
+        const patch = {
+          ...(this._beautyConsultingState.beautyConsultingState ?? {}),
+          photo_step_state: 'skipped',
+        };
+        this._beautyConsultingState.beautyConsultingState = patch;
+        this._syncBeautyUiHints();
+      },
+    });
+  }
+
+  private _syncBeautyStateFromPanel(panel: Record<string, unknown>): void {
+    if (panel['assistant_mode'] !== 'beauty_consulting' || !this._beautyConsultingState) return;
+    const beautyState = asRecord(panel['beauty_consulting_state']);
+    if (!beautyState) return;
+
+    this._beautyConsultingState.beautyConsultingState = beautyState;
+
+    const scenario = firstString(beautyState['scenario']);
+    if (scenario) this._beautyConsultingState.scenario = scenario;
+
+    const missingFields = asStringArray(beautyState['missing_fields']);
+    if (missingFields) this._beautyConsultingState.missingFields = missingFields;
+
+    const knownFields = normalizeKnownFields(beautyState['fields']);
+    if (knownFields) this._beautyConsultingState.knownFields = knownFields;
+
+    const transferText = firstString(beautyState['transfer_text']);
+    if (transferText) this._beautyConsultingState.transferText = transferText;
+
+    const handoffSummary = firstString(beautyState['handoff_summary']);
+    if (handoffSummary) this._beautyConsultingState.handoffSummary = handoffSummary;
+
+    const status = firstString(beautyState['status']);
+    if (status) this._beautyConsultingState.status = status;
+
+    const photoFindings = firstString(beautyState['photo_findings']);
+    if (photoFindings) {
+      this._beautyConsultingState.photoFindings = photoFindings;
+      this._beautyConsultingState.photoStepState = 'completed';
+    } else if (this._beautyConsultingState.photoStepState === 'processing') {
+      this._beautyConsultingState.photoStepState = 'idle';
+    }
+
+    this._syncBeautyUiHints();
+  }
+
   private _beautyInputPlaceholder(): string {
     const locale = (this.config.locale ?? 'tr').toLowerCase();
     if (locale.startsWith('tr')) return 'Cilt tipini yaz veya bir fotoğraf yükle';
@@ -1299,17 +1422,52 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (mode !== 'beauty_consulting') return;
 
     const scenario = firstString(payload['scenario']);
+    const prefill = asRecord(payload['prefill']);
+    const transferText = firstString(
+      payload['user_text'],
+      payload['transfer_text'],
+      payload['transferText'],
+      prefill?.['transfer_text'],
+      prefill?.['transferText'],
+    );
+    const handoffSummary = firstString(payload['handoff_summary'], payload['handoffSummary']);
+    const knownFieldsRaw =
+      normalizeKnownFields(payload['known_fields']) ??
+      normalizeKnownFields(payload['knownFields']) ??
+      normalizeKnownFields(prefill);
+    const knownFields = knownFieldsRaw
+      ? Object.fromEntries(
+          Object.entries(knownFieldsRaw).filter(
+            ([key]) => key !== 'transfer_text' && key !== 'transferText' && key !== 'handoff_summary',
+          ),
+        )
+      : undefined;
     const redirectedAgentState =
       asRecord(payload['redirected_agent_state']) ?? asRecord(payload['beauty_consulting_state']) ?? undefined;
-    const modeOptions: { scenario?: string; redirectedAgentState?: Record<string, unknown> } = {};
+    const modeOptions: {
+      scenario?: string;
+      redirectedAgentState?: Record<string, unknown>;
+      transferText?: string;
+      handoffSummary?: string;
+      knownFields?: Record<string, unknown>;
+    } = {};
     if (scenario) modeOptions.scenario = scenario;
     if (redirectedAgentState) modeOptions.redirectedAgentState = redirectedAgentState;
+    if (transferText) modeOptions.transferText = transferText;
+    if (handoffSummary) modeOptions.handoffSummary = handoffSummary;
+    if (knownFields && Object.keys(knownFields).length > 0) modeOptions.knownFields = knownFields;
     await this._switchAssistantMode('beauty_consulting', modeOptions);
   }
 
   private async _switchAssistantMode(
     mode: AssistantMode,
-    options?: { scenario?: string; redirectedAgentState?: Record<string, unknown> },
+    options?: {
+      scenario?: string;
+      redirectedAgentState?: Record<string, unknown>;
+      transferText?: string;
+      handoffSummary?: string;
+      knownFields?: Record<string, unknown>;
+    },
   ): Promise<void> {
     const prevMode = this._assistantMode;
     const wasBeauty = this._assistantMode === 'beauty_consulting';
@@ -1319,10 +1477,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       to: mode,
       scenario: options?.scenario,
       hasRedirectedState: !!options?.redirectedAgentState,
+      hasTransferText: !!options?.transferText,
     });
     if (mode !== 'beauty_consulting') {
       this._beautyConsultingState = null;
       this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
+      this._syncBeautyUiHints();
       return;
     }
 
@@ -1335,16 +1495,33 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (nextScenario) nextBeautyState.scenario = nextScenario;
     const nextRedirectedState = options?.redirectedAgentState ?? this._beautyConsultingState?.redirectedAgentState;
     if (nextRedirectedState) nextBeautyState.redirectedAgentState = nextRedirectedState;
+    const nextTransferText = options?.transferText ?? this._beautyConsultingState?.transferText;
+    if (nextTransferText) nextBeautyState.transferText = nextTransferText;
+    const nextHandoffSummary = options?.handoffSummary ?? this._beautyConsultingState?.handoffSummary;
+    if (nextHandoffSummary) nextBeautyState.handoffSummary = nextHandoffSummary;
+    const nextKnownFields = options?.knownFields ?? this._beautyConsultingState?.knownFields;
+    if (nextKnownFields) nextBeautyState.knownFields = nextKnownFields;
     if (this._beautyConsultingState?.beautyConsultingState) {
       nextBeautyState.beautyConsultingState = this._beautyConsultingState.beautyConsultingState;
+    }
+    if (this._beautyConsultingState?.status) {
+      nextBeautyState.status = this._beautyConsultingState.status;
+    }
+    if (this._beautyConsultingState?.photoFindings) {
+      nextBeautyState.photoFindings = this._beautyConsultingState.photoFindings;
+    }
+    if (this._beautyConsultingState?.photoStepState) {
+      nextBeautyState.photoStepState = this._beautyConsultingState.photoStepState;
     }
     if (this._beautyConsultingState?.missingFields) {
       nextBeautyState.missingFields = this._beautyConsultingState.missingFields;
     }
     this._beautyConsultingState = nextBeautyState;
+    this._syncBeautyUiHints();
 
     if (!wasBeauty) {
-      const handoffMsg = this._createMessage('assistant', this._i18n.handoffHeading);
+      const handoffText = nextHandoffSummary ?? this._i18n.handoffHeading;
+      const handoffMsg = this._createMessage('assistant', handoffText);
       handoffMsg.threadId = this._currentThreadId ?? uuidv7();
       this._messages.push(handoffMsg);
       this._ensureAssistantMessageRendered(handoffMsg);
@@ -1359,6 +1536,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private async _initBeautyConsultingSession(): Promise<void> {
     if (!this._beautyConsultingState) return;
     this._beautyConsultingState.initializing = true;
+    this._syncBeautyUiHints();
+    this._drawer?.showTypingIndicator('Güzellik danışmanını hazırlıyorum...');
     const initRequestId = ++this._beautyInitRequestId;
     const threadId = uuidv7();
     this._currentThreadId = threadId;
@@ -1423,6 +1602,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (this._beautyConsultingState.redirectedAgentState) {
       request.redirected_agent_state = this._beautyConsultingState.redirectedAgentState;
     }
+    if (this._beautyConsultingState.transferText) {
+      request.transfer_text = this._beautyConsultingState.transferText;
+    }
+    if (this._beautyConsultingState.handoffSummary) {
+      request.handoff_summary = this._beautyConsultingState.handoffSummary;
+    }
+    const mergedKnownFields = {
+      ...(normalizeKnownFields(this._beautyConsultingState.knownFields) ?? {}),
+      ...(normalizeKnownFields(this._beautyConsultingState.beautyConsultingState?.['fields']) ?? {}),
+    };
+    if (Object.keys(mergedKnownFields).length > 0) {
+      request.known_fields = mergedKnownFields;
+    }
     if (this.config.session?.userId !== undefined) {
       request.user_id = this.config.session.userId;
     }
@@ -1434,6 +1626,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       scenario: request.scenario,
       mode: request.assistant_mode,
       hasRedirectedState: !!request.redirected_agent_state,
+      hasTransferText: !!request.transfer_text,
+      knownFieldsCount: request.known_fields ? Object.keys(request.known_fields).length : 0,
       historyCount: chatHistory.length,
     });
 
@@ -1451,8 +1645,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       if (updatedState) {
         this._beautyConsultingState.beautyConsultingState = updatedState;
       }
+      const knownFields = normalizeKnownFields(result.fields);
+      if (knownFields) this._beautyConsultingState.knownFields = knownFields;
+      const handoffSummary = firstString(result.handoff_summary);
+      if (handoffSummary) this._beautyConsultingState.handoffSummary = handoffSummary;
       const missingFields = asStringArray(result.missing_fields);
       if (missingFields) this._beautyConsultingState.missingFields = missingFields;
+      const panel = asRecord(this._lastBackendContext?.panel);
+      if (panel) this._syncBeautyStateFromPanel(panel);
       debugLog('beauty', 'beauty init response', {
         scenario: this._beautyConsultingState.scenario,
         missingFields: this._beautyConsultingState.missingFields ?? [],
@@ -1469,12 +1669,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           asRecord(result.payload)?.['text'],
         ) ?? 'Beauty Expert is ready. Tell me your skin type or upload a selfie.';
 
+      this._drawer?.removeTypingIndicator();
       const botMsg = this._createMessage('assistant', text);
       botMsg.threadId = threadId;
       botMsg.status = 'done';
       this._messages.push(botMsg);
       this._ensureAssistantMessageRendered(botMsg);
       this.emit('message', botMsg);
+      this._syncBeautyUiHints();
       this._flushPresentationScroll();
       this._persistToIndexedDB().catch(() => {
         /* non-fatal */
@@ -1482,6 +1684,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     } catch (err) {
       if (initRequestId !== this._beautyInitRequestId) return;
       this._beautyConsultingState.initializing = false;
+      this._drawer?.removeTypingIndicator();
+      this._syncBeautyUiHints();
       debugLog('beauty', 'beauty init failed', {
         message: err instanceof Error ? err.message : String(err),
       });
@@ -2298,6 +2502,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               event.meta.message_id !== undefined
             ) {
               this._lastBackendContext = event.meta as import('../common/types.js').BackendContext;
+              const panel = asRecord(event.meta.panel);
+              if (panel) this._syncBeautyStateFromPanel(panel);
             }
 
             // Panel loading indicator
@@ -2421,7 +2627,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           pendingPanelAiSpec = null;
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
-          this._drawer?.removeTypingIndicator();
+          if (!this._shouldKeepTypingIndicator()) {
+            this._drawer?.removeTypingIndicator();
+          }
+          if (
+            options?.attachment &&
+            this._assistantMode === 'beauty_consulting' &&
+            this._beautyConsultingState?.photoStepState === 'processing' &&
+            !this._beautyConsultingState.photoFindings
+          ) {
+            this._beautyConsultingState.photoStepState = 'idle';
+            this._syncBeautyUiHints();
+          }
           // Capture panel state before resetting — needed for error gating below
           const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
@@ -2537,7 +2754,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._lastErrorMessage = '';
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
-          this._drawer?.removeTypingIndicator();
+          if (!this._shouldKeepTypingIndicator()) {
+            this._drawer?.removeTypingIndicator();
+          }
+          if (
+            options?.attachment &&
+            this._assistantMode === 'beauty_consulting' &&
+            this._beautyConsultingState?.photoStepState === 'processing' &&
+            !this._beautyConsultingState.photoFindings
+          ) {
+            this._beautyConsultingState.photoStepState = 'idle';
+            this._syncBeautyUiHints();
+          }
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
           panelContentReceived = false;
@@ -2627,7 +2855,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._drawer?.showStopButton(() => {
         ctrl.abort();
         this._abortControllers.delete(ctrl);
-        this._drawer?.removeTypingIndicator();
+        if (!this._shouldKeepTypingIndicator()) {
+          this._drawer?.removeTypingIndicator();
+        }
         this._bridge?.send('isResponding', false);
         this._bridge?.send('loadingMessage', { text: null });
         if (botMsg.status === 'streaming') {

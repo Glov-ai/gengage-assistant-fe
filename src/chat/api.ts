@@ -71,6 +71,9 @@ export interface BeautyConsultingInitRequest {
   scenario?: string;
   assistant_mode?: string;
   redirected_agent_state?: Record<string, unknown>;
+  transfer_text?: string;
+  handoff_summary?: string;
+  known_fields?: Record<string, unknown>;
 }
 
 export interface BeautyConsultingInitResponse {
@@ -78,6 +81,8 @@ export interface BeautyConsultingInitResponse {
   message?: string;
   text?: string;
   scenario?: string;
+  handoff_summary?: string;
+  fields?: Record<string, unknown>;
   missing_fields?: string[];
   beauty_consulting_state?: Record<string, unknown>;
   redirected_agent_state?: Record<string, unknown>;

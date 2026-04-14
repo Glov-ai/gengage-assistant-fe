@@ -1402,7 +1402,8 @@ function renderProductGrid(
 
           const label = document.createElement('h4');
           label.className = 'gengage-chat-consulting-group-label';
-          label.textContent = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
+          const labelText = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
+          label.textContent = skus.length > 0 ? `${labelText} (${skus.length})` : labelText;
           header.appendChild(label);
 
           if (typeof group.reason === 'string' && group.reason.trim().length > 0) {
@@ -1495,11 +1496,6 @@ function renderProductGrid(
       label.className = 'gengage-chat-consulting-style-label';
       label.textContent = variation.style_label ?? `Style ${index + 1}`;
       btn.appendChild(label);
-
-      const mood = document.createElement('span');
-      mood.className = 'gengage-chat-consulting-style-mood';
-      mood.textContent = variation.style_mood ?? '';
-      btn.appendChild(mood);
 
       btn.addEventListener('click', () => {
         if (selectedVariationIndex === index) return;
