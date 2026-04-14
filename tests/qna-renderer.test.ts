@@ -84,10 +84,7 @@ describe('renderQnaUISpec', () => {
       },
     };
 
-    const result = renderQnaUISpec(
-      spec,
-      makeContext({ headingTitleOverride: "Teknosa'ya Sor" }),
-    );
+    const result = renderQnaUISpec(spec, makeContext({ headingTitleOverride: "Teknosa'ya Sor" }));
     const heading = result.querySelector('.gengage-qna-heading');
     expect(heading?.textContent).toBe("Teknosa'ya Sor");
   });

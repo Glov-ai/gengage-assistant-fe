@@ -26,24 +26,15 @@
   --_gengage-qna-icon-color: var(--gengage-qna-icon-color, var(--client-primary));
   --_gengage-qna-transition-overlay: color-mix(in srgb, var(--surface-card) 78%, transparent);
   --_gengage-qna-pill-bg: var(--gengage-qna-pill-bg, #fff);
-  --_gengage-qna-pill-bg-hover: var(
-    --gengage-qna-pill-bg-hover,
-    color-mix(in srgb, var(--client-primary) 10%, white)
-  );
+  --_gengage-qna-pill-bg-hover: var(--gengage-qna-pill-bg-hover, color-mix(in srgb, var(--client-primary) 10%, white));
   --_gengage-qna-pill-fg: var(--gengage-qna-pill-fg, var(--client-primary));
-  --_gengage-qna-pill-border: var(
-    --gengage-qna-pill-border,
-    color-mix(in srgb, var(--client-primary) 64%, white)
-  );
+  --_gengage-qna-pill-border: var(--gengage-qna-pill-border, color-mix(in srgb, var(--client-primary) 64%, white));
   --_gengage-qna-pill-border-hover: var(
     --gengage-qna-pill-border-hover,
     color-mix(in srgb, var(--client-primary) 78%, white)
   );
   --_gengage-qna-input-bg: var(--gengage-qna-input-bg, #fff);
-  --_gengage-qna-input-border: var(
-    --gengage-qna-input-border,
-    color-mix(in srgb, var(--client-primary) 58%, white)
-  );
+  --_gengage-qna-input-border: var(--gengage-qna-input-border, color-mix(in srgb, var(--client-primary) 58%, white));
   --_gengage-qna-action-icon-bg-hover: var(
     --gengage-qna-action-icon-bg-hover,
     color-mix(in srgb, var(--client-primary) 12%, white)
