@@ -269,6 +269,8 @@ interface V1AiProductSuggestion {
   reason?: string;
   expert_quality_score?: number;
   review_highlight?: string;
+  /** Campaign / merchant discount label; merged into normalized product for price UI. */
+  discount_reason?: string;
   product_item?: V1Product;
   requestDetails?: V1RequestDetails;
   [key: string]: unknown;
@@ -1567,8 +1569,17 @@ function buildEmptyUISpec(widget: WidgetName): StreamEventUISpec {
 function suggestionToNormalizedProduct(suggestion: V1AiProductSuggestion): NormalizedProduct | null {
   const fallbackSku = firstNonEmptyString(suggestion.sku);
   const fallbackName = firstNonEmptyString(suggestion.short_name);
-  const productObj = asRecord(suggestion.product_item) ?? (suggestion as Record<string, unknown>);
-  return productRecordToNormalized(productObj, fallbackSku, fallbackName);
+  const inner = asRecord(suggestion.product_item);
+  const base = inner ?? (suggestion as Record<string, unknown>);
+  const merged: Record<string, unknown> = { ...base };
+  const fromSuggestionRoot = firstNonEmptyString(suggestion.discount_reason, suggestion['discountReason']);
+  if (
+    fromSuggestionRoot &&
+    !firstNonEmptyString(merged['discount_reason'] as unknown, merged['discountReason'] as unknown)
+  ) {
+    merged['discount_reason'] = fromSuggestionRoot;
+  }
+  return productRecordToNormalized(merged, fallbackSku, fallbackName);
 }
 
 function productRecordToNormalized(
@@ -1611,6 +1622,9 @@ function productRecordToNormalized(
   if (cartCode) product.cart_code = cartCode;
   if (typeof raw['in_stock'] === 'boolean') product.in_stock = raw['in_stock'];
   if (typeof raw['inStock'] === 'boolean') product.in_stock = raw['inStock'];
+
+  const discountReason = firstNonEmptyString(raw['discount_reason'], raw['discountReason']);
+  if (discountReason) product.discount_reason = discountReason;
 
   return productToNormalized(product);
 }

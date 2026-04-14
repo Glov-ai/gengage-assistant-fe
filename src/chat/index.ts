@@ -282,6 +282,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
+    this._applyDiscountedPriceColorVar(config.productPriceUi?.discountedPriceColor);
+
     // Create root container
     const rootEl = document.createElement('div');
     rootEl.className = 'gengage-chat-root';
@@ -710,6 +712,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   // ---------------------------------------------------------------------------
   // Private
   // ---------------------------------------------------------------------------
+
+  private _applyDiscountedPriceColorVar(mode: import('./types.js').DiscountedPriceColor | undefined): void {
+    const host = this.root as HTMLElement;
+    if (mode === 'client') {
+      host.style.setProperty('--gengage-discounted-price-color', 'var(--client-primary)');
+    } else {
+      host.style.removeProperty('--gengage-discounted-price-color');
+    }
+  }
 
   private _abortAllActiveRequests(): void {
     for (const controller of this._abortControllers) {
@@ -3439,6 +3450,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       },
       i18n: this._i18n,
       pricing: this.config.pricing,
+      productPriceUi: this.config.productPriceUi,
       productSort: this._productSort,
       onSortChange: (sort) => {
         this._productSort = sort;

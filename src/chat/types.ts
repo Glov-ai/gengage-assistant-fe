@@ -146,6 +146,9 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
    */
   productDetailsExtended?: boolean;
 
+  /** Product price presentation (cards, summary, details, AI Top Picks). */
+  productPriceUi?: ProductPriceUiConfig;
+
   // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
   // -------------------------------------------------------------------------
@@ -320,12 +323,40 @@ export interface ChatContextualCopyByContext {
   default?: string;
 }
 
+/** List vs sale price row: strike-through or inline with separator. */
+export type ProductPriceOriginalStyle = 'strikethrough' | 'inline';
+
+/** Sale price text color: body default or brand (`--client-primary`). */
+export type DiscountedPriceColor = 'default' | 'client';
+
+export interface ProductPriceUiConfig {
+  /**
+   * How the list price is shown. Override per product via `originalPriceStyle` / `price_original_style`.
+   * `strikethrough`: crossed-out list price. `inline`: current, separator, muted list price (no line).
+   */
+  originalPriceStyle?: ProductPriceOriginalStyle;
+  /**
+   * When true, show a campaign / discount reason line when the payload includes `discount_reason` (or aliases).
+   */
+  showCampaignReason?: boolean;
+  /**
+   * Sale price color. Sets `--gengage-discounted-price-color` on the widget host when `client`.
+   */
+  discountedPriceColor?: DiscountedPriceColor;
+  /**
+   * Optional default image URL for the left column of the campaign price badge (logo).
+   * Override per product via `campaignReasonLogoUrl` / `campaign_reason_logo_url` (or `discountBadgeLogoUrl`).
+   */
+  campaignBadgeLogoUrl?: string;
+}
+
 export interface ChatUISpecRenderContext {
   onAction: (action: ActionPayload) => void;
   onProductClick?: (params: { sku: string; url: string; name?: string }) => void;
   onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;
   onProductSelect?: (product: Record<string, unknown>) => void;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig | undefined;
+  productPriceUi?: ProductPriceUiConfig | undefined;
   i18n?: Pick<
     ChatI18n,
     | 'productCtaLabel'

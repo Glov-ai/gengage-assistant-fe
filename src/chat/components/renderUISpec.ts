@@ -30,6 +30,14 @@ import {
   addImageErrorHandler,
   createStarRatingElement,
 } from '../../common/product-utils.js';
+import {
+  campaignReasonForDisplay,
+  createCampaignPriceBadge,
+  createCampaignReasonElement,
+  resolveCampaignBadgeLogoUrl,
+  resolveOriginalPriceStyle,
+} from './product-price-layout.js';
+import type { ProductPriceOriginalStyle } from '../types.js';
 
 export type UISpecRenderContext = ChatUISpecRenderContext;
 
@@ -135,6 +143,168 @@ function renderActionButton(element: UIElement, ctx: UISpecRenderContext): HTMLE
     button.addEventListener('click', () => ctx.onAction(action));
   }
   return button;
+}
+
+function fillProductCardPriceBlock(
+  priceBlock: HTMLElement,
+  ctx: UISpecRenderContext,
+  product: Record<string, unknown>,
+  price: string,
+  originalPrice: string | undefined,
+): void {
+  priceBlock.replaceChildren();
+  const style = resolveOriginalPriceStyle(ctx, product);
+  const hasDiscount = !!(originalPrice && price && originalPrice !== price);
+  const campaignReason = campaignReasonForDisplay(ctx, product);
+  const frameDiscounted = !!(campaignReason && hasDiscount);
+  const logoUrl = resolveCampaignBadgeLogoUrl(ctx, product);
+  if (!price || parseFloat(price) <= 0) return;
+
+  if (frameDiscounted) {
+    const badge = createCampaignPriceBadge({
+      reasonText: campaignReason!,
+      salePriceFormatted: formatPrice(price, ctx.pricing),
+      ...(logoUrl !== undefined ? { logoUrl } : {}),
+    });
+    if (hasDiscount && style === 'inline') {
+      priceBlock.classList.add('gengage-chat-product-card-price-block--inline');
+      const row = document.createElement('div');
+      row.className = 'gengage-chat-product-card-price-row';
+      row.appendChild(badge);
+      const sep = document.createElement('span');
+      sep.className = 'gengage-chat-product-card-price-sep';
+      sep.setAttribute('aria-hidden', 'true');
+      const orig = document.createElement('span');
+      orig.className = 'gengage-chat-product-card-original-price';
+      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+      row.appendChild(sep);
+      row.appendChild(orig);
+      priceBlock.appendChild(row);
+      return;
+    }
+    priceBlock.classList.remove('gengage-chat-product-card-price-block--inline');
+    priceBlock.appendChild(badge);
+    if (hasDiscount) {
+      priceBlock.appendChild(document.createTextNode(' '));
+      const orig = document.createElement('span');
+      orig.className = 'gengage-chat-product-card-original-price';
+      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+      priceBlock.appendChild(orig);
+    }
+    return;
+  }
+
+  if (hasDiscount && style === 'inline') {
+    priceBlock.classList.add('gengage-chat-product-card-price-block--inline');
+    const row = document.createElement('div');
+    row.className = 'gengage-chat-product-card-price-row';
+    const cur = document.createElement('span');
+    cur.className = 'gengage-chat-product-card-current-price';
+    cur.textContent = formatPrice(price, ctx.pricing);
+    const sep = document.createElement('span');
+    sep.className = 'gengage-chat-product-card-price-sep';
+    sep.setAttribute('aria-hidden', 'true');
+    const orig = document.createElement('span');
+    orig.className = 'gengage-chat-product-card-original-price';
+    orig.textContent = formatPrice(originalPrice, ctx.pricing);
+    row.appendChild(cur);
+    row.appendChild(sep);
+    row.appendChild(orig);
+    priceBlock.appendChild(row);
+    return;
+  }
+
+  priceBlock.classList.remove('gengage-chat-product-card-price-block--inline');
+  const current = document.createElement('span');
+  current.className = 'gengage-chat-product-card-current-price';
+  current.textContent = formatPrice(price, ctx.pricing);
+  priceBlock.appendChild(current);
+  if (hasDiscount) {
+    priceBlock.appendChild(document.createTextNode(' '));
+    const orig = document.createElement('span');
+    orig.className = 'gengage-chat-product-card-original-price';
+    orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+    priceBlock.appendChild(orig);
+  }
+}
+
+function fillProductDetailsPriceRow(
+  priceRow: HTMLElement,
+  ctx: UISpecRenderContext,
+  product: Record<string, unknown>,
+  price: string,
+  originalPrice: string | undefined,
+  style: ProductPriceOriginalStyle,
+  hasDiscount: boolean,
+): void {
+  priceRow.classList.remove('gengage-chat-product-details-price--inline');
+  priceRow.replaceChildren();
+  priceRow.className = 'gengage-chat-product-details-price';
+  const campaignReason = campaignReasonForDisplay(ctx, product);
+  const frameDiscounted = !!(campaignReason && hasDiscount);
+  const logoUrl = resolveCampaignBadgeLogoUrl(ctx, product);
+  if (frameDiscounted) {
+    const badge = createCampaignPriceBadge({
+      reasonText: campaignReason!,
+      salePriceFormatted: formatPrice(price, ctx.pricing),
+      ...(logoUrl !== undefined ? { logoUrl } : {}),
+    });
+    if (hasDiscount && style === 'inline') {
+      priceRow.classList.add('gengage-chat-product-details-price--inline');
+      priceRow.appendChild(badge);
+      const sep = document.createElement('span');
+      sep.className = 'gengage-chat-product-details-price-sep';
+      sep.setAttribute('aria-hidden', 'true');
+      const oldP = document.createElement('span');
+      oldP.className = 'gengage-chat-product-details-original-price';
+      oldP.textContent = formatPrice(originalPrice!, ctx.pricing);
+      priceRow.appendChild(sep);
+      priceRow.appendChild(oldP);
+    } else {
+      if (hasDiscount) {
+        const oldPrice = document.createElement('span');
+        oldPrice.className = 'gengage-chat-product-details-original-price';
+        oldPrice.textContent = formatPrice(originalPrice!, ctx.pricing);
+        priceRow.appendChild(oldPrice);
+        priceRow.appendChild(document.createTextNode(' '));
+      }
+      priceRow.appendChild(badge);
+    }
+  } else if (hasDiscount && style === 'inline') {
+    priceRow.classList.add('gengage-chat-product-details-price--inline');
+    const cur = document.createElement('span');
+    cur.className = 'gengage-chat-product-details-current-price';
+    cur.textContent = formatPrice(price, ctx.pricing);
+    const sep = document.createElement('span');
+    sep.className = 'gengage-chat-product-details-price-sep';
+    sep.setAttribute('aria-hidden', 'true');
+    const oldP = document.createElement('span');
+    oldP.className = 'gengage-chat-product-details-original-price';
+    oldP.textContent = formatPrice(originalPrice!, ctx.pricing);
+    priceRow.appendChild(cur);
+    priceRow.appendChild(sep);
+    priceRow.appendChild(oldP);
+  } else {
+    if (hasDiscount) {
+      const oldPrice = document.createElement('span');
+      oldPrice.className = 'gengage-chat-product-details-original-price';
+      oldPrice.textContent = formatPrice(originalPrice!, ctx.pricing);
+      priceRow.appendChild(oldPrice);
+      priceRow.appendChild(document.createTextNode(' '));
+    }
+    const currentPrice = document.createElement('span');
+    currentPrice.className = 'gengage-chat-product-details-current-price';
+    currentPrice.textContent = formatPrice(price, ctx.pricing);
+    priceRow.appendChild(currentPrice);
+  }
+
+  const discountPercent = productNumber(product, 'discountPercent', 'price_discount_rate');
+  if (typeof discountPercent === 'number' && discountPercent > 0) {
+    const discountBadge = document.createElement('span');
+    discountBadge.className = 'gengage-chat-product-details-discount-badge';
+    discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
+    priceRow.appendChild(discountBadge);
+  }
 }
 
 function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
@@ -272,6 +442,10 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   const price = product['price'] as string | undefined;
   const originalPrice = product['originalPrice'] as string | undefined;
   const priceAsync = product['price_async'] as boolean | undefined;
+  const campaignReason = campaignReasonForDisplay(ctx, product);
+  const priceStyle = resolveOriginalPriceStyle(ctx, product);
+  const hasCardDiscount = !!(originalPrice && price && originalPrice !== price && parseFloat(price) > 0);
+  const useCardPriceStack = !!(campaignReason || (hasCardDiscount && priceStyle === 'inline'));
 
   const hasNumericRating = typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
   const metaRow = document.createElement('div');
@@ -281,6 +455,16 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
   // Keep .gengage-chat-product-card-price for tests and legacy selectors
   priceBlock.className = 'gengage-chat-product-card-price gengage-chat-product-card-price-block';
 
+  const priceOuter: HTMLElement = useCardPriceStack
+    ? (() => {
+        const stack = document.createElement('div');
+        stack.className = 'gengage-chat-product-card-price-stack';
+        if (campaignReason) stack.appendChild(createCampaignReasonElement(campaignReason));
+        stack.appendChild(priceBlock);
+        return stack;
+      })()
+    : priceBlock;
+
   if (priceAsync === true) {
     const skeleton = document.createElement('span');
     skeleton.className = 'gengage-chat-price-skeleton';
@@ -288,45 +472,17 @@ function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLEl
     setTimeout(() => {
       if (!skeleton.parentElement) return;
       if (price && parseFloat(price) > 0) {
-        const op = product['originalPrice'] as string | undefined;
-        if (op && op !== price) {
-          const cur = document.createElement('span');
-          cur.className = 'gengage-chat-product-card-current-price';
-          cur.textContent = formatPrice(price, ctx.pricing);
-          const origEl = document.createElement('span');
-          origEl.className = 'gengage-chat-product-card-original-price';
-          origEl.textContent = formatPrice(op, ctx.pricing);
-          const frag = document.createDocumentFragment();
-          frag.appendChild(cur);
-          frag.appendChild(document.createTextNode(' '));
-          frag.appendChild(origEl);
-          skeleton.replaceWith(frag);
-        } else {
-          const cur = document.createElement('span');
-          cur.className = 'gengage-chat-product-card-current-price';
-          cur.textContent = formatPrice(price, ctx.pricing);
-          skeleton.replaceWith(cur);
-        }
+        fillProductCardPriceBlock(priceBlock, ctx, product, price, product['originalPrice'] as string | undefined);
       } else {
         skeleton.remove();
       }
     }, 300);
   } else if (price && parseFloat(price) > 0) {
-    const current = document.createElement('span');
-    current.className = 'gengage-chat-product-card-current-price';
-    current.textContent = formatPrice(price, ctx.pricing);
-    priceBlock.appendChild(current);
-    if (originalPrice && originalPrice !== price) {
-      priceBlock.appendChild(document.createTextNode(' '));
-      const orig = document.createElement('span');
-      orig.className = 'gengage-chat-product-card-original-price';
-      orig.textContent = formatPrice(originalPrice, ctx.pricing);
-      priceBlock.appendChild(orig);
-    }
+    fillProductCardPriceBlock(priceBlock, ctx, product, price, originalPrice);
   }
 
   if (priceBlock.childElementCount > 0 || priceAsync === true) {
-    metaRow.appendChild(priceBlock);
+    metaRow.appendChild(priceOuter);
   }
 
   if (hasNumericRating) {
@@ -812,6 +968,9 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   const price = productString(product, 'price');
   const originalPrice = productString(product, 'originalPrice', 'price_original');
   const priceAsync = productBoolean(product, 'price_async');
+  const campaignReason = campaignReasonForDisplay(ctx, product);
+  const priceStyleDetails = resolveOriginalPriceStyle(ctx, product);
+  const hasDiscountDetails = !!(originalPrice && price && originalPrice !== price);
   const inStock = productBoolean(product, 'inStock', 'in_stock');
   const reviewCount = productNumber(product, 'reviewCount', 'review_count');
   const rating = productNumber(product, 'rating');
@@ -1014,47 +1173,53 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     content.appendChild(ratingRow);
   }
 
-  if (priceAsync === true) {
+  {
+    let priceAppendTarget: HTMLElement = content;
+    if (campaignReason) {
+      const stack = document.createElement('div');
+      stack.className = 'gengage-chat-product-details-price-stack';
+      stack.appendChild(createCampaignReasonElement(campaignReason));
+      content.appendChild(stack);
+      priceAppendTarget = stack;
+    }
+
     const priceRow = document.createElement('div');
     priceRow.className = 'gengage-chat-product-details-price';
-    const skeleton = document.createElement('span');
-    skeleton.className = 'gengage-chat-price-skeleton';
-    priceRow.appendChild(skeleton);
-    content.appendChild(priceRow);
-    // Replace skeleton with actual price after delay
-    setTimeout(() => {
-      if (!skeleton.parentElement) return; // Element removed from DOM
-      if (price && parseFloat(price) > 0) {
-        const currentPrice = document.createElement('span');
-        currentPrice.className = 'gengage-chat-product-details-current-price';
-        currentPrice.textContent = formatPrice(price, ctx.pricing);
-        skeleton.replaceWith(currentPrice);
-      } else {
-        skeleton.remove();
+
+    if (priceAsync === true) {
+      const skeleton = document.createElement('span');
+      skeleton.className = 'gengage-chat-price-skeleton';
+      priceRow.appendChild(skeleton);
+      priceAppendTarget.appendChild(priceRow);
+      setTimeout(() => {
+        if (!skeleton.parentElement) return;
+        if (price && parseFloat(price) > 0) {
+          fillProductDetailsPriceRow(
+            priceRow,
+            ctx,
+            product,
+            price,
+            originalPrice,
+            priceStyleDetails,
+            hasDiscountDetails,
+          );
+        } else {
+          const host = priceRow.parentElement;
+          priceRow.remove();
+          if (host?.classList.contains('gengage-chat-product-details-price-stack')) {
+            host.remove();
+          }
+        }
+      }, 300);
+    } else if (price && parseFloat(price) > 0) {
+      fillProductDetailsPriceRow(priceRow, ctx, product, price, originalPrice, priceStyleDetails, hasDiscountDetails);
+      priceAppendTarget.appendChild(priceRow);
+    } else if (campaignReason) {
+      const host = priceAppendTarget;
+      if (host.classList.contains('gengage-chat-product-details-price-stack')) {
+        host.remove();
       }
-    }, 300);
-  } else if (price && parseFloat(price) > 0) {
-    const priceRow = document.createElement('div');
-    priceRow.className = 'gengage-chat-product-details-price';
-    if (originalPrice && originalPrice !== price) {
-      const oldPrice = document.createElement('span');
-      oldPrice.className = 'gengage-chat-product-details-original-price';
-      oldPrice.textContent = formatPrice(originalPrice, ctx.pricing);
-      priceRow.appendChild(oldPrice);
-      priceRow.appendChild(document.createTextNode(' '));
     }
-    const currentPrice = document.createElement('span');
-    currentPrice.className = 'gengage-chat-product-details-current-price';
-    currentPrice.textContent = formatPrice(price, ctx.pricing);
-    priceRow.appendChild(currentPrice);
-    const discountPercent = productNumber(product, 'discountPercent', 'price_discount_rate');
-    if (typeof discountPercent === 'number' && discountPercent > 0) {
-      const discountBadge = document.createElement('span');
-      discountBadge.className = 'gengage-chat-product-details-discount-badge';
-      discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
-      priceRow.appendChild(discountBadge);
-    }
-    content.appendChild(priceRow);
   }
 
   if (typeof inStock === 'boolean') {

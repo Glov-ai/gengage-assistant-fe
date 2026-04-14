@@ -106,6 +106,7 @@ export interface OverlayChatOptions {
   onOpen?: () => void;
   /** Called when the chat panel closes. */
   onClose?: () => void;
+  productPriceUi?: ChatWidgetConfig['productPriceUi'];
 }
 
 export interface OverlayQNAOptions {
@@ -349,6 +350,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
     if (this.options.chat?.productDetailsExtended !== undefined) {
       config.productDetailsExtended = this.options.chat.productDetailsExtended;
+    }
+    if (this.options.chat?.productPriceUi !== undefined) {
+      config.productPriceUi = this.options.chat.productPriceUi;
     }
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
