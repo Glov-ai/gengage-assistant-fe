@@ -64,6 +64,8 @@ export const CHAT_I18N_TR: ChatI18n = {
   findSimilarLabel: 'Benzerlerini Bul',
   galleryPrevAriaLabel: 'Önceki görsel',
   galleryNextAriaLabel: 'Sonraki görsel',
+  beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
+  watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
   choicePrompterHeading: 'Kararsız mı kaldın?',
   choicePrompterSuggestion: 'Ürünleri seçip karşılaştırabilirsin',
   choicePrompterCta: 'Seç ve Karşılaştır',

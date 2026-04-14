@@ -5288,7 +5288,7 @@ button.gengage-chat-product-card-cta {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 104px;
+  min-height: 112px;
 }
 
 .gengage-chat-consulting-group-label {
@@ -5296,6 +5296,13 @@ button.gengage-chat-product-card-cta {
   font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
+  line-height: 1.25;
+  min-height: calc(2 * 1.25em);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .gengage-chat-consulting-group-reason {
@@ -5313,9 +5320,10 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-consulting-group-grid {
   margin-bottom: 2px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(var(--consulting-group-columns, 4), minmax(210px, 1fr));
   gap: 14px;
   align-items: stretch;
+  justify-content: stretch;
 }
 
 .gengage-chat-consulting-group-grid .gengage-chat-product-card {
@@ -5412,6 +5420,7 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card {
   min-width: 0;
+  margin-inline: auto;
 }
 
 .gengage-chat-root--mobile .gengage-chat-consulting-style-grid {

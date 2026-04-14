@@ -216,6 +216,10 @@ export interface ChatI18n {
   /** Product details gallery: previous / next image controls */
   galleryPrevAriaLabel: string;
   galleryNextAriaLabel: string;
+  /** Title shown above consultant style cards. Supports {count} placeholder. */
+  beautyStylesPreparedTitle: string;
+  /** Title shown above watch-expert style cards. Supports {count} placeholder. */
+  watchStylesPreparedTitle: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -339,6 +343,8 @@ export interface ChatUISpecRenderContext {
     | 'findSimilarLabel'
     | 'galleryPrevAriaLabel'
     | 'galleryNextAriaLabel'
+    | 'beautyStylesPreparedTitle'
+    | 'watchStylesPreparedTitle'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'
