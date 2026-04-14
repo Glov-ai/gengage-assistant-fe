@@ -238,6 +238,7 @@ export class ChatDrawer {
   private _typingLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
+  private _beautyPhotoStepEl: HTMLElement | null = null;
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -809,6 +810,12 @@ export class ChatDrawer {
     this._inputChipsEl.dataset['gengagePart'] = 'chat-input-chips';
     this._inputChipsEl.style.display = 'none';
     conversation.appendChild(this._inputChipsEl);
+
+    this._beautyPhotoStepEl = document.createElement('section');
+    this._beautyPhotoStepEl.className = 'gengage-chat-beauty-photo-step';
+    this._beautyPhotoStepEl.dataset['gengagePart'] = 'chat-beauty-photo-step';
+    this._beautyPhotoStepEl.hidden = true;
+    conversation.appendChild(this._beautyPhotoStepEl);
 
     // Input area
     const inputArea = document.createElement('div');
@@ -1421,6 +1428,83 @@ export class ChatDrawer {
 
   getElement(): HTMLElement {
     return this.root;
+  }
+
+  /** Opens the hidden file picker used by the attachment flow. */
+  openAttachmentPicker(): void {
+    this._fileInput.click();
+  }
+
+  /** Show/hide camera attach controls in the input shell. */
+  setAttachmentControlsVisible(visible: boolean): void {
+    if (!this._attachWrapEl) return;
+    this._attachWrapEl.style.display = visible ? '' : 'none';
+    if (!visible) this._closeAttachMenu();
+  }
+
+  /** Beauty mode selfie helper card shown above the input area. */
+  setBeautyPhotoStepCard(options: {
+    visible: boolean;
+    processing?: boolean;
+    onSkip?: (() => void) | undefined;
+  }): void {
+    if (!this._beautyPhotoStepEl) return;
+    if (!options.visible) {
+      this._beautyPhotoStepEl.hidden = true;
+      this._beautyPhotoStepEl.innerHTML = '';
+      return;
+    }
+
+    this._beautyPhotoStepEl.hidden = false;
+    this._beautyPhotoStepEl.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'gengage-chat-beauty-photo-step-card';
+
+    const icon = document.createElement('span');
+    icon.className = 'gengage-chat-beauty-photo-step-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '✦';
+
+    const content = document.createElement('div');
+    content.className = 'gengage-chat-beauty-photo-step-content';
+
+    const title = document.createElement('div');
+    title.className = 'gengage-chat-beauty-photo-step-title';
+    title.textContent = 'Selfie ile kişiselleştir';
+
+    const desc = document.createElement('p');
+    desc.className = 'gengage-chat-beauty-photo-step-desc';
+    desc.textContent = 'İstersen net bir profil fotoğrafı yükle, cilt analiziyle önerileri kişiselleştireyim.';
+
+    const actions = document.createElement('div');
+    actions.className = 'gengage-chat-beauty-photo-step-actions';
+
+    const uploadBtn = document.createElement('button');
+    uploadBtn.type = 'button';
+    uploadBtn.className = 'gengage-chat-beauty-photo-step-upload gds-btn gds-btn-primary';
+    uploadBtn.textContent = options.processing ? 'Fotoğraf işleniyor...' : 'Fotoğraf Yükle';
+    uploadBtn.disabled = options.processing === true;
+    uploadBtn.addEventListener('click', () => {
+      this.openAttachmentPicker();
+    });
+
+    const skipBtn = document.createElement('button');
+    skipBtn.type = 'button';
+    skipBtn.className = 'gengage-chat-beauty-photo-step-skip gds-btn gds-btn-ghost';
+    skipBtn.textContent = 'Geç';
+    skipBtn.addEventListener('click', () => {
+      options.onSkip?.();
+    });
+
+    actions.appendChild(uploadBtn);
+    actions.appendChild(skipBtn);
+    content.appendChild(title);
+    content.appendChild(desc);
+    content.appendChild(actions);
+    card.appendChild(icon);
+    card.appendChild(content);
+    this._beautyPhotoStepEl.appendChild(card);
   }
 
   /** Stage a file attachment for sending. Shows preview. */
