@@ -1522,6 +1522,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return this._assistantMode === 'beauty_consulting' && this._beautyConsultingState?.initializing === true;
   }
 
+  private _resolveLoadingTextForUi(rawText: unknown): string | undefined {
+    const fallbackBeautyText = (this.config.locale ?? 'tr').toLowerCase().startsWith('tr')
+      ? 'Fotoğrafınızı analiz ediyor, cilt ihtiyaçlarınızı çıkarıyorum...'
+      : 'Analyzing your photo and extracting skin insights...';
+    const text = typeof rawText === 'string' ? rawText : undefined;
+    const isBeautyPhotoFlow =
+      this._assistantMode === 'beauty_consulting' && this._beautyConsultingState?.photoStepState === 'processing';
+    if (!isBeautyPhotoFlow) return text;
+    return fallbackBeautyText;
+  }
+
   private _syncBeautyUiHints(): void {
     const isBeautyMode = this._assistantMode === 'beauty_consulting';
     this._drawer?.setAttachmentControlsVisible(!isBeautyMode);
@@ -1548,6 +1559,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       status === 'collecting' &&
       needsSkinProfile &&
       !photoFindings &&
+      photoStepState !== 'processing' &&
       photoStepState !== 'skipped' &&
       photoStepState !== 'completed';
 
@@ -2810,12 +2822,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               const thinkingMessages = Array.isArray(event.meta.thinkingMessages)
                 ? event.meta.thinkingMessages.filter((item): item is string => typeof item === 'string')
                 : [];
+              const loadingText = this._resolveLoadingTextForUi(event.meta.loadingText);
               if (thinkingMessages.length > 0) {
-                this._drawer?.setThinkingSteps(thinkingMessages);
+                const normalizedThinking = loadingText ? [...thinkingMessages.slice(0, 2), loadingText] : thinkingMessages;
+                this._drawer?.setThinkingSteps(normalizedThinking);
               }
-              if (typeof event.meta.loadingText === 'string') {
-                this._drawer?.addThinkingStep(event.meta.loadingText);
-                this._bridge?.send('loadingMessage', { text: event.meta.loadingText });
+              if (typeof loadingText === 'string' && loadingText.length > 0) {
+                this._drawer?.addThinkingStep(loadingText);
+                this._bridge?.send('loadingMessage', { text: loadingText });
               }
             }
 

@@ -2067,6 +2067,10 @@ function renderProductGrid(
       btn.type = 'button';
       btn.className = 'gengage-chat-consulting-style-btn gds-card';
       if (index === 0) btn.classList.add('gengage-chat-consulting-style-btn--active');
+      btn.setAttribute('aria-label', variation.style_label ?? `Style ${index + 1}`);
+
+      const media = document.createElement('div');
+      media.className = 'gengage-chat-consulting-style-media';
 
       const candidateImageUrls = toConsultingImageUrls(variation.image_url);
       const firstImageUrl = candidateImageUrls.find((url) => isSafeUrl(url));
@@ -2091,13 +2095,14 @@ function renderProductGrid(
         } else {
           addImageErrorHandler(img);
         }
-        btn.appendChild(img);
+        media.appendChild(img);
       }
 
-      const label = document.createElement('span');
-      label.className = 'gengage-chat-consulting-style-label';
-      label.textContent = variation.style_label ?? `Style ${index + 1}`;
-      btn.appendChild(label);
+      const caption = document.createElement('span');
+      caption.className = 'gengage-chat-consulting-style-caption';
+      caption.textContent = variation.style_label ?? `Style ${index + 1}`;
+      media.appendChild(caption);
+      btn.appendChild(media);
 
       btn.addEventListener('click', () => {
         if (selectedVariationIndex === index) return;

@@ -6098,14 +6098,14 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-consulting-style-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .gengage-chat-consulting-style-btn {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 0;
+  padding: 6px;
   border: 1px solid var(--border-default);
   border-radius: 14px;
   background: var(--surface-card);
@@ -6129,18 +6129,32 @@ button.gengage-chat-product-details-rating {
     var(--shadow-1);
 }
 
+.gengage-chat-consulting-style-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
 .gengage-chat-consulting-style-image {
   width: 100%;
-  aspect-ratio: 5 / 4;
+  aspect-ratio: 4 / 5;
   border-radius: 12px;
   object-fit: cover;
   border: 1px solid var(--border-subtle);
 }
 
-.gengage-chat-consulting-style-label {
-  font-size: 14px;
+.gengage-chat-consulting-style-caption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 15px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: white;
+  line-height: 1.2;
+  background: color-mix(in srgb, black 55%, transparent);
 }
 
 .gengage-chat-consulting-group {
@@ -6175,6 +6189,9 @@ button.gengage-chat-product-details-rating {
 
 .gengage-chat-consulting-group-grid {
   margin-bottom: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
 }
 
 .gengage-chat-beauty-photo-step {
@@ -6244,6 +6261,41 @@ button.gengage-chat-product-details-rating {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-image {
+  min-height: 250px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-caption {
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group {
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card {
+  min-width: 0;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-style-grid {
+  grid-template-columns: 1fr;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-style-image {
+  min-height: 220px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-group-grid {
+  grid-template-columns: 1fr;
 }
 
 .gengage-chat-product-grid-head {
