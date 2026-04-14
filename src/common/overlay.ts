@@ -100,6 +100,8 @@ export interface OverlayChatOptions {
   renderer?: ChatWidgetConfig['renderer'];
   /** When true, allow full product details in the assistant side panel; default is chat summary only. */
   productDetailsExtended?: boolean;
+  /** Pill launcher — forwarded to `chat.pillLauncher` (applied inside GengageChat). */
+  pillLauncher?: ChatWidgetConfig['pillLauncher'];
 }
 
 export interface OverlayQNAOptions {
@@ -309,6 +311,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.locale !== undefined) config.locale = this.options.locale;
     if (this.options.pricing !== undefined) config.pricing = this.options.pricing;
     if (this.options.chat?.mountTarget !== undefined) config.mountTarget = this.options.chat.mountTarget;
+    if (this.options.chat?.pillLauncher !== undefined) {
+      config.pillLauncher = this.options.chat.pillLauncher;
+    }
     if (this.options.chat?.launcherImageUrl !== undefined) config.launcherImageUrl = this.options.chat.launcherImageUrl;
     else if (this.options.chat?.launcherSvg !== undefined) config.launcherSvg = this.options.chat.launcherSvg;
     if (this.options.chat?.headerTitle !== undefined) config.headerTitle = this.options.chat.headerTitle;

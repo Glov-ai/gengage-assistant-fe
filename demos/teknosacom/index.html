@@ -479,7 +479,7 @@
     </main>
 
     <script type="module">
-      import { initOverlayWidgets, makePillLauncher } from '@gengage/assistant-fe';
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
       const defaultSkus = ['125077817', '125077816', '125077820'];
@@ -517,16 +517,6 @@
       document.title = `Gengage Dev — teknosacom • ${skuDisplay}`;
       const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
 
-      const pillLauncher = makePillLauncher({
-        label: "Teknosa'ya Sor",
-        avatarUrl,
-        primaryColor: '#F58220',
-        secondaryColor: '#0C0B37',
-        fontFamily: '"Metropolis", Arial, sans-serif',
-        labelClassName: 'teknosa-launcher-label',
-        styleId: 'teknosa-launcher-style',
-      });
-
       const controller = await initOverlayWidgets({
         accountId: 'teknosacom',
         middlewareUrl,
@@ -557,8 +547,16 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Teknosa'ya Sor",
-          launcherImageUrl: pillLauncher.launcherImageUrl,
           headerAvatarUrl: avatarUrl,
+          pillLauncher: {
+            label: "Teknosa'ya Sor",
+            avatarUrl,
+            primaryColor: '#F58220',
+            secondaryColor: '#0C0B37',
+            fontFamily: '"Metropolis", Arial, sans-serif',
+            labelClassName: 'teknosa-launcher-label',
+            styleId: 'teknosa-launcher-style',
+          },
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Gengage ile',
@@ -584,8 +582,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      await pillLauncher.apply();
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

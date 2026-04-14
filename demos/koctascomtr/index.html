@@ -485,7 +485,7 @@
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
-      const launcherUrl = new URL('./glov-koctascomtr-launcher.svg', import.meta.url).href;
+      const koctasLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-koctascomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -522,8 +522,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Koçtaş Robotu',
-          launcherImageUrl: launcherUrl,
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-koctascomtr-logo.svg',
+          headerAvatarUrl: koctasLogoUrl,
+          pillLauncher: {
+            label: "Koçtaş'a Sor",
+            avatarUrl: koctasLogoUrl,
+            primaryColor: '#ec6e00',
+            secondaryColor: '#222222',
+            fontFamily: '"Source Sans Pro", "Helvetica Neue", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Koçtaş AI Asistan',

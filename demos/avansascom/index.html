@@ -482,6 +482,8 @@
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
 
+      const avansasAvatarUrl = new URL('./avansas-avatar.svg', import.meta.url).href;
+
       const controller = await initOverlayWidgets({
         accountId: 'avansascom',
         middlewareUrl,
@@ -512,8 +514,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Avansas Asistan',
-          launcherImageUrl: new URL('./avansas-avatar.svg', import.meta.url).href,
-          headerAvatarUrl: new URL('./avansas-avatar.svg', import.meta.url).href,
+          headerAvatarUrl: avansasAvatarUrl,
+          pillLauncher: {
+            label: "Avansas'a Sor",
+            avatarUrl: avansasAvatarUrl,
+            primaryColor: '#F07E01',
+            secondaryColor: '#333333',
+            fontFamily: '"Open Sans", sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ofis malzemesi ara veya soru sor',
             poweredBy: 'Avansas AI Asistan',

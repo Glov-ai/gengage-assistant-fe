@@ -481,7 +481,6 @@
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
-      const launcherUrl = new URL('./glov-arcelikcomtr-launcher.svg', import.meta.url).href;
       const headerLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-arcelikcomtr-logo.png';
 
       const params = new URLSearchParams(location.search);
@@ -522,8 +521,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Çelik'e Sor",
-          launcherImageUrl: launcherUrl,
           headerAvatarUrl: headerLogoUrl,
+          pillLauncher: {
+            label: "Çelik'e Sor",
+            avatarUrl: headerLogoUrl,
+            primaryColor: '#d93131',
+            secondaryColor: '#222222',
+            fontFamily: '"Graphik", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          },
         },
         qna: {
           mountTarget: '#arcelik-qna-section',

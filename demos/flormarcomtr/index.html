@@ -542,7 +542,6 @@
       document.getElementById('summary-sku').textContent = skuDisplay;
 
       const avatarUrl = new URL('./hande.jpg', import.meta.url).href;
-      const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
       const controller = await initOverlayWidgets({
         accountId: 'flormarcomtr',
@@ -574,8 +573,16 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Hande'ye Sor",
-          launcherImageUrl: launcherBootstrapImage,
           headerAvatarUrl: avatarUrl,
+          pillLauncher: {
+            label: "Floarmar'a Sor",
+            avatarUrl,
+            primaryColor: '#E45A80',
+            secondaryColor: '#0f0f0f',
+            fontFamily: '"Montserrat", "Helvetica Neue", Arial, sans-serif',
+            labelClassName: 'flormar-launcher-label',
+            styleId: 'flormar-pill-launcher-style',
+          },
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
             poweredBy: 'Flormar AI Asistan',
@@ -610,122 +617,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      const flormarLauncherCss = `
-        .gengage-chat-launcher-container {
-          right: 22px;
-          bottom: 22px;
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode {
-          width: 188px;
-          min-width: 188px;
-          max-width: 188px;
-          height: 58px;
-          padding: 6px 8px 6px 18px;
-          display: inline-flex;
-          flex-direction: row-reverse;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          border-radius: 999px;
-          border: 1px solid color-mix(in srgb, var(--client-primary) 18%, #ffffff);
-          background: #ffffff;
-          box-shadow:
-            0 16px 36px color-mix(in srgb, var(--client-primary) 18%, transparent),
-            0 4px 12px color-mix(in srgb, #1f2937 8%, transparent);
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode:hover {
-          transform: translateY(-1px);
-          box-shadow:
-            0 20px 42px color-mix(in srgb, var(--client-primary) 24%, transparent),
-            0 6px 16px color-mix(in srgb, #1f2937 12%, transparent);
-        }
-
-        .flormar-launcher-label {
-          color: #1f2937;
-          font: 500 14px/1.1 var(--brand-font);
-          letter-spacing: -0.01em;
-          white-space: nowrap;
-          flex: 0 0 auto;
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
-          width: 44px;
-          height: 44px;
-          flex: 0 0 44px;
-          border-radius: 999px;
-          object-fit: cover;
-          object-position: center 38%;
-          background: transparent;
-          border: 0;
-          box-shadow: none;
-        }
-
-        @media (max-width: 768px) {
-          .gengage-chat-launcher.gengage-chat-launcher--image-mode {
-            width: 172px;
-            min-width: 172px;
-            max-width: 172px;
-            height: 54px;
-            padding-left: 18px;
-            padding-right: 8px;
-          }
-
-          .flormar-launcher-label {
-            font-size: 13px;
-          }
-
-          .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
-            width: 38px;
-            height: 38px;
-            flex-basis: 38px;
-          }
-        }
-      `;
-
-      const enhanceFlormarLauncher = () => {
-        const host = document.querySelector('[data-gengage-widget="gengagechat"]');
-        const root = host instanceof HTMLElement ? host.shadowRoot : null;
-        if (!root) return false;
-
-        if (!root.getElementById('flormar-launcher-style')) {
-          const style = document.createElement('style');
-          style.id = 'flormar-launcher-style';
-          style.textContent = flormarLauncherCss;
-          root.appendChild(style);
-        }
-
-        const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
-        if (!(launcher instanceof HTMLButtonElement)) return false;
-        const launcherImg = launcher.querySelector('img');
-        if (launcherImg instanceof HTMLImageElement && launcherImg.getAttribute('src') !== avatarUrl) {
-          launcherImg.src = avatarUrl;
-        }
-        // The bootstrap placeholder launcher makes launcherImageUrl !== headerAvatarUrl, which
-        // causes ChatDrawer to apply logo styling to the header avatar. Restore circular treatment.
-        const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
-        if (headerAvatar instanceof HTMLImageElement) {
-          headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
-        }
-        if (launcher.querySelector('.flormar-launcher-label')) return true;
-
-        launcher.setAttribute('aria-label', "Hande'ye Sor");
-        const label = document.createElement('span');
-        label.className = 'flormar-launcher-label';
-        label.textContent = "Hande'ye Sor";
-        launcher.appendChild(label);
-        return true;
-      };
-
-      if (!enhanceFlormarLauncher()) {
-        const launcherObserver = new MutationObserver(() => {
-          if (enhanceFlormarLauncher()) launcherObserver.disconnect();
-        });
-        launcherObserver.observe(document.body, { childList: true, subtree: true });
-        window.setTimeout(() => launcherObserver.disconnect(), 5000);
-      }
     </script>
   </body>
 </html>

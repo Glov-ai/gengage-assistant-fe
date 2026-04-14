@@ -2,14 +2,10 @@
  * makePillLauncher — creates a pill-shaped chat launcher that combines an
  * avatar image with a text label, replacing the default circular FAB.
  *
- * When a client does not supply a custom `launcherImageUrl`, use this helper
- * to build a branded pill from the assistant's avatar instead:
- *
- *   const pill = makePillLauncher({ label: "Teknosa'ya Sor", avatarUrl, primaryColor: '#f58220', secondaryColor: '#0c0b37' });
- *   const controller = await initOverlayWidgets({
- *     chat: { launcherImageUrl: pill.launcherImageUrl, headerAvatarUrl: avatarUrl, ... },
+
  *   });
- *   await pill.apply();
+ *
+ * Or call `makePillLauncher` + `apply()` manually when you need custom control.
  */
 
 export interface PillLauncherOptions {
