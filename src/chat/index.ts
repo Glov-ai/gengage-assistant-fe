@@ -253,7 +253,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       if (config.headerAvatarUrl === undefined) {
         config.headerAvatarUrl = config.pillLauncher.avatarUrl;
       }
-      this._pillLauncherApply = () => kit.apply();
+      this._pillLauncherApply = () => kit.apply(this._shadow ?? undefined);
     }
 
     // Create Shadow DOM for CSS isolation

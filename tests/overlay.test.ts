@@ -217,17 +217,18 @@ describe('overlay', () => {
       expect(initArg['headerTitle']).toBe("Koçtaş'a Sor");
     });
 
-    it('falls back to chat.headerTitle for QNA when qna.headerTitle is not set', async () => {
+    it('does NOT inherit chat.headerTitle for QNA when qna.headerTitle is absent', async () => {
       await initOverlayWidgets({
-        accountId: 'qna-headertitle-fallback',
+        accountId: 'qna-headertitle-no-fallback',
         middlewareUrl: 'https://example.com',
         sku: 'SKU123',
         chat: { headerTitle: "Boyner'e Sor" },
+        // qna.headerTitle deliberately absent — must not be silently inherited
       });
 
       const qnaInstance = vi.mocked(GengageQNA).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
       const initArg = qnaInstance['init'].mock.calls[0][0] as Record<string, unknown>;
-      expect(initArg['headerTitle']).toBe("Boyner'e Sor");
+      expect(initArg['headerTitle']).toBeUndefined();
     });
 
     it('qna.headerTitle takes precedence over chat.headerTitle', async () => {

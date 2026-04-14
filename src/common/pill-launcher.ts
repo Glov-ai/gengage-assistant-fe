@@ -44,8 +44,11 @@ export interface PillLauncherKit {
    * Injects pill CSS into the widget shadow root, fixes the header avatar
    * class, and appends the text label span to the launcher button.
    * Retries via requestAnimationFrame for up to ~1.5 s.
+   *
+   * Pass the widget's shadow root when it is available to avoid a global DOM
+   * scan — required when multiple GengageChat instances share the same page.
    */
-  apply(): Promise<void>;
+  apply(targetShadow?: ShadowRoot): Promise<void>;
 }
 
 export function makePillLauncher(options: PillLauncherOptions): PillLauncherKit {
@@ -88,11 +91,11 @@ button[data-gengage-part="chat-launcher-button"] {
   justify-content: space-between !important;
   gap: 12px !important;
   border-radius: 999px !important;
-  border: 1px solid color-mix(in srgb, var(--pill-secondary) 6%, white) !important;
+  border: 1px solid color-mix(in srgb, var(--pill-primary) 18%, white) !important;
   background: #ffffff !important;
   color: var(--pill-secondary) !important;
   box-shadow:
-    0 18px 46px color-mix(in srgb, var(--pill-secondary) 17%, transparent),
+    0 18px 46px color-mix(in srgb, var(--pill-primary) 18%, transparent),
     0 4px 14px color-mix(in srgb, var(--pill-secondary) 8%, transparent) !important;
   overflow: visible !important;
 }
@@ -100,7 +103,7 @@ button[data-gengage-part="chat-launcher-button"] {
 button[data-gengage-part="chat-launcher-button"]:hover {
   transform: translateY(-1px) !important;
   box-shadow:
-    0 22px 52px color-mix(in srgb, var(--pill-secondary) 22%, transparent),
+    0 22px 52px color-mix(in srgb, var(--pill-primary) 24%, transparent),
     0 6px 18px color-mix(in srgb, var(--pill-secondary) 12%, transparent) !important;
 }
 
@@ -168,20 +171,28 @@ button[data-gengage-part="chat-launcher-button"] img {
     root.appendChild(style);
   };
 
+  const escapedClassName = CSS.escape(labelClassName);
+
   const applyOnce = (root: ShadowRoot): boolean => {
     injectStyle(root);
 
     const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
     if (!(launcher instanceof HTMLButtonElement)) return false;
 
-    // When launcherImageUrl !== headerAvatarUrl the widget applies a logo class
-    // that breaks circular treatment on the header avatar — remove it.
+    // Only strip the logo class when the header and launcher show the same image.
+    // When headerAvatarUrl was explicitly set to a different asset (e.g. a rectangular
+    // brand logo), the logo class is intentional and must be preserved.
     const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
     if (headerAvatar instanceof HTMLImageElement) {
-      headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
+      const launcherImg = root.querySelector<HTMLImageElement>(
+        '[data-gengage-part="chat-launcher-button"] img',
+      );
+      if (!launcherImg || headerAvatar.src === launcherImg.src) {
+        headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
+      }
     }
 
-    if (launcher.querySelector(`.${labelClassName}`)) return true;
+    if (launcher.querySelector(`.${escapedClassName}`)) return true;
 
     launcher.setAttribute('aria-label', label);
     const labelEl = document.createElement('span');
@@ -191,8 +202,21 @@ button[data-gengage-part="chat-launcher-button"] img {
     return true;
   };
 
-  const apply = async (): Promise<void> => {
-    // Inject style early so the first paint never shows the default circle FAB
+  const apply = async (targetShadow?: ShadowRoot): Promise<void> => {
+    // When the caller passes the widget's own shadow root, use it directly and
+    // skip the global DOM scan — this prevents cross-instance interference when
+    // multiple GengageChat widgets share the same page.
+    if (targetShadow) {
+      injectStyle(targetShadow);
+      await Promise.resolve();
+      for (let frame = 0; frame < 90; frame++) {
+        if (applyOnce(targetShadow)) return;
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      }
+      return;
+    }
+
+    // Fallback: scan the document for a matching chat shadow host (standalone use).
     const earlyHost = findShadowHost();
     if (earlyHost?.shadowRoot) injectStyle(earlyHost.shadowRoot);
 

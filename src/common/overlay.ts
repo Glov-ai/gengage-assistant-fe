@@ -115,7 +115,8 @@ export interface OverlayQNAOptions {
   renderer?: QNAWidgetConfig['renderer'];
   /**
    * Q&A panel heading (e.g. "Koçtaş'a Sor"). Independent from `chat.headerTitle`.
-   * If omitted, overlay falls back to `headingTitle` then `chat.headerTitle`.
+   * If omitted, falls back to the deprecated `headingTitle` field.
+   * Set this explicitly — it does not inherit from `chat.headerTitle`.
    */
   headerTitle?: string;
   /** @deprecated Use `headerTitle` */
@@ -400,8 +401,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
           }
           if (this.options.qna?.i18n !== undefined) qnaConfig.i18n = this.options.qna.i18n;
           if (this.options.qna?.renderer !== undefined) qnaConfig.renderer = this.options.qna.renderer;
-          const qnaHeading =
-            this.options.qna?.headerTitle ?? this.options.qna?.headingTitle ?? this.options.chat?.headerTitle;
+          const qnaHeading = this.options.qna?.headerTitle ?? this.options.qna?.headingTitle;
           if (qnaHeading !== undefined) qnaConfig.headerTitle = qnaHeading;
           await qna.init(qnaConfig);
           this._qna = qna;
