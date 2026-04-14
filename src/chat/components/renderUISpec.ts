@@ -1961,10 +1961,11 @@ function renderProductGrid(
     picker.className = 'gengage-chat-consulting-style-picker';
     const pickerTitle = document.createElement('div');
     pickerTitle.className = 'gengage-chat-consulting-style-picker-title';
-    pickerTitle.textContent =
+    const stylePreparedTemplate =
       source === 'watch_expert'
-        ? `Prepared ${styleVariations.length} style directions for you`
-        : `Prepared ${styleVariations.length} beauty styles for you`;
+        ? (ctx?.i18n?.watchStylesPreparedTitle ?? 'Prepared {count} style directions for you')
+        : (ctx?.i18n?.beautyStylesPreparedTitle ?? 'Prepared {count} beauty styles for you');
+    pickerTitle.textContent = stylePreparedTemplate.replace('{count}', String(styleVariations.length));
     picker.appendChild(pickerTitle);
 
     const pickerGrid = document.createElement('div');
@@ -2019,6 +2020,7 @@ function renderProductGrid(
 
           const groupGrid = document.createElement('div');
           groupGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+          groupGrid.style.setProperty('--consulting-group-columns', String(Math.max(1, Math.min(4, groupedProducts.length))));
           for (const product of groupedProducts) {
             const cardElement: UIElement = {
               type: 'ProductCard',
@@ -2038,6 +2040,7 @@ function renderProductGrid(
         if (leftovers.length > 0) {
           const fallbackGrid = document.createElement('div');
           fallbackGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+          fallbackGrid.style.setProperty('--consulting-group-columns', String(Math.max(1, Math.min(4, leftovers.length))));
           for (const product of leftovers) {
             const cardElement: UIElement = {
               type: 'ProductCard',

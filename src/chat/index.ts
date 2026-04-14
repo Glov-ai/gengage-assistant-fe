@@ -1538,6 +1538,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _syncBeautyUiHints(): void {
     const isBeautyMode = this._assistantMode === 'beauty_consulting';
     this._drawer?.setAttachmentControlsVisible(!isBeautyMode);
+    if (isBeautyMode) {
+      this._choicePrompterEl?.remove();
+      this._choicePrompterEl = null;
+      this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+    }
     if (!isBeautyMode) {
       this._drawer?.setBeautyPhotoStepCard({ visible: false });
       return;
@@ -1556,6 +1561,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const photoStepState = state.photoStepState ?? (photoFindings ? 'completed' : 'idle');
     const hasUploadedPhoto =
       state.photoUploaded === true ||
+      photoStepState === 'processing' ||
+      photoStepState === 'completed' ||
       this._messages.some(
         (message) =>
           message.role === 'user' &&
@@ -1569,9 +1576,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       needsSkinProfile &&
       !photoFindings &&
       !hasUploadedPhoto &&
-      photoStepState !== 'processing' &&
-      photoStepState !== 'skipped' &&
-      photoStepState !== 'completed';
+      photoStepState !== 'skipped';
 
     this._drawer?.setBeautyPhotoStepCard({
       visible: isVisible,
@@ -2604,6 +2609,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             effectivePanelHint === 'panel' &&
             !skipSidePanelForUISpec &&
             productGridChildCount > 1 &&
+            this._assistantMode !== 'beauty_consulting' &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {

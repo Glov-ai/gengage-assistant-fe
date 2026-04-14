@@ -64,6 +64,8 @@ export const CHAT_I18N_EN: ChatI18n = {
   findSimilarLabel: 'Find Similar',
   galleryPrevAriaLabel: 'Previous image',
   galleryNextAriaLabel: 'Next image',
+  beautyStylesPreparedTitle: 'Prepared {count} beauty styles for you',
+  watchStylesPreparedTitle: 'Prepared {count} style directions for you',
   choicePrompterHeading: "Can't decide?",
   choicePrompterSuggestion: 'Select products to compare them',
   choicePrompterCta: 'Select & Compare',
