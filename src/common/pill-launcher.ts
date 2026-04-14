@@ -184,9 +184,7 @@ button[data-gengage-part="chat-launcher-button"] img {
     // brand logo), the logo class is intentional and must be preserved.
     const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
     if (headerAvatar instanceof HTMLImageElement) {
-      const launcherImg = root.querySelector<HTMLImageElement>(
-        '[data-gengage-part="chat-launcher-button"] img',
-      );
+      const launcherImg = root.querySelector<HTMLImageElement>('[data-gengage-part="chat-launcher-button"] img');
       if (!launcherImg || headerAvatar.src === launcherImg.src) {
         headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
       }

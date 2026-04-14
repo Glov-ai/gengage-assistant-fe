@@ -89,7 +89,6 @@ describe('renderQnaUISpec', () => {
     expect(heading?.textContent).toBe("Teknosa'ya Sor");
   });
 
-
   it('QuestionHeading falls back to stream text when headingTitleOverride is absent', () => {
     const spec: UISpec = {
       root: 'root',
@@ -121,7 +120,6 @@ describe('renderQnaUISpec', () => {
     const heading = result.querySelector('.gengage-qna-heading');
     expect(heading?.textContent).toBe('Stream başlığı');
   });
-
 
   it('submits TextInput as plain-string user_message payload', () => {
     const onAction = vi.fn();
