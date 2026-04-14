@@ -79,6 +79,7 @@ export function createCampaignPriceBadge(options: {
     const img = document.createElement('img');
     img.alt = '';
     img.loading = 'lazy';
+    // logoUrl is validated by isSafeImageUrl() in resolveCampaignBadgeLogoUrl before reaching here.
     img.src = options.logoUrl;
     addImageErrorHandler(img);
     logoWrap.appendChild(img);

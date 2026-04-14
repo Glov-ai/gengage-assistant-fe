@@ -130,53 +130,37 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
         priceRow.appendChild(badge);
       }
       content.appendChild(priceRow);
-    } else if (hasDiscount && listStyle === 'inline') {
-      priceRow.classList.add('gengage-chat-product-summary__price--inline');
-      const cur = document.createElement('span');
-      cur.className = 'gengage-chat-product-summary__price-current';
-      cur.textContent = formatPrice(price, ctx.pricing);
-      const sep = document.createElement('span');
-      sep.className = 'gengage-chat-product-summary__price-sep';
-      sep.setAttribute('aria-hidden', 'true');
-      const orig = document.createElement('span');
-      orig.className = 'gengage-chat-product-summary__price-original';
-      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
-      priceRow.appendChild(cur);
-      priceRow.appendChild(sep);
-      priceRow.appendChild(orig);
-      if (campaignReason) {
-        const stack = document.createElement('div');
-        stack.className = 'gengage-chat-product-summary__price-stack';
-        stack.appendChild(createCampaignReasonElement(campaignReason));
-        stack.appendChild(priceRow);
-        content.appendChild(stack);
-      } else {
-        content.appendChild(priceRow);
-      }
-    } else if (hasDiscount) {
-      const orig = document.createElement('span');
-      orig.className = 'gengage-chat-product-summary__price-original';
-      orig.textContent = formatPrice(originalPrice!, ctx.pricing);
-      priceRow.appendChild(orig);
-      priceRow.appendChild(document.createTextNode(' '));
-      const current = document.createElement('span');
-      current.className = 'gengage-chat-product-summary__price-current';
-      current.textContent = formatPrice(price, ctx.pricing);
-      priceRow.appendChild(current);
-      if (campaignReason) {
-        const stack = document.createElement('div');
-        stack.className = 'gengage-chat-product-summary__price-stack';
-        stack.appendChild(createCampaignReasonElement(campaignReason));
-        stack.appendChild(priceRow);
-        content.appendChild(stack);
-      } else {
-        content.appendChild(priceRow);
-      }
     } else {
-      const current = document.createElement('span');
-      current.className = 'gengage-chat-product-summary__price-current';
-      current.textContent = formatPrice(price, ctx.pricing);
-      priceRow.appendChild(current);
+      if (hasDiscount && listStyle === 'inline') {
+        priceRow.classList.add('gengage-chat-product-summary__price--inline');
+        const cur = document.createElement('span');
+        cur.className = 'gengage-chat-product-summary__price-current';
+        cur.textContent = formatPrice(price, ctx.pricing);
+        const sep = document.createElement('span');
+        sep.className = 'gengage-chat-product-summary__price-sep';
+        sep.setAttribute('aria-hidden', 'true');
+        const orig = document.createElement('span');
+        orig.className = 'gengage-chat-product-summary__price-original';
+        orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+        priceRow.appendChild(cur);
+        priceRow.appendChild(sep);
+        priceRow.appendChild(orig);
+      } else if (hasDiscount) {
+        const orig = document.createElement('span');
+        orig.className = 'gengage-chat-product-summary__price-original';
+        orig.textContent = formatPrice(originalPrice!, ctx.pricing);
+        priceRow.appendChild(orig);
+        priceRow.appendChild(document.createTextNode(' '));
+        const current = document.createElement('span');
+        current.className = 'gengage-chat-product-summary__price-current';
+        current.textContent = formatPrice(price, ctx.pricing);
+        priceRow.appendChild(current);
+      } else {
+        const current = document.createElement('span');
+        current.className = 'gengage-chat-product-summary__price-current';
+        current.textContent = formatPrice(price, ctx.pricing);
+        priceRow.appendChild(current);
+      }
       if (campaignReason) {
         const stack = document.createElement('div');
         stack.className = 'gengage-chat-product-summary__price-stack';
