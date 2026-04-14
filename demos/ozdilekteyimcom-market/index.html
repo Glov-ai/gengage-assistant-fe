@@ -612,8 +612,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Market Asistanı',
-          launcherImageUrl: chatIconUrl,
           headerAvatarUrl: chatIconUrl,
+          pillLauncher: {
+            label: 'Market Asistanı',
+            avatarUrl: chatIconUrl,
+            primaryColor: '#1BB407',
+            secondaryColor: '#212529',
+            fontFamily: "'Montserrat', sans-serif",
+          },
           i18n: {
             inputPlaceholder: "Market'te ne aramıştınız? (Örn: Domates, süt...)",
             poweredBy: 'Özdilekteyim Market AI Asistanı',
@@ -621,6 +627,7 @@
         },
         qna: {
           mountTarget: '#ozdilekteyimcom-market-qna-section',
+          headerTitle: 'Market Asistanı',
           ctaText: 'Markette başka bir şey sor',
         },
         simrel: {

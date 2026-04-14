@@ -553,8 +553,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Penti'ye Sor",
-          launcherImageUrl: sockAvatarUrl,
           headerAvatarUrl: sockAvatarUrl,
+          pillLauncher: {
+            label: "Penti'ye Sor",
+            avatarUrl: sockAvatarUrl,
+            primaryColor: '#E91E63',
+            secondaryColor: '#1a1a2e',
+            fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
             poweredBy: 'Penti AI Asistan',
@@ -562,6 +568,7 @@
         },
         qna: {
           mountTarget: '#penti-qna-section',
+          headerTitle: "Penti'ye Sor",
           hideButtonRowCta: true,
           inputPlaceholder: true,
           i18n: {

@@ -148,3 +148,6 @@ export type {
 
 export { getSuggestedSearchKeywords, getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
 export type { SuggestedSearchKeywordSource } from './suggested-search-keywords.js';
+
+export { makePillLauncher } from './pill-launcher.js';
+export type { PillLauncherOptions, PillLauncherKit } from './pill-launcher.js';

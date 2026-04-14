@@ -71,6 +71,7 @@ import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
 import { isLikelyConnectivityIssue } from '../common/global-error-toast.js';
+import { makePillLauncher } from '../common/pill-launcher.js';
 import { shouldShowStreamErrorAsRedStrip } from './stream-error-display.js';
 import {
   containsKvkk,
@@ -140,6 +141,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _drawer: ChatDrawer | null = null;
   private _bridge: CommunicationBridge | null = null;
   private _drawerVisible = false;
+  /** Set when `config.pillLauncher` is used — `apply()` runs at end of `onInit`. */
+  private _pillLauncherApply: (() => Promise<void>) | null = null;
   /**
    * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault.
    * Does not set `overflow` on html/body (avoids breaking host layouts).
@@ -243,6 +246,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   protected async onInit(config: ChatWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
     this._chatCreatedAt = new Date().toISOString();
+
+    if (config.pillLauncher) {
+      const kit = makePillLauncher(config.pillLauncher);
+      config.launcherImageUrl = kit.launcherImageUrl;
+      if (config.headerAvatarUrl === undefined) {
+        config.headerAvatarUrl = config.pillLauncher.avatarUrl;
+      }
+      this._pillLauncherApply = () => kit.apply(this._shadow ?? undefined);
+    }
 
     // Create Shadow DOM for CSS isolation
     this._shadow = this.root.attachShadow({ mode: 'open' });
@@ -513,6 +525,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._sendAction(pending.action, pending.options);
     }
     this._pendingActions = [];
+
+    if (this._pillLauncherApply && variant === 'floating') {
+      await this._pillLauncherApply();
+      this._pillLauncherApply = null;
+    }
 
     dispatch('gengage:chat:ready', {});
     ga.trackInit('chat');
@@ -1353,6 +1370,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (this._pdpPrimingInFlight) {
       this._queuedUserMessages.push(attachment !== undefined ? { text, attachment } : { text });
       return;
+    }
+
+    // First outgoing user message: mark KVKK accepted so `kvkkApproved` is true on this request;
+    // if banner is still visible on a later send, dismiss it without requiring ×.
+    const isFirstUserMessage = !this._messages.some((m) => m.role === 'user');
+    if (isFirstUserMessage || this._drawer?.isKvkkBannerVisible()) {
+      markKvkkShown(this.config.accountId);
+      this._drawer?.hideKvkkBanner();
     }
 
     ga.trackMessageSent();

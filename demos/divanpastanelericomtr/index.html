@@ -476,6 +476,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-divanpastanelericomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -512,6 +513,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Divan Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "Divan'a Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#8b1a2d',
+            secondaryColor: '#3d2c2e',
+            fontFamily: '"Georgia", serif',
+          },
           i18n: {
             inputPlaceholder: 'Ürün veya mağaza arayın',
             poweredBy: 'Divan AI Asistan',
@@ -519,6 +528,7 @@
         },
         qna: {
           mountTarget: '#divan-qna-section',
+          headerTitle: "Divan'a Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

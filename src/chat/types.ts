@@ -1,5 +1,6 @@
 import type { BaseWidgetConfig, ActionPayload } from '../common/types.js';
 import type { UnknownActionPolicy } from '../common/config-schema.js';
+import type { PillLauncherOptions } from '../common/pill-launcher.js';
 import type { UISpecDomRegistry, UISpecRendererOverrides } from '../common/renderer/index.js';
 
 export interface ChatWidgetConfig extends BaseWidgetConfig {
@@ -24,8 +25,16 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
    * Launcher image URL — renders the launcher as a full-size image button
    * (no circular background, no padding). The image fills the entire button.
    * Takes precedence over launcherSvg when set.
+   * Ignored when `pillLauncher` is set (pill derives `launcherImageUrl` from `pillLauncher.avatarUrl`).
    */
   launcherImageUrl?: string;
+
+  /**
+   * Declarative pill-shaped floating launcher (label + avatar). The widget calls
+   * `makePillLauncher` and `apply()` internally after mount — no host `apply()` needed.
+   * Floating variant only; omit manual `launcherImageUrl` when using this.
+   */
+  pillLauncher?: PillLauncherOptions;
 
   /** Tooltip text shown on launcher hover. */
   launcherTooltip?: string;

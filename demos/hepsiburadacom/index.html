@@ -484,6 +484,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-hepsiburadacom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -518,6 +519,15 @@
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
+          headerTitle: 'Hepsiburada Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "Hepsiburada'ya Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#ff6000',
+            secondaryColor: '#212529',
+            fontFamily: '"Nunito Sans", "Arial", sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Hepsiburada asistanına sorun...',
             poweredBy: 'Hepsiburada AI Asistan',
@@ -525,6 +535,8 @@
         },
         qna: {
           mountTarget: '#hb-qna-section',
+          headerTitle: "Hepsiburada'ya Sor",
+          ctaText: 'Başka bir şey sor',
         },
         simrel: {
           mountTarget: '#hb-similar-products',

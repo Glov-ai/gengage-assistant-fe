@@ -25,6 +25,17 @@ export interface QNAWidgetConfig extends BaseWidgetConfig {
   showStaticQuestion?: boolean;
   staticQuestionText?: string;
 
+  /**
+   * Title above the Q&A module (e.g. "Koçtaş'a Sor", "Teknosa'ya Sor").
+   * When set, overrides the stream `QuestionHeading` text from the backend.
+   * Overlay defaults: `qna.headerTitle` → `qna.headingTitle` (deprecated) → `chat.headerTitle`.
+   */
+  headerTitle?: string;
+  /**
+   * @deprecated Use `headerTitle` — same behavior.
+   */
+  headingTitle?: string;
+
   // -------------------------------------------------------------------------
   // Callbacks (alternative to event listeners)
   // -------------------------------------------------------------------------
@@ -57,6 +68,8 @@ export interface QNAUISpecRenderContext {
   ctaText?: string;
   inputPlaceholder?: string | string[];
   i18n: QNAI18n;
+  /** When set (from `QNAWidgetConfig.headerTitle` / `headingTitle`), replaces QuestionHeading `text` from the stream. */
+  headingTitleOverride?: string;
 }
 
 export type QNARendererConfig = UISpecRendererOverrides<QNAUISpecRenderContext>;

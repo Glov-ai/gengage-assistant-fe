@@ -485,6 +485,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-lcwcom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -521,6 +522,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'LC Waikiki Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "LC Waikiki'ye Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#B82020',
+            secondaryColor: '#0C0B37',
+            fontFamily: '"Metropolis", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ürün ara veya soru sor',
             poweredBy: 'LC Waikiki AI Asistan',
@@ -528,6 +537,7 @@
         },
         qna: {
           mountTarget: '#lcw-qna-section',
+          headerTitle: "LC Waikiki'ye Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

@@ -345,120 +345,10 @@
         min-height: 180px;
       }
 
-      /* ── QNA section ── */
+      /* ── QNA section (widget styles: src/qna/components/qna.css + initOverlayWidgets theme) ── */
       .qna-section {
         margin-top: 14px;
         min-height: 72px;
-      }
-
-      #teknosa-qna-section .gengage-qna-container {
-        --gengage-font-family: var(--brand-font);
-        --gengage-font-size: 14px;
-        --gengage-qna-panel-bg: #f7f7f9;
-        --gengage-qna-panel-radius: 14px;
-        --gengage-qna-panel-margin-top: 4px;
-        --gengage-qna-panel-margin-bottom: 0;
-        --gengage-qna-pill-radius: 999px;
-        --gengage-qna-input-radius: 14px;
-        --gengage-qna-pill-bg: #fff;
-        --gengage-qna-pill-bg-hover: color-mix(in srgb, var(--brand-primary) 10%, white);
-        --gengage-qna-pill-fg: var(--brand-primary);
-        --gengage-qna-pill-border: color-mix(in srgb, var(--brand-primary) 64%, white);
-        --gengage-qna-pill-border-hover: color-mix(in srgb, var(--brand-primary) 78%, white);
-        --gengage-qna-input-bg: #fff;
-        --gengage-qna-input-border: color-mix(in srgb, var(--brand-primary) 58%, white);
-        --gengage-qna-icon-color: var(--brand-primary);
-        --gengage-qna-clear-color: var(--brand-primary);
-        --gengage-qna-send-color: var(--brand-primary);
-        --gengage-qna-send-color-disabled: color-mix(in srgb, var(--brand-primary) 36%, #b3b8c8);
-        --gengage-qna-action-icon-bg-hover: color-mix(in srgb, var(--brand-primary) 12%, white);
-      }
-
-      #teknosa-qna-section .gengage-qna-panel {
-        padding: 20px 22px 20px;
-        display: flex;
-        flex-direction: column;
-      }
-
-      #teknosa-qna-section .gengage-qna-heading {
-        font-size: clamp(24px, 2.3vw, 38px);
-        line-height: 1.1;
-        letter-spacing: -0.01em;
-        margin-bottom: 6px;
-      }
-
-      #teknosa-qna-section .gengage-qna-uispec {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-heading) {
-        order: 0;
-      }
-
-      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-input-wrapper) {
-        order: 1;
-      }
-
-      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-uispec:has(.gengage-qna-buttons) {
-        order: 2;
-      }
-
-      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-input-wrapper {
-        order: 1;
-      }
-
-      #teknosa-qna-section .gengage-qna-panel > .gengage-qna-buttons {
-        order: 2;
-      }
-
-      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-heading {
-        order: 0;
-      }
-
-      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-input-wrapper {
-        order: 1;
-        padding-top: 2px;
-        margin-bottom: 4px;
-      }
-
-      #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
-        order: 2;
-        padding-top: 10px;
-        gap: 14px 12px;
-      }
-
-      #teknosa-qna-section .gengage-qna-button,
-      #teknosa-qna-section .gengage-qna-cta {
-        min-height: 42px;
-        font-size: 15px;
-        padding: 9px 16px;
-        line-height: 1.2;
-      }
-
-      #teknosa-qna-section .gengage-qna-input {
-        font-size: 18px;
-        font-weight: 500;
-      }
-
-      #teknosa-qna-section .gengage-qna-input::placeholder {
-        color: #6b7280;
-      }
-
-      @media (max-width: 900px) {
-        #teknosa-qna-section .gengage-qna-panel {
-          padding: 16px 16px 16px;
-        }
-
-        #teknosa-qna-section .gengage-qna-uispec {
-          gap: 12px;
-        }
-
-        #teknosa-qna-section .gengage-qna-uispec > .gengage-qna-buttons {
-          padding-top: 8px;
-          gap: 10px;
-        }
       }
 
       /* ── Responsive ── */
@@ -626,7 +516,6 @@
       document.getElementById('gallery-main-title').textContent = productTitle;
       document.title = `Gengage Dev — teknosacom • ${skuDisplay}`;
       const avatarUrl = new URL('./teknosa-assistant-avatar.png', import.meta.url).href;
-      const launcherBootstrapImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
       const controller = await initOverlayWidgets({
         accountId: 'teknosacom',
@@ -658,8 +547,16 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Teknosa'ya Sor",
-          launcherImageUrl: launcherBootstrapImage,
           headerAvatarUrl: avatarUrl,
+          pillLauncher: {
+            label: "Teknosa'ya Sor",
+            avatarUrl,
+            primaryColor: '#F58220',
+            secondaryColor: '#0C0B37',
+            fontFamily: '"Metropolis", Arial, sans-serif',
+            labelClassName: 'teknosa-launcher-label',
+            styleId: 'teknosa-launcher-style',
+          },
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Gengage ile',
@@ -667,6 +564,7 @@
         },
         qna: {
           mountTarget: '#teknosa-qna-section',
+          headerTitle: "Teknosa'ya Sor",
           ctaText: 'Başka bir şey sor',
           inputPlaceholder: true,
         },
@@ -684,166 +582,6 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
-
-      const normalizeTeknosaQnaHeading = () => {
-        const qnaRoot = document.getElementById('teknosa-qna-section');
-        if (!qnaRoot) return;
-
-        qnaRoot.querySelectorAll('.gengage-qna-heading').forEach((heading) => {
-          if (!(heading instanceof HTMLElement)) return;
-          if (heading.textContent !== "Teknosa'ya Sor") {
-            heading.textContent = "Teknosa'ya Sor";
-          }
-        });
-      };
-
-      normalizeTeknosaQnaHeading();
-      const qnaRootEl = document.getElementById('teknosa-qna-section');
-      if (qnaRootEl) {
-        const prevObserver = window.__teknosaQnaObserver;
-        if (prevObserver instanceof MutationObserver) {
-          prevObserver.disconnect();
-        }
-        const qnaObserver = new MutationObserver(() => normalizeTeknosaQnaHeading());
-        qnaObserver.observe(qnaRootEl, { childList: true, subtree: false });
-        window.__teknosaQnaObserver = qnaObserver;
-      }
-
-      const teknosaLauncherCss = `
-        .gengage-chat-launcher-container {
-          right: 24px;
-          bottom: 24px;
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode {
-          width: 188px;
-          min-width: 188px;
-          max-width: 188px;
-          height: 60px;
-          padding: 6px 7px 6px 22px;
-          display: inline-flex;
-          flex-direction: row-reverse;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          border-radius: 999px;
-          border: 1px solid color-mix(in srgb, var(--brand-primary) 58%, white);
-          background: #ffffff;
-          box-shadow:
-            0 18px 46px color-mix(in srgb, var(--brand-secondary) 17%, transparent),
-            0 4px 14px color-mix(in srgb, var(--brand-secondary) 8%, transparent);
-          transition:
-            border-color 0.16s ease,
-            box-shadow 0.16s ease,
-            transform 0.16s ease;
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode:hover {
-          border-color: color-mix(in srgb, var(--brand-primary) 78%, white);
-          transform: translateY(-1px);
-          box-shadow:
-            0 22px 52px color-mix(in srgb, var(--brand-secondary) 22%, transparent),
-            0 6px 18px color-mix(in srgb, var(--brand-secondary) 12%, transparent);
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode:focus-visible {
-          outline: 2px solid color-mix(in srgb, var(--brand-primary) 28%, transparent);
-          outline-offset: 2px;
-        }
-
-        .teknosa-launcher-label {
-          color: var(--brand-secondary);
-          font: 500 15px/1.05 var(--brand-font);
-          letter-spacing: -0.02em;
-          white-space: nowrap;
-          flex: 0 0 auto;
-        }
-
-        .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
-          width: 46px;
-          height: 46px;
-          flex: 0 0 46px;
-          border-radius: 999px;
-          object-fit: cover;
-          object-position: center;
-          background: transparent;
-          border: 0;
-          box-shadow: none;
-        }
-
-        .gengage-chat-header-avatar {
-          width: 52px;
-          height: 52px;
-          border: 0;
-          box-shadow: none;
-          background: transparent;
-          object-fit: cover;
-          object-position: center;
-        }
-
-        @media (max-width: 768px) {
-          .gengage-chat-launcher.gengage-chat-launcher--image-mode {
-            width: 174px;
-            min-width: 174px;
-            max-width: 174px;
-            height: 56px;
-            padding-left: 20px;
-            padding-right: 7px;
-          }
-
-          .teknosa-launcher-label {
-            font-size: 14px;
-          }
-
-          .gengage-chat-launcher.gengage-chat-launcher--image-mode img {
-            width: 42px;
-            height: 42px;
-            flex-basis: 42px;
-          }
-        }
-      `;
-
-      const enhanceTeknosaLauncher = () => {
-        const host = document.querySelector('[data-gengage-widget="gengagechat"]');
-        const root = host instanceof HTMLElement ? host.shadowRoot : null;
-        if (!root) return false;
-
-        if (!root.getElementById('teknosa-launcher-style')) {
-          const style = document.createElement('style');
-          style.id = 'teknosa-launcher-style';
-          style.textContent = teknosaLauncherCss;
-          root.appendChild(style);
-        }
-
-        const launcher = root.querySelector('[data-gengage-part="chat-launcher-button"]');
-        if (!(launcher instanceof HTMLButtonElement)) return false;
-        const launcherImg = launcher.querySelector('img');
-        if (launcherImg instanceof HTMLImageElement && launcherImg.getAttribute('src') !== avatarUrl) {
-          launcherImg.src = avatarUrl;
-        }
-        // The bootstrap placeholder launcher makes launcherImageUrl !== headerAvatarUrl, which
-        // causes ChatDrawer to apply logo styling to the header avatar. Restore circular treatment.
-        const headerAvatar = root.querySelector('[data-gengage-part="chat-header-avatar"]');
-        if (headerAvatar instanceof HTMLImageElement) {
-          headerAvatar.classList.remove('gengage-chat-header-avatar--logo');
-        }
-        if (launcher.querySelector('.teknosa-launcher-label')) return true;
-        launcher.setAttribute('aria-label', "Teknosa'ya Sor");
-        const label = document.createElement('span');
-        label.className = 'teknosa-launcher-label';
-        label.textContent = "Teknosa'ya Sor";
-        launcher.appendChild(label);
-        return true;
-      };
-      if (!enhanceTeknosaLauncher()) {
-        const launcherObserver = new MutationObserver(() => {
-          if (enhanceTeknosaLauncher()) {
-            launcherObserver.disconnect();
-          }
-        });
-        launcherObserver.observe(document.body, { childList: true, subtree: true });
-        window.setTimeout(() => launcherObserver.disconnect(), 5000);
-      }
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

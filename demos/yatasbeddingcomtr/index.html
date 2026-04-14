@@ -479,7 +479,7 @@
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
-      const launcherUrl = new URL('./glov-yatasbeddingcomtr-launcher.svg', import.meta.url).href;
+      const yatasLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -515,8 +515,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Yataş'a Sor",
-          launcherImageUrl: launcherUrl,
-          headerAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
+          headerAvatarUrl: yatasLogoUrl,
+          pillLauncher: {
+            label: "Yataş'a Sor",
+            avatarUrl: yatasLogoUrl,
+            primaryColor: '#4097ca',
+            secondaryColor: '#222222',
+            fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Bu ürünle ilgili soru sor',
             poweredBy: 'Yataş Bedding AI Asistan',
@@ -529,6 +535,7 @@
         },
         qna: {
           mountTarget: '#yatas-qna-section',
+          headerTitle: "Yataş'a Sor",
           hideButtonRowCta: true,
           inputPlaceholder: true,
           i18n: {

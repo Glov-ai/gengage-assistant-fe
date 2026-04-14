@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock widget constructors so overlay doesn't try to create real DOM/fetch
 vi.mock('../src/chat/index.js', () => ({
@@ -47,6 +47,8 @@ import {
   destroyOverlayWidgets,
   buildOverlayIdempotencyKey,
 } from '../src/common/overlay.js';
+import { GengageQNA } from '../src/qna/index.js';
+import { GengageChat } from '../src/chat/index.js';
 
 describe('overlay', () => {
   beforeEach(() => {
@@ -194,6 +196,84 @@ describe('overlay', () => {
 
       controller.closeChat();
       expect(controller.chat!.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('QNA headerTitle forwarding', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('passes qna.headerTitle directly to QNA init config', async () => {
+      await initOverlayWidgets({
+        accountId: 'qna-headertitle-direct',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        qna: { headerTitle: "Koçtaş'a Sor" },
+      });
+
+      const qnaInstance = vi.mocked(GengageQNA).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = qnaInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['headerTitle']).toBe("Koçtaş'a Sor");
+    });
+
+    it('does NOT inherit chat.headerTitle for QNA when qna.headerTitle is absent', async () => {
+      await initOverlayWidgets({
+        accountId: 'qna-headertitle-no-fallback',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        chat: { headerTitle: "Boyner'e Sor" },
+        // qna.headerTitle deliberately absent — must not be silently inherited
+      });
+
+      const qnaInstance = vi.mocked(GengageQNA).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = qnaInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['headerTitle']).toBeUndefined();
+    });
+
+    it('qna.headerTitle takes precedence over chat.headerTitle', async () => {
+      await initOverlayWidgets({
+        accountId: 'qna-headertitle-priority',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        chat: { headerTitle: 'Chat Title' },
+        qna: { headerTitle: 'QNA Title' },
+      });
+
+      const qnaInstance = vi.mocked(GengageQNA).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = qnaInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['headerTitle']).toBe('QNA Title');
+    });
+
+    it('qna.headingTitle (deprecated) is used when headerTitle is absent', async () => {
+      await initOverlayWidgets({
+        accountId: 'qna-headertitle-deprecated',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        qna: { headingTitle: 'Legacy Title' },
+      });
+
+      const qnaInstance = vi.mocked(GengageQNA).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = qnaInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['headerTitle']).toBe('Legacy Title');
+    });
+
+    it('forwards pillLauncher from chat options to GengageChat init config', async () => {
+      const pillLauncher = {
+        label: "Koçtaş'a Sor",
+        avatarUrl: 'https://example.com/logo.svg',
+        primaryColor: '#ec6e00',
+      };
+
+      await initOverlayWidgets({
+        accountId: 'pill-launcher-forward',
+        middlewareUrl: 'https://example.com',
+        chat: { pillLauncher },
+      });
+
+      const chatInstance = vi.mocked(GengageChat).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = chatInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['pillLauncher']).toEqual(pillLauncher);
     });
   });
 });

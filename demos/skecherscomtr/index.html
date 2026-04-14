@@ -490,6 +490,8 @@
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
 
+      const skechersAvatarUrl = new URL('./skechers-avatar.svg', import.meta.url).href;
+
       const controller = await initOverlayWidgets({
         accountId: 'skecherscomtr',
         middlewareUrl,
@@ -520,8 +522,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Skechers Asistan',
-          launcherImageUrl: new URL('./skechers-avatar.svg', import.meta.url).href,
-          headerAvatarUrl: new URL('./skechers-avatar.svg', import.meta.url).href,
+          headerAvatarUrl: skechersAvatarUrl,
+          pillLauncher: {
+            label: "Skechers'a Sor",
+            avatarUrl: skechersAvatarUrl,
+            primaryColor: '#003478',
+            secondaryColor: '#333333',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ayakkabı ara veya soru sor',
             poweredBy: 'Skechers AI Asistan',
@@ -529,6 +537,7 @@
         },
         qna: {
           mountTarget: '#skechers-qna-section',
+          headerTitle: "Skechers'a Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

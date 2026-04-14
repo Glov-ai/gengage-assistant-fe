@@ -485,6 +485,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-flocomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -521,6 +522,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'FLO Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "FLO'ya Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#FF6600',
+            secondaryColor: '#000000',
+            fontFamily: '"Roboto", sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ayakkabı veya aksesuar arayın',
             poweredBy: 'FLO AI Asistan',
@@ -528,6 +537,7 @@
         },
         qna: {
           mountTarget: '#flo-qna-section',
+          headerTitle: "FLO'ya Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

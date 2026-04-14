@@ -484,6 +484,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-defactocomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -520,6 +521,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'DeFacto Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "DeFacto'ya Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#f28100',
+            secondaryColor: '#22242a',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ürün ara veya soru sor',
             poweredBy: 'DeFacto AI Asistan',
@@ -527,6 +536,7 @@
         },
         qna: {
           mountTarget: '#defacto-qna-section',
+          headerTitle: "DeFacto'ya Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

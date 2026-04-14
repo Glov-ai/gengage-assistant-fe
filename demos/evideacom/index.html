@@ -476,6 +476,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-evideacom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -512,6 +513,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Evidea Asistan',
+          headerAvatarUrl: brandRemoteLogoUrl,
+          pillLauncher: {
+            label: "Evidea'ya Sor",
+            avatarUrl: brandRemoteLogoUrl,
+            primaryColor: '#ff6a00',
+            secondaryColor: '#2d3436',
+            fontFamily: '"Poppins", Arial, sans-serif',
+          },
           i18n: {
             inputPlaceholder: 'Ev dekorasyon ürünleri arayın',
             poweredBy: 'Evidea AI Asistan',
@@ -519,6 +528,7 @@
         },
         qna: {
           mountTarget: '#evidea-qna-section',
+          headerTitle: "Evidea'ya Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {

@@ -607,8 +607,14 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Alışveriş Asistanı',
-          launcherImageUrl: chatIconUrl,
           headerAvatarUrl: chatIconUrl,
+          pillLauncher: {
+            label: "Özdilek'e Sor",
+            avatarUrl: chatIconUrl,
+            primaryColor: '#F08A2B',
+            secondaryColor: '#2c2528',
+            fontFamily: "'Montserrat', sans-serif",
+          },
           i18n: {
             inputPlaceholder: 'Mağazada ne aramıştınız? (Örn: Sabahlık, Parfüm...)',
             poweredBy: 'Özdilekteyim AI Asistan',
@@ -616,6 +622,7 @@
         },
         qna: {
           mountTarget: '#ozdilekteyimcom-magaza-qna-section',
+          headerTitle: "Özdilek'e Sor",
           ctaText: 'Başka bir şey sor',
         },
         simrel: {
