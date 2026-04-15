@@ -1108,4 +1108,42 @@ describe('adaptBackendEvent — handoff', () => {
     expect(result.type).toBe('text_chunk');
     expect((result as { renderHint?: string }).renderHint).toBe('photo_analysis');
   });
+
+  it('adapts outputText with kvkk flag to text_chunk preserving kvkk', () => {
+    const raw = {
+      type: 'outputText',
+      payload: {
+        text: '<p>KVKK content</p>',
+        plain_text: 'KVKK content',
+        kvkk: true,
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('text_chunk');
+    expect((result as { kvkk?: boolean }).kvkk).toBe(true);
+  });
+
+  it('adapts uiSpec (PhotoAnalysisCard) to ui_spec with structured fields', () => {
+    const raw = {
+      type: 'uiSpec',
+      payload: {
+        type: 'PhotoAnalysisCard',
+        summary: 'Cildiniz kuru ve hassas görünüyor.',
+        clues: ['Kızarıklık belirgin', 'Gözenekler geniş'],
+        next_question: 'Hangi ürün grubunu tercih edersiniz?',
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      widget: string;
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(uiSpec.widget).toBe('chat');
+    const root = uiSpec.spec.elements['root']!;
+    expect(root.type).toBe('PhotoAnalysisCard');
+    expect(root.props?.['summary']).toBe('Cildiniz kuru ve hassas görünüyor.');
+    expect(root.props?.['clues']).toEqual(['Kızarıklık belirgin', 'Gözenekler geniş']);
+    expect(root.props?.['next_question']).toBe('Hangi ürün grubunu tercih edersiniz?');
+  });
 });

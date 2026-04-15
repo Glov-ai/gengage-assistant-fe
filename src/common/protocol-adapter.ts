@@ -592,6 +592,10 @@ function adaptOutputText(event: V1OutputText): StreamEventTextChunk | StreamEven
     result.renderHint = renderHint;
   }
 
+  if (event.payload['kvkk'] === true) {
+    result.kvkk = true;
+  }
+
   return result;
 }
 

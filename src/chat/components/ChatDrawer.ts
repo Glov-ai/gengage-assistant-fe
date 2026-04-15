@@ -240,7 +240,11 @@ export class ChatDrawer {
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
   private _beautyPhotoStepEl: HTMLElement | null = null;
 
-  private _renderPhotoAnalysisMessageCard(container: HTMLElement, content: string): void {
+  private _renderPhotoAnalysisCard(
+    container: HTMLElement,
+    content: string,
+    structured?: { summary: string; clues: string[]; nextQuestion?: string },
+  ): void {
     container.innerHTML = '';
 
     const card = document.createElement('div');
@@ -253,37 +257,64 @@ export class ChatDrawer {
     const body = document.createElement('div');
     body.className = 'gengage-chat-photo-analysis-body';
 
-    const parts = content
-      .split(/(?<=[.!?])\s+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
+    if (structured) {
+      // Structured data from PhotoAnalysisCard UISpec — no sentence splitting needed.
+      const summaryEl = document.createElement('p');
+      summaryEl.className = 'gengage-chat-photo-analysis-summary';
+      summaryEl.textContent = structured.summary;
+      body.appendChild(summaryEl);
 
-    const summary = document.createElement('p');
-    summary.className = 'gengage-chat-photo-analysis-summary';
-    summary.textContent = parts[0] ?? content;
-    body.appendChild(summary);
-
-    const clues = parts
-      .slice(1)
-      .filter((part) => !part.includes('?'))
-      .slice(0, 4);
-    if (clues.length > 0) {
-      const list = document.createElement('ul');
-      list.className = 'gengage-chat-photo-analysis-points';
-      for (const clue of clues) {
-        const item = document.createElement('li');
-        item.textContent = clue;
-        list.appendChild(item);
+      if (structured.clues.length > 0) {
+        const list = document.createElement('ul');
+        list.className = 'gengage-chat-photo-analysis-points';
+        for (const clue of structured.clues) {
+          const item = document.createElement('li');
+          item.textContent = clue;
+          list.appendChild(item);
+        }
+        body.appendChild(list);
       }
-      body.appendChild(list);
-    }
 
-    const question = parts.find((part) => part.includes('?'));
-    if (question) {
-      const next = document.createElement('p');
-      next.className = 'gengage-chat-photo-analysis-next';
-      next.textContent = question;
-      body.appendChild(next);
+      if (structured.nextQuestion) {
+        const next = document.createElement('p');
+        next.className = 'gengage-chat-photo-analysis-next';
+        next.textContent = structured.nextQuestion;
+        body.appendChild(next);
+      }
+    } else {
+      // Fallback: sentence-splitting heuristic for old backends without PhotoAnalysisCard UISpec.
+      const parts = content
+        .split(/(?<=[.!?])\s+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      const summaryEl = document.createElement('p');
+      summaryEl.className = 'gengage-chat-photo-analysis-summary';
+      summaryEl.textContent = parts[0] ?? content;
+      body.appendChild(summaryEl);
+
+      const clues = parts
+        .slice(1)
+        .filter((part) => !part.includes('?'))
+        .slice(0, 4);
+      if (clues.length > 0) {
+        const list = document.createElement('ul');
+        list.className = 'gengage-chat-photo-analysis-points';
+        for (const clue of clues) {
+          const item = document.createElement('li');
+          item.textContent = clue;
+          list.appendChild(item);
+        }
+        body.appendChild(list);
+      }
+
+      const question = parts.find((part) => part.includes('?'));
+      if (question) {
+        const next = document.createElement('p');
+        next.className = 'gengage-chat-photo-analysis-next';
+        next.textContent = question;
+        body.appendChild(next);
+      }
     }
 
     card.appendChild(badge);
@@ -1207,7 +1238,7 @@ export class ChatDrawer {
       if (message.role === 'assistant') {
         if (message.renderHint === 'photo_analysis') {
           bubble.classList.add('gengage-chat-bubble--photo-analysis');
-          this._renderPhotoAnalysisMessageCard(text, message.content);
+          this._renderPhotoAnalysisCard(text, message.content, message.photoAnalysis);
         } else {
           text.innerHTML = sanitizeHtml(message.content);
         }
@@ -2451,7 +2482,12 @@ export class ChatDrawer {
   }
 
   /** Update a bot message's text content in the DOM (e.g. for fallback messages). */
-  updateBotMessage(messageId: string, html: string, renderHint?: string): void {
+  updateBotMessage(
+    messageId: string,
+    html: string,
+    renderHint?: string,
+    photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string },
+  ): void {
     const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
     let textEl = bubble.querySelector('.gengage-chat-bubble-text');
@@ -2462,7 +2498,7 @@ export class ChatDrawer {
     }
     if (renderHint === 'photo_analysis') {
       bubble.classList.add('gengage-chat-bubble--photo-analysis');
-      this._renderPhotoAnalysisMessageCard(textEl as HTMLElement, html);
+      this._renderPhotoAnalysisCard(textEl as HTMLElement, html, photoAnalysis);
     } else {
       bubble.classList.remove('gengage-chat-bubble--photo-analysis');
       textEl.innerHTML = sanitizeHtml(html);

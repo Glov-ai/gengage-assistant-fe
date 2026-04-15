@@ -75,6 +75,7 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   HandoffNotice: ({ element, context }) => renderHandoffNotice(element, context),
   ProductSummaryCard: ({ element, context }) => renderProductSummaryCard(element, context),
   Divider: ({ element }) => renderDivider(element),
+  PhotoAnalysisCard: ({ element, context }) => renderPhotoAnalysisCard(element, context),
 };
 
 export const defaultChatUnknownUISpecRenderer: UISpecDomUnknownRenderer<UISpecRenderContext> = ({
@@ -1713,30 +1714,25 @@ function renderProductGrid(
     recommendation_groups?: Array<{ label?: string; reason?: string; skus?: string[] }>;
   };
 
-  const toConsultingImageUrls = (input: unknown): string[] => {
-    if (typeof input !== 'string') return [];
+  const toConsultingImageUrl = (input: unknown): string | undefined => {
+    if (typeof input !== 'string') return undefined;
     const raw = input.trim();
-    if (!raw) return [];
+    if (!raw) return undefined;
 
+    // If the backend sends an absolute URL, use it directly.
+    if (/^https?:\/\//i.test(raw)) return raw;
+
+    // Relative path fallback for old backends that don't send absolute URLs.
     let path = raw.split(/[?#]/)[0];
-    if (!path) return [];
+    if (!path) return undefined;
 
     path = path.replace(/^\/+/, '');
     if (path.startsWith('remoteConfig/')) {
       path = path.slice('remoteConfig/'.length);
     }
 
-    if (/^https?:\/\//i.test(path)) {
-      try {
-        path = new URL(path).pathname.replace(/^\/+/, '');
-      } catch {
-        const last = path.lastIndexOf('/');
-        path = last >= 0 ? path.slice(last + 1) : path;
-      }
-    }
-
-    if (!path) return [];
-    return [`https://configs.gengage.ai/assets/${path}`];
+    if (!path) return undefined;
+    return `https://configs.gengage.ai/assets/${path}`;
   };
 
   const wrapper = document.createElement('div');
@@ -2098,29 +2094,14 @@ function renderProductGrid(
       const media = document.createElement('div');
       media.className = 'gengage-chat-consulting-style-media';
 
-      const candidateImageUrls = toConsultingImageUrls(variation.image_url);
-      const firstImageUrl = candidateImageUrls.find((url) => isSafeUrl(url));
-      if (firstImageUrl) {
+      const imageUrl = toConsultingImageUrl(variation.image_url);
+      if (imageUrl && isSafeUrl(imageUrl)) {
         const img = document.createElement('img');
         img.className = 'gengage-chat-consulting-style-image';
-        safeSetAttribute(img, 'src', firstImageUrl);
+        safeSetAttribute(img, 'src', imageUrl);
         img.alt = variation.style_label ?? `Style ${index + 1}`;
         img.loading = 'lazy';
-        if (candidateImageUrls.length > 1) {
-          let fallbackIndex = 1;
-          img.addEventListener('error', () => {
-            while (fallbackIndex < candidateImageUrls.length) {
-              const next = candidateImageUrls[fallbackIndex++];
-              if (!next || !isSafeUrl(next)) continue;
-              if (img.src === next) continue;
-              safeSetAttribute(img, 'src', next);
-              return;
-            }
-            img.style.display = 'none';
-          });
-        } else {
-          addImageErrorHandler(img);
-        }
+        addImageErrorHandler(img);
         media.appendChild(img);
       }
 
@@ -2242,6 +2223,51 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
   }
 
   return el;
+}
+
+function renderPhotoAnalysisCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'gengage-chat-photo-analysis-card';
+
+  const badge = document.createElement('div');
+  badge.className = 'gengage-chat-photo-analysis-badge';
+  badge.textContent = ctx.i18n?.photoAnalysisBadge ?? 'Skin Analysis';
+
+  const body = document.createElement('div');
+  body.className = 'gengage-chat-photo-analysis-body';
+
+  const summary = element.props?.['summary'];
+  if (typeof summary === 'string' && summary) {
+    const p = document.createElement('p');
+    p.className = 'gengage-chat-photo-analysis-summary';
+    p.textContent = summary;
+    body.appendChild(p);
+  }
+
+  const clues = element.props?.['clues'];
+  if (Array.isArray(clues) && clues.length > 0) {
+    const list = document.createElement('ul');
+    list.className = 'gengage-chat-photo-analysis-points';
+    for (const clue of clues) {
+      if (typeof clue !== 'string') continue;
+      const item = document.createElement('li');
+      item.textContent = clue;
+      list.appendChild(item);
+    }
+    body.appendChild(list);
+  }
+
+  const nextQuestion = element.props?.['next_question'];
+  if (typeof nextQuestion === 'string' && nextQuestion) {
+    const p = document.createElement('p');
+    p.className = 'gengage-chat-photo-analysis-next';
+    p.textContent = nextQuestion;
+    body.appendChild(p);
+  }
+
+  card.appendChild(badge);
+  card.appendChild(body);
+  return card;
 }
 
 function renderDivider(element: UIElement): HTMLElement {

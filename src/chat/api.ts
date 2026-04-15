@@ -143,6 +143,7 @@ export interface StreamCallbacks {
       skuToProductItem?: Record<string, Record<string, unknown>> | undefined;
       conversationMode?: string | undefined;
       renderHint?: string | undefined;
+      kvkk?: boolean | undefined;
     },
   ) => void;
   onUISpec: (spec: UISpec, widget: string, panelHint?: 'panel', clearPanel?: boolean) => void;
@@ -259,6 +260,7 @@ export function sendChatMessage(
                 skuToProductItem: normalized.skuToProductItem,
                 conversationMode: normalized.conversationMode,
                 renderHint: normalized.renderHint,
+                kvkk: normalized.kvkk,
               });
               break;
             case 'ui_spec':

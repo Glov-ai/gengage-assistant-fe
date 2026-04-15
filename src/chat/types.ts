@@ -433,6 +433,7 @@ export interface ChatUISpecRenderContext {
     | 'reviewCustomersMentionPlural'
     | 'reviewSubjectsHeading'
     | 'aiBrowseCategoriesTitle'
+    | 'photoAnalysisBadge'
   >;
   productSort?: ProductSortState | undefined;
   onSortChange?: ((sort: ProductSortState) => void) | undefined;
@@ -481,6 +482,9 @@ export interface ChatMessage {
   silent?: boolean;
   /** Backend render hint for special rendering (e.g. "photo_analysis"). */
   renderHint?: string;
+  /** Structured photo analysis data from PhotoAnalysisCard UISpec (preferred over sentence-splitting). */
+  photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string };
+
   timestamp: number;
   status: 'streaming' | 'done' | 'error';
 }

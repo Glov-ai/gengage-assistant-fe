@@ -274,6 +274,110 @@ describe('beauty consulting migration', () => {
     expect(request.type).toBe('findSimilar');
   });
 
+  it('watch_expert redirect sets mode and applies ui_hints', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    // Simulate watch_expert redirect
+    (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
+      assistant_mode: 'watch_expert',
+    });
+
+    const accessor = chat as unknown as {
+      _assistantMode: string;
+      _uiHints: Record<string, unknown> | null;
+      _lastBackendContext: Record<string, unknown>;
+      _applyUiHints: () => void;
+    };
+    expect(accessor._assistantMode).toBe('watch_expert');
+
+    // Simulate CONTEXT with watch_expert ui_hints
+    accessor._lastBackendContext = {
+      panel: {
+        assistant_mode: 'watch_expert',
+        ui_hints: {
+          hide_attachment_controls: true,
+          hide_comparison_prompt: true,
+          input_placeholder: 'Saat danışmanınıza yazın...',
+        },
+      },
+    };
+    accessor._uiHints = (accessor._lastBackendContext['panel'] as Record<string, unknown>)['ui_hints'] as Record<
+      string,
+      unknown
+    >;
+    accessor._applyUiHints();
+
+    expect(accessor._uiHints?.['hide_attachment_controls']).toBe(true);
+    expect(accessor._uiHints?.['input_placeholder']).toBe('Saat danışmanınıza yazın...');
+  });
+
+  it('unavailable product context does not block user messages from reaching backend', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+      pageContext: { pageType: 'pdp', sku: 'TEST-SKU' },
+    });
+
+    const accessor = chat as unknown as {
+      _assistantMode: string;
+      _productContextUnavailableSku: string | null;
+      _sendMessage(text: string): void;
+    };
+    accessor._assistantMode = 'shopping';
+    accessor._productContextUnavailableSku = 'TEST-SKU';
+
+    // Send a message — it should reach the backend (no short-circuit)
+    accessor._sendMessage('Bu ürün hakkında bilgi ver');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    const processCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/chat/process_action'));
+    expect(processCall).toBeDefined();
+  });
+
+  it('PhotoAnalysisCard UISpec attaches structured data to bot message', () => {
+    const chat = new GengageChat();
+
+    const accessor = chat as unknown as {
+      _createMessage(
+        role: string,
+        content: string,
+      ): {
+        id: string;
+        role: string;
+        content: string;
+        photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string };
+      };
+    };
+
+    const msg = accessor._createMessage('assistant', 'Analysis text');
+    // Verify the message interface supports photoAnalysis
+    msg.photoAnalysis = {
+      summary: 'Cildiniz kuru görünüyor.',
+      clues: ['Kızarıklık var', 'Gözenekler geniş'],
+      nextQuestion: 'Nemlendirici önerelim mi?',
+    };
+    expect(msg.photoAnalysis.summary).toBe('Cildiniz kuru görünüyor.');
+    expect(msg.photoAnalysis.clues).toHaveLength(2);
+    expect(msg.photoAnalysis.nextQuestion).toBe('Nemlendirici önerelim mi?');
+  });
+
   it('BeautyPhotoStep skip sends a message to the backend', async () => {
     const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;

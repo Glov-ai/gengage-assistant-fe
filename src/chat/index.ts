@@ -1610,28 +1610,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
-    const shouldShortCircuitUnavailableContext =
-      !options?.silent &&
-      this._assistantMode === 'shopping' &&
-      this._hasUnavailableProductContext() &&
-      (action.type === 'user_message' || action.type === 'inputText');
-    if (shouldShortCircuitUnavailableContext) {
-      const fallback = this._i18n.productNotFoundMessage;
-      const botMsg = this._createMessage('assistant', fallback);
-      botMsg.threadId = threadId;
-      botMsg.status = 'done';
-      this._messages.push(botMsg);
-      this._ensureAssistantMessageRendered(botMsg);
-      this._drawer?.updateBotMessage(botMsg.id, fallback);
-      this._drawer?.setPresentationFocus(threadId);
-      this._bridge?.send('isResponding', false);
-      this.emit('message', botMsg);
-      this._persistToIndexedDB().catch(() => {
-        /* non-fatal */
-      });
-      return;
-    }
-
     // Preserve panel during the request — don't clear or show loading skeleton
     // until the backend explicitly signals new panel content (panelLoading event).
     // Exception: getComparisonTable shows the panel skeleton immediately (desktop + mobile)
@@ -1852,8 +1830,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           // KVKK filtering: always strip KVKK block from display text.
           // Show banner on first encounter only.
+          // Prefer backend `kvkk` flag; fall back to keyword scanning for old backends.
           let displayText = localBotText;
-          if (isFinal && containsKvkk(displayText)) {
+          const isKvkkContent = extra?.kvkk === true || containsKvkk(displayText);
+          if (isFinal && isKvkkContent) {
             const acctId = this.config.accountId;
             if (!isKvkkShown(acctId)) {
               const kvkkHtml = extractKvkkBlock(displayText);
@@ -1890,35 +1870,40 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             botMsg.status = 'done';
             ga.trackMessageReceived();
 
-            // Apply typewriter animation to the final bot text
-            const bubbleTextEl = this._shadow?.querySelector(
-              `[data-message-id="${botMsg.id}"] .gengage-chat-bubble-text`,
-            ) as HTMLElement | null;
-            if (bubbleTextEl) {
-              this._activeTypewriter?.cancel();
-              const mentions = extra?.productMentions;
-              this._activeTypewriter = typewriteHtml({
-                container: bubbleTextEl,
-                html: sanitizeHtml(displayText),
-                onTick: () => this._drawer?.scrollToBottomIfNeeded(),
-                onComplete: () => {
-                  this._activeTypewriter = null;
-                  // Link product mentions after typewriter finishes
-                  if (mentions && mentions.length > 0 && bubbleTextEl) {
-                    linkProductMentions({
-                      container: bubbleTextEl,
-                      mentions,
-                      onProductClick: (sku) => {
-                        this._sendAction({
-                          title: mentions.find((m) => m.sku === sku)?.short_name ?? sku,
-                          type: 'launchSingleProduct',
-                          payload: { sku },
-                        });
-                      },
-                    });
-                  }
-                },
-              });
+            // Photo analysis messages render a structured card — skip typewriter, use card renderer.
+            if (botMsg.renderHint === 'photo_analysis') {
+              this._drawer?.updateBotMessage(botMsg.id, displayText, 'photo_analysis', botMsg.photoAnalysis);
+            } else {
+              // Apply typewriter animation to the final bot text
+              const bubbleTextEl = this._shadow?.querySelector(
+                `[data-message-id="${botMsg.id}"] .gengage-chat-bubble-text`,
+              ) as HTMLElement | null;
+              if (bubbleTextEl) {
+                this._activeTypewriter?.cancel();
+                const mentions = extra?.productMentions;
+                this._activeTypewriter = typewriteHtml({
+                  container: bubbleTextEl,
+                  html: sanitizeHtml(displayText),
+                  onTick: () => this._drawer?.scrollToBottomIfNeeded(),
+                  onComplete: () => {
+                    this._activeTypewriter = null;
+                    // Link product mentions after typewriter finishes
+                    if (mentions && mentions.length > 0 && bubbleTextEl) {
+                      linkProductMentions({
+                        container: bubbleTextEl,
+                        mentions,
+                        onProductClick: (sku) => {
+                          this._sendAction({
+                            title: mentions.find((m) => m.sku === sku)?.short_name ?? sku,
+                            type: 'launchSingleProduct',
+                            payload: { sku },
+                          });
+                        },
+                      });
+                    }
+                  },
+                });
+              }
             }
           }
         },
@@ -1936,6 +1921,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
+
+          // PhotoAnalysisCard: attach structured data to the bot message instead of rendering in panel.
+          if (componentType === 'PhotoAnalysisCard') {
+            const props = rootElement?.props ?? {};
+            const summary = typeof props['summary'] === 'string' ? props['summary'] : '';
+            const clues = Array.isArray(props['clues'])
+              ? (props['clues'] as string[]).filter((c) => typeof c === 'string')
+              : [];
+            const nextQuestion = typeof props['next_question'] === 'string' ? props['next_question'] : undefined;
+            if (summary || clues.length > 0) {
+              botMsg.photoAnalysis = nextQuestion ? { summary, clues, nextQuestion } : { summary, clues };
+            }
+            return;
+          }
 
           // BeautyPhotoStep: render into the dedicated transient slot, not the panel.
           if (componentType === 'BeautyPhotoStep') {

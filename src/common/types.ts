@@ -194,6 +194,8 @@ export interface StreamEventTextChunk {
   conversationMode?: string;
   /** Backend render hint for special rendering (e.g. 'photo_analysis'). */
   renderHint?: string;
+  /** True when the outputText contains KVKK consent content (set by backend). */
+  kvkk?: boolean;
 }
 
 /**

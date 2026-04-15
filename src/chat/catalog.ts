@@ -287,6 +287,13 @@ export const HandoffNoticeSchema = z.object({
   user_sentiment: z.string().optional(),
 });
 
+export const PhotoAnalysisCardSchema = z.object({
+  summary: z.string(),
+  clues: z.array(z.string()),
+  next_question: z.string().optional(),
+  style_images: z.array(z.string()).optional(),
+});
+
 // ---------------------------------------------------------------------------
 // Catalog definition
 //
@@ -360,6 +367,10 @@ export const chatCatalog = {
     HandoffNotice: {
       schema: HandoffNoticeSchema,
       description: 'A notice shown when the conversation is escalated to a human agent.',
+    },
+    PhotoAnalysisCard: {
+      schema: PhotoAnalysisCardSchema,
+      description: 'Structured photo analysis card with summary, clues, and follow-up question.',
     },
   },
 } as const;
