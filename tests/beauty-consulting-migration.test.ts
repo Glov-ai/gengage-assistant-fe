@@ -321,7 +321,7 @@ describe('beauty consulting migration', () => {
     expect(accessor._uiHints?.['input_placeholder']).toBe('Saat danışmanınıza yazın...');
   });
 
-  it('unavailable product context does not block user messages from reaching backend', async () => {
+  it('unavailable product context short-circuits user messages in shopping mode', async () => {
     const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
@@ -343,12 +343,12 @@ describe('beauty consulting migration', () => {
     accessor._assistantMode = 'shopping';
     accessor._productContextUnavailableSku = 'TEST-SKU';
 
-    // Send a message — it should reach the backend (no short-circuit)
+    // Send a message — should be short-circuited, not reaching the backend
     accessor._sendMessage('Bu ürün hakkında bilgi ver');
     await new Promise((resolve) => setTimeout(resolve, 30));
 
     const processCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/chat/process_action'));
-    expect(processCall).toBeDefined();
+    expect(processCall).toBeUndefined();
   });
 
   it('PhotoAnalysisCard UISpec attaches structured data to bot message', () => {

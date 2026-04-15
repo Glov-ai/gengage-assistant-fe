@@ -129,7 +129,7 @@ describe('global error event dispatch', () => {
     chat.destroy();
   });
 
-  it('sends free-text messages to backend even when PDP context is unavailable', async () => {
+  it('short-circuits free-text messages when PDP context is unavailable', async () => {
     const chat = new GengageChat();
     await chat.init({
       accountId: 'test-account',
@@ -140,12 +140,13 @@ describe('global error event dispatch', () => {
 
     (chat as any)._pdpLaunched = true;
     (chat as any)._productContextUnavailableSku = 'BAD-SKU';
+    (chat as any)._assistantMode = 'shopping';
 
     chat.open();
     chat.sendMessage('bu urun nedir');
 
-    // Message should reach the backend — no frontend short-circuit
-    expect(mockedSendChatMessage).toHaveBeenCalled();
+    // Message should NOT reach the backend — frontend short-circuits with fallback
+    expect(mockedSendChatMessage).not.toHaveBeenCalled();
 
     chat.destroy();
   });

@@ -1629,10 +1629,7 @@ function buildProductGridUISpec(products: V1Product[], widget: WidgetName): Stre
  * Used for consulting grids where products were normalized via
  * productRecordToNormalized (which unwraps product_detail wrappers).
  */
-function buildProductGridFromNormalized(
-  products: Record<string, unknown>[],
-  widget: WidgetName,
-): StreamEventUISpec {
+function buildProductGridFromNormalized(products: Record<string, unknown>[], widget: WidgetName): StreamEventUISpec {
   const elements: Record<string, UIElement> = {};
   const childIds: string[] = [];
 

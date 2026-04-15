@@ -1586,6 +1586,28 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     }
 
+    const shouldShortCircuitUnavailableContext =
+      !options?.silent &&
+      this._assistantMode === 'shopping' &&
+      this._hasUnavailableProductContext() &&
+      (action.type === 'user_message' || action.type === 'inputText');
+    if (shouldShortCircuitUnavailableContext) {
+      const fallback = this._i18n.productNotFoundMessage;
+      const botMsg = this._createMessage('assistant', fallback);
+      botMsg.threadId = threadId;
+      botMsg.status = 'done';
+      this._messages.push(botMsg);
+      this._ensureAssistantMessageRendered(botMsg);
+      this._drawer?.updateBotMessage(botMsg.id, fallback);
+      this._drawer?.setPresentationFocus(threadId);
+      this._bridge?.send('isResponding', false);
+      this.emit('message', botMsg);
+      this._persistToIndexedDB().catch(() => {
+        /* non-fatal */
+      });
+      return;
+    }
+
     // Preserve panel during the request — don't clear or show loading skeleton
     // until the backend explicitly signals new panel content (panelLoading event).
     // Exception: getComparisonTable shows the panel skeleton immediately (desktop + mobile)
