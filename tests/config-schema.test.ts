@@ -10,8 +10,8 @@ const exampleConfig = {
   accountId: 'examplecom',
   middlewareUrl: 'https://api.example.com',
   locale: 'tr',
-  widgets: { chat: { enabled: true }, qna: { enabled: true }, simrel: { enabled: true } },
-  mounts: { chat: 'body', qna: '#gengage-qna', simrel: '#gengage-simrel' },
+  widgets: { chat: { enabled: true }, qna: { enabled: true }, simrel: { enabled: true }, simbut: { enabled: true } },
+  mounts: { chat: 'body', qna: '#gengage-qna', simrel: '#gengage-simrel', simbut: '#product-gallery' },
   transport: {},
   analytics: {
     enabled: true,
@@ -36,6 +36,7 @@ describe('AccountRuntimeConfigSchema', () => {
     expect(config.widgets.chat.enabled).toBe(true);
     expect(config.widgets.qna.enabled).toBe(true);
     expect(config.widgets.simrel.enabled).toBe(true);
+    expect(config.widgets.simbut.enabled).toBe(true);
   });
 
   it('creates default config with required fields', () => {
@@ -48,6 +49,7 @@ describe('AccountRuntimeConfigSchema', () => {
     expect(config.accountId).toBe('testaccount');
     expect(config.locale).toBe('tr');
     expect(config.widgets.chat.enabled).toBe(true);
+    expect(config.widgets.simbut.enabled).toBe(false);
     expect(config.analytics.enabled).toBe(true);
     expect(config.analytics.endpoint).toBe('/analytics');
     expect(config.gtm.idempotencyKey).toBe('__gengageWidgetsInit');
@@ -87,6 +89,7 @@ describe('AccountRuntimeConfigSchema', () => {
       widgets: { chat: { enabled: true }, qna: { enabled: true }, simrel: { enabled: true } },
     });
     expect(config.widgets.chat.enabled).toBe(true);
+    expect(config.widgets.simbut.enabled).toBe(false);
     expect(config.analytics.fireAndForget).toBe(true);
     expect(config.actionHandling.unknownActionPolicy).toBe('log-and-ignore');
     expect(config.actionHandling.allowScriptCall).toBe(false);
@@ -101,11 +104,13 @@ describe('AccountRuntimeConfigSchema', () => {
         chat: { enabled: true },
         qna: { enabled: false },
         simrel: { enabled: false },
+        simbut: { enabled: true },
       },
     });
     expect(config.widgets.chat.enabled).toBe(true);
     expect(config.widgets.qna.enabled).toBe(false);
     expect(config.widgets.simrel.enabled).toBe(false);
+    expect(config.widgets.simbut.enabled).toBe(true);
   });
 
   it('every enabled widget receives required fields', () => {

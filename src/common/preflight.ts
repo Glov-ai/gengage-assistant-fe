@@ -30,6 +30,7 @@ export function preflightDiagnostics(
   const mountEntries: Array<[string, string | undefined]> = [
     ['qna', mounts.qna],
     ['simrel', mounts.simrel],
+    ['simbut', mounts.simbut],
     ['chat', mounts.chat],
   ];
 

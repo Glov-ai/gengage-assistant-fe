@@ -2,7 +2,7 @@
 
 Three copy-paste patterns to get Gengage widgets running on your site.
 All three use `initGengageClient()` — a single function that validates your config,
-runs preflight checks, and initialises all enabled widgets.
+runs preflight checks, and initialises all enabled widgets, including optional SimBut mounts.
 
 > **Power-user API:** `initOverlayWidgets()` is still available for callers
 > who build options programmatically. `initGengageClient()` is a convenience
@@ -30,11 +30,13 @@ Set the trigger to **DOM Ready** (or **All Pages** if your config sets
         chat:   { enabled: true },
         qna:    { enabled: true },
         simrel: { enabled: true },
+        simbut: { enabled: true },
       },
       mounts: {
         chat:   'body',
         qna:    '#gengage-qna',
         simrel: '#gengage-simrel',
+        simbut: '#product-gallery',
       },
 
       // Optional: price formatting
@@ -52,21 +54,25 @@ That is the absolute minimum. The SDK fills in sensible defaults for every
 field not shown above (transport, analytics, GTM guards, action handling).
 
 > **DOM-ready requirement:** When injected via GTM, the mount-target elements
-> (`#gengage-qna`, `#gengage-simrel`) must exist in the DOM before the tag
+> (`#gengage-qna`, `#gengage-simrel`, `#product-gallery`) must exist in the DOM before the tag
 > fires. Use a DOM Ready trigger, or place `<div id="gengage-qna"></div>` and
-> `<div id="gengage-simrel"></div>` in your page template.
+> `<div id="gengage-simrel"></div>` in your page template. `#product-gallery`
+> should be the existing, relatively positioned PDP image wrapper.
 
 ---
 
 ## Pattern 2: Direct Script Embed
 
 Add this to your page HTML (outside GTM). Place the mount targets wherever
-you want the QNA and SimRel widgets to appear.
+you want the QNA and SimRel widgets to appear, and point SimBut at the PDP image wrapper.
 
 ```html
 <!-- Mount targets — place these where you want the widgets -->
 <div id="gengage-qna"></div>
 <div id="gengage-simrel"></div>
+<div id="product-gallery" style="position: relative; width: 320px;">
+  <img src="https://placehold.co/640x640/f5f5f5/1d1d1f?text=Product+Image" alt="Product" style="display: block; width: 100%; height: auto;" />
+</div>
 
 <script type="module">
   import { initGengageClient } from 'https://cdn.jsdelivr.net/npm/@gengage/assistant-fe/dist/index.js';
@@ -80,11 +86,13 @@ you want the QNA and SimRel widgets to appear.
         chat:   { enabled: true },
         qna:    { enabled: true },
         simrel: { enabled: true },
+        simbut: { enabled: true },
       },
       mounts: {
         chat:   'body',
         qna:    '#gengage-qna',
         simrel: '#gengage-simrel',
+        simbut: '#product-gallery',
       },
 
       // Optional: price formatting

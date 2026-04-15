@@ -25,6 +25,7 @@ describe('initGengageClient', () => {
             chat: { enabled: true },
             qna: { enabled: true },
             simrel: { enabled: true },
+            simbut: { enabled: false },
           },
         },
         preflight: false,
@@ -50,6 +51,7 @@ describe('initGengageClient', () => {
             chat: { enabled: true },
             qna: { enabled: true },
             simrel: { enabled: true },
+            simbut: { enabled: false },
           },
         },
         hostActions: { onAddToCart },
@@ -75,6 +77,7 @@ describe('initGengageClient', () => {
             chat: { enabled: true },
             qna: { enabled: true },
             simrel: { enabled: true },
+            simbut: { enabled: false },
           },
         },
         contextResolver,
@@ -98,6 +101,7 @@ describe('initGengageClient', () => {
             chat: { enabled: true },
             qna: { enabled: true },
             simrel: { enabled: true },
+            simbut: { enabled: false },
           },
           mounts: { qna: '#missing' },
         },
@@ -118,13 +122,44 @@ describe('initGengageClient', () => {
             chat: { enabled: true },
             qna: { enabled: true },
             simrel: { enabled: true },
+            simbut: { enabled: true },
           },
-          mounts: { qna: '##invalid' },
+          mounts: { qna: '##invalid', simbut: '#product-image' },
         },
+        hostActions: { onFindSimilar: vi.fn() },
         preflight: false,
       });
     } catch {
       // Expected — will fail on init, but NOT on preflight INVALID_SELECTOR
     }
+  });
+
+  it('accepts simbut runtime config with a custom host action', async () => {
+    document.body.innerHTML = '<div id="product-image"></div>';
+    const onFindSimilar = vi.fn();
+
+    try {
+      await initGengageClient({
+        runtimeConfig: {
+          version: '1',
+          accountId: 'test',
+          middlewareUrl: 'https://test.example.com',
+          widgets: {
+            chat: { enabled: false },
+            qna: { enabled: false },
+            simrel: { enabled: false },
+            simbut: { enabled: true },
+          },
+          mounts: { simbut: '#product-image' },
+        },
+        hostActions: { onFindSimilar },
+        preflight: false,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      expect(message).not.toMatch(/Invalid runtime config/i);
+    }
+
+    expect(onFindSimilar).not.toHaveBeenCalled();
   });
 });

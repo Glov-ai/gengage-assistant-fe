@@ -17,6 +17,7 @@ await initOverlayWidgets({
   chat: { variant: 'floating', mobileBreakpoint: 992, mobileInitialState: 'half' },
   qna: { mountTarget: '#gengage-qna' },
   simrel: { mountTarget: '#gengage-simrel' },
+   simbut: { mountTarget: '#product-gallery' },
 });
 ```
 
@@ -25,7 +26,8 @@ await initOverlayWidgets({
 1. Define where each widget mounts:
    - chat launcher target (or body-floating),
    - qna container selector,
-   - simrel container selector.
+   - simrel container selector,
+   - optional simbut image-wrapper selector (`position: relative` wrapper around the PDP image).
 2. Define load order and idempotency:
    - script may execute multiple times in GTM,
    - widget init must be guarded against duplicate mount,
@@ -67,7 +69,7 @@ Treat analytics ingestion as available during implementation:
 - default planned path: `/analytics` (or account-configured equivalent),
 - transport: `sendBeacon` preferred, `fetch keepalive` fallback,
 - non-blocking, retry-limited behavior,
-- if endpoint fails, do not affect chat/qna/simrel UX.
+- if endpoint fails, do not affect chat/qna/simrel/simbut UX.
 
 ## GA Data Layer Integration
 

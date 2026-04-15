@@ -56,6 +56,14 @@ Backend URL can come from demo defaults or be overridden with `--backend-url`.
 - Quantity stepper on product cards: Verify [-][1][+][cart] stepper renders on each card
 - Focus-visible outlines: Tab through product cards — verify blue outline ring
 
+### SimBut Widget
+
+- Pill renders over the configured PDP image wrapper, aligned to the top-right corner
+- Clicking the pill opens the chat with a `findSimilar` action when chat is wired
+- If `onFindSimilar` is supplied instead of chat, verify the callback receives `{ sku, imageUrl? }`
+- Missing SKU disables the button instead of sending a broken action
+- Mount wrapper remains layout-safe (`position: relative` is applied automatically when needed)
+
 ---
 
 ## Testing Against a Different Backend
@@ -79,8 +87,8 @@ For visual verification of all components without a backend:
 npm run catalog    # http://localhost:3002 (builds first)
 ```
 
-The catalog renders every component (Chat, QNA, SimRel) with mock data inside realistic
-frames. Use the global theme selector to switch between 12 merchant color presets.
+The catalog renders every Chat/QNA/SimRel component plus a live SimBut preview with mock
+data inside realistic frames. Use the global theme selector to switch between 12 merchant color presets.
 
 Useful for:
 - Verifying UI changes across all component types at once

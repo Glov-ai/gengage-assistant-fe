@@ -486,6 +486,7 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? undefined;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const beymenHeaderAvatarUrl = 'https://configs.gengage.ai/beymencom/glov-beymencom-logo.png';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -499,22 +500,26 @@
         sku,
         pageContext: { pageType: sku ? 'pdp' : 'other', sku },
         theme: {
-          primaryColor: '#1a1a1a',
+          primaryColor: '#0b00dc',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#1a1a1a',
-          borderRadius: '4px',
-          fontFamily: '"Montserrat", "Helvetica Neue", Arial, sans-serif',
+          foregroundColor: '#111111',
+          borderRadius: '2px',
+          fontFamily: '"TT Norms Pro", "Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--client-primary': '#1a1a1a',
-          '--client-primary-hover': 'color-mix(in srgb, #1a1a1a 88%, white 12%)',
-          '--client-primary-active': 'color-mix(in srgb, #1a1a1a 78%, black 22%)',
-          '--client-primary-subtle': 'color-mix(in srgb, #1a1a1a 10%, white)',
-          '--client-primary-soft': 'color-mix(in srgb, #1a1a1a 16%, white)',
+          '--client-primary': '#0b00dc',
+          '--client-primary-hover': 'color-mix(in srgb, #0b00dc 88%, white 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #0b00dc 78%, white 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #0b00dc 8%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #0b00dc 15%, white)',
           '--client-on-primary': '#ffffff',
-          '--client-focus-ring': 'color-mix(in srgb, #1a1a1a 32%, transparent)',
-          '--gengage-chat-launcher-size': '112px',
+          '--client-focus-ring': 'color-mix(in srgb, #0b00dc 35%, transparent)',
+          '--root-wrapper-background-color': '#f5f5f5',
+          '--root-wrapper-border-color': '#e0e0e0',
+          '--gengage-chat-launcher-size': '56px',
+          '--gengage-chat-launcher-mobile-right': '16px',
+          '--gengage-chat-launcher-mobile-bottom': '24px',
           '--gengage-campaign-reason-color': '#6b5b4a',
           '--gengage-campaign-reason-color-end': '#b8a369',
         },
@@ -523,21 +528,33 @@
           mobileBreakpoint: 768,
           isDemoWebsite: true,
           productDetailsExtended: true,
-          headerTitle: 'Beymen Asistan',
+          headerTitle: "Beymen'e Sor",
+          headerAvatarUrl: beymenHeaderAvatarUrl,
+          pillLauncher: {
+            label: "Beymen'e Sor",
+            avatarUrl: beymenHeaderAvatarUrl,
+            primaryColor: '#0b00dc',
+            secondaryColor: '#000000',
+            fontFamily: '"TT Norms Pro", "Helvetica Neue", Arial, sans-serif',
+          },
           productPriceUi: {
             originalPriceStyle: 'inline',
             showCampaignReason: true,
             discountedPriceColor: 'default',
           },
           i18n: {
-            inputPlaceholder: 'Lüks moda ve lifestyle ürünleri arayın',
+            inputPlaceholder: 'Bu ürünle ilgili soru sorun',
             poweredBy: 'Beymen AI Asistan',
           },
         },
         qna: {
           mountTarget: '#beymen-qna-section',
           headerTitle: "Beymen'e Sor",
-          ctaText: 'Başka bir şey sor',
+          hideButtonRowCta: true,
+          inputPlaceholder: true,
+          i18n: {
+            sendButton: 'Bu ürünle ilgili soru sorun',
+          },
         },
         onAddToCart: (p) => {
           console.log('[beymen] add-to-cart', p);

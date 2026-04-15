@@ -563,7 +563,8 @@
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? 'PR-70147SBH.MVI0082300048MAVI';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const chatIconUrl = new URL('./magaza.svg', import.meta.url).href;
+      const ozdilekLauncherIconUrl = new URL('./magaza.svg', import.meta.url).href;
+      const ozdilekHeaderLogoUrl = new URL('./ozdilekteyimLogoMagaza.svg', import.meta.url).href;
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -581,49 +582,52 @@
           currencyPosition: 'suffix',
         },
         theme: {
-          primaryColor: '#F08A2B',
+          primaryColor: '#ec6e00',
           primaryForeground: '#ffffff',
           backgroundColor: '#ffffff',
-          foregroundColor: '#2c2528',
-          borderRadius: '10px',
-          fontFamily: "'Montserrat', sans-serif",
+          foregroundColor: '#222222',
+          borderRadius: '8px',
+          fontFamily: '"Source Sans Pro", "Helvetica Neue", Arial, sans-serif',
           fontSize: '14px',
           zIndex: '1000',
-          '--client-primary': '#F08A2B',
-          '--client-primary-hover': 'color-mix(in srgb, #F08A2B 88%, black 12%)',
-          '--client-primary-active': 'color-mix(in srgb, #F08A2B 78%, black 22%)',
-          '--client-primary-subtle': 'color-mix(in srgb, #F08A2B 10%, white)',
-          '--client-primary-soft': 'color-mix(in srgb, #F08A2B 18%, white)',
+          '--client-primary': '#ec6e00',
+          '--client-primary-hover': 'color-mix(in srgb, #ec6e00 88%, black 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #ec6e00 78%, black 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #ec6e00 12%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #ec6e00 20%, white)',
           '--client-on-primary': '#ffffff',
-          '--client-focus-ring': 'color-mix(in srgb, #F08A2B 32%, transparent)',
+          '--client-focus-ring': 'color-mix(in srgb, #ec6e00 32%, transparent)',
           '--surface-card': '#ffffff',
           '--surface-card-soft': '#fff8f1',
-          '--text-primary': '#2c2528',
+          '--text-primary': '#222222',
           '--text-secondary': '#6b6163',
           '--border-default': 'rgba(44, 37, 40, 0.12)',
-          '--gengage-chat-launcher-size': '104px',
+          '--gengage-chat-launcher-size': '64px',
+          '--gengage-chat-launcher-mobile-right': '20px',
+          '--gengage-chat-launcher-mobile-bottom': '40px',
         },
         chat: {
           variant: 'floating',
           mobileBreakpoint: 768,
-          headerTitle: 'Alışveriş Asistanı',
-          headerAvatarUrl: chatIconUrl,
+          headerTitle: 'Özdilek AI Asistan',
+          headerAvatarUrl: ozdilekHeaderLogoUrl,
           pillLauncher: {
             label: "Özdilek'e Sor",
-            avatarUrl: chatIconUrl,
-            primaryColor: '#F08A2B',
-            secondaryColor: '#2c2528',
-            fontFamily: "'Montserrat', sans-serif",
+            avatarUrl: ozdilekLauncherIconUrl,
+            primaryColor: '#ec6e00',
+            secondaryColor: '#222222',
+            fontFamily: '"Source Sans Pro", "Helvetica Neue", Arial, sans-serif',
           },
           i18n: {
-            inputPlaceholder: 'Mağazada ne aramıştınız? (Örn: Sabahlık, Parfüm...)',
-            poweredBy: 'Özdilekteyim AI Asistan',
+            inputPlaceholder: 'Ürün ara, soru sor',
+            poweredBy: 'Özdilek AI Asistan',
           },
         },
         qna: {
           mountTarget: '#ozdilekteyimcom-magaza-qna-section',
-          headerTitle: "Özdilek'e Sor",
+          headerTitle: 'Özdilek AI Asistan',
           ctaText: 'Başka bir şey sor',
+          inputPlaceholder: true,
         },
         simrel: {
           mountTarget: '#ozdilekteyimcom-magaza-similar-products',
