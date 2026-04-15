@@ -1420,11 +1420,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       hasAttachment: attachment !== undefined,
       textLength: text.length,
     });
-    const mode =
-      (this._lastBackendContext?.panel as Record<string, unknown> | undefined)?.['assistant_mode'] ?? 'shopping';
     const action: ActionPayload =
       attachment !== undefined
-        ? mode === 'beauty_consulting'
+        ? this._assistantMode === 'beauty_consulting'
           ? { title: text, type: 'user_message', payload: text ? { text } : {} }
           : { title: text, type: 'findSimilar', payload: text ? { text } : {} }
         : { title: text, type: 'user_message', payload: text };
@@ -2342,12 +2340,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._lastBackendContext = event.meta as import('../common/types.js').BackendContext;
               const panel = asRecord(event.meta.panel);
               if (panel) {
-                // Derive assistant mode from backend context (source of truth)
+                // Derive assistant mode from backend context when explicitly present.
+                // Missing field = backend hasn't adopted the field yet; keep current mode.
                 const panelMode = panel['assistant_mode'];
                 if (typeof panelMode === 'string' && panelMode) {
                   this._assistantMode = panelMode as AssistantMode;
-                } else if (panelMode === null || panelMode === undefined) {
-                  // No mode in context → default back to shopping
+                } else if (panelMode === null) {
+                  // Explicit null = backend reset to default
                   this._assistantMode = 'shopping';
                 }
                 this._uiHints = asRecord(panel['ui_hints']) ?? null;
