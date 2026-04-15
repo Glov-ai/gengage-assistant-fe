@@ -1990,7 +1990,9 @@ function renderProductGrid(
     const renderVariationProducts = (variation: StyleVariation): void => {
       grid.innerHTML = '';
       const products = Array.isArray(variation.product_list) ? variation.product_list : [];
-      const recommendationGroups = Array.isArray(variation.recommendation_groups) ? variation.recommendation_groups : [];
+      const recommendationGroups = Array.isArray(variation.recommendation_groups)
+        ? variation.recommendation_groups
+        : [];
 
       if (recommendationGroups.length > 0) {
         const productBySku = new Map<string, StyleVariationProduct>();
@@ -2035,7 +2037,10 @@ function renderProductGrid(
 
           const groupGrid = document.createElement('div');
           groupGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
-          groupGrid.style.setProperty('--consulting-group-columns', String(Math.max(1, Math.min(4, groupedProducts.length))));
+          groupGrid.style.setProperty(
+            '--consulting-group-columns',
+            String(Math.max(1, Math.min(4, groupedProducts.length))),
+          );
           for (const product of groupedProducts) {
             const cardElement: UIElement = {
               type: 'ProductCard',
@@ -2055,7 +2060,10 @@ function renderProductGrid(
         if (leftovers.length > 0) {
           const fallbackGrid = document.createElement('div');
           fallbackGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
-          fallbackGrid.style.setProperty('--consulting-group-columns', String(Math.max(1, Math.min(4, leftovers.length))));
+          fallbackGrid.style.setProperty(
+            '--consulting-group-columns',
+            String(Math.max(1, Math.min(4, leftovers.length))),
+          );
           for (const product of leftovers) {
             const cardElement: UIElement = {
               type: 'ProductCard',

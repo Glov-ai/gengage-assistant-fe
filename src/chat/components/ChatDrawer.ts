@@ -242,7 +242,8 @@ export class ChatDrawer {
 
   private _isPhotoAnalysisMessage(content: string): boolean {
     const normalized = content.toLocaleLowerCase('tr-TR');
-    const hasPhotoCue = normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie');
+    const hasPhotoCue =
+      normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie');
     const hasBeautyCue =
       normalized.includes('analiz') ||
       normalized.includes('cilt') ||
@@ -253,11 +254,7 @@ export class ChatDrawer {
       normalized.includes('parlama') ||
       normalized.includes('kızarıklık') ||
       normalized.includes('alt ton');
-    return (
-      hasPhotoCue &&
-      hasBeautyCue &&
-      normalized.length > 80
-    );
+    return hasPhotoCue && hasBeautyCue && normalized.length > 80;
   }
 
   private _renderPhotoAnalysisMessageCard(container: HTMLElement, content: string): void {
@@ -283,7 +280,10 @@ export class ChatDrawer {
     summary.textContent = parts[0] ?? content;
     body.appendChild(summary);
 
-    const clues = parts.slice(1).filter((part) => !part.includes('?')).slice(0, 4);
+    const clues = parts
+      .slice(1)
+      .filter((part) => !part.includes('?'))
+      .slice(0, 4);
     if (clues.length > 0) {
       const list = document.createElement('ul');
       list.className = 'gengage-chat-photo-analysis-points';
@@ -1516,11 +1516,7 @@ export class ChatDrawer {
   }
 
   /** Beauty mode selfie helper card shown above the input area. */
-  setBeautyPhotoStepCard(options: {
-    visible: boolean;
-    processing?: boolean;
-    onSkip?: (() => void) | undefined;
-  }): void {
+  setBeautyPhotoStepCard(options: { visible: boolean; processing?: boolean; onSkip?: (() => void) | undefined }): void {
     if (!this._beautyPhotoStepEl) return;
     if (!options.visible) {
       this._beautyPhotoStepEl.hidden = true;

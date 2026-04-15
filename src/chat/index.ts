@@ -1555,7 +1555,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     const status = state.status ?? firstString(state.beautyConsultingState?.['status']) ?? 'collecting';
-    const fields = normalizeKnownFields(state.knownFields) ?? normalizeKnownFields(state.beautyConsultingState?.['fields']) ?? {};
+    const fields =
+      normalizeKnownFields(state.knownFields) ?? normalizeKnownFields(state.beautyConsultingState?.['fields']) ?? {};
     const missingFields = state.missingFields ?? asStringArray(state.beautyConsultingState?.['missing_fields']) ?? [];
     const photoFindings = state.photoFindings ?? firstString(state.beautyConsultingState?.['photo_findings']);
     const photoStepState = state.photoStepState ?? (photoFindings ? 'completed' : 'idle');
@@ -1563,13 +1564,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       state.photoUploaded === true ||
       photoStepState === 'processing' ||
       photoStepState === 'completed' ||
-      this._messages.some(
-        (message) =>
-          message.role === 'user' &&
-          !!message.attachment,
-      );
+      this._messages.some((message) => message.role === 'user' && !!message.attachment);
 
-    const hasSkinProfile = typeof fields['skin_profile'] === 'string' && String(fields['skin_profile']).trim().length > 0;
+    const hasSkinProfile =
+      typeof fields['skin_profile'] === 'string' && String(fields['skin_profile']).trim().length > 0;
     const needsSkinProfile = missingFields.includes('skin_profile') || !hasSkinProfile;
     const isVisible =
       status === 'collecting' &&
@@ -2844,7 +2842,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 : [];
               const loadingText = this._resolveLoadingTextForUi(event.meta.loadingText);
               if (thinkingMessages.length > 0) {
-                const normalizedThinking = loadingText ? [...thinkingMessages.slice(0, 2), loadingText] : thinkingMessages;
+                const normalizedThinking = loadingText
+                  ? [...thinkingMessages.slice(0, 2), loadingText]
+                  : thinkingMessages;
                 this._drawer?.setThinkingSteps(normalizedThinking);
               }
               if (typeof loadingText === 'string' && loadingText.length > 0) {

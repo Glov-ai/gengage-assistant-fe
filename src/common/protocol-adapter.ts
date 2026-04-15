@@ -609,7 +609,8 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
         .map((entry) => {
           const entryRecord = asRecord(entry);
           if (!entryRecord) return null;
-          const productRecord = asRecord(entryRecord['product_detail']) ?? asRecord(entryRecord['product']) ?? entryRecord;
+          const productRecord =
+            asRecord(entryRecord['product_detail']) ?? asRecord(entryRecord['product']) ?? entryRecord;
           return productRecordToNormalized(productRecord) as unknown as Record<string, unknown> | null;
         })
         .filter(isNonNullable);
