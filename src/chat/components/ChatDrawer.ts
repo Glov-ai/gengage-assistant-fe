@@ -821,11 +821,8 @@ export class ChatDrawer {
     this._inputChipsEl.style.display = 'none';
     conversation.appendChild(this._inputChipsEl);
 
-    this._beautyPhotoStepEl = document.createElement('section');
-    this._beautyPhotoStepEl.className = 'gengage-chat-beauty-photo-step';
-    this._beautyPhotoStepEl.dataset['gengagePart'] = 'chat-beauty-photo-step';
-    this._beautyPhotoStepEl.hidden = true;
-    conversation.appendChild(this._beautyPhotoStepEl);
+    // _beautyPhotoStepEl is created lazily in setBeautyPhotoStepCard()
+    // so non-beauty clients never allocate the DOM node.
 
     // Input area
     const inputArea = document.createElement('div');
@@ -1467,11 +1464,27 @@ export class ChatDrawer {
     uploadLabel?: string | undefined;
     skipLabel?: string | undefined;
   }): void {
-    if (!this._beautyPhotoStepEl) return;
     if (!options.visible) {
-      this._beautyPhotoStepEl.hidden = true;
-      this._beautyPhotoStepEl.innerHTML = '';
+      if (this._beautyPhotoStepEl) {
+        this._beautyPhotoStepEl.hidden = true;
+        this._beautyPhotoStepEl.innerHTML = '';
+      }
       return;
+    }
+
+    // Lazy creation: only allocate the DOM node when beauty mode actually needs it.
+    if (!this._beautyPhotoStepEl) {
+      this._beautyPhotoStepEl = document.createElement('section');
+      this._beautyPhotoStepEl.className = 'gengage-chat-beauty-photo-step';
+      this._beautyPhotoStepEl.dataset['gengagePart'] = 'chat-beauty-photo-step';
+      this._beautyPhotoStepEl.hidden = true;
+      // Insert before the input area (last child of conversation)
+      const inputArea = this._conversationEl?.querySelector('.gengage-chat-input-area');
+      if (inputArea) {
+        inputArea.parentElement?.insertBefore(this._beautyPhotoStepEl, inputArea);
+      } else {
+        this._conversationEl?.appendChild(this._beautyPhotoStepEl);
+      }
     }
 
     this._beautyPhotoStepEl.hidden = false;

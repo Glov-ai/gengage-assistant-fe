@@ -825,11 +825,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._presentation.reset();
     this._drawer?.setPresentationFocus(null);
     this._drawer?.setFormerMessagesButtonVisible(false);
+    const wasNonShopping = this._assistantMode !== 'shopping';
     this._assistantMode = 'shopping';
     this._uiHints = null;
-    this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
-    this._drawer?.setAttachmentControlsVisible(true);
-    this._drawer?.setBeautyPhotoStepCard({ visible: false });
+    if (wasNonShopping) {
+      this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
+      this._drawer?.setAttachmentControlsVisible(true);
+      this._drawer?.setBeautyPhotoStepCard({ visible: false });
+    }
   }
 
   /**
