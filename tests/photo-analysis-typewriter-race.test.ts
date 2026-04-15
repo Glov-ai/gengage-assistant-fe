@@ -74,7 +74,6 @@ describe('PhotoAnalysisCard typewriter race', () => {
         cancelTypewriter: cancelTypewriterMock,
         sendSkipMessage: vi.fn(),
         streamDone: false,
-        beautyPhotoStepSkipMessage: 'Skip',
       },
       botMsg,
     );
@@ -151,7 +150,6 @@ describe('PhotoAnalysisCard typewriter race', () => {
         cancelTypewriter: cancelTypewriterMock,
         sendSkipMessage: vi.fn(),
         streamDone: false,
-        beautyPhotoStepSkipMessage: 'Skip',
       },
       botMsg,
     );
@@ -191,7 +189,6 @@ describe('PhotoAnalysisCard typewriter race', () => {
         cancelTypewriter: cancelTypewriterMock,
         sendSkipMessage: vi.fn(),
         streamDone: false,
-        beautyPhotoStepSkipMessage: 'Skip',
       },
       botMsg,
     );

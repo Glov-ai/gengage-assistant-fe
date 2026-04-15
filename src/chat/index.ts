@@ -1913,7 +1913,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 },
                 sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
                 streamDone,
-                beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,
               },
               botMsg,
             )
@@ -2476,7 +2475,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             cancelTypewriter: () => {},
             sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
             streamDone: true,
-            beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,
           });
           // Capture panel state before resetting — needed for error gating below
           const hadPanelContent = panelContentReceived;
@@ -2622,7 +2620,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             cancelTypewriter: () => {},
             sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
             streamDone: true,
-            beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,
           });
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;

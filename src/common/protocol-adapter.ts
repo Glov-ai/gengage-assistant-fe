@@ -666,14 +666,13 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
   // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
   if (root) {
-    if (typeof event.payload.offset === 'number') root.props = { ...root.props, offset: event.payload.offset };
-    if (typeof event.payload.end_of_list === 'boolean')
-      root.props = { ...root.props, endOfList: event.payload.end_of_list };
-    if (typeof event.payload.title === 'string') root.props = { ...root.props, panelTitle: event.payload.title };
-    if (typeof event.payload.source === 'string') root.props = { ...root.props, source: event.payload.source };
-    if (normalizedStyleVariations.length > 0) {
-      root.props = { ...root.props, styleVariations: normalizedStyleVariations };
-    }
+    const extra: Record<string, unknown> = {};
+    if (typeof event.payload.offset === 'number') extra['offset'] = event.payload.offset;
+    if (typeof event.payload.end_of_list === 'boolean') extra['endOfList'] = event.payload.end_of_list;
+    if (typeof event.payload.title === 'string') extra['panelTitle'] = event.payload.title;
+    if (typeof event.payload.source === 'string') extra['source'] = event.payload.source;
+    if (normalizedStyleVariations.length > 0) extra['styleVariations'] = normalizedStyleVariations;
+    if (Object.keys(extra).length > 0) root.props = { ...root.props, ...extra };
   }
   return spec;
 }

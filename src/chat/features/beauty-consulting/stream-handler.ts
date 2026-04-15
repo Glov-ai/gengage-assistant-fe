@@ -42,7 +42,6 @@ export interface BeautyStreamContext {
   cancelTypewriter: () => void;
   sendSkipMessage: () => void;
   streamDone: boolean;
-  beautyPhotoStepSkipMessage: string;
 }
 
 /**

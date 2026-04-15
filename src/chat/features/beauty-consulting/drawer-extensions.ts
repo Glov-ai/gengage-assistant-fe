@@ -7,7 +7,6 @@
  */
 
 import { renderBeautyPhotoStep } from '../../components/BeautyPhotoStep.js';
-import { renderPhotoAnalysisBubble } from '../../components/PhotoAnalysisCard.js';
 import type { ChatI18n, ChatUISpecRenderContext } from '../../types.js';
 
 export interface BeautyPhotoStepCardOptions {
@@ -85,17 +84,4 @@ export function applyBeautyPhotoStepCard(
 
   slot.appendChild(card);
   return slot;
-}
-
-/**
- * Render a photo analysis card into a chat message bubble.
- * Thin wrapper around renderPhotoAnalysisBubble that reads badge text from i18n.
- */
-export function applyPhotoAnalysisCard(
-  container: HTMLElement,
-  content: string,
-  badgeText: string,
-  structured?: { summary: string; clues: string[]; nextQuestion?: string },
-): void {
-  renderPhotoAnalysisBubble(container, content, badgeText, structured);
 }

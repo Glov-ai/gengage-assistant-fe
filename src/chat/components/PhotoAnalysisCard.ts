@@ -25,31 +25,29 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
   return nextQuestion ? { summary, clues, nextQuestion } : { summary, clues };
 }
 
-export function renderPhotoAnalysisCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
+/** Build the shared photo analysis card DOM from structured data. */
+function buildAnalysisCardDom(badgeText: string, data: PhotoAnalysisData): HTMLElement {
   const card = document.createElement('div');
   card.className = 'gengage-chat-photo-analysis-card';
 
   const badge = document.createElement('div');
   badge.className = 'gengage-chat-photo-analysis-badge';
-  badge.textContent = ctx.i18n?.photoAnalysisBadge ?? 'Skin Analysis';
+  badge.textContent = badgeText;
 
   const body = document.createElement('div');
   body.className = 'gengage-chat-photo-analysis-body';
 
-  const summary = element.props?.['summary'];
-  if (typeof summary === 'string' && summary) {
+  if (data.summary) {
     const p = document.createElement('p');
     p.className = 'gengage-chat-photo-analysis-summary';
-    p.textContent = summary;
+    p.textContent = data.summary;
     body.appendChild(p);
   }
 
-  const clues = element.props?.['clues'];
-  if (Array.isArray(clues) && clues.length > 0) {
+  if (data.clues.length > 0) {
     const list = document.createElement('ul');
     list.className = 'gengage-chat-photo-analysis-points';
-    for (const clue of clues) {
-      if (typeof clue !== 'string') continue;
+    for (const clue of data.clues) {
       const item = document.createElement('li');
       item.textContent = clue;
       list.appendChild(item);
@@ -57,17 +55,22 @@ export function renderPhotoAnalysisCard(element: UIElement, ctx: ChatUISpecRende
     body.appendChild(list);
   }
 
-  const nextQuestion = element.props?.['next_question'];
-  if (typeof nextQuestion === 'string' && nextQuestion) {
+  if (data.nextQuestion) {
     const p = document.createElement('p');
     p.className = 'gengage-chat-photo-analysis-next';
-    p.textContent = nextQuestion;
+    p.textContent = data.nextQuestion;
     body.appendChild(p);
   }
 
   card.appendChild(badge);
   card.appendChild(body);
   return card;
+}
+
+export function renderPhotoAnalysisCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
+  const parsed = parsePhotoAnalysisProps(element.props ?? {});
+  const data: PhotoAnalysisData = parsed ?? { summary: '', clues: [] };
+  return buildAnalysisCardDom(ctx.i18n?.photoAnalysisBadge ?? 'Skin Analysis', data);
 }
 
 /**
@@ -85,76 +88,28 @@ export function renderPhotoAnalysisBubble(
 ): void {
   container.innerHTML = '';
 
-  const card = document.createElement('div');
-  card.className = 'gengage-chat-photo-analysis-card';
-
-  const badge = document.createElement('div');
-  badge.className = 'gengage-chat-photo-analysis-badge';
-  badge.textContent = badgeText;
-
-  const body = document.createElement('div');
-  body.className = 'gengage-chat-photo-analysis-body';
-
   if (structured) {
-    const summaryEl = document.createElement('p');
-    summaryEl.className = 'gengage-chat-photo-analysis-summary';
-    summaryEl.textContent = structured.summary;
-    body.appendChild(summaryEl);
-
-    if (structured.clues.length > 0) {
-      const list = document.createElement('ul');
-      list.className = 'gengage-chat-photo-analysis-points';
-      for (const clue of structured.clues) {
-        const item = document.createElement('li');
-        item.textContent = clue;
-        list.appendChild(item);
-      }
-      body.appendChild(list);
-    }
-
-    if (structured.nextQuestion) {
-      const next = document.createElement('p');
-      next.className = 'gengage-chat-photo-analysis-next';
-      next.textContent = structured.nextQuestion;
-      body.appendChild(next);
-    }
-  } else {
-    // Fallback: sentence-splitting heuristic for old backends without PhotoAnalysisCard UISpec.
-    const parts = content
-      .split(/(?<=[.!?])\s+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
-
-    const summaryEl = document.createElement('p');
-    summaryEl.className = 'gengage-chat-photo-analysis-summary';
-    summaryEl.textContent = parts[0] ?? content;
-    body.appendChild(summaryEl);
-
-    const clues = parts
-      .slice(1)
-      .filter((part) => !part.includes('?'))
-      .slice(0, 4);
-    if (clues.length > 0) {
-      const list = document.createElement('ul');
-      list.className = 'gengage-chat-photo-analysis-points';
-      for (const clue of clues) {
-        const item = document.createElement('li');
-        item.textContent = clue;
-        list.appendChild(item);
-      }
-      body.appendChild(list);
-    }
-
-    const question = parts.find((part) => part.includes('?'));
-    if (question) {
-      const next = document.createElement('p');
-      next.className = 'gengage-chat-photo-analysis-next';
-      next.textContent = question;
-      body.appendChild(next);
-    }
+    container.appendChild(buildAnalysisCardDom(badgeText, structured));
+    return;
   }
 
-  card.appendChild(badge);
-  card.appendChild(body);
-  container.appendChild(card);
+  // Fallback: sentence-splitting heuristic for old backends without PhotoAnalysisCard UISpec.
+  const parts = content
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const summaryText = parts[0] ?? content;
+  const clues = parts
+    .slice(1)
+    .filter((part) => !part.includes('?'))
+    .slice(0, 4);
+  const question = parts.find((part) => part.includes('?'));
+
+  const data: PhotoAnalysisData = {
+    summary: summaryText,
+    clues,
+    ...(question ? { nextQuestion: question } : {}),
+  };
+  container.appendChild(buildAnalysisCardDom(badgeText, data));
 }

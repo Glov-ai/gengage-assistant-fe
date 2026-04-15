@@ -1710,7 +1710,8 @@ function renderProductGrid(
   const wrapper = document.createElement('div');
   wrapper.className = 'gengage-chat-product-grid-wrapper';
 
-  const { isConsulting: hasConsultingVariations } = detectConsultingGrid(element);
+  const consultingResult = detectConsultingGrid(element);
+  const hasConsultingVariations = consultingResult.isConsulting;
 
   const childIds = element.children ?? [];
   const grid = document.createElement('div');
@@ -1932,7 +1933,7 @@ function renderProductGrid(
   }
 
   if (hasConsultingVariations) {
-    renderConsultingGrid(wrapper, grid, element, ctx);
+    renderConsultingGrid(wrapper, grid, consultingResult, ctx);
   } else {
     const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
     for (const childId of sortedIds) {

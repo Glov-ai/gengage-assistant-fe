@@ -8,7 +8,8 @@ import { createKvkkBanner } from './KvkkBanner.js';
 import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
-import { applyBeautyPhotoStepCard, applyPhotoAnalysisCard } from '../features/beauty-consulting/drawer-extensions.js';
+import { applyBeautyPhotoStepCard } from '../features/beauty-consulting/drawer-extensions.js';
+import { renderPhotoAnalysisBubble } from './PhotoAnalysisCard.js';
 
 /** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
 const DEFAULT_ACTION_ICON =
@@ -246,7 +247,7 @@ export class ChatDrawer {
     content: string,
     structured?: { summary: string; clues: string[]; nextQuestion?: string },
   ): void {
-    applyPhotoAnalysisCard(container, content, this.i18n.photoAnalysisBadge, structured);
+    renderPhotoAnalysisBubble(container, content, this.i18n.photoAnalysisBadge, structured);
   }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
@@ -819,9 +820,6 @@ export class ChatDrawer {
     this._inputChipsEl.dataset['gengagePart'] = 'chat-input-chips';
     this._inputChipsEl.style.display = 'none';
     conversation.appendChild(this._inputChipsEl);
-
-    // _beautyPhotoStepEl is created lazily in setBeautyPhotoStepCard()
-    // so non-beauty clients never allocate the DOM node.
 
     // Input area
     const inputArea = document.createElement('div');

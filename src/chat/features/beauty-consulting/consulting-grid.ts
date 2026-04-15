@@ -14,11 +14,12 @@ import type { StyleVariation } from '../../components/ConsultingStylePicker.js';
 export interface ConsultingGridResult {
   isConsulting: boolean;
   source: string | undefined;
+  styleVariations: StyleVariation[];
 }
 
 /**
  * Check whether a ProductGrid element should render as a consulting style picker.
- * Returns the check result and the source string for delegation.
+ * Returns the check result plus pre-parsed data for {@link renderConsultingGrid}.
  */
 export function detectConsultingGrid(element: UIElement): ConsultingGridResult {
   const source = typeof element.props?.['source'] === 'string' ? element.props['source'] : undefined;
@@ -29,7 +30,7 @@ export function detectConsultingGrid(element: UIElement): ConsultingGridResult {
     (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
   );
   const isConsulting = (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
-  return { isConsulting, source };
+  return { isConsulting, source, styleVariations };
 }
 
 /**
@@ -39,15 +40,8 @@ export function detectConsultingGrid(element: UIElement): ConsultingGridResult {
 export function renderConsultingGrid(
   wrapper: HTMLElement,
   grid: HTMLElement,
-  element: UIElement,
+  detected: ConsultingGridResult,
   ctx?: ChatUISpecRenderContext,
 ): void {
-  const source = typeof element.props?.['source'] === 'string' ? element.props['source'] : undefined;
-  const styleVariationsRaw = Array.isArray(element.props?.['styleVariations'])
-    ? (element.props['styleVariations'] as StyleVariation[])
-    : [];
-  const styleVariations = styleVariationsRaw.filter(
-    (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
-  );
-  renderConsultingStylePicker(wrapper, grid, source!, styleVariations, ctx);
+  renderConsultingStylePicker(wrapper, grid, detected.source!, detected.styleVariations, ctx);
 }
