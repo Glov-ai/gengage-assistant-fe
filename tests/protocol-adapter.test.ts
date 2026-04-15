@@ -1066,4 +1066,46 @@ describe('adaptBackendEvent — handoff', () => {
     expect(root.props?.['summary']).toBe('Need help');
     expect(root.props?.['products_discussed']).toBeUndefined();
   });
+
+  it('adapts uiSpec (BeautyPhotoStep) to ui_spec with { root, elements } shape', () => {
+    const raw = {
+      type: 'uiSpec',
+      payload: {
+        type: 'BeautyPhotoStep',
+        title: 'Selfie ile kişiselleştir',
+        description: 'Fotoğraf yükle',
+        upload_label: 'Fotoğraf Yükle',
+        skip_label: 'Geç',
+        processing: false,
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      widget: string;
+      spec: { root: string; elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    expect(uiSpec.widget).toBe('chat');
+    expect(uiSpec.spec.root).toBe('root');
+    const root = uiSpec.spec.elements['root']!;
+    expect(root.type).toBe('BeautyPhotoStep');
+    expect(root.props?.['title']).toBe('Selfie ile kişiselleştir');
+    expect(root.props?.['processing']).toBe(false);
+    // `type` field is stripped from props (used as component type)
+    expect(root.props?.['type']).toBeUndefined();
+  });
+
+  it('adapts outputText with render_hint to text_chunk preserving renderHint', () => {
+    const raw = {
+      type: 'outputText',
+      payload: {
+        text: '<p>Photo analysis results</p>',
+        plain_text: 'Photo analysis results',
+        render_hint: 'photo_analysis',
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+    expect(result.type).toBe('text_chunk');
+    expect((result as { renderHint?: string }).renderHint).toBe('photo_analysis');
+  });
 });

@@ -123,4 +123,11 @@ export const CHAT_I18N_TR: ChatI18n = {
   showFormerMessagesButton: '↑ Önceki mesajları göster',
   aiAnalysisAnalyzingLabel: 'Ürünler analiz ediliyor...',
   aiBrowseCategoriesTitle: 'Kategorilere Göz At',
+  photoAnalysisBadge: 'Cilt Analizi',
+  beautyPhotoStepTitle: 'Selfie ile kişiselleştir',
+  beautyPhotoStepDescription: 'İstersen net bir profil fotoğrafı yükle, sana özel önerilerde bulunayım.',
+  beautyPhotoStepUpload: 'Fotoğraf Yükle',
+  beautyPhotoStepProcessing: 'Fotoğraf işleniyor...',
+  beautyPhotoStepSkip: 'Geç',
+  beautyPhotoStepSkipMessage: 'Fotoğraf adımını geçiyorum',
 };

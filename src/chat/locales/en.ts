@@ -123,4 +123,11 @@ export const CHAT_I18N_EN: ChatI18n = {
   showFormerMessagesButton: '↑ Show earlier messages',
   aiAnalysisAnalyzingLabel: 'Analyzing products...',
   aiBrowseCategoriesTitle: 'Browse categories',
+  photoAnalysisBadge: 'Skin Analysis',
+  beautyPhotoStepTitle: 'Personalize with a selfie',
+  beautyPhotoStepDescription: 'Upload a clear profile photo so I can give you personalized recommendations.',
+  beautyPhotoStepUpload: 'Upload Photo',
+  beautyPhotoStepProcessing: 'Processing photo...',
+  beautyPhotoStepSkip: 'Skip',
+  beautyPhotoStepSkipMessage: 'Skip the photo step',
 };

@@ -240,23 +240,6 @@ export class ChatDrawer {
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
   private _beautyPhotoStepEl: HTMLElement | null = null;
 
-  private _isPhotoAnalysisMessage(content: string): boolean {
-    const normalized = content.toLocaleLowerCase('tr-TR');
-    const hasPhotoCue =
-      normalized.includes('fotoğraf') || normalized.includes('fotograf') || normalized.includes('selfie');
-    const hasBeautyCue =
-      normalized.includes('analiz') ||
-      normalized.includes('cilt') ||
-      normalized.includes('skin') ||
-      normalized.includes('ten') ||
-      normalized.includes('göz') ||
-      normalized.includes('dudak') ||
-      normalized.includes('parlama') ||
-      normalized.includes('kızarıklık') ||
-      normalized.includes('alt ton');
-    return hasPhotoCue && hasBeautyCue && normalized.length > 80;
-  }
-
   private _renderPhotoAnalysisMessageCard(container: HTMLElement, content: string): void {
     container.innerHTML = '';
 
@@ -265,7 +248,7 @@ export class ChatDrawer {
 
     const badge = document.createElement('div');
     badge.className = 'gengage-chat-photo-analysis-badge';
-    badge.textContent = 'Cilt Analizi';
+    badge.textContent = this.i18n.photoAnalysisBadge;
 
     const body = document.createElement('div');
     body.className = 'gengage-chat-photo-analysis-body';
@@ -1222,7 +1205,7 @@ export class ChatDrawer {
       text.className = 'gengage-chat-bubble-text';
       text.dataset['gengagePart'] = 'chat-message-text';
       if (message.role === 'assistant') {
-        if (this._isPhotoAnalysisMessage(message.content)) {
+        if (message.renderHint === 'photo_analysis') {
           bubble.classList.add('gengage-chat-bubble--photo-analysis');
           this._renderPhotoAnalysisMessageCard(text, message.content);
         } else {
@@ -1516,7 +1499,15 @@ export class ChatDrawer {
   }
 
   /** Beauty mode selfie helper card shown above the input area. */
-  setBeautyPhotoStepCard(options: { visible: boolean; processing?: boolean; onSkip?: (() => void) | undefined }): void {
+  setBeautyPhotoStepCard(options: {
+    visible: boolean;
+    processing?: boolean;
+    onSkip?: (() => void) | undefined;
+    title?: string | undefined;
+    description?: string | undefined;
+    uploadLabel?: string | undefined;
+    skipLabel?: string | undefined;
+  }): void {
     if (!this._beautyPhotoStepEl) return;
     if (!options.visible) {
       this._beautyPhotoStepEl.hidden = true;
@@ -1538,13 +1529,13 @@ export class ChatDrawer {
     const content = document.createElement('div');
     content.className = 'gengage-chat-beauty-photo-step-content';
 
-    const title = document.createElement('div');
-    title.className = 'gengage-chat-beauty-photo-step-title';
-    title.textContent = 'Selfie ile kişiselleştir';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'gengage-chat-beauty-photo-step-title';
+    titleEl.textContent = options.title ?? this.i18n.beautyPhotoStepTitle;
 
     const desc = document.createElement('p');
     desc.className = 'gengage-chat-beauty-photo-step-desc';
-    desc.textContent = 'İstersen net bir profil fotoğrafı yükle, cilt analiziyle önerileri kişiselleştireyim.';
+    desc.textContent = options.description ?? this.i18n.beautyPhotoStepDescription;
 
     const actions = document.createElement('div');
     actions.className = 'gengage-chat-beauty-photo-step-actions';
@@ -1552,7 +1543,9 @@ export class ChatDrawer {
     const uploadBtn = document.createElement('button');
     uploadBtn.type = 'button';
     uploadBtn.className = 'gengage-chat-beauty-photo-step-upload gds-btn gds-btn-primary';
-    uploadBtn.textContent = options.processing ? 'Fotoğraf işleniyor...' : 'Fotoğraf Yükle';
+    uploadBtn.textContent = options.processing
+      ? this.i18n.beautyPhotoStepProcessing
+      : (options.uploadLabel ?? this.i18n.beautyPhotoStepUpload);
     uploadBtn.disabled = options.processing === true;
     uploadBtn.addEventListener('click', () => {
       this.openAttachmentPicker();
@@ -1561,14 +1554,14 @@ export class ChatDrawer {
     const skipBtn = document.createElement('button');
     skipBtn.type = 'button';
     skipBtn.className = 'gengage-chat-beauty-photo-step-skip gds-btn gds-btn-ghost';
-    skipBtn.textContent = 'Geç';
+    skipBtn.textContent = options.skipLabel ?? this.i18n.beautyPhotoStepSkip;
     skipBtn.addEventListener('click', () => {
       options.onSkip?.();
     });
 
     actions.appendChild(uploadBtn);
     actions.appendChild(skipBtn);
-    content.appendChild(title);
+    content.appendChild(titleEl);
     content.appendChild(desc);
     content.appendChild(actions);
     card.appendChild(icon);
@@ -2458,7 +2451,7 @@ export class ChatDrawer {
   }
 
   /** Update a bot message's text content in the DOM (e.g. for fallback messages). */
-  updateBotMessage(messageId: string, html: string): void {
+  updateBotMessage(messageId: string, html: string, renderHint?: string): void {
     const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
     let textEl = bubble.querySelector('.gengage-chat-bubble-text');
@@ -2467,7 +2460,7 @@ export class ChatDrawer {
       textEl.className = 'gengage-chat-bubble-text';
       bubble.appendChild(textEl);
     }
-    if (this._isPhotoAnalysisMessage(html)) {
+    if (renderHint === 'photo_analysis') {
       bubble.classList.add('gengage-chat-bubble--photo-analysis');
       this._renderPhotoAnalysisMessageCard(textEl as HTMLElement, html);
     } else {

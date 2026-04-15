@@ -192,6 +192,8 @@ export interface StreamEventTextChunk {
   skuToProductItem?: Record<string, Record<string, unknown>>;
   /** Current conversation mode from outputText (e.g., 'product_search'). */
   conversationMode?: string;
+  /** Backend render hint for special rendering (e.g. 'photo_analysis'). */
+  renderHint?: string;
 }
 
 /**

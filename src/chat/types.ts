@@ -304,6 +304,20 @@ export interface ChatI18n {
   aiAnalysisAnalyzingLabel: string;
   /** Section heading above AI grouping cards (panel browse categories). */
   aiBrowseCategoriesTitle: string;
+  /** Badge text on photo analysis message cards. */
+  photoAnalysisBadge: string;
+  /** Beauty photo step card: title. */
+  beautyPhotoStepTitle: string;
+  /** Beauty photo step card: description. */
+  beautyPhotoStepDescription: string;
+  /** Beauty photo step card: upload button label. */
+  beautyPhotoStepUpload: string;
+  /** Beauty photo step card: processing state label. */
+  beautyPhotoStepProcessing: string;
+  /** Beauty photo step card: skip button label. */
+  beautyPhotoStepSkip: string;
+  /** Message sent to backend when user clicks skip on beauty photo step. */
+  beautyPhotoStepSkipMessage: string;
 }
 
 export type OpeningContextKey = 'home' | 'listing' | 'product' | 'default';
@@ -465,6 +479,8 @@ export interface ChatMessage {
   panelSnapshot?: HTMLElement;
   /** Silent messages are hidden from the conversation but kept for context. */
   silent?: boolean;
+  /** Backend render hint for special rendering (e.g. "photo_analysis"). */
+  renderHint?: string;
   timestamp: number;
   status: 'streaming' | 'done' | 'error';
 }

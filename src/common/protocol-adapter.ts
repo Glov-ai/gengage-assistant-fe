@@ -384,6 +384,14 @@ interface V1LauncherContent {
   payload?: Record<string, unknown>;
 }
 
+interface V1UiSpec {
+  type: 'uiSpec';
+  payload: {
+    type: string;
+    [key: string]: unknown;
+  };
+}
+
 interface V1Handoff {
   type: 'handoff';
   payload?: {
@@ -424,6 +432,7 @@ type V1StreamEvent =
   | V1FormEvent
   | V1LauncherContent
   | V1Handoff
+  | V1UiSpec
   | { type: string; payload?: unknown; [key: string]: unknown };
 
 export function adaptBackendEvent(raw: Record<string, unknown>): StreamEvent | null {
@@ -504,6 +513,8 @@ export function adaptBackendEvent(raw: Record<string, unknown>): StreamEvent | n
       return adaptLauncherContent(event as V1LauncherContent);
     case 'handoff':
       return adaptHandoff(event as V1Handoff);
+    case 'uiSpec':
+      return adaptUiSpec(event as V1UiSpec);
     default:
       if (import.meta.env?.DEV) {
         console.warn('[gengage:protocol] Unknown backend event type:', event.type);
@@ -574,6 +585,11 @@ function adaptOutputText(event: V1OutputText): StreamEventTextChunk | StreamEven
   const convMode = event.payload['conversation_mode'];
   if (typeof convMode === 'string' && convMode) {
     result.conversationMode = convMode;
+  }
+
+  const renderHint = event.payload['render_hint'];
+  if (typeof renderHint === 'string' && renderHint) {
+    result.renderHint = renderHint;
   }
 
   return result;
@@ -1917,4 +1933,30 @@ export function normalizeProductGroupingsResponse(json: ProductGroupingsJsonResp
     if (group.highlight !== undefined) result.highlight = group.highlight;
     return result;
   });
+}
+
+/**
+ * Adapts a generic `uiSpec` backend event to a normalized `ui_spec` StreamEvent.
+ *
+ * The backend emits `{ type: "uiSpec", payload: { type: "BeautyPhotoStep", ... } }`.
+ * This wraps the flat payload into the standard `{ root, elements }` UISpec shape
+ * expected by the frontend renderer.
+ */
+function adaptUiSpec(event: V1UiSpec): StreamEventUISpec {
+  const componentType = event.payload.type;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure to exclude `type` from rest
+  const { type: _type, ...rest } = event.payload;
+  return {
+    type: 'ui_spec',
+    widget: 'chat',
+    spec: {
+      root: 'root',
+      elements: {
+        root: {
+          type: componentType,
+          props: rest,
+        },
+      },
+    },
+  };
 }

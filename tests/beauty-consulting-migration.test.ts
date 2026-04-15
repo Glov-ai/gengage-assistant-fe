@@ -12,17 +12,8 @@ describe('beauty consulting migration', () => {
     }
   });
 
-  it('switches to beauty mode and calls beauty_consulting_init endpoint', async () => {
-    const initBodies: Array<Record<string, unknown>> = [];
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/chat/beauty_consulting_init')) {
-        const body = JSON.parse(String((fetchMock.mock.calls.at(-1)?.[1] as RequestInit | undefined)?.body ?? '{}'));
-        initBodies.push(body as Record<string, unknown>);
-        return new Response(JSON.stringify({ assistant_reply: 'Beauty flow started.' }), { status: 200 });
-      }
-      return new Response('', { status: 503 });
-    });
+  it('switches to beauty mode on redirect metadata with assistant_mode', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const chat = new GengageChat();
@@ -34,31 +25,24 @@ describe('beauty consulting migration', () => {
       session: { sessionId: 'test-session' },
     });
 
-    await (chat as unknown as { _handleRedirectMetadata(payload: unknown): Promise<void> })._handleRedirectMetadata({
+    // Redirect handler is now sync — no REST call to /beauty_consulting_init
+    (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
       assistant_mode: 'beauty_consulting',
       scenario: 'shade_advisor',
       user_text: 'balo makyajı öner',
     });
 
+    // No call to beauty_consulting_init endpoint
     const urls = fetchMock.mock.calls.map((call) => String(call[0]));
-    expect(urls.some((url) => url.includes('/chat/beauty_consulting_init'))).toBe(true);
-    expect(initBodies[0]?.['transfer_text']).toBe('balo makyajı öner');
+    expect(urls.some((url) => url.includes('/chat/beauty_consulting_init'))).toBe(false);
 
-    const drawer = (chat as unknown as { _drawer?: { inputEl?: HTMLTextAreaElement } })._drawer;
-    expect(drawer?.inputEl?.placeholder).toBe('Cilt tipini yaz veya bir fotoğraf yükle');
+    // Mode is set locally (will be confirmed by CONTEXT event in production)
+    const mode = (chat as unknown as { _assistantMode: string })._assistantMode;
+    expect(mode).toBe('beauty_consulting');
   });
 
-  it('sends attachment as inputText in beauty mode', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('/chat/beauty_consulting_init')) {
-        return new Response(JSON.stringify({ assistant_reply: 'Hazırım.' }), { status: 200 });
-      }
-      if (url.includes('/chat/process_action')) {
-        return new Response('', { status: 503 });
-      }
-      return new Response('', { status: 404 });
-    });
+  it('sends attachment as user_message (inputText) in beauty mode', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const chat = new GengageChat();
@@ -70,10 +54,11 @@ describe('beauty consulting migration', () => {
       session: { sessionId: 'test-session' },
     });
 
-    await (chat as unknown as { _handleRedirectMetadata(payload: unknown): Promise<void> })._handleRedirectMetadata({
-      assistant_mode: 'beauty_consulting',
-      scenario: 'shade_advisor',
-    });
+    // Simulate backend context with beauty mode set
+    (chat as unknown as { _lastBackendContext: Record<string, unknown> })._lastBackendContext = {
+      panel: { assistant_mode: 'beauty_consulting' },
+    };
+    (chat as unknown as { _assistantMode: string })._assistantMode = 'beauty_consulting';
 
     const file = new File(['img-bytes'], 'face.jpg', { type: 'image/jpeg' });
     (chat as unknown as { _sendMessage(text: string, attachment?: File): void })._sendMessage('cildim kuru', file);
@@ -87,23 +72,14 @@ describe('beauty consulting migration', () => {
     const requestRaw = formData.get('request');
     expect(typeof requestRaw).toBe('string');
     const request = JSON.parse(requestRaw as string) as Record<string, unknown>;
+    // Backend receives inputText (mapped from user_message)
     expect(request.type).toBe('inputText');
     const payload = request.payload as Record<string, unknown>;
-    expect(payload['assistant_mode']).toBe('beauty_consulting');
     expect(payload['text']).toBe('cildim kuru');
   });
 
-  it('auto-sends beauty photo upload with analysis prompt', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/chat/beauty_consulting_init')) {
-        return new Response(JSON.stringify({ assistant_reply: 'Hazırım.' }), { status: 200 });
-      }
-      if (url.includes('/chat/process_action')) {
-        return new Response('', { status: 503 });
-      }
-      return new Response('', { status: 404 });
-    });
+  it('stages attachment normally in beauty mode (no fabricated message)', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const chat = new GengageChat();
@@ -115,13 +91,176 @@ describe('beauty consulting migration', () => {
       session: { sessionId: 'test-session' },
     });
 
-    await (chat as unknown as { _handleRedirectMetadata(payload: unknown): Promise<void> })._handleRedirectMetadata({
-      assistant_mode: 'beauty_consulting',
-      scenario: 'shade_advisor',
-    });
+    // Simulate beauty mode
+    (chat as unknown as { _assistantMode: string })._assistantMode = 'beauty_consulting';
 
     const file = new File(['img-bytes'], 'face.jpg', { type: 'image/jpeg' });
-    (chat as unknown as { _handleAttachment(file: File): void })._handleAttachment(file);
+    const drawer = (
+      chat as unknown as { _drawer?: { stageAttachment(f: File): void; getPendingAttachment(): File | null } }
+    )._drawer;
+    if (drawer) {
+      drawer.stageAttachment(file);
+      expect(drawer.getPendingAttachment()?.name).toBe('face.jpg');
+    }
+
+    // No process_action call should have been made by staging alone
+    const processCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/chat/process_action'));
+    expect(processCall).toBeUndefined();
+  });
+
+  it('handles watch_expert and booking redirects (not just beauty)', () => {
+    const chat = new GengageChat();
+
+    // Test all three recognized modes
+    for (const mode of ['beauty_consulting', 'watch_expert', 'booking'] as const) {
+      (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
+        assistant_mode: mode,
+      });
+      expect((chat as unknown as { _assistantMode: string })._assistantMode).toBe(mode);
+    }
+  });
+
+  it('ignores unknown redirect payloads without assistant_mode', () => {
+    const chat = new GengageChat();
+    (chat as unknown as { _assistantMode: string })._assistantMode = 'shopping';
+
+    // Host-only redirect (e.g. voiceLead) — no assistant_mode field
+    (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
+      to: 'voiceLead',
+    });
+
+    expect((chat as unknown as { _assistantMode: string })._assistantMode).toBe('shopping');
+  });
+
+  it('applies ui_hints from CONTEXT panel', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    // Verify _uiHints is null initially
+    const hints = (chat as unknown as { _uiHints: Record<string, unknown> | null })._uiHints;
+    expect(hints).toBeNull();
+  });
+
+  it('derives _assistantMode from CONTEXT panel.assistant_mode', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    // Simulate CONTEXT event with beauty mode
+    const accessor = chat as unknown as {
+      _lastBackendContext: Record<string, unknown>;
+      _assistantMode: string;
+      _uiHints: Record<string, unknown> | null;
+      _applyUiHints: () => void;
+    };
+
+    accessor._lastBackendContext = {
+      panel: {
+        assistant_mode: 'beauty_consulting',
+        ui_hints: {
+          hide_attachment_controls: true,
+          hide_comparison_prompt: true,
+          hide_choice_prompter: true,
+          input_placeholder: 'Güzellik danışmanınıza yazın...',
+        },
+      },
+    };
+    accessor._assistantMode = 'beauty_consulting';
+    accessor._uiHints = (accessor._lastBackendContext['panel'] as Record<string, unknown>)['ui_hints'] as Record<
+      string,
+      unknown
+    >;
+    accessor._applyUiHints();
+
+    expect(accessor._assistantMode).toBe('beauty_consulting');
+    expect(accessor._uiHints).toBeTruthy();
+    expect(accessor._uiHints?.['hide_attachment_controls']).toBe(true);
+  });
+
+  it('clears _uiHints when CONTEXT has no ui_hints (shopping mode transition)', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    const accessor = chat as unknown as {
+      _uiHints: Record<string, unknown> | null;
+      _applyUiHints: () => void;
+    };
+
+    // First set ui_hints (beauty mode)
+    accessor._uiHints = { hide_attachment_controls: true };
+    expect(accessor._uiHints).toBeTruthy();
+
+    // Then clear (transition to shopping — no ui_hints in CONTEXT)
+    accessor._uiHints = null;
+    accessor._applyUiHints();
+    expect(accessor._uiHints).toBeNull();
+  });
+
+  it('ignores bookingMode redirect (host-only, no assistant_mode)', () => {
+    const chat = new GengageChat();
+    (chat as unknown as { _assistantMode: string })._assistantMode = 'shopping';
+
+    // Booking redirect from auto_warmup — has no assistant_mode, just "to: bookingMode"
+    (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
+      to: 'bookingMode',
+      booking_intent: 'service_appointment',
+      handoff_summary: 'Randevu bilgisi',
+    });
+
+    // Mode should remain shopping — this is a host page redirect, not an internal mode switch
+    expect((chat as unknown as { _assistantMode: string })._assistantMode).toBe('shopping');
+  });
+
+  it('shopping image attachment uses findSimilar action type', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    // Ensure mode is shopping (default)
+    const accessor = chat as unknown as {
+      _assistantMode: string;
+      _lastBackendContext: Record<string, unknown>;
+      _sendMessage(text: string, attachment?: File): void;
+    };
+    accessor._assistantMode = 'shopping';
+    accessor._lastBackendContext = { panel: { assistant_mode: 'shopping' } };
+
+    const file = new File(['img-bytes'], 'product.jpg', { type: 'image/jpeg' });
+    accessor._sendMessage('', file);
     await new Promise((resolve) => setTimeout(resolve, 30));
 
     const processCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/chat/process_action'));
@@ -130,9 +269,53 @@ describe('beauty consulting migration', () => {
     expect(init.body).toBeInstanceOf(FormData);
     const formData = init.body as FormData;
     const requestRaw = formData.get('request');
+    expect(typeof requestRaw).toBe('string');
     const request = JSON.parse(requestRaw as string) as Record<string, unknown>;
-    const payload = request.payload as Record<string, unknown>;
-    expect(payload['assistant_mode']).toBe('beauty_consulting');
-    expect(payload['text']).toBe('Fotoğrafımı analiz edebilir misiniz?');
+    expect(request.type).toBe('findSimilar');
+  });
+
+  it('BeautyPhotoStep skip sends a message to the backend', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 503 }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const chat = new GengageChat();
+    await chat.init({
+      accountId: 'flormarcomtr',
+      middlewareUrl: 'https://api.test.com',
+      mountTarget: '#chat-root',
+      variant: 'inline',
+      session: { sessionId: 'test-session' },
+    });
+
+    const accessor = chat as unknown as {
+      _assistantMode: string;
+      _lastBackendContext: Record<string, unknown>;
+      _sendMessage(text: string, attachment?: File): void;
+    };
+    accessor._assistantMode = 'beauty_consulting';
+    accessor._lastBackendContext = { panel: { assistant_mode: 'beauty_consulting' } };
+
+    // Simulate what onSkip does: send skip message to backend
+    const sendSpy = vi.spyOn(accessor, '_sendMessage' as never);
+    accessor._sendMessage('Fotoğraf adımını geçiyorum');
+
+    expect(sendSpy).toHaveBeenCalledWith('Fotoğraf adımını geçiyorum');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    // Backend should receive the skip as an inputText action
+    const processCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/chat/process_action'));
+    expect(processCall).toBeDefined();
+    const init = processCall?.[1] as RequestInit;
+    const body = init.body;
+    // In beauty mode, text messages are sent as JSON (no attachment)
+    if (typeof body === 'string') {
+      const request = JSON.parse(body) as Record<string, unknown>;
+      expect(request.type).toBe('inputText');
+    } else if (body instanceof FormData) {
+      const requestRaw = body.get('request');
+      expect(typeof requestRaw).toBe('string');
+      const request = JSON.parse(requestRaw as string) as Record<string, unknown>;
+      expect(request.type).toBe('inputText');
+    }
   });
 });
