@@ -1907,13 +1907,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
 
-          // PhotoAnalysisCard: attach structured data to the bot message instead of rendering in panel.
-          // Also set renderHint so the card renders even if outputText didn't include render_hint.
+          // PhotoAnalysisCard: attach structured data to the bot message and render as a card.
+          // Handles all orderings: UISpec before text, after text, or without text.
           if (componentType === 'PhotoAnalysisCard') {
             const parsed = parsePhotoAnalysisProps(rootElement?.props ?? {});
             if (parsed) {
               botMsg.photoAnalysis = parsed;
               botMsg.renderHint = 'photo_analysis';
+              // Ensure the bot bubble exists in DOM (covers UISpec-only streams).
+              this._ensureAssistantMessageRendered(botMsg);
+              // Re-render the bubble as a photo analysis card (covers text-first ordering).
+              this._drawer?.updateBotMessage(
+                botMsg.id,
+                botMsg.content ?? '',
+                'photo_analysis',
+                botMsg.photoAnalysis,
+              );
             }
             return;
           }
