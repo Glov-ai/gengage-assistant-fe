@@ -10,6 +10,26 @@ export type AssistantMode = 'shopping' | 'booking' | 'beauty_consulting' | 'watc
 
 const RECOGNISED_MODES: readonly AssistantMode[] = ['beauty_consulting', 'watch_expert', 'booking'];
 
+/** All valid AssistantMode values (including the default 'shopping'). */
+const ALL_MODES: readonly string[] = ['shopping', ...RECOGNISED_MODES];
+
+/**
+ * Modes that use consulting-style product grids (style variations + tabbed picker).
+ * Used by the protocol adapter and the consulting-grid detector.
+ */
+export const CONSULTING_SOURCES: readonly string[] = ['beauty_consulting', 'watch_expert'];
+
+/** Whether a wire-protocol source string is a consulting source. */
+export function isConsultingSource(source: string | undefined): boolean {
+  return typeof source === 'string' && CONSULTING_SOURCES.includes(source);
+}
+
+/** Return the value as an AssistantMode if it is a known mode string, otherwise null. */
+export function toAssistantMode(value: unknown): AssistantMode | null {
+  if (typeof value === 'string' && ALL_MODES.includes(value)) return value as AssistantMode;
+  return null;
+}
+
 /** Safely cast an unknown value to a plain Record, or null. */
 export function asRecord(value: unknown): Record<string, unknown> | null {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return null;

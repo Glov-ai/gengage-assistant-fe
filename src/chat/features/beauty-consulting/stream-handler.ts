@@ -10,6 +10,7 @@ import { parsePhotoAnalysisProps } from '../../components/PhotoAnalysisCard.js';
 import type { PhotoAnalysisData } from '../../components/PhotoAnalysisCard.js';
 import { parseBeautyPhotoStepProps } from '../../components/BeautyPhotoStep.js';
 import type { ChatMessage } from '../../types.js';
+import { debugLog } from '../../../common/debug.js';
 
 /** Per-stream state for beauty consulting features. */
 export interface BeautyStreamState {
@@ -65,8 +66,12 @@ export function handleBeautyUISpec(
       // into the same bubble container that we are about to replace with the card.
       ctx.cancelTypewriter();
       ctx.drawer?.updateBotMessage(botMsg.id, botMsg.content ?? '', 'photo_analysis', botMsg.photoAnalysis);
+      return true;
     }
-    return true;
+    // Parse failed — fall through to the generic UISpec renderer so the
+    // component degrades visibly instead of being silently dropped.
+    debugLog('beauty', 'PhotoAnalysisCard parse failed, falling through to generic renderer', rootElementProps);
+    return false;
   }
 
   if (componentType === 'BeautyPhotoStep') {

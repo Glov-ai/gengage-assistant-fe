@@ -6,7 +6,7 @@
  */
 
 import type { AssistantMode } from '../../assistant-mode.js';
-import { asRecord, parseRedirectMode } from '../../assistant-mode.js';
+import { asRecord, parseRedirectMode, toAssistantMode } from '../../assistant-mode.js';
 import { debugLog } from '../../../common/debug.js';
 
 /**
@@ -75,7 +75,7 @@ export class AssistantModeController {
         : undefined;
     if (placeholder) {
       drawer?.setInputPlaceholder(placeholder);
-    } else if (this._mode === 'shopping') {
+    } else {
       drawer?.setInputPlaceholder(defaultPlaceholder);
     }
   }
@@ -107,7 +107,12 @@ export class AssistantModeController {
   updateFromContext(panel: Record<string, unknown>): void {
     const panelMode = panel['assistant_mode'];
     if (typeof panelMode === 'string' && panelMode) {
-      this._mode = panelMode as AssistantMode;
+      const validated = toAssistantMode(panelMode);
+      if (validated) {
+        this._mode = validated;
+      } else {
+        debugLog('mode', 'ignoring unrecognised assistant_mode from context', panelMode);
+      }
     } else if (panelMode === null) {
       this._mode = 'shopping';
     }

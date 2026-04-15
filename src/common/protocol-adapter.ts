@@ -22,6 +22,7 @@ import type {
   UIElement,
 } from './types.js';
 import { getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
+import { isConsultingSource } from '../chat/assistant-mode.js';
 
 type WidgetName = 'chat' | 'qna' | 'simrel';
 
@@ -655,8 +656,12 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
     .filter((variation) => variation.product_list.length > 0);
 
   const fallbackProducts = event.payload.product_list ?? [];
+  // Only use first-variation products as grid children when the source is a
+  // consulting mode.  Non-consulting backends that happen to include
+  // style_variations should still render the top-level product_list so the
+  // grid doesn't silently narrow to the first variation.
   const firstVariationProducts =
-    rawStyleVariations.length > 0 && Array.isArray(rawStyleVariations[0]?.product_list)
+    isConsultingSource(event.payload.source) && rawStyleVariations.length > 0 && Array.isArray(rawStyleVariations[0]?.product_list)
       ? (rawStyleVariations[0]!.product_list as V1Product[])
       : [];
   const effectiveProducts = firstVariationProducts.length > 0 ? firstVariationProducts : fallbackProducts;

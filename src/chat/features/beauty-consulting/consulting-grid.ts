@@ -10,6 +10,7 @@ import type { UIElement } from '../../../common/types.js';
 import type { ChatUISpecRenderContext } from '../../types.js';
 import { renderConsultingStylePicker } from '../../components/ConsultingStylePicker.js';
 import type { StyleVariation } from '../../components/ConsultingStylePicker.js';
+import { isConsultingSource } from '../../assistant-mode.js';
 
 export interface ConsultingGridResult {
   isConsulting: boolean;
@@ -29,7 +30,7 @@ export function detectConsultingGrid(element: UIElement): ConsultingGridResult {
   const styleVariations = styleVariationsRaw.filter(
     (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
   );
-  const isConsulting = (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
+  const isConsulting = isConsultingSource(source) && styleVariations.length > 0;
   return { isConsulting, source, styleVariations };
 }
 
