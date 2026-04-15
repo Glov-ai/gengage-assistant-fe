@@ -23,10 +23,9 @@ import { renderProsAndCons } from './ProsAndCons.js';
 import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
-import { renderPhotoAnalysisCard } from './PhotoAnalysisCard.js';
-import { renderBeautyPhotoStep } from './BeautyPhotoStep.js';
 import { renderConsultingStylePicker } from './ConsultingStylePicker.js';
 import type { StyleVariation } from './ConsultingStylePicker.js';
+import { beautyConsultingRegistry } from '../features/beauty-consulting/registry.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
 import {
   clampRating,
@@ -79,8 +78,7 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   HandoffNotice: ({ element, context }) => renderHandoffNotice(element, context),
   ProductSummaryCard: ({ element, context }) => renderProductSummaryCard(element, context),
   Divider: ({ element }) => renderDivider(element),
-  PhotoAnalysisCard: ({ element, context }) => renderPhotoAnalysisCard(element, context),
-  BeautyPhotoStep: ({ element, context }) => renderBeautyPhotoStep(element, context),
+  ...beautyConsultingRegistry,
 };
 
 export const defaultChatUnknownUISpecRenderer: UISpecDomUnknownRenderer<UISpecRenderContext> = ({

@@ -8,8 +8,7 @@ import { createKvkkBanner } from './KvkkBanner.js';
 import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
-import { renderBeautyPhotoStep } from './BeautyPhotoStep.js';
-import { renderPhotoAnalysisBubble } from './PhotoAnalysisCard.js';
+import { applyBeautyPhotoStepCard, applyPhotoAnalysisCard } from '../features/beauty-consulting/drawer-extensions.js';
 
 /** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
 const DEFAULT_ACTION_ICON =
@@ -247,7 +246,7 @@ export class ChatDrawer {
     content: string,
     structured?: { summary: string; clues: string[]; nextQuestion?: string },
   ): void {
-    renderPhotoAnalysisBubble(container, content, this.i18n.photoAnalysisBadge, structured);
+    applyPhotoAnalysisCard(container, content, this.i18n.photoAnalysisBadge, structured);
   }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
@@ -1464,51 +1463,13 @@ export class ChatDrawer {
     uploadLabel?: string | undefined;
     skipLabel?: string | undefined;
   }): void {
-    if (!options.visible) {
-      if (this._beautyPhotoStepEl) {
-        this._beautyPhotoStepEl.hidden = true;
-        this._beautyPhotoStepEl.innerHTML = '';
-      }
-      return;
-    }
-
-    // Lazy creation: only allocate the DOM node when beauty mode actually needs it.
-    if (!this._beautyPhotoStepEl) {
-      this._beautyPhotoStepEl = document.createElement('section');
-      this._beautyPhotoStepEl.className = 'gengage-chat-beauty-photo-step';
-      this._beautyPhotoStepEl.dataset['gengagePart'] = 'chat-beauty-photo-step';
-      this._beautyPhotoStepEl.hidden = true;
-      // Insert before the input area (last child of conversation)
-      const inputArea = this._conversationEl?.querySelector('.gengage-chat-input-area');
-      if (inputArea) {
-        inputArea.parentElement?.insertBefore(this._beautyPhotoStepEl, inputArea);
-      } else {
-        this._conversationEl?.appendChild(this._beautyPhotoStepEl);
-      }
-    }
-
-    this._beautyPhotoStepEl.hidden = false;
-    this._beautyPhotoStepEl.innerHTML = '';
-
-    const card = renderBeautyPhotoStep(
-      {
-        type: 'BeautyPhotoStep',
-        props: {
-          processing: options.processing ?? false,
-          title: options.title,
-          description: options.description,
-          upload_label: options.uploadLabel,
-          skip_label: options.skipLabel,
-        },
-      },
-      { i18n: this.i18n, onAction: () => undefined } as import('../types.js').ChatUISpecRenderContext,
-      {
-        onUpload: () => this.openAttachmentPicker(),
-        onSkip: options.onSkip,
-      },
+    this._beautyPhotoStepEl = applyBeautyPhotoStepCard(
+      this._beautyPhotoStepEl,
+      this._conversationEl ?? null,
+      options,
+      this.i18n,
+      () => this.openAttachmentPicker(),
     );
-
-    this._beautyPhotoStepEl.appendChild(card);
   }
 
   /** Stage a file attachment for sending. Shows preview. */
