@@ -17,6 +17,25 @@
 import type { UIElement } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 
+export interface BeautyPhotoStepProps {
+  processing: boolean;
+  title?: string | undefined;
+  description?: string | undefined;
+  uploadLabel?: string | undefined;
+  skipLabel?: string | undefined;
+}
+
+/** Extract typed props from a raw UISpec element props bag. */
+export function parseBeautyPhotoStepProps(props: Record<string, unknown>): BeautyPhotoStepProps {
+  return {
+    processing: props['processing'] === true,
+    title: typeof props['title'] === 'string' ? props['title'] : undefined,
+    description: typeof props['description'] === 'string' ? props['description'] : undefined,
+    uploadLabel: typeof props['upload_label'] === 'string' ? props['upload_label'] : undefined,
+    skipLabel: typeof props['skip_label'] === 'string' ? props['skip_label'] : undefined,
+  };
+}
+
 export interface BeautyPhotoStepCallbacks {
   onUpload?: (() => void) | undefined;
   onSkip?: (() => void) | undefined;

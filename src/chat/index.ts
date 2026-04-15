@@ -33,6 +33,8 @@ import { debugLog } from '../common/debug.js';
 import { validateImageFile } from './attachment-utils.js';
 import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
+import { parsePhotoAnalysisProps } from './components/PhotoAnalysisCard.js';
+import { parseBeautyPhotoStepProps } from './components/BeautyPhotoStep.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
 import { playTtsAudio } from '../common/tts-player.js';
@@ -116,22 +118,8 @@ function isActionLike(value: unknown): value is ActionPayload {
   return typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).type === 'string';
 }
 
-type AssistantMode = 'shopping' | 'booking' | 'beauty_consulting' | 'watch_expert';
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (value == null || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-}
-
-function firstString(...values: unknown[]): string | undefined {
-  for (const value of values) {
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) return trimmed;
-    }
-  }
-  return undefined;
-}
+import type { AssistantMode } from './assistant-mode.js';
+import { asRecord, parseRedirectMode } from './assistant-mode.js';
 
 /**
  * Floating AI chat widget with streaming NDJSON responses, product cards, and comparison tables.
@@ -1424,7 +1412,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!hasUserMessages) {
       ga.trackConversationStart();
     }
-    debugLog('beauty', 'sendMessage', {
+    debugLog('chat', 'sendMessage', {
       mode: this._assistantMode,
       hasAttachment: attachment !== undefined,
       textLength: text.length,
@@ -1474,22 +1462,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _handleRedirectMetadata(redirectPayload: unknown): void {
-    const payload = asRecord(redirectPayload);
-    if (!payload) return;
-    debugLog('beauty', 'redirect metadata received', payload);
-
-    const mode = firstString(payload['assistant_mode'], payload['assistantMode']);
-    const recognized: AssistantMode[] = ['beauty_consulting', 'watch_expert', 'booking'];
-    if (!mode || !recognized.includes(mode as AssistantMode)) return;
-
-    this._switchAssistantMode(mode as AssistantMode);
+    debugLog('mode', 'redirect metadata received', redirectPayload);
+    const mode = parseRedirectMode(redirectPayload);
+    if (!mode) return;
+    this._switchAssistantMode(mode);
   }
 
   private _switchAssistantMode(mode: AssistantMode): void {
     const prevMode = this._assistantMode;
     this._assistantMode = mode;
-    debugLog('beauty', 'assistant mode switched', { from: prevMode, to: mode });
-    // ui_hints and placeholder will be applied when the CONTEXT event arrives
+    debugLog('mode', 'assistant mode switched', { from: prevMode, to: mode });
   }
 
   private _sendAction(action: ActionPayload, options?: SendActionOptions): void {
@@ -1713,7 +1695,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isControlGroup: this.config.session?.abTestVariant === 'control',
       isMobile: this._isMobileViewport,
     };
-    meta.assistantMode = this._assistantMode;
+    if (this._assistantMode !== 'shopping') {
+      meta.assistantMode = this._assistantMode;
+    }
     if (this.config.session?.viewId !== undefined) {
       meta.viewId = this.config.session.viewId;
     }
@@ -1924,40 +1908,26 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           // PhotoAnalysisCard: attach structured data to the bot message instead of rendering in panel.
           if (componentType === 'PhotoAnalysisCard') {
-            const props = rootElement?.props ?? {};
-            const summary = typeof props['summary'] === 'string' ? props['summary'] : '';
-            const clues = Array.isArray(props['clues'])
-              ? (props['clues'] as string[]).filter((c) => typeof c === 'string')
-              : [];
-            const nextQuestion = typeof props['next_question'] === 'string' ? props['next_question'] : undefined;
-            if (summary || clues.length > 0) {
-              botMsg.photoAnalysis = nextQuestion ? { summary, clues, nextQuestion } : { summary, clues };
-            }
+            const parsed = parsePhotoAnalysisProps(rootElement?.props ?? {});
+            if (parsed) botMsg.photoAnalysis = parsed;
             return;
           }
 
           // BeautyPhotoStep: render into the dedicated transient slot, not the panel.
           if (componentType === 'BeautyPhotoStep') {
             streamIncludedBeautyPhotoStep = true;
-            const props = rootElement?.props ?? {};
+            const stepProps = parseBeautyPhotoStepProps(rootElement?.props ?? {});
             this._drawer?.setBeautyPhotoStepCard({
               visible: true,
-              processing: props['processing'] === true,
+              ...stepProps,
               onSkip: () => {
                 this._drawer?.setBeautyPhotoStepCard({ visible: false });
-                // Inform backend the user skipped the photo step.
-                // If the init stream is still active, queue the skip to avoid aborting
-                // the stream before the final CONTEXT (with redirected_agent_state) arrives.
                 if (streamDone) {
                   this._sendMessage(this._i18n.beautyPhotoStepSkipMessage);
                 } else {
                   pendingPhotoStepSkip = true;
                 }
               },
-              title: typeof props['title'] === 'string' ? props['title'] : undefined,
-              description: typeof props['description'] === 'string' ? props['description'] : undefined,
-              uploadLabel: typeof props['upload_label'] === 'string' ? props['upload_label'] : undefined,
-              skipLabel: typeof props['skip_label'] === 'string' ? props['skip_label'] : undefined,
             });
             return;
           }
@@ -2456,9 +2426,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 : [];
               const loadingText = typeof event.meta.loadingText === 'string' ? event.meta.loadingText : undefined;
               if (thinkingMessages.length > 0) {
-                const normalizedThinking = loadingText
-                  ? [...thinkingMessages.slice(0, 2), loadingText]
-                  : thinkingMessages;
+                // Beauty/watch modes: condense long thinking lists to 2 steps + loading text.
+                // Standard shopping mode: show all thinking messages unmodified.
+                const normalizedThinking =
+                  loadingText && this._assistantMode !== 'shopping'
+                    ? [...thinkingMessages.slice(0, 2), loadingText]
+                    : thinkingMessages;
                 this._drawer?.setThinkingSteps(normalizedThinking);
               }
               if (typeof loadingText === 'string' && loadingText.length > 0) {

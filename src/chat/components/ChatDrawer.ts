@@ -9,6 +9,7 @@ import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
 import { renderBeautyPhotoStep } from './BeautyPhotoStep.js';
+import { renderPhotoAnalysisBubble } from './PhotoAnalysisCard.js';
 
 /** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
 const DEFAULT_ACTION_ICON =
@@ -246,81 +247,7 @@ export class ChatDrawer {
     content: string,
     structured?: { summary: string; clues: string[]; nextQuestion?: string },
   ): void {
-    container.innerHTML = '';
-
-    const card = document.createElement('div');
-    card.className = 'gengage-chat-photo-analysis-card';
-
-    const badge = document.createElement('div');
-    badge.className = 'gengage-chat-photo-analysis-badge';
-    badge.textContent = this.i18n.photoAnalysisBadge;
-
-    const body = document.createElement('div');
-    body.className = 'gengage-chat-photo-analysis-body';
-
-    if (structured) {
-      // Structured data from PhotoAnalysisCard UISpec — no sentence splitting needed.
-      const summaryEl = document.createElement('p');
-      summaryEl.className = 'gengage-chat-photo-analysis-summary';
-      summaryEl.textContent = structured.summary;
-      body.appendChild(summaryEl);
-
-      if (structured.clues.length > 0) {
-        const list = document.createElement('ul');
-        list.className = 'gengage-chat-photo-analysis-points';
-        for (const clue of structured.clues) {
-          const item = document.createElement('li');
-          item.textContent = clue;
-          list.appendChild(item);
-        }
-        body.appendChild(list);
-      }
-
-      if (structured.nextQuestion) {
-        const next = document.createElement('p');
-        next.className = 'gengage-chat-photo-analysis-next';
-        next.textContent = structured.nextQuestion;
-        body.appendChild(next);
-      }
-    } else {
-      // Fallback: sentence-splitting heuristic for old backends without PhotoAnalysisCard UISpec.
-      const parts = content
-        .split(/(?<=[.!?])\s+/)
-        .map((part) => part.trim())
-        .filter(Boolean);
-
-      const summaryEl = document.createElement('p');
-      summaryEl.className = 'gengage-chat-photo-analysis-summary';
-      summaryEl.textContent = parts[0] ?? content;
-      body.appendChild(summaryEl);
-
-      const clues = parts
-        .slice(1)
-        .filter((part) => !part.includes('?'))
-        .slice(0, 4);
-      if (clues.length > 0) {
-        const list = document.createElement('ul');
-        list.className = 'gengage-chat-photo-analysis-points';
-        for (const clue of clues) {
-          const item = document.createElement('li');
-          item.textContent = clue;
-          list.appendChild(item);
-        }
-        body.appendChild(list);
-      }
-
-      const question = parts.find((part) => part.includes('?'));
-      if (question) {
-        const next = document.createElement('p');
-        next.className = 'gengage-chat-photo-analysis-next';
-        next.textContent = question;
-        body.appendChild(next);
-      }
-    }
-
-    card.appendChild(badge);
-    card.appendChild(body);
-    container.appendChild(card);
+    renderPhotoAnalysisBubble(container, content, this.i18n.photoAnalysisBadge, structured);
   }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
