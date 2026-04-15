@@ -10,7 +10,7 @@ import type { UIElement } from '../../../common/types.js';
 import type { ChatUISpecRenderContext } from '../../types.js';
 import { renderConsultingStylePicker } from '../../components/ConsultingStylePicker.js';
 import type { StyleVariation } from '../../components/ConsultingStylePicker.js';
-import { isConsultingSource } from '../../assistant-mode.js';
+import { isConsultingSource } from '../../../common/consulting-sources.js';
 
 export interface ConsultingGridResult {
   isConsulting: boolean;

@@ -135,6 +135,16 @@ Each `renderer` supports:
 Use `createDefaultChatUISpecRegistry()`, `createDefaultQnaUISpecRegistry()`, and
 `createDefaultSimRelUISpecRegistry()` as baseline registries for partial overrides.
 
+> **Beauty consulting components:** `PhotoAnalysisCard` and `BeautyPhotoStep`
+> are registered in the default chat registry but are **not overridable** via
+> `renderer.registry` during live streaming.  The stream handler intercepts
+> these components for timing-critical rendering (typewriter cancellation,
+> drawer-level placement) before the registry is consulted.  The registry
+> entries serve as fallback renderers for session restore and degraded
+> rendering on parse failure.  To customise these components, use the i18n
+> overrides (`photoAnalysisBadge`, `beautyPhotoStepTitle`, etc.) or fork
+> the feature module at `src/chat/features/beauty-consulting/`.
+
 ### Level 3 — Full widget replacement
 
 Replace the entire visual layer while keeping API contracts stable:

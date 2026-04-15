@@ -22,7 +22,7 @@ import type {
   UIElement,
 } from './types.js';
 import { getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
-import { isConsultingSource } from '../chat/assistant-mode.js';
+import { isConsultingSource } from './consulting-sources.js';
 
 type WidgetName = 'chat' | 'qna' | 'simrel';
 
@@ -656,17 +656,18 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
     .filter((variation) => variation.product_list.length > 0);
 
   const fallbackProducts = event.payload.product_list ?? [];
-  // Only use first-variation products as grid children when the source is a
-  // consulting mode.  Non-consulting backends that happen to include
-  // style_variations should still render the top-level product_list so the
-  // grid doesn't silently narrow to the first variation.
-  const firstVariationProducts =
-    isConsultingSource(event.payload.source) && rawStyleVariations.length > 0 && Array.isArray(rawStyleVariations[0]?.product_list)
-      ? (rawStyleVariations[0]!.product_list as V1Product[])
-      : [];
-  const effectiveProducts = firstVariationProducts.length > 0 ? firstVariationProducts : fallbackProducts;
 
-  const spec = buildProductGridUISpec(effectiveProducts, 'chat');
+  // For consulting sources, build grid children from the already-normalized
+  // first variation so wrapper formats (product_detail, product) are properly
+  // unwrapped.  Non-consulting backends always use the top-level product_list.
+  const firstNormalized =
+    isConsultingSource(event.payload.source) && normalizedStyleVariations.length > 0
+      ? normalizedStyleVariations[0]!.product_list
+      : null;
+
+  const spec = firstNormalized
+    ? buildProductGridFromNormalized(firstNormalized, 'chat')
+    : buildProductGridUISpec(fallbackProducts, 'chat');
   spec.panelHint = 'panel';
   // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
@@ -1608,6 +1609,48 @@ function buildProductGridUISpec(products: V1Product[], widget: WidgetName): Stre
       type: 'ProductCard',
       props,
     };
+  }
+
+  elements['root'] = {
+    type: 'ProductGrid',
+    props: { layout: 'grid' },
+    children: childIds,
+  };
+
+  return {
+    type: 'ui_spec',
+    widget,
+    spec: { root: 'root', elements },
+  };
+}
+
+/**
+ * Build a ProductGrid UISpec from already-normalized product records.
+ * Used for consulting grids where products were normalized via
+ * productRecordToNormalized (which unwraps product_detail wrappers).
+ */
+function buildProductGridFromNormalized(
+  products: Record<string, unknown>[],
+  widget: WidgetName,
+): StreamEventUISpec {
+  const elements: Record<string, UIElement> = {};
+  const childIds: string[] = [];
+
+  for (let i = 0; i < products.length; i++) {
+    const product = products[i];
+    if (!product) continue;
+    const id = `product-${i}`;
+    childIds.push(id);
+    const props: Record<string, unknown> = { product, index: i };
+    const sku = product['sku'] as string | undefined;
+    if (sku) {
+      props['action'] = {
+        title: (product['name'] as string | undefined) ?? '',
+        type: 'launchSingleProduct',
+        payload: { sku },
+      };
+    }
+    elements[id] = { type: 'ProductCard', props };
   }
 
   elements['root'] = {
