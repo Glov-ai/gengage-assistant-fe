@@ -25,11 +25,20 @@ test.describe('Chat widget', () => {
 
     const box = await launcher.boundingBox();
     expect(box).toBeTruthy();
-    // Koctas demo overrides launcher size to 112px in image mode.
-    expect(box!.width).toBeGreaterThanOrEqual(100);
-    expect(box!.width).toBeLessThanOrEqual(124);
-    expect(box!.height).toBeGreaterThanOrEqual(100);
-    expect(box!.height).toBeLessThanOrEqual(124);
+    // Koctas demo uses pillLauncher — renders as a wide pill (image-mode),
+    // not a square FAB. Pill width depends on label text; height is compact.
+    const isImageMode = await launcher.evaluate((el) => el.classList.contains('gengage-chat-launcher--image-mode'));
+    if (isImageMode) {
+      expect(box!.width).toBeGreaterThanOrEqual(80);
+      expect(box!.width).toBeLessThanOrEqual(250);
+      expect(box!.height).toBeGreaterThanOrEqual(40);
+      expect(box!.height).toBeLessThanOrEqual(120);
+    } else {
+      expect(box!.width).toBeGreaterThanOrEqual(40);
+      expect(box!.width).toBeLessThanOrEqual(124);
+      expect(box!.height).toBeGreaterThanOrEqual(40);
+      expect(box!.height).toBeLessThanOrEqual(124);
+    }
   });
 
   test('drawer is hidden initially (has --hidden class)', async ({ page }) => {

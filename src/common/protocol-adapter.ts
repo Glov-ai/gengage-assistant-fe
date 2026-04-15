@@ -22,6 +22,7 @@ import type {
   UIElement,
 } from './types.js';
 import { getSuggestedSearchKeywordsText } from './suggested-search-keywords.js';
+import { isConsultingSource } from './consulting-sources.js';
 
 type WidgetName = 'chat' | 'qna' | 'simrel';
 
@@ -108,6 +109,25 @@ interface V1ProductList {
     offset?: number;
     page_size?: number;
     end_of_list?: boolean;
+    recommendation_groups?: Array<{
+      label?: string;
+      reason?: string;
+      skus?: string[];
+      [key: string]: unknown;
+    }>;
+    style_variations?: Array<{
+      style_label?: string;
+      style_mood?: string;
+      image_url?: string | null;
+      recommendation_groups?: Array<{
+        label?: string;
+        reason?: string;
+        skus?: string[];
+        [key: string]: unknown;
+      }>;
+      product_list?: V1Product[];
+      [key: string]: unknown;
+    }>;
     [key: string]: unknown;
   };
 }
@@ -365,6 +385,14 @@ interface V1LauncherContent {
   payload?: Record<string, unknown>;
 }
 
+interface V1UiSpec {
+  type: 'uiSpec';
+  payload: {
+    type: string;
+    [key: string]: unknown;
+  };
+}
+
 interface V1Handoff {
   type: 'handoff';
   payload?: {
@@ -405,6 +433,7 @@ type V1StreamEvent =
   | V1FormEvent
   | V1LauncherContent
   | V1Handoff
+  | V1UiSpec
   | { type: string; payload?: unknown; [key: string]: unknown };
 
 export function adaptBackendEvent(raw: Record<string, unknown>): StreamEvent | null {
@@ -485,6 +514,8 @@ export function adaptBackendEvent(raw: Record<string, unknown>): StreamEvent | n
       return adaptLauncherContent(event as V1LauncherContent);
     case 'handoff':
       return adaptHandoff(event as V1Handoff);
+    case 'uiSpec':
+      return adaptUiSpec(event as V1UiSpec);
     default:
       if (import.meta.env?.DEV) {
         console.warn('[gengage:protocol] Unknown backend event type:', event.type);
@@ -557,6 +588,15 @@ function adaptOutputText(event: V1OutputText): StreamEventTextChunk | StreamEven
     result.conversationMode = convMode;
   }
 
+  const renderHint = event.payload['render_hint'];
+  if (typeof renderHint === 'string' && renderHint) {
+    result.renderHint = renderHint;
+  }
+
+  if (event.payload['kvkk'] === true) {
+    result.kvkk = true;
+  }
+
   return result;
 }
 
@@ -579,15 +619,66 @@ function adaptSuggestedActions(event: V1SuggestedActions): StreamEventUISpec {
 }
 
 function adaptProductList(event: V1ProductList): StreamEventUISpec {
-  const spec = buildProductGridUISpec(event.payload.product_list ?? [], 'chat');
+  const rawStyleVariations = Array.isArray(event.payload.style_variations) ? event.payload.style_variations : [];
+  const normalizedStyleVariations = rawStyleVariations
+    .map((variation) => {
+      const styleLabel = firstNonEmptyString(variation.style_label);
+      const styleMood = firstNonEmptyString(variation.style_mood);
+      const imageUrl = firstNonEmptyString(variation.image_url ?? undefined);
+      const productList = Array.isArray(variation.product_list) ? variation.product_list : [];
+      const normalizedProducts = productList
+        .map((entry) => {
+          const entryRecord = asRecord(entry);
+          if (!entryRecord) return null;
+          const productRecord =
+            asRecord(entryRecord['product_detail']) ?? asRecord(entryRecord['product']) ?? entryRecord;
+          return productRecordToNormalized(productRecord) as unknown as Record<string, unknown> | null;
+        })
+        .filter(isNonNullable);
+      const recommendationGroups = Array.isArray(variation.recommendation_groups)
+        ? variation.recommendation_groups.map((group) => ({
+            label: firstNonEmptyString(group.label) ?? '',
+            reason: firstNonEmptyString(group.reason) ?? '',
+            skus: Array.isArray(group.skus)
+              ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
+              : [],
+          }))
+        : [];
+
+      return {
+        style_label: styleLabel ?? '',
+        style_mood: styleMood ?? '',
+        ...(imageUrl ? { image_url: imageUrl } : {}),
+        product_list: normalizedProducts,
+        recommendation_groups: recommendationGroups,
+      };
+    })
+    .filter((variation) => variation.product_list.length > 0);
+
+  const fallbackProducts = event.payload.product_list ?? [];
+
+  // For consulting sources, build grid children from the already-normalized
+  // first variation so wrapper formats (product_detail, product) are properly
+  // unwrapped.  Non-consulting backends always use the top-level product_list.
+  const firstNormalized =
+    isConsultingSource(event.payload.source) && normalizedStyleVariations.length > 0
+      ? normalizedStyleVariations[0]!.product_list
+      : null;
+
+  const spec = firstNormalized
+    ? buildProductGridFromNormalized(firstNormalized, 'chat')
+    : buildProductGridUISpec(fallbackProducts, 'chat');
   spec.panelHint = 'panel';
   // Pass pagination fields and backend-provided title
   const root = spec.spec.elements[spec.spec.root];
   if (root) {
-    if (typeof event.payload.offset === 'number') root.props = { ...root.props, offset: event.payload.offset };
-    if (typeof event.payload.end_of_list === 'boolean')
-      root.props = { ...root.props, endOfList: event.payload.end_of_list };
-    if (typeof event.payload.title === 'string') root.props = { ...root.props, panelTitle: event.payload.title };
+    const extra: Record<string, unknown> = {};
+    if (typeof event.payload.offset === 'number') extra['offset'] = event.payload.offset;
+    if (typeof event.payload.end_of_list === 'boolean') extra['endOfList'] = event.payload.end_of_list;
+    if (typeof event.payload.title === 'string') extra['panelTitle'] = event.payload.title;
+    if (typeof event.payload.source === 'string') extra['source'] = event.payload.source;
+    if (normalizedStyleVariations.length > 0) extra['styleVariations'] = normalizedStyleVariations;
+    if (Object.keys(extra).length > 0) root.props = { ...root.props, ...extra };
   }
   return spec;
 }
@@ -1533,6 +1624,45 @@ function buildProductGridUISpec(products: V1Product[], widget: WidgetName): Stre
   };
 }
 
+/**
+ * Build a ProductGrid UISpec from already-normalized product records.
+ * Used for consulting grids where products were normalized via
+ * productRecordToNormalized (which unwraps product_detail wrappers).
+ */
+function buildProductGridFromNormalized(products: Record<string, unknown>[], widget: WidgetName): StreamEventUISpec {
+  const elements: Record<string, UIElement> = {};
+  const childIds: string[] = [];
+
+  for (let i = 0; i < products.length; i++) {
+    const product = products[i];
+    if (!product) continue;
+    const id = `product-${i}`;
+    childIds.push(id);
+    const props: Record<string, unknown> = { product, index: i };
+    const sku = product['sku'] as string | undefined;
+    if (sku) {
+      props['action'] = {
+        title: (product['name'] as string | undefined) ?? '',
+        type: 'launchSingleProduct',
+        payload: { sku },
+      };
+    }
+    elements[id] = { type: 'ProductCard', props };
+  }
+
+  elements['root'] = {
+    type: 'ProductGrid',
+    props: { layout: 'grid' },
+    children: childIds,
+  };
+
+  return {
+    type: 'ui_spec',
+    widget,
+    spec: { root: 'root', elements },
+  };
+}
+
 function buildSingleProductUISpec(product: V1Product, widget: WidgetName): StreamEventUISpec {
   return {
     type: 'ui_spec',
@@ -1851,4 +1981,30 @@ export function normalizeProductGroupingsResponse(json: ProductGroupingsJsonResp
     if (group.highlight !== undefined) result.highlight = group.highlight;
     return result;
   });
+}
+
+/**
+ * Adapts a generic `uiSpec` backend event to a normalized `ui_spec` StreamEvent.
+ *
+ * The backend emits `{ type: "uiSpec", payload: { type: "BeautyPhotoStep", ... } }`.
+ * This wraps the flat payload into the standard `{ root, elements }` UISpec shape
+ * expected by the frontend renderer.
+ */
+function adaptUiSpec(event: V1UiSpec): StreamEventUISpec {
+  const componentType = event.payload.type;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructure to exclude `type` from rest
+  const { type: _type, ...rest } = event.payload;
+  return {
+    type: 'ui_spec',
+    widget: 'chat',
+    spec: {
+      root: 'root',
+      elements: {
+        root: {
+          type: componentType,
+          props: rest,
+        },
+      },
+    },
+  };
 }

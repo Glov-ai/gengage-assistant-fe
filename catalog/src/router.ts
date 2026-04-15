@@ -27,6 +27,8 @@ export const ROUTES: Route[] = [
       { path: '/chat/CategoriesContainer', label: 'CategoriesContainer' },
       { path: '/chat/HandoffNotice', label: 'HandoffNotice' },
       { path: '/chat/ProductSummaryCard', label: 'ProductSummaryCard' },
+      { path: '/chat/PhotoAnalysisCard', label: 'PhotoAnalysisCard' },
+      { path: '/chat/BeautyPhotoStep', label: 'BeautyPhotoStep' },
       { path: '/chat/Divider', label: 'Divider' },
     ],
   },

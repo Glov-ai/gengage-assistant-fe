@@ -21,6 +21,7 @@ export interface BackendRequestMeta {
   isControlGroup: boolean;
   isMobile: boolean;
   viewId?: string;
+  assistantMode?: string;
 }
 
 export interface ProcessActionRequest {
@@ -141,6 +142,8 @@ export interface StreamCallbacks {
       productMentions?: Array<{ sku: string; short_name: string }> | undefined;
       skuToProductItem?: Record<string, Record<string, unknown>> | undefined;
       conversationMode?: string | undefined;
+      renderHint?: string | undefined;
+      kvkk?: boolean | undefined;
     },
   ) => void;
   onUISpec: (spec: UISpec, widget: string, panelHint?: 'panel', clearPanel?: boolean) => void;
@@ -256,6 +259,8 @@ export function sendChatMessage(
                 productMentions: normalized.productMentions,
                 skuToProductItem: normalized.skuToProductItem,
                 conversationMode: normalized.conversationMode,
+                renderHint: normalized.renderHint,
+                kvkk: normalized.kvkk,
               });
               break;
             case 'ui_spec':

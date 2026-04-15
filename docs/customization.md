@@ -135,6 +135,16 @@ Each `renderer` supports:
 Use `createDefaultChatUISpecRegistry()`, `createDefaultQnaUISpecRegistry()`, and
 `createDefaultSimRelUISpecRegistry()` as baseline registries for partial overrides.
 
+> **Beauty consulting components:** `PhotoAnalysisCard` and `BeautyPhotoStep`
+> are registered in the default chat registry but are **not overridable** via
+> `renderer.registry` during live streaming.  The stream handler intercepts
+> these components for timing-critical rendering (typewriter cancellation,
+> drawer-level placement) before the registry is consulted.  The registry
+> entries serve as fallback renderers for session restore and degraded
+> rendering on parse failure.  To customise these components, use the i18n
+> overrides (`photoAnalysisBadge`, `beautyPhotoStepTitle`, etc.) or fork
+> the feature module at `src/chat/features/beauty-consulting/`.
+
 ### Level 3 — Full widget replacement
 
 Replace the entire visual layer while keeping API contracts stable:
@@ -297,6 +307,33 @@ await chatWidget.init({
   },
 });
 ```
+
+Beauty and watch consultant strings are also localizable:
+
+```js
+await chatWidget.init({
+  locale: 'tr',
+  i18n: {
+    // Style variation picker titles ({count} replaced at runtime)
+    beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
+    watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+
+    // BeautyPhotoStep — selfie upload prompt card
+    beautyPhotoStepTitle: 'Selfie Paylaşın',
+    beautyPhotoStepDescription: 'Cilt analizi için bir selfie yükleyin.',
+    beautyPhotoStepUpload: 'Fotoğraf Yükle',
+    beautyPhotoStepProcessing: 'Analiz ediliyor...',
+    beautyPhotoStepSkip: 'Geç',
+
+    // PhotoAnalysisCard — skin analysis badge
+    photoAnalysisBadge: 'Cilt Analizi',
+  },
+});
+```
+
+`{count}` placeholder is replaced at runtime with the number of generated styles.
+
+When `assistant_mode = beauty_consulting`, the floating compare prompt (`choicePrompter`) is intentionally suppressed to reduce distraction during guided consulting.
 
 For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork required).
 

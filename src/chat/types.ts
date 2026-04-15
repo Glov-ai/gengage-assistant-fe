@@ -236,6 +236,10 @@ export interface ChatI18n {
   /** Product details gallery: previous / next image controls */
   galleryPrevAriaLabel: string;
   galleryNextAriaLabel: string;
+  /** Title shown above consultant style cards. Supports {count} placeholder. */
+  beautyStylesPreparedTitle: string;
+  /** Title shown above watch-expert style cards. Supports {count} placeholder. */
+  watchStylesPreparedTitle: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -300,6 +304,20 @@ export interface ChatI18n {
   aiAnalysisAnalyzingLabel: string;
   /** Section heading above AI grouping cards (panel browse categories). */
   aiBrowseCategoriesTitle: string;
+  /** Badge text on photo analysis message cards. */
+  photoAnalysisBadge: string;
+  /** Beauty photo step card: title. */
+  beautyPhotoStepTitle: string;
+  /** Beauty photo step card: description. */
+  beautyPhotoStepDescription: string;
+  /** Beauty photo step card: upload button label. */
+  beautyPhotoStepUpload: string;
+  /** Beauty photo step card: processing state label. */
+  beautyPhotoStepProcessing: string;
+  /** Beauty photo step card: skip button label. */
+  beautyPhotoStepSkip: string;
+  /** Message sent to backend when user clicks skip on beauty photo step. */
+  beautyPhotoStepSkipMessage: string;
 }
 
 export type OpeningContextKey = 'home' | 'listing' | 'product' | 'default';
@@ -388,6 +406,8 @@ export interface ChatUISpecRenderContext {
     | 'findSimilarLabel'
     | 'galleryPrevAriaLabel'
     | 'galleryNextAriaLabel'
+    | 'beautyStylesPreparedTitle'
+    | 'watchStylesPreparedTitle'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'
@@ -413,6 +433,12 @@ export interface ChatUISpecRenderContext {
     | 'reviewCustomersMentionPlural'
     | 'reviewSubjectsHeading'
     | 'aiBrowseCategoriesTitle'
+    | 'photoAnalysisBadge'
+    | 'beautyPhotoStepTitle'
+    | 'beautyPhotoStepDescription'
+    | 'beautyPhotoStepUpload'
+    | 'beautyPhotoStepProcessing'
+    | 'beautyPhotoStepSkip'
   >;
   productSort?: ProductSortState | undefined;
   onSortChange?: ((sort: ProductSortState) => void) | undefined;
@@ -459,6 +485,11 @@ export interface ChatMessage {
   panelSnapshot?: HTMLElement;
   /** Silent messages are hidden from the conversation but kept for context. */
   silent?: boolean;
+  /** Backend render hint for special rendering (e.g. "photo_analysis"). */
+  renderHint?: string;
+  /** Structured photo analysis data from PhotoAnalysisCard UISpec (preferred over sentence-splitting). */
+  photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string };
+
   timestamp: number;
   status: 'streaming' | 'done' | 'error';
 }

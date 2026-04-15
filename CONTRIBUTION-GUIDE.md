@@ -34,8 +34,10 @@ from the backend and render UI using json-render catalogs. See
 ### Adding a widget feature
 
 1. Add types to `src/<widget>/types.ts`.
-2. Implement in `src/<widget>/components/`.
-3. If the feature needs shared infrastructure, put it in `src/common/` first.
+2. Implement in `src/<widget>/components/` as a standalone component file (e.g. `PhotoAnalysisCard.ts`).
+3. Register in the UISpec registry (`renderUISpec.ts`) and add a Zod schema in `catalog.ts`.
+4. Add mock data to `catalog/src/mock-data/chat-specs.ts` so it appears in `npm run catalog`.
+5. If the feature needs shared infrastructure, put it in `src/common/` first.
 
 ### Adding a new account
 
