@@ -39,6 +39,7 @@ export interface BeautyStreamContext {
     }): void;
   } | null;
   ensureRendered: () => void;
+  cancelTypewriter: () => void;
   sendSkipMessage: () => void;
   streamDone: boolean;
   beautyPhotoStepSkipMessage: string;
@@ -61,6 +62,9 @@ export function handleBeautyUISpec(
       botMsg.photoAnalysis = parsed;
       botMsg.renderHint = 'photo_analysis';
       ctx.ensureRendered();
+      // Cancel any active typewriter — text may have arrived first and started animating
+      // into the same bubble container that we are about to replace with the card.
+      ctx.cancelTypewriter();
       ctx.drawer?.updateBotMessage(botMsg.id, botMsg.content ?? '', 'photo_analysis', botMsg.photoAnalysis);
     }
     return true;

@@ -1907,6 +1907,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               {
                 drawer: this._drawer,
                 ensureRendered: () => this._ensureAssistantMessageRendered(botMsg),
+                cancelTypewriter: () => {
+                  this._activeTypewriter?.cancel();
+                  this._activeTypewriter = null;
+                },
                 sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
                 streamDone,
                 beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,
@@ -2469,6 +2473,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           flushBeautyStreamError(beautyStreamState, {
             drawer: this._drawer,
             ensureRendered: () => {},
+            cancelTypewriter: () => {},
             sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
             streamDone: true,
             beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,
@@ -2614,6 +2619,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           flushBeautyStreamComplete(beautyStreamState, {
             drawer: this._drawer,
             ensureRendered: () => {},
+            cancelTypewriter: () => {},
             sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
             streamDone: true,
             beautyPhotoStepSkipMessage: this._i18n.beautyPhotoStepSkipMessage,

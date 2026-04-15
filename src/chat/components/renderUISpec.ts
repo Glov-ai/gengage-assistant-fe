@@ -23,9 +23,8 @@ import { renderProsAndCons } from './ProsAndCons.js';
 import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
-import { renderConsultingStylePicker } from './ConsultingStylePicker.js';
-import type { StyleVariation } from './ConsultingStylePicker.js';
 import { beautyConsultingRegistry } from '../features/beauty-consulting/registry.js';
+import { detectConsultingGrid, renderConsultingGrid } from '../features/beauty-consulting/consulting-grid.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
 import {
   clampRating,
@@ -1711,15 +1710,7 @@ function renderProductGrid(
   const wrapper = document.createElement('div');
   wrapper.className = 'gengage-chat-product-grid-wrapper';
 
-  const source = typeof element.props?.['source'] === 'string' ? element.props['source'] : undefined;
-  const styleVariationsRaw = Array.isArray(element.props?.['styleVariations'])
-    ? (element.props?.['styleVariations'] as StyleVariation[])
-    : [];
-  const styleVariations = styleVariationsRaw.filter(
-    (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
-  );
-  const hasConsultingVariations =
-    (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
+  const { isConsulting: hasConsultingVariations } = detectConsultingGrid(element);
 
   const childIds = element.children ?? [];
   const grid = document.createElement('div');
@@ -1941,7 +1932,7 @@ function renderProductGrid(
   }
 
   if (hasConsultingVariations) {
-    renderConsultingStylePicker(wrapper, grid, source!, styleVariations, ctx);
+    renderConsultingGrid(wrapper, grid, element, ctx);
   } else {
     const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
     for (const childId of sortedIds) {
