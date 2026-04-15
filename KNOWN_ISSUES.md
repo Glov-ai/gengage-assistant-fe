@@ -27,6 +27,14 @@ After the `ComparisonTable` fix (PR #35), clicking a comparison-table product in
 
 The product name is in scope at each site (available as `product['name']`). On production sites this is a non-issue (same-origin URLs trigger navigation instead of `launchSingleProduct`), but on demo sites (`isDemoWebsite: true`) the chat bubble still shows the raw SKU for these four entry points.
 
-## 5. Accessibility
+## 5. Frontend Business Logic Leaks (Architecture Debt)
+
+The SDK's architecture principle is "frontend renders, backend decides." These pre-existing patterns violate that by having the frontend make business decisions:
+
+- **KVKK content detection via keyword scan (`src/chat/kvkk.ts:12-17`):** The frontend scans every final bot message for Turkish legal keywords (`'kvkk'`, `'kişisel veri'`, `'6698'`) to detect a data protection notice, then strips it from the message and shows a consent banner. The backend should send KVKK as a separate event type or with a metadata flag (e.g. `render_hint: "kvkk"` on the `outputText` payload), not as hidden markup for the frontend to parse.
+- **Unavailable product context short-circuit (`src/chat/index.ts:2042-2059`):** When the frontend marks a product SKU as unavailable (after a prior empty response), subsequent `user_message`/`inputText` actions are blocked from reaching the backend entirely. The frontend generates a synthetic fallback message without consulting the backend, which may have fresher product data. The backend should handle product availability; the frontend should always forward the request.
+- **Panel title inference from action type (`src/chat/panel-manager.ts:262-264`):** `isSearchLikeActionType` classifies the user's intent to choose between "Search Results" vs "Similar Products" panel titles when the backend omits a title. Low severity since the backend title takes priority when present.
+
+## 6. Accessibility
 
 - **Screen reader coverage not verified:** Launcher button is keyboard-accessible (Tab/Enter/Space), focus-visible styling is applied, and Escape-to-close is implemented. Full screen reader testing (NVDA, JAWS, VoiceOver) for WCAG 2.1 AA compliance has not been performed.
