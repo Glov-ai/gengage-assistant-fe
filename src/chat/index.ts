@@ -2432,7 +2432,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 target: event.meta.redirectTarget ?? null,
                 payload: event.meta.redirect ?? null,
               });
-              debugLog('beauty', 'redirect dispatched', {
+              debugLog('redirect', 'redirect dispatched', {
                 target: event.meta.redirectTarget ?? null,
               });
               this._handleRedirectMetadata(event.meta.redirect);

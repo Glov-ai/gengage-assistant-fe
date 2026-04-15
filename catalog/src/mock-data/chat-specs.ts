@@ -447,6 +447,45 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
     },
   },
 
+  PhotoAnalysisCard: {
+    description: 'Structured photo analysis card with summary, clues, and follow-up question.',
+    spec: {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'PhotoAnalysisCard',
+          props: {
+            summary: 'Cildiniz karma tip gorunuyor — T bolgesi yagli, yanaklar kuru.',
+            clues: [
+              'T bolgesinde parlama ve genis gozenekler mevcut',
+              'Yanak bolgesinde hafif kuruluk ve soyulma',
+              'Genel cilt tonu esit, belirgin lekelenme yok',
+              'Dudak cevresi hafif dehidrate gorunuyor',
+            ],
+            next_question: 'Gunluk bakim rutininiz var mi, yoksa sifirdan olusturalim mi?',
+          },
+        },
+      },
+    },
+  },
+
+  BeautyPhotoStep: {
+    description: 'Transient selfie upload prompt for beauty consulting init flow.',
+    spec: {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'BeautyPhotoStep',
+          props: {
+            processing: false,
+            title: 'Selfie Paylasın',
+            description: 'Cilt analizi icin bir selfie yukleyin — size en uygun urunleri onerelim.',
+          },
+        },
+      },
+    },
+  },
+
   Divider: {
     description: 'A horizontal rule with an optional label.',
     spec: {

@@ -126,7 +126,8 @@ POST /chat/process_action  →  NDJSON stream (backend event types)
       │   text_chunk, ui_spec, action, metadata, done
       │
       └── json-render resolves each ui_spec to:
-               ProductCard / ActionButtons / AITopPicks / ComparisonTable / etc.
+               ProductCard / ActionButtons / AITopPicks / ComparisonTable /
+               PhotoAnalysisCard / BeautyPhotoStep / etc.
 ```
 
 ## Data Flow: QNA Widget
@@ -417,7 +418,7 @@ npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 Key details:
-- **Hash-based SPA** with sidebar navigation for all 25+ components
+- **Hash-based SPA** with sidebar navigation for all 30+ components
 - **Global theme selector** applies any of the 12 merchant presets catalog-wide
 - **Realistic frames**: chat components in a chat-drawer frame, QNA in a PDP frame, SimRel in a product section
 - **Isolated rendering** via `renderUISpecWithRegistry()` with stub contexts (no widget lifecycle)

@@ -23,6 +23,8 @@ import { renderProsAndCons } from './ProsAndCons.js';
 import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
+import { renderPhotoAnalysisCard } from './PhotoAnalysisCard.js';
+import { renderBeautyPhotoStep } from './BeautyPhotoStep.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
 import {
   clampRating,
@@ -76,6 +78,7 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   ProductSummaryCard: ({ element, context }) => renderProductSummaryCard(element, context),
   Divider: ({ element }) => renderDivider(element),
   PhotoAnalysisCard: ({ element, context }) => renderPhotoAnalysisCard(element, context),
+  BeautyPhotoStep: ({ element, context }) => renderBeautyPhotoStep(element, context),
 };
 
 export const defaultChatUnknownUISpecRenderer: UISpecDomUnknownRenderer<UISpecRenderContext> = ({
@@ -2223,51 +2226,6 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
   }
 
   return el;
-}
-
-function renderPhotoAnalysisCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
-  const card = document.createElement('div');
-  card.className = 'gengage-chat-photo-analysis-card';
-
-  const badge = document.createElement('div');
-  badge.className = 'gengage-chat-photo-analysis-badge';
-  badge.textContent = ctx.i18n?.photoAnalysisBadge ?? 'Skin Analysis';
-
-  const body = document.createElement('div');
-  body.className = 'gengage-chat-photo-analysis-body';
-
-  const summary = element.props?.['summary'];
-  if (typeof summary === 'string' && summary) {
-    const p = document.createElement('p');
-    p.className = 'gengage-chat-photo-analysis-summary';
-    p.textContent = summary;
-    body.appendChild(p);
-  }
-
-  const clues = element.props?.['clues'];
-  if (Array.isArray(clues) && clues.length > 0) {
-    const list = document.createElement('ul');
-    list.className = 'gengage-chat-photo-analysis-points';
-    for (const clue of clues) {
-      if (typeof clue !== 'string') continue;
-      const item = document.createElement('li');
-      item.textContent = clue;
-      list.appendChild(item);
-    }
-    body.appendChild(list);
-  }
-
-  const nextQuestion = element.props?.['next_question'];
-  if (typeof nextQuestion === 'string' && nextQuestion) {
-    const p = document.createElement('p');
-    p.className = 'gengage-chat-photo-analysis-next';
-    p.textContent = nextQuestion;
-    body.appendChild(p);
-  }
-
-  card.appendChild(badge);
-  card.appendChild(body);
-  return card;
 }
 
 function renderDivider(element: UIElement): HTMLElement {

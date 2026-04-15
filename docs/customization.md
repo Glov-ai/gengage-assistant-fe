@@ -298,14 +298,25 @@ await chatWidget.init({
 });
 ```
 
-Beauty consultant screen titles are also localizable:
+Beauty and watch consultant strings are also localizable:
 
 ```js
 await chatWidget.init({
   locale: 'tr',
   i18n: {
+    // Style variation picker titles ({count} replaced at runtime)
     beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
     watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+
+    // BeautyPhotoStep — selfie upload prompt card
+    beautyPhotoStepTitle: 'Selfie Paylaşın',
+    beautyPhotoStepDescription: 'Cilt analizi için bir selfie yükleyin.',
+    beautyPhotoStepUpload: 'Fotoğraf Yükle',
+    beautyPhotoStepProcessing: 'Analiz ediliyor...',
+    beautyPhotoStepSkip: 'Geç',
+
+    // PhotoAnalysisCard — skin analysis badge
+    photoAnalysisBadge: 'Cilt Analizi',
   },
 });
 ```

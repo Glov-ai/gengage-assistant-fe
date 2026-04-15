@@ -294,6 +294,14 @@ export const PhotoAnalysisCardSchema = z.object({
   style_images: z.array(z.string()).optional(),
 });
 
+export const BeautyPhotoStepSchema = z.object({
+  processing: z.boolean().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  upload_label: z.string().optional(),
+  skip_label: z.string().optional(),
+});
+
 // ---------------------------------------------------------------------------
 // Catalog definition
 //
@@ -371,6 +379,10 @@ export const chatCatalog = {
     PhotoAnalysisCard: {
       schema: PhotoAnalysisCardSchema,
       description: 'Structured photo analysis card with summary, clues, and follow-up question.',
+    },
+    BeautyPhotoStep: {
+      schema: BeautyPhotoStepSchema,
+      description: 'Transient selfie upload prompt for beauty consulting init flow.',
     },
   },
 } as const;

@@ -25,16 +25,16 @@ describe('beauty consulting migration', () => {
       session: { sessionId: 'test-session' },
     });
 
-    // Redirect handler is now sync — no REST call to /beauty_consulting_init
+    // Redirect handler is sync — init is streamed via process_action, no separate endpoint.
     (chat as unknown as { _handleRedirectMetadata(payload: unknown): void })._handleRedirectMetadata({
       assistant_mode: 'beauty_consulting',
       scenario: 'shade_advisor',
       user_text: 'balo makyajı öner',
     });
 
-    // No call to beauty_consulting_init endpoint
+    // No separate init endpoint — everything goes through process_action
     const urls = fetchMock.mock.calls.map((call) => String(call[0]));
-    expect(urls.some((url) => url.includes('/chat/beauty_consulting_init'))).toBe(false);
+    expect(urls.every((url) => !url.includes('/beauty_consulting_init'))).toBe(true);
 
     // Mode is set locally (will be confirmed by CONTEXT event in production)
     const mode = (chat as unknown as { _assistantMode: string })._assistantMode;

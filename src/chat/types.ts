@@ -434,6 +434,11 @@ export interface ChatUISpecRenderContext {
     | 'reviewSubjectsHeading'
     | 'aiBrowseCategoriesTitle'
     | 'photoAnalysisBadge'
+    | 'beautyPhotoStepTitle'
+    | 'beautyPhotoStepDescription'
+    | 'beautyPhotoStepUpload'
+    | 'beautyPhotoStepProcessing'
+    | 'beautyPhotoStepSkip'
   >;
   productSort?: ProductSortState | undefined;
   onSortChange?: ((sort: ProductSortState) => void) | undefined;
