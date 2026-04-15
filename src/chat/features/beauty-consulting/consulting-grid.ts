@@ -28,8 +28,7 @@ export function detectConsultingGrid(element: UIElement): ConsultingGridResult {
   const styleVariations = styleVariationsRaw.filter(
     (variation) => Array.isArray(variation.product_list) && variation.product_list.length > 0,
   );
-  const isConsulting =
-    (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
+  const isConsulting = (source === 'beauty_consulting' || source === 'watch_expert') && styleVariations.length > 0;
   return { isConsulting, source };
 }
 

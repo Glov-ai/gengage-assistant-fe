@@ -14,10 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { typewriteHtml } from '../src/chat/components/typewriter.js';
 import type { TypewriterHandle } from '../src/chat/components/typewriter.js';
-import {
-  createBeautyStreamState,
-  handleBeautyUISpec,
-} from '../src/chat/features/beauty-consulting/stream-handler.js';
+import { createBeautyStreamState, handleBeautyUISpec } from '../src/chat/features/beauty-consulting/stream-handler.js';
 import type { ChatMessage } from '../src/chat/types.js';
 
 describe('PhotoAnalysisCard typewriter race', () => {
@@ -31,7 +28,8 @@ describe('PhotoAnalysisCard typewriter race', () => {
 
   it('cancels running typewriter when PhotoAnalysisCard UISpec arrives after text', () => {
     // Step 1: Start a multi-block typewriter (simulates outputText final)
-    const multiBlockHtml = '<p>First paragraph of analysis.</p><p>Second paragraph with details.</p><p>Third paragraph with more info.</p>';
+    const multiBlockHtml =
+      '<p>First paragraph of analysis.</p><p>Second paragraph with details.</p><p>Third paragraph with more info.</p>';
     let activeTypewriter: TypewriterHandle | null = null;
 
     activeTypewriter = typewriteHtml({
@@ -95,12 +93,7 @@ describe('PhotoAnalysisCard typewriter race', () => {
     });
 
     // updateBotMessage should have been called with photo_analysis hint
-    expect(updateBotMessageMock).toHaveBeenCalledWith(
-      'msg-1',
-      'Analysis text',
-      'photo_analysis',
-      botMsg.photoAnalysis,
-    );
+    expect(updateBotMessageMock).toHaveBeenCalledWith('msg-1', 'Analysis text', 'photo_analysis', botMsg.photoAnalysis);
   });
 
   it('typewriter timer does not corrupt container after cancel', async () => {
