@@ -1908,9 +1908,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const componentType = rootElement?.type ?? 'unknown';
 
           // PhotoAnalysisCard: attach structured data to the bot message instead of rendering in panel.
+          // Also set renderHint so the card renders even if outputText didn't include render_hint.
           if (componentType === 'PhotoAnalysisCard') {
             const parsed = parsePhotoAnalysisProps(rootElement?.props ?? {});
-            if (parsed) botMsg.photoAnalysis = parsed;
+            if (parsed) {
+              botMsg.photoAnalysis = parsed;
+              botMsg.renderHint = 'photo_analysis';
+            }
             return;
           }
 
