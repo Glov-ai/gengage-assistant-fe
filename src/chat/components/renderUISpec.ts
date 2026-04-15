@@ -1718,10 +1718,25 @@ function renderProductGrid(
     const raw = input.trim();
     if (!raw) return [];
 
-    if (raw.startsWith('/remoteConfig/')) return [raw, `https://configs.glov.ai${raw}`];
-    if (raw.startsWith('remoteConfig/')) return [`/${raw}`, `https://configs.glov.ai/${raw}`];
-    if (raw.startsWith('beauty-styles/')) return [`/remoteConfig/${raw}`, `https://configs.glov.ai/remoteConfig/${raw}`];
-    return [raw];
+    let path = raw.split(/[?#]/)[0];
+    if (!path) return [];
+
+    path = path.replace(/^\/+/, '');
+    if (path.startsWith('remoteConfig/')) {
+      path = path.slice('remoteConfig/'.length);
+    }
+
+    if (/^https?:\/\//i.test(path)) {
+      try {
+        path = new URL(path).pathname.replace(/^\/+/, '');
+      } catch {
+        const last = path.lastIndexOf('/');
+        path = last >= 0 ? path.slice(last + 1) : path;
+      }
+    }
+
+    if (!path) return [];
+    return [`https://configs.gengage.ai/assets/${path}`];
   };
 
   const wrapper = document.createElement('div');

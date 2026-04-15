@@ -100,6 +100,7 @@ export interface OverlayChatOptions {
   renderer?: ChatWidgetConfig['renderer'];
   /** When true, allow full product details in the assistant side panel; default is chat summary only. */
   productDetailsExtended?: boolean;
+  isDemoWebsite?: ChatWidgetConfig['isDemoWebsite'];
   /** Pill launcher — forwarded to `chat.pillLauncher` (applied inside GengageChat). */
   pillLauncher?: ChatWidgetConfig['pillLauncher'];
   /** Called when the chat panel opens. */
@@ -350,6 +351,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
     if (this.options.chat?.productDetailsExtended !== undefined) {
       config.productDetailsExtended = this.options.chat.productDetailsExtended;
+    }
+    if (this.options.chat?.isDemoWebsite !== undefined) {
+      config.isDemoWebsite = this.options.chat.isDemoWebsite;
     }
     if (this.options.chat?.productPriceUi !== undefined) {
       config.productPriceUi = this.options.chat.productPriceUi;
