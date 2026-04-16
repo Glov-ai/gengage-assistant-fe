@@ -591,7 +591,7 @@ Source: `src/chat/components/HandoffNotice.ts`
 
 **Delivered as**: `ui_spec` event with root element type `PhotoAnalysisCard`.
 
-**Props**: `summary` (string), `clues` (string[]), `strengths` (string[], optional), `focus_points` (string[], optional), `celeb_style` (string, optional), `celeb_style_reason` (string, optional), `details` (string[], optional), `next_question` (string, optional), `style_images` (string[], optional)
+**Props**: `summary` (string), `strengths` (string[], optional), `focus_points` (string[], optional), `celeb_style` (string, optional), `celeb_style_reason` (string, optional), `details` (string[]), `next_question` (string, optional), `style_images` (string[], optional)
 
 ```
 ┌─────────────────────────────────┐
@@ -622,7 +622,7 @@ The `PhotoAnalysisCard` is intercepted by the chat widget and attached as struct
 the bot message (not rendered in the panel). The `ChatDrawer` renders it inline using the
 `_renderPhotoAnalysisCard()` method, with a fallback to sentence-splitting heuristic for
 older backends that send unstructured text instead. When only the legacy minimal payload is
-available, the frontend derives lightweight strengths and focus sections from `clues`.
+available, the frontend derives lightweight strengths and focus sections from `details`.
 
 Source: `src/chat/components/PhotoAnalysisCard.ts`
 

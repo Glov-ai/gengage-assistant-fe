@@ -502,12 +502,11 @@ export interface ChatMessage {
   /** Structured photo analysis data from PhotoAnalysisCard UISpec (preferred over sentence-splitting). */
   photoAnalysis?: {
     summary: string;
-    clues: string[];
     strengths?: string[];
     focusPoints?: string[];
     celebStyle?: string;
     celebStyleReason?: string;
-    details?: string[];
+    details: string[];
     nextQuestion?: string;
   };
 

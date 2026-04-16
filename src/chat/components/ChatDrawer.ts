@@ -247,12 +247,11 @@ export class ChatDrawer {
     content: string,
     structured?: {
       summary: string;
-      clues: string[];
       strengths?: string[];
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details?: string[];
+      details: string[];
       nextQuestion?: string;
     },
   ): void {
@@ -2377,12 +2376,11 @@ export class ChatDrawer {
     renderHint?: string,
     photoAnalysis?: {
       summary: string;
-      clues: string[];
       strengths?: string[];
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details?: string[];
+      details: string[];
       nextQuestion?: string;
     },
   ): void {

@@ -1129,7 +1129,6 @@ describe('adaptBackendEvent — handoff', () => {
       payload: {
         type: 'PhotoAnalysisCard',
         summary: 'Cildiniz kuru ve hassas görünüyor.',
-        clues: ['Kızarıklık belirgin', 'Gözenekler geniş'],
         strengths: ['Belirgin goz hattı'],
         focus_points: ['T bolgesinde parlama'],
         celeb_style: 'Hailey Bieber temiz isiltisi',
@@ -1148,7 +1147,6 @@ describe('adaptBackendEvent — handoff', () => {
     const root = uiSpec.spec.elements['root']!;
     expect(root.type).toBe('PhotoAnalysisCard');
     expect(root.props?.['summary']).toBe('Cildiniz kuru ve hassas görünüyor.');
-    expect(root.props?.['clues']).toEqual(['Kızarıklık belirgin', 'Gözenekler geniş']);
     expect(root.props?.['strengths']).toEqual(['Belirgin goz hattı']);
     expect(root.props?.['focus_points']).toEqual(['T bolgesinde parlama']);
     expect(root.props?.['celeb_style']).toBe('Hailey Bieber temiz isiltisi');

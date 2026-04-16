@@ -12,19 +12,17 @@ import type { ChatUISpecRenderContext } from '../types.js';
 
 export interface PhotoAnalysisData {
   summary: string;
-  clues: string[];
   strengths?: string[];
   focusPoints?: string[];
   celebStyle?: string;
   celebStyleReason?: string;
-  details?: string[];
+  details: string[];
   nextQuestion?: string;
 }
 
 /** Extract structured photo-analysis data from a UISpec element's props. */
 export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAnalysisData | null {
   const summary = typeof props['summary'] === 'string' ? props['summary'] : '';
-  const clues = Array.isArray(props['clues']) ? (props['clues'] as string[]).filter((c) => typeof c === 'string') : [];
   const strengths = Array.isArray(props['strengths'])
     ? (props['strengths'] as string[]).filter((c) => typeof c === 'string')
     : [];
@@ -34,16 +32,14 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
   const details = Array.isArray(props['details'])
     ? (props['details'] as string[]).filter((c) => typeof c === 'string')
     : [];
-  if (!summary && clues.length === 0 && strengths.length === 0 && focusPoints.length === 0 && details.length === 0)
-    return null;
+  if (!summary && strengths.length === 0 && focusPoints.length === 0 && details.length === 0) return null;
 
-  const result: PhotoAnalysisData = { summary, clues };
+  const result: PhotoAnalysisData = { summary, details };
   const celebStyle = typeof props['celeb_style'] === 'string' ? props['celeb_style'] : undefined;
   const celebStyleReason = typeof props['celeb_style_reason'] === 'string' ? props['celeb_style_reason'] : undefined;
   const nextQuestion = typeof props['next_question'] === 'string' ? props['next_question'] : undefined;
   if (strengths.length > 0) result.strengths = strengths;
   if (focusPoints.length > 0) result.focusPoints = focusPoints;
-  if (details.length > 0) result.details = details;
   if (celebStyle) result.celebStyle = celebStyle;
   if (celebStyleReason) result.celebStyleReason = celebStyleReason;
   if (nextQuestion) result.nextQuestion = nextQuestion;
@@ -51,7 +47,7 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
 }
 
 function deriveFallbackStructuredData(data: PhotoAnalysisData): PhotoAnalysisData {
-  const details = data.details && data.details.length > 0 ? data.details : data.clues;
+  const details = data.details;
   if ((data.strengths && data.strengths.length > 0) || (data.focusPoints && data.focusPoints.length > 0)) {
     return {
       ...data,
@@ -159,7 +155,7 @@ function buildAnalysisCardDom(
     body.appendChild(section);
   }
 
-  const detailItems = (data.details && data.details.length > 0 ? data.details : data.clues).filter(Boolean);
+  const detailItems = data.details.filter(Boolean);
   if (detailItems.length > 0) {
     const details = document.createElement('details');
     details.className = 'gengage-chat-photo-analysis-details';
@@ -211,7 +207,7 @@ function analysisLabels(ctx?: ChatUISpecRenderContext): {
 
 export function renderPhotoAnalysisCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const parsed = parsePhotoAnalysisProps(element.props ?? {});
-  const data: PhotoAnalysisData = deriveFallbackStructuredData(parsed ?? { summary: '', clues: [] });
+  const data: PhotoAnalysisData = deriveFallbackStructuredData(parsed ?? { summary: '', details: [] });
   return buildAnalysisCardDom(analysisLabels(ctx), data);
 }
 
@@ -248,7 +244,7 @@ export function renderPhotoAnalysisBubble(
     .filter(Boolean);
 
   const summaryText = parts[0] ?? content;
-  const clues = parts
+  const details = parts
     .slice(1)
     .filter((part) => !part.includes('?'))
     .slice(0, 4);
@@ -256,8 +252,7 @@ export function renderPhotoAnalysisBubble(
 
   const data: PhotoAnalysisData = deriveFallbackStructuredData({
     summary: summaryText,
-    clues,
-    details: clues,
+    details,
     ...(question ? { nextQuestion: question } : {}),
   });
   container.appendChild(buildAnalysisCardDom(labels, data));

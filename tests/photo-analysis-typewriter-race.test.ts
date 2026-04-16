@@ -61,7 +61,7 @@ describe('PhotoAnalysisCard typewriter race', () => {
       'PhotoAnalysisCard',
       {
         summary: 'Your skin looks dry.',
-        clues: ['Redness observed', 'Wide pores'],
+        details: ['Redness observed', 'Wide pores'],
         next_question: 'Shall we recommend a moisturizer?',
       },
       beautyState,
@@ -87,7 +87,7 @@ describe('PhotoAnalysisCard typewriter race', () => {
     expect(botMsg.renderHint).toBe('photo_analysis');
     expect(botMsg.photoAnalysis).toEqual({
       summary: 'Your skin looks dry.',
-      clues: ['Redness observed', 'Wide pores'],
+      details: ['Redness observed', 'Wide pores'],
       nextQuestion: 'Shall we recommend a moisturizer?',
     });
 
@@ -177,7 +177,7 @@ describe('PhotoAnalysisCard typewriter race', () => {
       'PhotoAnalysisCard',
       {
         summary: 'Skin analysis complete.',
-        clues: ['Hydration low'],
+        details: ['Hydration low'],
       },
       beautyState,
       {

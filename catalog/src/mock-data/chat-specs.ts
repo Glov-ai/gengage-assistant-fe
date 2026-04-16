@@ -466,12 +466,6 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
               'Genel cilt tonu esit, belirgin lekelenme yok',
               'Dudak cevresi hafif dehidrate gorunuyor',
             ],
-            clues: [
-              'T bolgesinde parlama ve genis gozenekler mevcut',
-              'Yanak bolgesinde hafif kuruluk ve soyulma',
-              'Genel cilt tonu esit, belirgin lekelenme yok',
-              'Dudak cevresi hafif dehidrate gorunuyor',
-            ],
             next_question: 'Gunluk bakim rutininiz var mi, yoksa sifirdan olusturalim mi?',
           },
         },
