@@ -73,6 +73,11 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     voicePermissionDenied: 'Mikrofon erişimi reddedildi.',
     voiceError: 'Sesli giriş hatası.',
     handoffHeading: 'Destek temsilcisine aktarılıyor',
+    photoAnalysisBadge: 'Cilt Analizi',
+    photoAnalysisStrengthsLabel: 'Öne Çıkanlar',
+    photoAnalysisFocusLabel: 'Odak Noktaları',
+    photoAnalysisCelebStyleLabel: 'Celeb Vibe Eşleşmesi',
+    photoAnalysisSeeMoreLabel: 'Detayli analizi gor',
   };
 
   return {

@@ -306,6 +306,14 @@ export interface ChatI18n {
   aiBrowseCategoriesTitle: string;
   /** Badge text on photo analysis message cards. */
   photoAnalysisBadge: string;
+  /** Photo analysis section label: strengths. */
+  photoAnalysisStrengthsLabel: string;
+  /** Photo analysis section label: focus points. */
+  photoAnalysisFocusLabel: string;
+  /** Photo analysis section label: celeb style match. */
+  photoAnalysisCelebStyleLabel: string;
+  /** Photo analysis expander summary text. */
+  photoAnalysisSeeMoreLabel: string;
   /** Beauty photo step card: title. */
   beautyPhotoStepTitle: string;
   /** Beauty photo step card: description. */
@@ -434,6 +442,10 @@ export interface ChatUISpecRenderContext {
     | 'reviewSubjectsHeading'
     | 'aiBrowseCategoriesTitle'
     | 'photoAnalysisBadge'
+    | 'photoAnalysisStrengthsLabel'
+    | 'photoAnalysisFocusLabel'
+    | 'photoAnalysisCelebStyleLabel'
+    | 'photoAnalysisSeeMoreLabel'
     | 'beautyPhotoStepTitle'
     | 'beautyPhotoStepDescription'
     | 'beautyPhotoStepUpload'
@@ -488,7 +500,16 @@ export interface ChatMessage {
   /** Backend render hint for special rendering (e.g. "photo_analysis"). */
   renderHint?: string;
   /** Structured photo analysis data from PhotoAnalysisCard UISpec (preferred over sentence-splitting). */
-  photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string };
+  photoAnalysis?: {
+    summary: string;
+    clues: string[];
+    strengths?: string[];
+    focusPoints?: string[];
+    celebStyle?: string;
+    celebStyleReason?: string;
+    details?: string[];
+    nextQuestion?: string;
+  };
 
   timestamp: number;
   status: 'streaming' | 'done' | 'error';

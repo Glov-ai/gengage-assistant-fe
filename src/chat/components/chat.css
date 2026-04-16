@@ -1189,7 +1189,7 @@
 .gengage-chat-photo-analysis-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .gengage-chat-photo-analysis-summary {
@@ -1197,6 +1197,84 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--text-primary);
+}
+
+.gengage-chat-photo-analysis-highlights {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.gengage-chat-photo-analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 14%, var(--border-default));
+  background: color-mix(in srgb, var(--surface-card-soft) 78%, white);
+}
+
+.gengage-chat-photo-analysis-section--celeb {
+  gap: 6px;
+}
+
+.gengage-chat-photo-analysis-section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.gengage-chat-photo-analysis-section-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.gengage-chat-photo-analysis-section-item {
+  margin: 0;
+}
+
+.gengage-chat-photo-analysis-celeb-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.gengage-chat-photo-analysis-celeb-reason {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.gengage-chat-photo-analysis-details {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 12%, var(--border-default));
+  background: color-mix(in srgb, var(--surface-card-soft) 54%, white);
+  overflow: hidden;
+}
+
+.gengage-chat-photo-analysis-details-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--client-primary);
+}
+
+.gengage-chat-photo-analysis-details-summary::-webkit-details-marker {
+  display: none;
 }
 
 .gengage-chat-photo-analysis-points {
@@ -1209,14 +1287,19 @@
   color: var(--text-primary);
 }
 
+.gengage-chat-photo-analysis-details .gengage-chat-photo-analysis-points {
+  padding: 0 16px 14px 32px;
+}
+
 .gengage-chat-photo-analysis-next {
   margin: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--client-primary) 7%, white);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--client-primary) 9%, white);
   font-size: 13px;
   line-height: 1.45;
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 /* First bot message in thread — subtle accent */
