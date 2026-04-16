@@ -2116,15 +2116,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
 
           const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
-          const isSimilarsAppendGrid =
-            componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
           const shouldRenderInline =
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
               (skipSidePanelForUISpec &&
                 componentType === 'ProductGrid' &&
-                (!isSimilarsAppendGrid || this._isMobileViewport))) &&
+                (!similarsAppendGrid || this._isMobileViewport))) &&
             componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
