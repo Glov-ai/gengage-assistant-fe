@@ -4,7 +4,7 @@
 [![tests](https://img.shields.io/badge/tests-passing-brightgreen)]()
 [![license](https://img.shields.io/badge/license-source--available-blue)](LICENSE)
 
-Embeddable AI shopping assistant widgets for e-commerce — **chat**, **contextual Q&A**, and **similar products** — built with vanilla TypeScript, zero framework dependencies.
+Embeddable AI shopping assistant widgets for e-commerce — **chat**, **contextual Q&A**, **similar products**, and an optional **find-similar PDP image overlay** — built with vanilla TypeScript, zero framework dependencies.
 
 > Backend services require a [gengage.ai](https://gengage.ai) subscription.
 > See [LEGAL.md](./LEGAL.md) and [TRADEMARKS.md](./TRADEMARKS.md).
@@ -16,10 +16,10 @@ Embeddable AI shopping assistant widgets for e-commerce — **chat**, **contextu
 ### CDN Script Tag (fastest)
 
 ```html
-<script src="https://unpkg.com/@gengage/assistant-fe/dist/gengage-assistant.iife.js"></script>
+<script src="https://unpkg.com/@gengage/assistant-fe/dist/chat.iife.js"></script>
 <script>
-  GengageAssistant.initFromConfig({
-    version: '1',
+  const chat = new window.Gengage.GengageChat();
+  chat.init({
     accountId: 'YOUR_ACCOUNT_ID',
     middlewareUrl: 'https://YOUR_BACKEND_URL',
   });
@@ -57,6 +57,7 @@ await chat.init({
     chat: { variant: 'floating' },
     qna: { mountTarget: '#qna-section' },
     simrel: { mountTarget: '#similar-products' },
+    simbut: { mountTarget: '#product-gallery' },
   });
 </script>
 ```
@@ -87,6 +88,7 @@ See [docs/native-mobile-sdk.md](docs/native-mobile-sdk.md) for iOS WKWebView, An
 | **Chat** | `@gengage/assistant-fe/chat` | Floating AI drawer with streaming responses, product cards, comparison tables |
 | **QNA** | `@gengage/assistant-fe/qna` | Contextual action buttons for product pages |
 | **SimRel** | `@gengage/assistant-fe/simrel` | AI-powered similar/related product grid |
+| **SimBut** | `@gengage/assistant-fe/simbut` | PDP image-overlay pill that opens a `findSimilar` flow for the current product |
 | **Native** | `@gengage/assistant-fe/native` | Android/iOS WebView bridge + overlay bootstrap |
 
 ---
@@ -102,9 +104,11 @@ chat.init({
 
 **Component overrides** — swap any UI component via the json-render registry.
 
+**SimBut customization** — use theme tokens, `i18n.findSimilarLabel`, and `onFindSimilar` for the PDP image-overlay pill.
+
 **Full fork** — replace `src/chat/components/` entirely; keep `catalog.ts` + `index.ts`.
 
-See [CUSTOMIZATION-GUIDE.md](CUSTOMIZATION-GUIDE.md) for the full playbook.
+See [docs/customization.md](docs/customization.md) for the fork and merchant-customization playbook.
 
 ---
 
@@ -117,6 +121,7 @@ npm run typecheck                              # TypeScript strict check
 npm run test                                   # Unit tests
 npm run build                                  # Build to dist/
 npm run catalog                                # Visual component catalog at :3002
+npm run docs:build                             # Build contributor docs with VitePress
 ```
 
 **Using a local backend:**
@@ -137,14 +142,20 @@ MIDDLEWARE_URL=http://localhost:7860 npm run dev -- koctascomtr --sku=1000465056
 
 | Doc | Description |
 |-----|-------------|
+| [Docs Index](docs/index.md) | Full documentation map |
+| [API Reference](docs/api-reference.md) | Public entry points and config surfaces |
 | [Architecture](docs/architecture.md) | System design, widget lifecycle, data flows |
 | [Wire Protocol](docs/wire-protocol.md) | Backend NDJSON streaming contract |
 | [Customization](docs/customization.md) | CSS tokens, component overrides, XSS rules |
+| [i18n](docs/i18n.md) | Locale resolution and string overrides |
+| [Error Handling](docs/error-handling.md) | Offline, retry, and recovery behavior |
 | [GTM Quickstart](docs/gtm-quickstart.md) | Copy-paste GTM embedding patterns |
 | [Security](docs/security-production.md) | Production CSP, postMessage origins, sanitization |
 | [Analytics](docs/analytics-contract.md) | Event taxonomy and attribution |
 | [Mobile SDK](docs/native-mobile-sdk.md) | Android/iOS/React Native integration |
 | [New Account](docs/new-account-guide.md) | Adding a new merchant demo |
+| [AGENTS](AGENTS.md) | Coding-agent architecture and code-path index |
+| [Contributing](CONTRIBUTING.md) | Shared SDK contribution workflow |
 
 ---
 
@@ -156,8 +167,9 @@ src/
   chat/       # Chat widget (GengageChat class + components)
   qna/        # QNA widget (GengageQNA class + components)
   simrel/     # Similar products widget (GengageSimRel class + components)
+  simbut/     # PDP image overlay pill widget (GengageSimBut class)
   native/     # Native WebView bridge exports
-demos/        # 12 merchant-branded demo pages
+demos/        # Merchant-branded demo pages and framework integration examples
 catalog/      # Visual component catalog (mock data, no backend)
 docs/         # Architecture, wire protocol, customization, analytics
 tests/        # Vitest unit tests + Playwright E2E

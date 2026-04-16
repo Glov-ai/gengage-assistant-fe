@@ -100,9 +100,40 @@ export const MOCK_CHAT_PRODUCT_LIST_NDJSON = [
   '{"type":"chatStreamEnd","payload":{}}',
 ].join('\n');
 
-/** Chat NDJSON that sends a productDetails (triggers detail panel with share button) */
+/** Chat NDJSON that sends a ProductDetailsPanel ui_spec (triggers detail panel with share button) */
 export const MOCK_CHAT_PRODUCT_DETAILS_NDJSON = [
-  '{"type":"productDetails","payload":{"productDetails":{"sku":"TEST-001","name":"Stanley Matkap 750W","brand":"Stanley","price":1499,"price_discounted":1199,"url":"https://example.com/p/test-001","images":["https://via.placeholder.com/200x200/ec6e00/fff?text=P1","https://via.placeholder.com/200x200/ec6e00/fff?text=P1b"],"rating":4.5,"review_count":120,"in_stock":true,"cart_code":"CART-001","description":"Profesyonel kullanim icin ideal matkap."}}}',
+  JSON.stringify({
+    type: 'ui_spec',
+    widget: 'chat',
+    panelHint: 'panel',
+    spec: {
+      root: 'root',
+      elements: {
+        root: {
+          type: 'ProductDetailsPanel',
+          props: {
+            product: {
+              sku: 'TEST-001',
+              name: 'Stanley Matkap 750W',
+              brand: 'Stanley',
+              price: '1.499 TL',
+              originalPrice: '1.199 TL',
+              url: 'https://example.com/p/test-001',
+              images: [
+                'https://via.placeholder.com/200x200/ec6e00/fff?text=P1',
+                'https://via.placeholder.com/200x200/ec6e00/fff?text=P1b',
+              ],
+              rating: 4.5,
+              reviewCount: 120,
+              inStock: true,
+              cartCode: 'CART-001',
+              description: 'Profesyonel kullanim icin ideal matkap.',
+            },
+          },
+        },
+      },
+    },
+  }),
   '{"type":"chatStreamEnd","payload":{}}',
 ].join('\n');
 

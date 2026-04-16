@@ -514,7 +514,9 @@
           '--client-primary-soft': 'color-mix(in srgb, #ec6e00 20%, white)',
           '--client-on-primary': '#ffffff',
           '--client-focus-ring': 'color-mix(in srgb, #ec6e00 32%, transparent)',
-          '--gengage-chat-launcher-size': '112px',
+          '--gengage-chat-launcher-size': '100px',
+          '--gengage-chat-launcher-mobile-right': '20px',
+          '--gengage-chat-launcher-mobile-bottom': '40px',
         },
         isDemoWebsite: true,
         productDetailsExtended: true,
@@ -523,13 +525,7 @@
           mobileBreakpoint: 768,
           headerTitle: 'Koçtaş Robotu',
           headerAvatarUrl: koctasLogoUrl,
-          pillLauncher: {
-            label: "Koçtaş'a Sor",
-            avatarUrl: koctasLogoUrl,
-            primaryColor: '#ec6e00',
-            secondaryColor: '#222222',
-            fontFamily: '"Source Sans Pro", "Helvetica Neue", Arial, sans-serif',
-          },
+          launcherImageUrl: koctasLogoUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Koçtaş AI Asistan',
@@ -537,8 +533,9 @@
         },
         qna: {
           mountTarget: '#koctas-qna-section',
-          headerTitle: "Koçtaş'a Sor",
+          headerTitle: 'Koçtaş Robotu',
           ctaText: 'Başka bir şey sor',
+          inputPlaceholder: true,
         },
         simrel: {
           mountTarget: '#koctas-similar-products',

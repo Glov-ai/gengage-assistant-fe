@@ -78,7 +78,7 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
     expect(columnParts.length).toBe(2);
   });
 
-  test('SimRel rail remains a horizontal list at 1280px', async ({ page }) => {
+  test('SimRel grid shows multiple desktop columns at 1280px', async ({ page }) => {
     await setupMockRoutes(page);
     await page.setViewportSize({ width: 1280, height: 900 });
     await gotoDemoReady(page);
@@ -90,12 +90,12 @@ test.describe('Responsive — desktop viewport (1280px)', () => {
       const style = getComputedStyle(el);
       return {
         display: style.display,
-        overflowX: style.overflowX,
+        gridTemplateColumns: style.gridTemplateColumns,
         gap: style.columnGap,
       };
     });
-    expect(layout.display).toBe('flex');
-    expect(layout.overflowX === 'auto' || layout.overflowX === 'scroll').toBe(true);
+    expect(layout.display).toBe('grid');
+    expect(layout.gridTemplateColumns.trim().split(/\s+/).length).toBeGreaterThan(1);
     expect(parseInt(layout.gap, 10)).toBeGreaterThan(0);
   });
 });

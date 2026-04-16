@@ -2,6 +2,7 @@
 import '../../src/chat/components/chat.css';
 import '../../src/qna/components/qna.css';
 import '../../src/simrel/components/simrel.css';
+import '../../src/simbut/simbut.css';
 
 import { mountLayout, updateBreadcrumb, highlightActiveNav, getContentEl } from './layout.js';
 import { onRouteChange, getCurrentPath } from './router.js';
@@ -9,6 +10,7 @@ import { renderOverview } from './sections/overview.js';
 import { renderChatComponent, CHAT_COMPONENT_NAMES } from './sections/chat-components.js';
 import { renderQnaComponent, QNA_COMPONENT_NAMES } from './sections/qna-components.js';
 import { renderSimrelComponent, SIMREL_COMPONENT_NAMES } from './sections/simrel-components.js';
+import { renderSimbutComponent, SIMBUT_COMPONENT_NAMES } from './sections/simbut-components.js';
 import { renderFullWidgets } from './sections/full-widgets.js';
 import { renderThemeComparison } from './sections/theme-comparison.js';
 import { renderResponsivePreview } from './sections/responsive-preview.js';
@@ -69,6 +71,15 @@ onRouteChange((path) => {
     const name = path.slice('/simrel/'.length);
     if (SIMREL_COMPONENT_NAMES.includes(name)) {
       renderSimrelComponent(content, name);
+      return;
+    }
+  }
+
+  // SimBut preview routes
+  if (path.startsWith('/simbut/')) {
+    const name = path.slice('/simbut/'.length);
+    if (SIMBUT_COMPONENT_NAMES.includes(name)) {
+      renderSimbutComponent(content, name);
       return;
     }
   }

@@ -1,8 +1,6 @@
 # Backend Requirements — Frontend UX Gap Fixes
 
-**Date:** 2026-03-10
-**Source:** GAP.md verified issues requiring backend changes
-**Context:** Frontend sprints 1-7 added resilience (error states, retries, fallbacks) but these issues need backend fixes to fully resolve.
+This file tracks verified UX gaps that cannot be fully solved in the frontend alone. The SDK already adds retries, fallbacks, and degraded states where possible, but the issues below still require backend work for full parity.
 
 ## 1. Broken Chat (P0)
 
@@ -15,11 +13,11 @@
 ## 2. Empty SimRel Responses (P0)
 
 **Merchants:** n11com, hepsiburadacom, arcelikcomtr, penticom
-**Issue:** `/chat/simrel` returns empty payload — no similar products rendered. The SimRel widget shows nothing.
+**Issue:** `/chat/similar_products` returns empty payload — no similar products render. The SimRel widget can only show its inline retry state.
 **Working merchants:** koctascomtr, yatasbeddingcomtr return valid product arrays.
 **Test:** `npm run dev -- n11com --sku=5002998547` → check SimRel widget area
 **Expected:** 4-8 similar products per SKU.
-**Frontend mitigation:** Inline error with retry button + 10s timeout (Sprint 2).
+**Frontend mitigation:** Inline retry state plus shared connectivity warning / error toast.
 
 ## 3. Missing PDP Context (P1)
 

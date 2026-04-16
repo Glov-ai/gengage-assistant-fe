@@ -140,16 +140,14 @@ test.describe('Visual findings — chip/button theming', () => {
     await gotoDemoReady(page);
   });
 
-  test('QNA buttons use the theme primary color (orange)', async ({ page }) => {
+  test('QNA buttons use the theme primary color for their text styling', async ({ page }) => {
     const button = page.locator('.gengage-qna-button').first();
     await expect(button).toBeVisible({ timeout: 10000 });
 
-    const bgColor = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // #ec6e00 = rgb(236, 110, 0) — check approximate ranges
-    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    const textColor = await button.evaluate((el) => getComputedStyle(el).color);
+    const match = textColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     expect(match).toBeTruthy();
     const [, r, , b] = match!;
-    // High red channel, low blue = orange tone
     expect(Number(r)).toBeGreaterThan(200);
     expect(Number(b)).toBeLessThan(40);
   });

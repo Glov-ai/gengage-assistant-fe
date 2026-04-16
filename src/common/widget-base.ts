@@ -124,12 +124,21 @@ export abstract class BaseWidget<
     this._handlers.clear();
     this.onDestroy();
     this.config.analyticsClient?.destroy();
+    this._cleanupRoot();
+    this.isInitialised = false;
+  }
+
+  /**
+   * Called at the end of destroy() to remove or clear the root node.
+   * Subclasses that mount into a merchant-owned element (e.g. SimBut) should
+   * override this to a no-op so the host page's DOM is never mutated.
+   */
+  protected _cleanupRoot(): void {
     if (this._ownsRoot) {
       this.root.remove();
     } else {
       this.root.innerHTML = '';
     }
-    this.isInitialised = false;
   }
 
   on(event: string, handler: AnyHandler): () => void {

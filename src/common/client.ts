@@ -8,6 +8,7 @@ import type { PageContext } from './types.js';
 export interface HostActions {
   onAddToCart?: (params: import('./types.js').AddToCartParams) => void;
   onProductNavigate?: (url: string, sku: string, sessionId: string | null) => void;
+  onFindSimilar?: (detail: { sku: string; imageUrl?: string }) => void;
   onScriptCall?: (params: { name: string; payload?: Record<string, unknown> }) => void;
 }
 
@@ -66,12 +67,23 @@ function mapConfigToOverlayOptions(
     options.simrel.mountTarget = config.mounts.simrel;
   }
 
+  options.simbut = {
+    enabled: config.widgets.simbut.enabled,
+  };
+  if (config.mounts.simbut !== undefined) {
+    options.simbut.mountTarget = config.mounts.simbut;
+  }
+
   if (hostActions?.onAddToCart !== undefined) {
     options.onAddToCart = hostActions.onAddToCart;
   }
 
   if (hostActions?.onProductNavigate !== undefined) {
     options.onProductNavigate = hostActions.onProductNavigate;
+  }
+
+  if (hostActions?.onFindSimilar !== undefined) {
+    options.simbut.onFindSimilar = hostActions.onFindSimilar;
   }
 
   if (hostActions?.onScriptCall !== undefined) {

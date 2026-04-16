@@ -1,323 +1,190 @@
 # Adding a New Widget
 
-This guide walks through adding a completely new widget to the SDK. A "widget" is an
-independent embeddable component (like Chat, QNA, SimRel, or SimBut) — it has its own
-Shadow DOM, its own config, and its own UISpec registry.
+Use this guide when you are adding a new public widget surface to the SDK. If the feature lives inside the chat drawer and shares chat streaming lifecycle, add a mode instead. See [adding-new-mode.md](./adding-new-mode.md).
 
-> **Do you need a new widget, or a new mode?** If the new feature lives inside the
-> chat drawer and uses chat streaming, you want a **mode** — see `docs/adding-new-mode.md`.
-> A new widget is for a fundamentally different UI surface (e.g. a standalone product
-> quiz, a floating review panel).
+## Architectural Decision First
 
----
+Choose the widget family before you scaffold files.
 
-## Widget Anatomy
+| Family | Use When | Required Deliverables |
+|--------|----------|-----------------------|
+| UISpec / json-render widget | The backend drives structured UI or the widget contains multiple component types | `catalog.ts`, renderer registry, mock UISpec data, catalog route, docs, tests |
+| Direct DOM widget | The surface is intentionally small and host-driven, like a pill or overlay affordance | explicit rationale, live catalog preview, docs, tests |
 
-Every widget follows the same pattern:
+Preferred rule: new backend-driven widgets should use UISpec plus json-render and must be individually previewable in `npm run catalog`.
 
-```
+Current reference points:
+
+- Chat: UISpec widget with Shadow DOM
+- QNA: UISpec widget in host DOM
+- SimRel: UISpec widget in host DOM
+- SimBut: direct-DOM exception for a tiny PDP overlay pill
+
+## Non-Negotiable Rules
+
+1. Keep business and recommendation rules on the backend.
+2. Preserve `/chat/*` protocol compatibility unless the work is explicitly a breaking migration.
+3. Register the widget in the catalog app with realistic mock data or a live preview frame.
+4. Add docs and tests together with the widget.
+5. If the widget participates in overlay bootstrap or runtime config, wire it through those shared layers rather than inventing a parallel path.
+
+## Recommended File Layout
+
+### UISpec widget
+
+```text
 src/<widget>/
-  index.ts          # Public class extending BaseWidget
-  types.ts          # Config interface + domain types
-  catalog.ts        # Zod schemas for json-render (component contract)
-  locales/          # i18n string files (tr.ts, en.ts)
-  components/       # Vanilla TS renderers (one file per component)
-    <widget>.css    # All widget styles (injected into Shadow DOM)
+  index.ts
+  types.ts
+  catalog.ts
+  locales/
+    tr.ts
+    en.ts
+    index.ts
+  components/
+    renderUISpec.ts
+    <WidgetComponent>.ts
+    <widget>.css
 ```
 
-All widgets share `src/common/` for types, streaming, events, analytics, and the
-renderer foundation.
+### Direct DOM widget
 
----
+```text
+src/<widget>/
+  index.ts
+  types.ts
+  locales.ts or locales/
+  <widget>.css
+```
 
-## Step-by-Step
+Use the direct-DOM shape only when the widget is intentionally simple and does not justify a backend UISpec contract.
 
-### 1. Create the Directory Structure
+## Step-By-Step
+
+### 1. Define the Public Contract
+
+Create `src/<widget>/types.ts` and extend `BaseWidgetConfig`.
+
+Include:
+
+- widget-specific config fields
+- domain types used by callbacks or renderers
+- i18n interface for user-facing strings
+
+Keep shared types in `src/common/types.ts` only when they truly cross widget boundaries.
+
+### 2. Implement the Widget Class
+
+Create `src/<widget>/index.ts` and extend `BaseWidget<MyWidgetConfig>`.
+
+`BaseWidget` gives you the common lifecycle:
+
+- `init`
+- `update`
+- `show`
+- `hide`
+- `destroy`
+
+Use Shadow DOM only when CSS isolation is necessary. Chat needs it; QNA, SimRel, and SimBut do not.
+
+### 3. Add Locale Support
+
+Ship at least Turkish and English unless there is a strong reason not to. Wire a locale resolver so `locale` plus partial `i18n` overrides behave like the existing widgets.
+
+### 4. For UISpec Widgets, Define The Catalog Contract
+
+Create `src/<widget>/catalog.ts` using Zod schemas. The schema file is the contract between backend payloads and frontend renderers.
+
+Also add:
+
+- `components/renderUISpec.ts`
+- default registry creation helper
+- unknown component fallback behavior
+
+### 5. Add Styles And Part Hooks
+
+Keep classes prefixed with `gengage-<widget>-` and expose stable `data-gengage-part` hooks for customization.
+
+If the widget renders unsafe HTML, add explicit XSS warnings in both code and docs.
+
+### 6. Export The Widget Publicly
+
+Update:
+
+- `src/index.ts`
+- `package.json` exports
+- `vite.config.iife.ts` if the widget needs its own IIFE bundle
+- `scripts/build-iife.ts` if it should be built with the other IIFE targets
+
+### 7. Register The Widget In The Catalog
+
+Minimum catalog work:
+
+1. add mock data under `catalog/src/mock-data/`
+2. add a section renderer under `catalog/src/sections/`
+3. add routes in `catalog/src/router.ts`
+4. wire the section in `catalog/src/main.ts`
+5. add any frame helpers needed for realistic preview
+
+For a direct-DOM widget, add a live preview frame rather than pretending it is UISpec-driven.
+
+### 8. Wire Overlay And Runtime Config If Needed
+
+If the widget should participate in `initOverlayWidgets(...)` or file-driven account config, update:
+
+- `src/common/overlay.ts`
+- `src/common/config-schema.ts`
+- `src/common/client.ts`
+- `src/common/preflight.ts`
+
+### 9. Add Documentation
+
+Update the relevant docs, usually:
+
+- [architecture.md](./architecture.md)
+- [api-reference.md](./api-reference.md)
+- [customization.md](./customization.md)
+- [adding-new-widget.md](./adding-new-widget.md) if the general process changed
+
+### 10. Add Tests And Verification
+
+At minimum, cover:
+
+- widget init and update behavior
+- overlay/config integration if applicable
+- catalog rendering path or preview wiring
+
+Run:
 
 ```bash
-mkdir -p src/mywidget/components src/mywidget/locales
+npm run typecheck
+npm run typecheck:catalog
+npm run test
+npm run build
+npm run catalog
 ```
-
-### 2. Define Types
-
-**File:** `src/mywidget/types.ts`
-
-```ts
-import type { GengageWidgetConfig } from '../common/types.js';
-
-export interface MyWidgetConfig extends GengageWidgetConfig {
-  // Widget-specific config fields
-  someSetting?: string;
-}
-
-export interface MyWidgetI18n {
-  title: string;
-  // ... all user-facing strings
-}
-```
-
-### 3. Create the Widget Class
-
-**File:** `src/mywidget/index.ts`
-
-```ts
-import { BaseWidget } from '../common/widget-base.js';
-import type { MyWidgetConfig } from './types.js';
-import styles from './components/mywidget.css?inline';
-
-export class GengageMyWidget extends BaseWidget<MyWidgetConfig> {
-  private _shadow: ShadowRoot | null = null;
-
-  protected async onInit(config: MyWidgetConfig): Promise<void> {
-    this._shadow = this.root.attachShadow({ mode: 'open' });
-    const style = document.createElement('style');
-    style.textContent = styles;
-    this._shadow.appendChild(style);
-    // Build DOM, set up event listeners
-  }
-
-  protected onUpdate(config: Partial<MyWidgetConfig>): void {
-    // Handle config changes (e.g. SPA page navigation)
-  }
-
-  protected onShow(): void { /* widget becomes visible */ }
-  protected onHide(): void { /* widget becomes hidden */ }
-  protected onDestroy(): void { /* cleanup: abort controllers, remove listeners */ }
-}
-
-export type { MyWidgetConfig };
-```
-
-`BaseWidget` gives you `init()`, `update()`, `show()`, `hide()`, `destroy()`,
-config storage, and the root element lifecycle.
-
-### 4. Define the Catalog Schemas
-
-**File:** `src/mywidget/catalog.ts`
-
-```ts
-import { z } from 'zod';
-
-export const MyComponentSchema = z.object({
-  type: z.literal('MyComponent'),
-  props: z.object({
-    title: z.string(),
-    items: z.array(z.string()),
-  }),
-});
-
-// Export all schemas for validation
-export const MY_WIDGET_SCHEMAS = {
-  MyComponent: MyComponentSchema,
-};
-```
-
-These Zod schemas are the **contract** between backend and frontend. They define what
-props each component type expects.
-
-### 5. Create Component Renderers
-
-**File:** `src/mywidget/components/MyComponent.ts`
-
-```ts
-import type { UIElement } from '../../common/types.js';
-
-export function renderMyComponent(element: UIElement): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'gengage-mywidget-component';
-  wrapper.dataset['gengagePart'] = 'mywidget-component';
-  // Build DOM from element.props
-  return wrapper;
-}
-```
-
-### 6. Create the UISpec Registry
-
-```ts
-// In index.ts or a dedicated registry file:
-import type { UISpecDomRegistry } from '../common/renderer/index.js';
-import { renderMyComponent } from './components/MyComponent.js';
-
-const MY_WIDGET_REGISTRY: UISpecDomRegistry<MyWidgetRenderContext> = {
-  MyComponent: ({ element, context }) => renderMyComponent(element),
-};
-```
-
-### 7. Add Styles
-
-**File:** `src/mywidget/components/mywidget.css`
-
-```css
-/* All classes prefixed with gengage-mywidget- */
-.gengage-mywidget-root { ... }
-.gengage-mywidget-component { ... }
-```
-
-The CSS is imported as `?inline` in the widget's `index.ts` and injected into
-Shadow DOM, so it won't leak into the host page.
-
-### 8. Add Locales
-
-```ts
-// src/mywidget/locales/tr.ts
-import type { MyWidgetI18n } from '../types.js';
-export const MY_WIDGET_I18N_TR: MyWidgetI18n = {
-  title: 'Turkce baslik',
-};
-
-// src/mywidget/locales/en.ts
-import type { MyWidgetI18n } from '../types.js';
-export const MY_WIDGET_I18N_EN: MyWidgetI18n = {
-  title: 'English title',
-};
-```
-
-### 9. Export from Package Entry Point
-
-Add your widget to the package exports so consumers can import it:
-
-```ts
-// package.json "exports" field:
-"./<widget>": {
-  "types": "./dist/<widget>/index.d.ts",
-  "import": "./dist/<widget>/index.js"
-}
-```
-
-### 10. Add to the Build
-
-Ensure Vite builds your widget. Check `vite.config.ts` for the entry point
-configuration — each widget is a separate entry.
-
----
-
-## Catalog Registration
-
-The catalog is a separate app (`catalog/`) that renders every component with mock
-data. It imports from `dist/` (the built npm package).
-
-### a) Add Mock UISpec Data
-
-**File:** `catalog/src/mock-data/mywidget-specs.ts`
-
-```ts
-export const MY_WIDGET_SPECS: Record<string, { spec: Record<string, unknown>; description: string }> = {
-  MyComponent: {
-    description: 'A brief description of the component.',
-    spec: {
-      root: 'root',
-      elements: {
-        root: {
-          type: 'MyComponent',
-          props: {
-            title: 'Example Title',
-            items: ['Item A', 'Item B'],
-          },
-        },
-      },
-    },
-  },
-};
-```
-
-### b) Create a Section Renderer
-
-**File:** `catalog/src/sections/mywidget-components.ts`
-
-Follow the pattern in `catalog/src/sections/chat-components.ts`:
-
-```ts
-import { MY_WIDGET_SPECS } from '../mock-data/mywidget-specs.js';
-
-export const MY_WIDGET_COMPONENT_NAMES = Object.keys(MY_WIDGET_SPECS);
-
-export function renderMyWidgetComponent(container: HTMLElement, name: string): void {
-  const entry = MY_WIDGET_SPECS[name];
-  if (!entry) { container.textContent = `Unknown: ${name}`; return; }
-  // Use renderUISpecWithRegistry to render the component
-  // Wrap in a frame that matches the widget's display context
-}
-```
-
-### c) Add Routes
-
-**File:** `catalog/src/router.ts`
-
-```ts
-export const ROUTES: Route[] = [
-  // ... existing routes ...
-  {
-    path: '/mywidget',
-    label: 'MyWidget Components',
-    section: 'mywidget',
-    children: [
-      { path: '/mywidget/MyComponent', label: 'MyComponent' },
-    ],
-  },
-  // ...
-];
-```
-
-### d) Wire into Main
-
-**File:** `catalog/src/main.ts`
-
-Add a case for your section in the route handler switch statement.
-
-### e) Verify
-
-```bash
-npm run build && npm run catalog
-# Navigate to http://localhost:3002/#/mywidget/MyComponent
-```
-
----
-
-## Embedding Pattern
-
-Document how customers embed the widget. Follow the existing patterns:
-
-**Script tag (IIFE):**
-```html
-<script src="https://unpkg.com/@gengage/assistant-fe/dist/mywidget/index.iife.js"></script>
-<script>
-  const widget = new GengageMyWidget();
-  widget.init({ accountId: 'store', mountTarget: '#widget-root' });
-</script>
-```
-
-**ESM:**
-```js
-import { GengageMyWidget } from '@gengage/assistant-fe/mywidget';
-const widget = new GengageMyWidget();
-await widget.init({ accountId: 'store', mountTarget: '#widget-root' });
-```
-
----
 
 ## Checklist
 
-- [ ] Directory structure: `src/<widget>/index.ts`, `types.ts`, `catalog.ts`, `components/`, `locales/`
-- [ ] Widget class extending `BaseWidget` with Shadow DOM
-- [ ] Zod catalog schemas defining the component contract
-- [ ] Component renderers (one file per component type)
-- [ ] UISpec registry mapping type names to renderers
-- [ ] CSS with `gengage-<widget>-` prefix, imported as `?inline`
-- [ ] i18n locales (at minimum `tr.ts`)
-- [ ] Package exports in `package.json`
-- [ ] Vite build entry point
-- [ ] Catalog mock specs in `catalog/src/mock-data/<widget>-specs.ts`
-- [ ] Catalog section renderer in `catalog/src/sections/<widget>-components.ts`
-- [ ] Catalog route in `catalog/src/router.ts`
-- [ ] Catalog main.ts wiring
-- [ ] `npm run typecheck` passes
-- [ ] `npm run test` passes
-- [ ] `npm run build && npm run catalog` — all components render correctly
-- [ ] Demo page in `demos/` (optional, for integration testing)
-
----
+- [ ] Public widget class extends `BaseWidget`
+- [ ] Widget config and i18n types are defined
+- [ ] Locale resolution is implemented
+- [ ] UISpec widgets include `catalog.ts` and renderer registry
+- [ ] Direct-DOM widgets document why they are not UISpec-driven
+- [ ] Package exports are updated
+- [ ] Catalog section and route are registered
+- [ ] Overlay/runtime config integration is wired when required
+- [ ] Contributor docs are updated
+- [ ] Tests and verification commands pass
 
 ## Existing Widgets (Reference)
+
+| Widget | Path | Architecture | Notes |
+|--------|------|--------------|-------|
+| Chat | `src/chat/` | UISpec plus Shadow DOM | Richest widget and feature-module host |
+| QNA | `src/qna/` | UISpec in host DOM | Launcher actions and text input |
+| SimRel | `src/simrel/` | UISpec in host DOM | Product grid and grouping surfaces |
+| SimBut | `src/simbut/` | Direct DOM exception | Tiny PDP image-overlay pill |
 
 | Widget | Directory | Class | Components |
 |--------|-----------|-------|-----------|

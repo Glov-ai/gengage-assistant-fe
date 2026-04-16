@@ -56,6 +56,12 @@ export const ROUTES: Route[] = [
       { path: '/simrel/GroupTabs', label: 'GroupTabs' },
     ],
   },
+  {
+    path: '/simbut',
+    label: 'SimBut Widget',
+    section: 'simbut',
+    children: [{ path: '/simbut/FindSimilarPill', label: 'FindSimilarPill' }],
+  },
   { path: '/full-widgets', label: 'Full Widgets' },
   { path: '/themes', label: 'Theme Comparison' },
   { path: '/responsive', label: 'Responsive Preview' },

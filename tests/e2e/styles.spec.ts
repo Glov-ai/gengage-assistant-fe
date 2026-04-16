@@ -32,7 +32,7 @@ test.describe('Widget visual styles', () => {
     expect(numericRadius).toBeGreaterThanOrEqual(8);
   });
 
-  test('SimRel rail has proper horizontal layout', async ({ page }) => {
+  test('SimRel grid uses a multi-column desktop layout', async ({ page }) => {
     const grid = page.locator('.gengage-simrel-grid');
     await expect(grid).toBeAttached({ timeout: 10000 });
 
@@ -40,11 +40,11 @@ test.describe('Widget visual styles', () => {
       const computed = window.getComputedStyle(el);
       return {
         display: computed.display,
-        overflowX: computed.overflowX,
+        gridTemplateColumns: computed.gridTemplateColumns,
       };
     });
-    expect(styles.display).toBe('flex');
-    expect(styles.overflowX === 'auto' || styles.overflowX === 'scroll').toBe(true);
+    expect(styles.display).toBe('grid');
+    expect(styles.gridTemplateColumns.trim().split(/\s+/).length).toBeGreaterThan(1);
   });
 
   test('font family is applied from theme', async ({ page }) => {

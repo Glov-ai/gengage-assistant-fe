@@ -1,12 +1,57 @@
 # Customization Guide
 
-This repo is designed to be forked. Customers own the visual layer; Gengage owns the backend.
+This repo is designed to be forked. Customers own the frontend experience while Gengage owns the backend contract and assistant behavior.
 
----
+## Who This Guide Is For
 
-## Three Levels of Customization
+Use this guide when you are:
 
-## Recommended Public Styling Surface
+- adapting a merchant fork
+- changing theme tokens, selectors, labels, or host callbacks
+- wiring the SDK into GTM, a storefront shell, or a merchant demo
+- implementing account-specific work while keeping shared logic centralized
+
+If you are changing shared SDK architecture rather than merchant customization, use the root contributor guides and the docs index.
+
+## Account Customization Workflow
+
+1. Start from the closest existing demo under `demos/` or the current overlay config.
+2. Change theme tokens, locale, mount selectors, widget options, and host callbacks first.
+3. Only fork widget renderers when tokens and stable part selectors are not enough.
+4. Move anything reusable into `src/common/` or the relevant widget core.
+5. Validate in both the account dev shell and the component catalog.
+
+Recommended commands:
+
+```bash
+npm run dev -- <accountId> --sku=<sku>
+npm run catalog
+```
+
+## Where To Change What
+
+| Path | Change Here When... |
+|------|----------------------|
+| `src/common/` | You are adding shared transport, overlay, analytics, config, or utility logic |
+| `src/chat/`, `src/qna/`, `src/simrel/`, `src/simbut/` | You are changing shared widget behavior or reusable UI implementation |
+| `demos/<accountId>/index.html` | You are changing merchant theme tokens, mount selectors, or host callback wiring |
+| `catalog/` | You are validating or exposing components in the visual catalog |
+| `tests/` | You are protecting shared behavior against regressions |
+
+Rule: if two or more accounts need the same behavior, move it out of `demos/` and into shared SDK code.
+
+## Centralization Rules
+
+1. Shared abstractions go in `src/common/` or widget core first.
+2. Do not add merchant-specific branching to core widget code.
+3. Keep per-account files limited to brand tokens, mount selectors, i18n copy, widget overrides, and host callback wiring.
+4. Export reusable additions through the public barrels when they are part of the supported API.
+
+## Three Levels Of Customization
+
+The safest customization path is tokens first, stable part selectors second, and renderer overrides only when structure or behavior must change.
+
+### Recommended Public Styling Surface
 
 Clients should treat the SDK styling API as:
 
@@ -14,13 +59,11 @@ Clients should treat the SDK styling API as:
 2. stable `data-gengage-part` selectors second
 3. full renderer overrides only when structure or behavior must change
 
-The SDK is gradually adopting an internal shared primitive layer (`.gds-*` classes),
-but those classes are **not** the preferred client-facing API. They may evolve as the
-SDK converges internally.
+The SDK is gradually adopting an internal shared primitive layer (`.gds-*` classes), but those classes are not the preferred client-facing API and may continue to evolve.
 
 ### Use tokens first
 
-Prefer overriding semantic/client tokens like:
+Prefer overriding semantic and client tokens like:
 
 ```js
 theme: {
@@ -37,7 +80,7 @@ theme: {
 
 ### Use stable part selectors when tokens are not enough
 
-The SDK is adding supported part hooks such as:
+Supported hooks include selectors such as:
 
 ```css
 [data-gengage-part='product-summary-card'] { ... }
@@ -46,17 +89,15 @@ The SDK is adding supported part hooks such as:
 [data-gengage-part='simrel-product-card'] { ... }
 ```
 
-These selectors are intended to remain stable even if internal DOM/class composition changes.
+These selectors are intended to remain stable even if internal DOM composition changes.
 
-### Avoid targeting internal implementation details
+### Avoid targeting implementation details
 
 Avoid building customer themes around:
 
 - `.gds-*` primitive classes
-- deep widget-local classes inside `src/chat/components/chat.css`
+- deep widget-local classes inside widget CSS files
 - exact internal DOM nesting
-
-Those layers are implementation details and may continue to evolve as the shared design system lands.
 
 ### Level 1 — Theme tokens (CSS custom properties)
 
@@ -78,21 +119,14 @@ await chatWidget.init({
 ```
 
 These are applied as CSS custom properties on the widget root element:
+
 ```css
 --gengage-primary-color: #e63946;
 --gengage-border-radius: 12px;
 /* etc. */
 ```
 
-The SDK also injects shared layout defaults (`DEFAULT_WIDGET_THEME_TOKENS`) so
-chat/QNA/SimRel stay consistent across accounts unless you override them.
-
-Every default component reads these variables. Override them in your own CSS too:
-```css
-[data-gengage-widget="chat"] {
-  --gengage-primary-color: #e63946;
-}
-```
+The SDK also injects shared layout defaults (`DEFAULT_WIDGET_THEME_TOKENS`) so Chat, QNA, SimRel, and SimBut stay consistent across accounts unless you override them.
 
 ### Level 2 — Component overrides via json-render registry
 
@@ -115,6 +149,7 @@ await chatWidget.init({
             context.onProductClick?.({ sku: product.sku, url: product.url });
           }
         });
+
         return card;
       },
     },
@@ -122,85 +157,76 @@ await chatWidget.init({
 });
 ```
 
-Same API exists for all widgets:
+The same renderer API exists for UISpec-driven widgets:
+
 - `chat.init({ renderer })`
 - `qna.init({ renderer })`
 - `simrel.init({ renderer })`
 
+`simbut` is a direct DOM overlay widget and does not expose `renderer.registry` or `renderUISpec`.
+
 Each `renderer` supports:
-- `registry`: override individual component renderers.
-- `unknownRenderer`: custom fallback for unknown component types.
-- `renderUISpec`: replace rendering methodology entirely.
 
-Use `createDefaultChatUISpecRegistry()`, `createDefaultQnaUISpecRegistry()`, and
-`createDefaultSimRelUISpecRegistry()` as baseline registries for partial overrides.
+- `registry`: override individual component renderers
+- `unknownRenderer`: custom fallback for unknown component types
+- `renderUISpec`: replace rendering methodology entirely
 
-> **Beauty consulting components:** `PhotoAnalysisCard` and `BeautyPhotoStep`
-> are registered in the default chat registry but are **not overridable** via
-> `renderer.registry` during live streaming.  The stream handler intercepts
-> these components for timing-critical rendering (typewriter cancellation,
-> drawer-level placement) before the registry is consulted.  The registry
-> entries serve as fallback renderers for session restore and degraded
-> rendering on parse failure.  To customise these components, use the i18n
-> overrides (`photoAnalysisBadge`, `beautyPhotoStepTitle`, etc.) or fork
-> the feature module at `src/chat/features/beauty-consulting/`.
+Use `createDefaultChatUISpecRegistry()`, `createDefaultQnaUISpecRegistry()`, and `createDefaultSimRelUISpecRegistry()` as baseline registries for partial overrides.
+
+> **Beauty consulting components:** `PhotoAnalysisCard` and `BeautyPhotoStep` are registered in the default chat registry but are not overridable via `renderer.registry` during live streaming. The stream handler intercepts them for timing-critical rendering before the registry is consulted. Use i18n overrides or fork the feature module at `src/chat/features/beauty-consulting/` when you need deeper changes.
 
 ### Level 3 — Full widget replacement
 
 Replace the entire visual layer while keeping API contracts stable:
-- keep `catalog.ts` contracts compatible with backend responses,
-- keep widget lifecycle (`init/update/show/hide/destroy`) and transport semantics,
-- replace default renderer implementation, DOM output, and CSS as needed.
 
----
+- keep `catalog.ts` contracts compatible with backend responses
+- keep widget lifecycle (`init`, `update`, `show`, `hide`, `destroy`) and transport semantics
+- replace default renderer implementation, DOM output, and CSS as needed
 
 ## Component Catalog (Visual Preview)
 
-Before customizing components, browse the visual catalog to see every component rendered
-with mock data. No backend needed.
+Before customizing components, browse the visual catalog to see every component rendered with mock data. No backend is needed.
 
 ```bash
 npm run catalog    # http://localhost:3002 (builds first)
 ```
 
-The catalog shows all 25+ components in realistic frames (chat drawer, PDP section, etc.)
-with a global theme selector to preview all 12 merchant color presets.
-
----
+The catalog shows all Chat, QNA, and SimRel UISpec components plus a live SimBut preview in realistic frames. Use it to validate overrides against the merchant presets shipped with the catalog.
 
 ## Demo Pages
 
-The `demos/` directory contains self-contained demo pages for branded accounts and
-integration patterns. Each demo is a single `index.html` file with inline config —
-no separate config files, factory functions, or `.env` files required.
+The `demos/` directory contains self-contained merchant pages and integration examples. Each demo is a single `index.html` file with inline config, so teams can adjust real-world wiring without setting up a separate config system.
 
-### Account demos
+### Example merchant demos
 
-```
+```text
 demos/
-  koctascomtr/index.html        # Koçtaş — home improvement retail, Turkish locale
-  arcelikcomtr/index.html       # Arçelik — consumer electronics
-  n11com/index.html             # N11 — marketplace
-  yatasbeddingcomtr/index.html  # Yataş Bedding — furniture, large product images
-  hepsiburadacom/index.html     # Hepsiburada — general e-commerce
+  koctascomtr/index.html
+  arcelikcomtr/index.html
+  n11com/index.html
+  trendyolcom/index.html
+  yatasbeddingcomtr/index.html
 ```
 
-### Integration demos
+### Framework and integration demos
 
-```
+```text
 demos/
-  vanilla-script/index.html     # IIFE script tags, no bundler
-  vanilla-esm/index.html        # ESM import, Vite-served
-  react/index.html              # React CDN + IIFE bundles
-  nextjs/index.html             # Next.js integration guide
-  native/index.html             # Mobile WebView overlay
+  vanilla-script/index.html
+  vanilla-esm/index.html
+  react/index.html
+  nextjs/index.html
+  native/index.html
 ```
 
-Each demo embeds all three widgets with inline configuration and theme tokens:
+Each demo can embed Chat, QNA, SimRel, and, when needed, the optional SimBut PDP image overlay. `demos/n11com/index.html` shows the SimBut mount pattern.
+
+Example inline configuration:
 
 ```html
 <script type="module">
   import { initOverlayWidgets } from '@gengage/assistant-fe';
+
   initOverlayWidgets({
     accountId: 'koctascomtr',
     sku: '1000465056',
@@ -213,12 +239,14 @@ Each demo embeds all three widgets with inline configuration and theme tokens:
 </script>
 ```
 
-To run any demo locally, use the dev server:
+## Validation Workflow
 
-```bash
-npm run dev -- koctascomtr --sku=1000465056
-npm run dev -- n11com --sku=ABC123 --port=3005
-```
+For merchant-specific work, validate in both environments:
+
+1. Account shell: `npm run dev -- <accountId> --sku=<sku>`
+2. Catalog: `npm run catalog`
+
+Add `npm run test:e2e` when the change affects layout, interaction, or navigation behavior.
 
 ---
 
@@ -335,7 +363,7 @@ await chatWidget.init({
 
 When `assistant_mode = beauty_consulting`, the floating compare prompt (`choicePrompter`) is intentionally suppressed to reduce distraction during guided consulting.
 
-For full i18n replacement, add your own locale file to `src/chat/i18n/` (fork required).
+For full i18n replacement, add the locale to the relevant widget locale module (`src/chat/locales/`, `src/qna/locales/`, `src/simrel/locales/`, or `src/simbut/locales.ts`). See [i18n.md](./i18n.md) for the per-widget model.
 
 ---
 
@@ -658,6 +686,26 @@ It also dispatches a `gengage:similar:add-to-cart` CustomEvent on `window`.
 
 The "Add to Cart" button only appears on product cards that have a `cartCode` value
 in their product data. Products without a `cartCode` show only the product link.
+
+### SimBut Widget
+
+The SimBut widget supports a lightweight `onFindSimilar` callback and optional label override:
+
+```js
+await simbutWidget.init({
+  // ...
+  mountTarget: productImageWrapper,
+  sku: currentSku,
+  imageUrl: currentImageUrl,
+  i18n: { findSimilarLabel: 'Find Similar' },
+  onFindSimilar: ({ sku, imageUrl }) => {
+    openYourOwnSimilarFlow({ sku, imageUrl });
+  },
+});
+```
+
+If you pass `chat` instead of `onFindSimilar`, SimBut opens the chat drawer and forwards a
+`findSimilar` action automatically.
 
 ---
 
@@ -1028,7 +1076,7 @@ The chat widget follows WAI-ARIA patterns for dialog and live-region content.
 
 ### Reduced Motion
 
-All three widgets (chat, QNA, SimRel) include a `@media (prefers-reduced-motion: reduce)`
+All four widgets (chat, QNA, SimRel, SimBut) include a `@media (prefers-reduced-motion: reduce)`
 block that disables animations and transitions:
 
 ```css

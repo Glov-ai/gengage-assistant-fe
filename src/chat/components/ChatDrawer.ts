@@ -302,7 +302,7 @@ export class ChatDrawer {
       _handleEl = handleEl;
     }
 
-    // Header — branded dark bar
+    // Header — branded surface bar
     const header = document.createElement('div');
     header.className = 'gengage-chat-header gds-shell-header';
     header.dataset['gengagePart'] = 'chat-header';
@@ -2586,16 +2586,32 @@ export class ChatDrawer {
 
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      const focusable = this.root.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusable = Array.from(
+        this.root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => {
+        const styles = getComputedStyle(el);
+        if (el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
+        if (styles.display === 'none' || styles.visibility === 'hidden') return false;
+        return el.getClientRects().length > 0;
+      });
       if (focusable.length === 0) return;
       const first = focusable[0]!;
       const last = focusable[focusable.length - 1]!;
 
-      // Use getRootNode() to resolve activeElement inside Shadow DOM
+      const composedTarget =
+        e.composedPath().find((node): node is HTMLElement => node instanceof HTMLElement && this.root.contains(node)) ??
+        null;
       const rootNode = this.root.getRootNode();
-      const active = rootNode instanceof ShadowRoot ? rootNode.activeElement : document.activeElement;
+      const activeCandidate =
+        composedTarget ??
+        (rootNode instanceof ShadowRoot && rootNode.activeElement instanceof HTMLElement
+          ? rootNode.activeElement
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null);
+      const active = activeCandidate && this.root.contains(activeCandidate) ? activeCandidate : null;
 
       if (e.shiftKey) {
         if (active === first || !this.root.contains(active)) {

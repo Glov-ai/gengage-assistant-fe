@@ -5,6 +5,7 @@
 import { CHAT_SPECS } from '../mock-data/chat-specs.js';
 import { QNA_SPECS } from '../mock-data/qna-specs.js';
 import { SIMREL_SPECS } from '../mock-data/simrel-specs.js';
+import { SIMBUT_SPECS } from '../mock-data/simbut-specs.js';
 import { navigate } from '../router.js';
 
 export function renderOverview(container: HTMLElement): void {
@@ -22,7 +23,7 @@ export function renderOverview(container: HTMLElement): void {
 
   const intro = document.createElement('p');
   intro.textContent =
-    'Visual catalog of all UI components across Chat, QNA, and SimRel widgets. Click a component name to see it rendered with mock data.';
+    'Visual catalog of Chat, QNA, and SimRel UI components plus a live SimBut widget preview. Click any entry to see it rendered with mock data.';
   intro.style.marginBottom = '24px';
   intro.style.color = '#666';
   wrapper.appendChild(intro);
@@ -35,6 +36,9 @@ export function renderOverview(container: HTMLElement): void {
 
   // SimRel components table
   wrapper.appendChild(createSectionTable('SimRel Components', SIMREL_SPECS, '/simrel'));
+
+  // SimBut widget table
+  wrapper.appendChild(createSectionTable('SimBut Widget', SIMBUT_SPECS, '/simbut'));
 
   container.appendChild(wrapper);
 }

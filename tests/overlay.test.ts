@@ -275,5 +275,37 @@ describe('overlay', () => {
       const initArg = chatInstance['init'].mock.calls[0][0] as Record<string, unknown>;
       expect(initArg['pillLauncher']).toEqual(pillLauncher);
     });
+
+    it('forwards top-level demo flags to GengageChat init config', async () => {
+      await initOverlayWidgets({
+        accountId: 'top-level-demo-flags',
+        middlewareUrl: 'https://example.com',
+        isDemoWebsite: true,
+        productDetailsExtended: true,
+      });
+
+      const chatInstance = vi.mocked(GengageChat).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = chatInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['isDemoWebsite']).toBe(true);
+      expect(initArg['productDetailsExtended']).toBe(true);
+    });
+
+    it('prefers chat demo flags over top-level compatibility flags', async () => {
+      await initOverlayWidgets({
+        accountId: 'chat-demo-flags-precedence',
+        middlewareUrl: 'https://example.com',
+        isDemoWebsite: false,
+        productDetailsExtended: false,
+        chat: {
+          isDemoWebsite: true,
+          productDetailsExtended: true,
+        },
+      });
+
+      const chatInstance = vi.mocked(GengageChat).mock.instances[0] as Record<string, ReturnType<typeof vi.fn>>;
+      const initArg = chatInstance['init'].mock.calls[0][0] as Record<string, unknown>;
+      expect(initArg['isDemoWebsite']).toBe(true);
+      expect(initArg['productDetailsExtended']).toBe(true);
+    });
   });
 });

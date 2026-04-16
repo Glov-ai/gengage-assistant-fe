@@ -482,6 +482,7 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const headerLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-arcelikcomtr-logo.png';
+      const launcherLogoUrl = new URL('./glov-arcelikcomtr-launcher.svg', import.meta.url).href;
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? '7296520186';
@@ -516,6 +517,10 @@
           '--client-focus-ring': 'color-mix(in srgb, #d93131 32%, transparent)',
           '--root-wrapper-background-color': '#f2f2f2',
           '--root-wrapper-border-color': '#e5e5e5',
+          '--gengage-chat-launcher-size': '152px',
+          '--gengage-chat-launcher-mobile-right': '20px',
+          '--gengage-chat-launcher-mobile-bottom': '40px',
+          '--gengage-chat-launcher-bottom': '40px',
           '--gengage-campaign-reason-color': '#5f93cd',
           '--gengage-campaign-reason-color-end': '#c38dbe',
         },
@@ -523,13 +528,11 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Çelik'e Sor",
+          launcherImageUrl: launcherLogoUrl,
           headerAvatarUrl: headerLogoUrl,
-          pillLauncher: {
-            label: "Çelik'e Sor",
-            avatarUrl: headerLogoUrl,
-            primaryColor: '#d93131',
-            secondaryColor: '#222222',
-            fontFamily: '"Graphik", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          i18n: {
+            inputPlaceholder: 'Arçelik asistanına sorun...',
+            poweredBy: 'Arçelik AI Asistan',
           },
           productPriceUi: {
             originalPriceStyle: 'inline',
@@ -540,7 +543,11 @@
         qna: {
           mountTarget: '#arcelik-qna-section',
           headerTitle: "Çelik'e Sor",
-          ctaText: 'Başka bir şey sor',
+          hideButtonRowCta: true,
+          inputPlaceholder: true,
+          i18n: {
+            sendButton: 'Gönder',
+          },
         },
         simrel: {
           mountTarget: '#arcelik-similar-products',
