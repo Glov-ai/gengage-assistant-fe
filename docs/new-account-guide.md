@@ -140,6 +140,11 @@ lives here in a single `initOverlayWidgets()` call:
       mountTarget: '#mystore-similar-products',
     },
 
+    // ── Optional: SimBut widget ──
+    simbut: {
+      mountTarget: '#mystore-product-image',
+    },
+
     // ── Optional: price formatting (defaults to Turkish) ──
     // pricing: { currencySymbol: 'TL', currencyPosition: 'suffix' },
 
@@ -174,6 +179,7 @@ lives here in a single `initOverlayWidgets()` call:
 | `chat` | `OverlayChatOptions` | No | Chat variant, breakpoint, i18n strings |
 | `qna` | `OverlayQNAOptions` | No | Mount target selector, CTA text |
 | `simrel` | `OverlaySimRelOptions` | No | Mount target selector, discount display type |
+| `simbut` | `OverlaySimButOptions` | No | PDP image-wrapper mount target, label override, custom `onFindSimilar` hook |
 | `onAddToCart` | `(params) => void` | No | Callback when user adds a product from SimRel |
 | `onProductNavigate` | `(url, sku, sessionId) => void` | No | Callback when user clicks a product card |
 
@@ -217,8 +223,9 @@ real PDP so you can see the widgets in context.
 
 ### Widget mount points
 
-The QNA and SimRel widgets need DOM elements to mount into. Their `id` attributes
-must match the `mountTarget` selectors in the script block:
+The QNA and SimRel widgets need DOM elements to mount into. SimBut, when enabled,
+mounts into the existing PDP image wrapper. Their selectors must match the
+`mountTarget` values in the script block:
 
 ```html
 <!-- QNA widget mount point -->
@@ -229,6 +236,11 @@ must match the `mountTarget` selectors in the script block:
   <h2 class="section-title">Similar Products</h2>
   <div id="mystore-similar-products" class="simrel-mount"></div>
 </section>
+
+<!-- Optional: SimBut mount target (wrapper around the PDP image) -->
+<div id="mystore-product-image" class="product-image-wrap">
+  <img src="https://placehold.co/640x640/f5f5f5/1d1d1f?text=Product+Image" alt="Product" />
+</div>
 ```
 
 The chat widget uses `variant: 'floating'` by default and renders its own launcher
@@ -245,7 +257,7 @@ npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 Use the global theme selector to see how your merchant's theme tokens look on every
-component type (product cards, action buttons, comparison tables, etc.).
+component type and on the SimBut PDP-image overlay preview.
 
 ---
 
@@ -260,7 +272,7 @@ This starts a Vite dev server with HMR at `http://localhost:3000`. You will see:
 - The dev header at the top with session/account/SKU info
 - Your branded PDP page shell
 - The chat launcher in the bottom-right corner
-- QNA and SimRel widgets in their mount points (on PDP pages with a valid SKU)
+- QNA and SimRel widgets in their mount points, plus SimBut if you configured a PDP image mount (on PDP pages with a valid SKU)
 
 ### Dev server options
 
@@ -271,7 +283,7 @@ npm run dev -- mystorecom                           # No SKU (non-PDP page)
 npm run dev -- --client=mystorecom --sku=ABC123     # Named alias for demo
 ```
 
-When no `--sku` is provided, the page loads as a non-PDP page and the QNA/SimRel
+When no `--sku` is provided, the page loads as a non-PDP page and the QNA/SimRel/SimBut
 widgets will not render (they are PDP-only).
 
 ---
@@ -298,6 +310,7 @@ are already your existing site.
     chat: { variant: 'floating', i18n: { inputPlaceholder: 'Ask a question...' } },
     qna: { mountTarget: '#mystore-qna' },
     simrel: { mountTarget: '#mystore-simrel' },
+    simbut: { mountTarget: '#mystore-product-image' },
     onAddToCart: (params) => {
       yourCartAPI.add(params.sku, params.quantity, params.cartCode);
     },
@@ -329,6 +342,7 @@ router.afterEach(async (to) => {
       chat: { /* ... */ },
       qna: { mountTarget: '#mystore-qna' },
       simrel: { mountTarget: '#mystore-simrel' },
+      simbut: { mountTarget: '#mystore-product-image' },
       onAddToCart: (params) => yourCartAPI.add(params.sku, params.quantity),
     });
   }

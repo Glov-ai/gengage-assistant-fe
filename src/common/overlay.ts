@@ -157,6 +157,10 @@ export interface OverlayWidgetsOptions {
   pageContext?: Partial<PageContext>;
   sku?: string;
   theme?: WidgetTheme;
+  /** Backward-compatible alias for `chat.isDemoWebsite`. */
+  isDemoWebsite?: ChatWidgetConfig['isDemoWebsite'];
+  /** Backward-compatible alias for `chat.productDetailsExtended`. */
+  productDetailsExtended?: ChatWidgetConfig['productDetailsExtended'];
   /** Price formatting options. Defaults to Turkish locale. */
   pricing?: import('./price-formatter.js').PriceFormatConfig;
   idempotencyKey?: string;
@@ -305,6 +309,8 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.enabled === false) return;
 
     const middlewareUrl = this.options.middlewareUrl;
+    const productDetailsExtended = this.options.chat?.productDetailsExtended ?? this.options.productDetailsExtended;
+    const isDemoWebsite = this.options.chat?.isDemoWebsite ?? this.options.isDemoWebsite;
 
     const config: ChatWidgetConfig = {
       accountId: this.options.accountId,
@@ -349,11 +355,11 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       config.actionHandling = this.options.chat.actionHandling;
     }
     if (this.options.chat?.renderer !== undefined) config.renderer = this.options.chat.renderer;
-    if (this.options.chat?.productDetailsExtended !== undefined) {
-      config.productDetailsExtended = this.options.chat.productDetailsExtended;
+    if (productDetailsExtended !== undefined) {
+      config.productDetailsExtended = productDetailsExtended;
     }
-    if (this.options.chat?.isDemoWebsite !== undefined) {
-      config.isDemoWebsite = this.options.chat.isDemoWebsite;
+    if (isDemoWebsite !== undefined) {
+      config.isDemoWebsite = isDemoWebsite;
     }
     if (this.options.chat?.productPriceUi !== undefined) {
       config.productPriceUi = this.options.chat.productPriceUi;
@@ -412,8 +418,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
           };
           if (this.options.theme !== undefined) qnaConfig.theme = this.options.theme;
           if (this.options.qna?.ctaText !== undefined) qnaConfig.ctaText = this.options.qna.ctaText;
-          if (this.options.qna?.hideButtonRowCta !== undefined)
+          if (this.options.qna?.hideButtonRowCta !== undefined) {
             qnaConfig.hideButtonRowCta = this.options.qna.hideButtonRowCta;
+          }
           if (this.options.qna?.inputPlaceholder !== undefined) {
             qnaConfig.inputPlaceholder = this.options.qna.inputPlaceholder;
           }

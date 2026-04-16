@@ -212,3 +212,55 @@ test.describe('QNA Components', () => {
     await expect(page.locator('.catalog-card')).toHaveScreenshot('qna-question-heading.png');
   });
 });
+
+test.describe('Beauty consulting components', () => {
+  test('PhotoAnalysisCard renders structured analysis details', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/chat/PhotoAnalysisCard');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const card = page.locator('.gengage-chat-photo-analysis-card');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.gengage-chat-photo-analysis-summary')).toContainText('Cildiniz karma tip gorunuyor');
+    await expect(card.locator('.gengage-chat-photo-analysis-points li')).toHaveCount(4);
+    await expect(card.locator('.gengage-chat-photo-analysis-next')).toContainText('Gunluk bakim rutininiz var mi');
+  });
+
+  test('BeautyPhotoStep renders upload and skip actions', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/chat/BeautyPhotoStep');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const card = page.locator('.gengage-chat-beauty-photo-step-card');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.gengage-chat-beauty-photo-step-title')).toContainText('Selfie Paylas');
+    await expect(card.locator('.gengage-chat-beauty-photo-step-desc')).toContainText(
+      'Cilt analizi icin bir selfie yukleyin',
+    );
+
+    const uploadButton = card.locator('.gengage-chat-beauty-photo-step-upload');
+    const skipButton = card.locator('.gengage-chat-beauty-photo-step-skip');
+    await expect(uploadButton).toBeVisible();
+    await expect(uploadButton).toBeEnabled();
+    await expect(skipButton).toBeVisible();
+    await expect(skipButton).toBeEnabled();
+  });
+});
+
+test.describe('SimBut components', () => {
+  test('FindSimilarPill renders and emits the callback payload on click', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/simbut/FindSimilarPill');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const root = page.locator('.gengage-simbut-root');
+    const pill = root.locator('.gengage-chat-find-similar-pill');
+    await expect(root).toBeVisible();
+    await expect(pill).toBeVisible();
+    await expect(pill).toContainText('Benzerlerini Bul');
+
+    await pill.click();
+
+    const latestLog = page.locator('.catalog-card-console .log-entry').last();
+    await expect(latestLog).toContainText('onFindSimilar:');
+    await expect(latestLog).toContainText('"sku"');
+    await expect(latestLog).toContainText('"imageUrl"');
+  });
+});

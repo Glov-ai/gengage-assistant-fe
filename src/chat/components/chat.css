@@ -8043,7 +8043,10 @@ button.gengage-chat-product-details-rating {
   right: 12px;
   width: auto;
   max-width: none;
-  bottom: 12px;
+  bottom: calc(
+    var(--gengage-chat-launcher-mobile-bottom, 16px) + var(--gengage-chat-launcher-size, 56px) +
+      env(safe-area-inset-bottom, 0px) + 12px
+  );
   max-height: 40vh;
   overflow-y: auto;
   grid-template-columns: 1fr;

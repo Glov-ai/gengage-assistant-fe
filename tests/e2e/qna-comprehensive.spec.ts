@@ -35,17 +35,23 @@ test.describe('QNA widget — button styling', () => {
     await gotoDemoReady(page);
   });
 
-  test('QNA button has primary background color (orange)', async ({ page }) => {
+  test('QNA button uses the primary color for its outlined chip styling', async ({ page }) => {
     const button = page.locator('.gengage-qna-button').first();
     await expect(button).toBeVisible({ timeout: 10000 });
 
-    const bgColor = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // #ec6e00 = rgb(236, 110, 0)
-    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    const styles = await button.evaluate((el) => {
+      const computed = getComputedStyle(el);
+      return {
+        backgroundColor: computed.backgroundColor,
+        textColor: computed.color,
+      };
+    });
+    const match = styles.textColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     expect(match).toBeTruthy();
-    const [, r, g, b] = match!;
+    const [, r, , b] = match!;
     expect(Number(r)).toBeGreaterThan(200);
     expect(Number(b)).toBeLessThan(40);
+    expect(styles.backgroundColor === 'transparent' || styles.backgroundColor.includes('0, 0, 0, 0')).toBe(false);
   });
 
   test('CTA button has an outline border (not solid fill)', async ({ page }) => {
@@ -63,13 +69,17 @@ test.describe('QNA widget — button styling', () => {
     expect(border.borderWidth).not.toBe('0px');
   });
 
-  test('CTA button has transparent background', async ({ page }) => {
+  test('CTA button has a light secondary surface background', async ({ page }) => {
     const cta = page.locator('.gengage-qna-cta');
     await expect(cta).toBeVisible({ timeout: 10000 });
 
     const bgColor = await cta.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // Should be transparent (rgba(0,0,0,0)) or "transparent"
-    expect(bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)' || bgColor.includes('0, 0, 0, 0')).toBe(true);
+    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    expect(match).toBeTruthy();
+    const [, r, g, b] = match!;
+    expect(Number(r)).toBeGreaterThan(200);
+    expect(Number(g)).toBeGreaterThan(200);
+    expect(Number(b)).toBeGreaterThan(200);
   });
 
   test('QNA button has cursor pointer', async ({ page }) => {

@@ -9,6 +9,7 @@ const MountSelectorsSchema = z.object({
   chat: z.string().optional(),
   qna: z.string().optional(),
   simrel: z.string().optional(),
+  simbut: z.string().optional(),
 });
 
 const TransportSchema = z.object({});
@@ -60,6 +61,7 @@ export const AccountRuntimeConfigSchema = z.object({
     chat: WidgetToggleSchema.default({ enabled: true }),
     qna: WidgetToggleSchema.default({ enabled: true }),
     simrel: WidgetToggleSchema.default({ enabled: true }),
+    simbut: WidgetToggleSchema.default({ enabled: false }),
   }),
   mounts: MountSelectorsSchema.default({}),
   transport: TransportSchema.default({}),
@@ -112,6 +114,7 @@ export function createDefaultAccountRuntimeConfig(params: {
       chat: { enabled: true },
       qna: { enabled: true },
       simrel: { enabled: true },
+      simbut: { enabled: false },
     },
   });
 }
