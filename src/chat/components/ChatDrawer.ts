@@ -848,6 +848,7 @@ export class ChatDrawer {
 
     // Enter submits; Shift+Enter inserts newline on desktop only
     this.inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.isComposing) return;
       if (e.key === 'Enter') {
         const isMobile = this._options.getMobileViewport?.() ?? window.innerWidth <= 768;
         if (isMobile || !e.shiftKey) {
@@ -2300,14 +2301,13 @@ export class ChatDrawer {
   private _submit(): void {
     const text = this.inputEl.value.trim();
     const attachment = this._pendingAttachment;
-    if (!text && !attachment) return;
-    // Match send-button behaviour: while "Stop generating" is active, Enter must run
-    // the same abort + cleanup as Stop before starting a new request. Otherwise the
-    // prior stream's placeholder and bridge state drift from _sendAction's abort.
     if (this._sendStopHandler) {
       const onStop = this._sendStopHandler;
       this.hideStopButton();
       onStop();
+      if (!text && !attachment) return;
+    } else if (!text && !attachment) {
+      return;
     }
     this.onSend(text, attachment ?? undefined);
     this.inputEl.value = '';
