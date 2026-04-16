@@ -1412,8 +1412,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   private _sendMessage(text: string, attachment?: File): void {
     if (this._pdpPrimingInFlight) {
-      this._queuedUserMessages.push(attachment !== undefined ? { text, attachment } : { text });
-      return;
+      this._abortAllActiveRequests();
+      this._pdpPrimingInFlight = false;
+      this._queuedUserMessages = [];
     }
 
     // First outgoing user message: mark KVKK accepted so `kvkkApproved` is true on this request;
