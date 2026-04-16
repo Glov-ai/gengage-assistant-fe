@@ -383,7 +383,8 @@ export const chatCatalog = {
     },
     PhotoAnalysisCard: {
       schema: PhotoAnalysisCardSchema,
-      description: 'Structured photo analysis card with strengths, focus points, celeb vibe, details, and follow-up question.',
+      description:
+        'Structured photo analysis card with strengths, focus points, celeb vibe, details, and follow-up question.',
     },
     BeautyPhotoStep: {
       schema: BeautyPhotoStepSchema,

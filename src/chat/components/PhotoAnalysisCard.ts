@@ -31,8 +31,11 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
   const focusPoints = Array.isArray(props['focus_points'])
     ? (props['focus_points'] as string[]).filter((c) => typeof c === 'string')
     : [];
-  const details = Array.isArray(props['details']) ? (props['details'] as string[]).filter((c) => typeof c === 'string') : [];
-  if (!summary && clues.length === 0 && strengths.length === 0 && focusPoints.length === 0 && details.length === 0) return null;
+  const details = Array.isArray(props['details'])
+    ? (props['details'] as string[]).filter((c) => typeof c === 'string')
+    : [];
+  if (!summary && clues.length === 0 && strengths.length === 0 && focusPoints.length === 0 && details.length === 0)
+    return null;
 
   const result: PhotoAnalysisData = { summary, clues };
   const celebStyle = typeof props['celeb_style'] === 'string' ? props['celeb_style'] : undefined;
