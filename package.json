@@ -12,7 +12,6 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "unpkg": "./dist/chat.iife.js",
   "jsdelivr": "./dist/chat.iife.js",
@@ -38,38 +37,31 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./chat": {
       "types": "./dist/chat/index.d.ts",
-      "import": "./dist/chat.js",
-      "require": "./dist/chat.cjs"
+      "import": "./dist/chat.js"
     },
     "./qna": {
       "types": "./dist/qna/index.d.ts",
-      "import": "./dist/qna.js",
-      "require": "./dist/qna.cjs"
+      "import": "./dist/qna.js"
     },
     "./simrel": {
       "types": "./dist/simrel/index.d.ts",
-      "import": "./dist/simrel.js",
-      "require": "./dist/simrel.cjs"
+      "import": "./dist/simrel.js"
     },
     "./simbut": {
       "types": "./dist/simbut/index.d.ts",
-      "import": "./dist/simbut.js",
-      "require": "./dist/simbut.cjs"
+      "import": "./dist/simbut.js"
     },
     "./common": {
       "types": "./dist/common/index.d.ts",
-      "import": "./dist/common.js",
-      "require": "./dist/common.cjs"
+      "import": "./dist/common.js"
     },
     "./native": {
       "types": "./dist/native/index.d.ts",
-      "import": "./dist/native.js",
-      "require": "./dist/native.cjs"
+      "import": "./dist/native.js"
     },
     "./chat.iife": "./dist/chat.iife.js",
     "./qna.iife": "./dist/qna.iife.js",

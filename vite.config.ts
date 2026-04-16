@@ -49,7 +49,7 @@ export default defineConfig({
         common: resolve(__dirname, 'src/common/index.ts'),
         native: resolve(__dirname, 'src/native/index.ts'),
       },
-      formats: ['es', 'cjs'],
+      formats: ['es'],
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],
