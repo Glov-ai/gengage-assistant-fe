@@ -55,6 +55,11 @@ function deriveFallbackStructuredData(data: PhotoAnalysisData): PhotoAnalysisDat
       details,
     };
   }
+  // Need at least 3 items to split meaningfully into two sections;
+  // otherwise just show the collapsible details to avoid redundancy.
+  if (details.length < 3) {
+    return { ...data, details };
+  }
   return {
     ...data,
     strengths: details.slice(0, 2),
