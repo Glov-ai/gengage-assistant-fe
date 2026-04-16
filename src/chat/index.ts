@@ -1827,11 +1827,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           if (!this._drawer) return;
 
-          // KVKK filtering: always strip KVKK block from display text.
-          // Show banner on first encounter only.
-          // Prefer backend `kvkk` flag; fall back to keyword scanning for old backends.
+          // KVKK filtering: strip KVKK block from display text and show banner.
+          // Backend explicitly flags KVKK content via `extra.kvkk` — always respect that.
+          // Keyword-based fallback (`containsKvkk`) only applies during PDP auto-launch
+          // to avoid false-positives on normal replies that mention KVKK conversationally.
           let displayText = localBotText;
-          const isKvkkContent = extra?.kvkk === true || containsKvkk(displayText);
+          const isKvkkContent = extra?.kvkk === true || (isPdpAutoLaunch && containsKvkk(displayText));
           if (isFinal && isKvkkContent) {
             const acctId = this.config.accountId;
             if (!isKvkkShown(acctId)) {
