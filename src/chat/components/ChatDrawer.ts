@@ -848,8 +848,7 @@ export class ChatDrawer {
 
     // Enter submits; Shift+Enter inserts newline on desktop only
     this.inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.isComposing) return;
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.isComposing) {
         const isMobile = this._options.getMobileViewport?.() ?? window.innerWidth <= 768;
         if (isMobile || !e.shiftKey) {
           e.preventDefault();
