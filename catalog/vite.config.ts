@@ -32,6 +32,7 @@ export default defineConfig({
       '@gengage/assistant-fe/chat': resolve(ROOT, 'src/chat/index.ts'),
       '@gengage/assistant-fe/qna': resolve(ROOT, 'src/qna/index.ts'),
       '@gengage/assistant-fe/simrel': resolve(ROOT, 'src/simrel/index.ts'),
+      '@gengage/assistant-fe/simbut': resolve(ROOT, 'src/simbut/index.ts'),
       '@gengage/assistant-fe/common': resolve(ROOT, 'src/common/index.ts'),
       '@gengage/assistant-fe': resolve(ROOT, 'src/index.ts'),
     },

@@ -77,6 +77,8 @@ All other response types render exclusively in the chat pane.
 | `voice` | TTS audio playback (no visual) | — | Same |
 | `handoffNotice` | Handoff alert card | — | Same |
 | `redirect` | Bridge message to host | — | Same |
+| `ui_spec:PhotoAnalysisCard` | Skin analysis card (beauty) | — | Same |
+| `ui_spec:BeautyPhotoStep` | Selfie upload prompt (beauty) | — | Same |
 | `productDetailsSimilars` | Not rendered directly — patches `productDetails` | — | — |
 | `productListPreview` | Analyze animation overlay | — | Same |
 | `visitorDataResponse` | Bridge message to host | — | Same |
@@ -582,6 +584,65 @@ Rendered when the backend escalates the conversation to a human agent. CSS class
 ```
 
 Source: `src/chat/components/HandoffNotice.ts`
+
+---
+
+### `ui_spec:PhotoAnalysisCard` — Photo analysis card (beauty consulting)
+
+**Delivered as**: `ui_spec` event with root element type `PhotoAnalysisCard`.
+
+**Props**: `summary` (string), `clues` (string[]), `next_question` (string, optional), `style_images` (string[], optional)
+
+```
+┌─────────────────────────────────┐
+│  🔬 Skin Analysis               │  ← badge (i18n: photoAnalysisBadge)
+│                                  │
+│  "Your skin looks combination —  │  ← summary
+│   oily T-zone, dry cheeks."     │
+│                                  │
+│  • T-zone shine and open pores   │  ← clues (bullet list)
+│  • Mild dryness on cheeks        │
+│  • Even skin tone overall        │
+│                                  │
+│  "Shall we build a routine?"     │  ← next_question (optional)
+└─────────────────────────────────┘
+```
+
+The backend emits this UISpec during the beauty consulting flow when the user uploads a selfie.
+The `PhotoAnalysisCard` is intercepted by the chat widget and attached as structured data on
+the bot message (not rendered in the panel). The `ChatDrawer` renders it inline using the
+`_renderPhotoAnalysisCard()` method, with a fallback to sentence-splitting heuristic for
+older backends that send unstructured text instead.
+
+Source: `src/chat/components/PhotoAnalysisCard.ts`
+
+---
+
+### `ui_spec:BeautyPhotoStep` — Selfie upload prompt (beauty consulting)
+
+**Delivered as**: `ui_spec` event with root element type `BeautyPhotoStep`.
+
+**Props**: `processing` (boolean), `title` (string, optional), `description` (string, optional), `upload_label` (string, optional), `skip_label` (string, optional)
+
+```
+┌─────────────────────────────────┐
+│  ✦  Upload a Photo              │  ← title (i18n: beautyPhotoStepTitle)
+│     Share a selfie so we can     │  ← description
+│     analyze your skin...         │
+│                                  │
+│  [Upload Photo]  [Skip]          │  ← upload + skip buttons
+└─────────────────────────────────┘
+```
+
+Rendered as a transient card above the chat input area (not in the message stream or panel).
+The backend sends this UISpec during the beauty consulting init flow. When `processing` is
+`true`, the upload button is disabled and shows a "processing" label.
+
+**Interactions**:
+- Upload click → opens the attachment file picker
+- Skip click → hides the card and sends a skip message to the backend
+
+Source: `src/chat/components/BeautyPhotoStep.ts`
 
 ---
 

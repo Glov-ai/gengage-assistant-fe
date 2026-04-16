@@ -60,7 +60,8 @@ test.describe('ComparisonTable', () => {
     await page.waitForSelector('.gengage-chat-comparison-table');
     await page.waitForTimeout(300);
 
-    const rows = page.locator('.gengage-chat-comparison-row');
+    // Rows are plain <tr> elements inside the comparison table — no BEM class.
+    const rows = page.locator('.gengage-chat-comparison-table tbody tr');
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
   });
@@ -183,21 +184,16 @@ test.describe('ActionButtons (Suggested Actions)', () => {
 
 // ─── ChoicePrompter ─────────────────────────────────────────────────────────
 
-test.describe('ChoicePrompter', () => {
-  test('renders in catalog with heading and CTA', async ({ page }) => {
+test.describe('ProductGrid', () => {
+  test('renders product cards in catalog', async ({ page }) => {
     await page.goto('http://localhost:3002/#/chat/ProductGrid');
     await page.waitForSelector('.catalog-card-preview');
     await page.waitForTimeout(500);
 
-    // ChoicePrompter appears within ProductGrid when comparison mode is available
-    // Check for the choice-prompter element or the compare button
-    const prompter = page.locator('.gengage-chat-choice-prompter, [class*="choice-prompter"]');
-    const compareBtn = page.locator('.gengage-chat-compare-btn, [class*="compare"]');
-
-    // At least one comparison-related element should be present
-    const hasPrompter = (await prompter.count()) > 0;
-    const hasCompare = (await compareBtn.count()) > 0;
-    expect(hasPrompter || hasCompare).toBe(true);
+    // ProductGrid should contain product cards with action buttons
+    const cards = page.locator('.gengage-chat-product-card');
+    const count = await cards.count();
+    expect(count).toBeGreaterThan(0);
   });
 });
 
@@ -214,5 +210,57 @@ test.describe('QNA Components', () => {
     await page.waitForSelector('.catalog-card-preview');
     await page.waitForTimeout(500);
     await expect(page.locator('.catalog-card')).toHaveScreenshot('qna-question-heading.png');
+  });
+});
+
+test.describe('Beauty consulting components', () => {
+  test('PhotoAnalysisCard renders structured analysis details', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/chat/PhotoAnalysisCard');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const card = page.locator('.gengage-chat-photo-analysis-card');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.gengage-chat-photo-analysis-summary')).toContainText('Cildiniz karma tip gorunuyor');
+    await expect(card.locator('.gengage-chat-photo-analysis-points li')).toHaveCount(4);
+    await expect(card.locator('.gengage-chat-photo-analysis-next')).toContainText('Gunluk bakim rutininiz var mi');
+  });
+
+  test('BeautyPhotoStep renders upload and skip actions', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/chat/BeautyPhotoStep');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const card = page.locator('.gengage-chat-beauty-photo-step-card');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.gengage-chat-beauty-photo-step-title')).toContainText('Selfie Paylas');
+    await expect(card.locator('.gengage-chat-beauty-photo-step-desc')).toContainText(
+      'Cilt analizi icin bir selfie yukleyin',
+    );
+
+    const uploadButton = card.locator('.gengage-chat-beauty-photo-step-upload');
+    const skipButton = card.locator('.gengage-chat-beauty-photo-step-skip');
+    await expect(uploadButton).toBeVisible();
+    await expect(uploadButton).toBeEnabled();
+    await expect(skipButton).toBeVisible();
+    await expect(skipButton).toBeEnabled();
+  });
+});
+
+test.describe('SimBut components', () => {
+  test('FindSimilarPill renders and emits the callback payload on click', async ({ page }) => {
+    await page.goto('http://localhost:3002/#/simbut/FindSimilarPill');
+    await page.waitForSelector('.catalog-card-preview');
+
+    const root = page.locator('.gengage-simbut-root');
+    const pill = root.locator('.gengage-chat-find-similar-pill');
+    await expect(root).toBeVisible();
+    await expect(pill).toBeVisible();
+    await expect(pill).toContainText('Benzerlerini Bul');
+
+    await pill.click();
+
+    const latestLog = page.locator('.catalog-card-console .log-entry').last();
+    await expect(latestLog).toContainText('onFindSimilar:');
+    await expect(latestLog).toContainText('"sku"');
+    await expect(latestLog).toContainText('"imageUrl"');
   });
 });

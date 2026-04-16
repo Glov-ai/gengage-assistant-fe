@@ -12,7 +12,8 @@ If your setup requires cross-origin iframe communication (e.g., a portal on a di
 domain needs to control the chat widget), explicitly list the allowed origins:
 
 ```js
-const chat = new GengageChat({
+const chat = new GengageChat();
+chat.init({
   accountId: 'your-account',
   middlewareUrl: 'https://chat.gengage.ai',
   allowedOrigins: [
@@ -79,7 +80,7 @@ If your CSP policy prohibits CDN domains, self-host the IIFE bundle:
 
 ```bash
 npm install @gengage/assistant-fe
-cp node_modules/@gengage/assistant-fe/dist/gengage-assistant.iife.js public/js/
+cp node_modules/@gengage/assistant-fe/dist/chat.iife.js public/js/
 ```
 
 Then adjust CSP to only allow `'self'` for `script-src`.
@@ -125,7 +126,8 @@ Complete example for a production deployment:
 ```js
 import { GengageChat } from '@gengage/assistant-fe/chat';
 
-const chat = new GengageChat({
+const chat = new GengageChat();
+await chat.init({
   accountId: 'your-account',
   middlewareUrl: 'https://chat.gengage.ai',
 
@@ -144,23 +146,20 @@ const chat = new GengageChat({
     sku: '12345',
   },
 });
-
-chat.init();
 ```
 
 ### GTM Production Tag
 
 ```html
-<script src="https://unpkg.com/@gengage/assistant-fe@latest/dist/gengage-assistant.iife.js"></script>
+<script src="https://unpkg.com/@gengage/assistant-fe@latest/dist/chat.iife.js"></script>
 <script>
 (function() {
-  var config = {
-    version: '1',
+  var chat = new window.Gengage.GengageChat();
+  chat.init({
     accountId: 'your-account',
     middlewareUrl: 'https://chat.gengage.ai',
-    allowedOrigins: ['https://www.yoursite.com'],
-  };
-  window.GengageAssistant.initFromConfig(config);
+    allowedOrigins: ['https://www.yoursite.com']
+  });
 })();
 </script>
 ```

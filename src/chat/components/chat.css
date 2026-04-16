@@ -1163,6 +1163,62 @@
   overflow-wrap: break-word;
 }
 
+.gengage-chat-bubble--photo-analysis {
+  border-color: color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
+  background: linear-gradient(165deg, color-mix(in srgb, var(--surface-card-soft) 80%, white), var(--surface-card));
+}
+
+.gengage-chat-photo-analysis-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gengage-chat-photo-analysis-badge {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--client-primary);
+  background: color-mix(in srgb, var(--client-primary) 14%, white);
+  border: 1px solid color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
+}
+
+.gengage-chat-photo-analysis-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gengage-chat-photo-analysis-summary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.gengage-chat-photo-analysis-points {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.gengage-chat-photo-analysis-next {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--client-primary) 7%, white);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
 /* First bot message in thread — subtle accent */
 .gengage-chat-bubble--first {
   border-left: 1px solid var(--ds-message-assistant-border);
@@ -6077,6 +6133,247 @@ button.gengage-chat-product-details-rating {
   gap: 6px;
 }
 
+.gengage-chat-consulting-style-picker {
+  border: 1px solid color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+  border-radius: 20px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--surface-card) 80%, white),
+    color-mix(in srgb, var(--surface-card-soft) 84%, white)
+  );
+  padding: 12px;
+}
+
+.gengage-chat-consulting-style-picker-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.gengage-chat-consulting-style-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.gengage-chat-consulting-style-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--surface-card);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.gengage-chat-consulting-style-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--client-primary) 26%, var(--border-default));
+}
+
+.gengage-chat-consulting-style-btn--active {
+  border-color: color-mix(in srgb, var(--client-primary) 40%, var(--border-default));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--client-primary) 16%, transparent),
+    var(--shadow-1);
+}
+
+.gengage-chat-consulting-style-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.gengage-chat-consulting-style-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+}
+
+.gengage-chat-consulting-style-caption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: white;
+  line-height: 1.2;
+  background: color-mix(in srgb, black 55%, transparent);
+}
+
+.gengage-chat-consulting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 14%, var(--border-default));
+  background: linear-gradient(180deg, var(--surface-card-soft), var(--surface-card));
+}
+
+.gengage-chat-consulting-group-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 112px;
+}
+
+.gengage-chat-consulting-group-label {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+  min-height: calc(2 * 1.25em);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gengage-chat-consulting-group-reason {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gengage-chat-consulting-group-grid {
+  margin-bottom: 2px;
+  display: grid;
+  grid-template-columns: repeat(var(--consulting-group-columns, 4), minmax(210px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.gengage-chat-consulting-group-grid .gengage-chat-product-card {
+  height: 100%;
+}
+
+.gengage-chat-beauty-photo-step {
+  padding: 0 12px;
+}
+
+.gengage-chat-beauty-photo-step-card {
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 20%, var(--border-default));
+  background: linear-gradient(165deg, color-mix(in srgb, var(--surface-card) 85%, white), var(--surface-card-soft));
+  box-shadow: var(--shadow-1);
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.gengage-chat-beauty-photo-step-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--client-primary) 16%, white);
+  color: var(--client-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.gengage-chat-beauty-photo-step-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gengage-chat-beauty-photo-step-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.gengage-chat-beauty-photo-step-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.gengage-chat-beauty-photo-step-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gengage-chat-beauty-photo-step-upload {
+  min-height: 34px;
+  padding-inline: 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gengage-chat-beauty-photo-step-skip {
+  min-height: 34px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-image {
+  min-height: 250px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-style-caption {
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group {
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card {
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-style-grid {
+  grid-template-columns: 1fr;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-style-image {
+  min-height: 220px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-group-grid {
+  grid-template-columns: 1fr;
+}
+
 .gengage-chat-product-grid-head {
   display: flex;
   align-items: center;
@@ -7746,7 +8043,10 @@ button.gengage-chat-product-details-rating {
   right: 12px;
   width: auto;
   max-width: none;
-  bottom: 12px;
+  bottom: calc(
+    var(--gengage-chat-launcher-mobile-bottom, 16px) + var(--gengage-chat-launcher-size, 56px) +
+      env(safe-area-inset-bottom, 0px) + 12px
+  );
   max-height: 40vh;
   overflow-y: auto;
   grid-template-columns: 1fr;

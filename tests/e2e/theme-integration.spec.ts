@@ -56,29 +56,30 @@ test.describe('Theme CSS custom properties', () => {
     expect(value).toBe('8px');
   });
 
-  test('chat launcher inherits theme presentation in image mode', async ({ page }) => {
+  test('chat launcher inherits the configured pill launcher presentation', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
 
     await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
     await expect(launcher.locator('img')).toBeVisible();
+    await expect(launcher).toContainText("Koçtaş'a Sor");
 
     const size = await launcher.evaluate((el) => ({
-      width: getComputedStyle(el).width,
-      height: getComputedStyle(el).height,
+      width: parseFloat(getComputedStyle(el).width),
+      height: parseFloat(getComputedStyle(el).height),
     }));
-    expect(size.width).toBe(size.height);
+    expect(size.width).toBeGreaterThan(size.height);
+    expect(size.height).toBeGreaterThanOrEqual(56);
   });
 
-  test('QNA buttons use primary color as background', async ({ page }) => {
+  test('QNA buttons use the primary color for their text styling', async ({ page }) => {
     const button = page.locator('.gengage-qna-button').first();
     await expect(button).toBeVisible({ timeout: 10000 });
 
-    const bgColor = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
-    const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    const textColor = await button.evaluate((el) => getComputedStyle(el).color);
+    const match = textColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     expect(match).toBeTruthy();
-    // Should be the orange primary color, not the default blue
-    expect(Number(match![1])).toBeGreaterThan(200); // red > 200
-    expect(Number(match![3])).toBeLessThan(40); // blue < 40
+    expect(Number(match![1])).toBeGreaterThan(200);
+    expect(Number(match![3])).toBeLessThan(40);
   });
 });

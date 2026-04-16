@@ -60,6 +60,36 @@ async function isFocusInShadowRoot(page: Page): Promise<boolean> {
   });
 }
 
+async function focusDrawerBoundaryElement(
+  page: Page,
+  boundary: 'first' | 'last',
+): Promise<{ tag: string; className: string }> {
+  return page.evaluate((targetBoundary) => {
+    const hosts = document.querySelectorAll('*');
+    for (const host of hosts) {
+      const sr = host.shadowRoot;
+      if (!sr) continue;
+      const drawer = sr.querySelector('.gengage-chat-drawer');
+      if (!drawer) continue;
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => {
+        const styles = getComputedStyle(el);
+        if (el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
+        if (styles.display === 'none' || styles.visibility === 'hidden') return false;
+        return el.getClientRects().length > 0;
+      });
+      const target = targetBoundary === 'first' ? focusable[0] : focusable[focusable.length - 1];
+      if (!target) break;
+      target.focus();
+      return { tag: target.tagName.toLowerCase(), className: target.className };
+    }
+    return { tag: 'unknown', className: '' };
+  }, boundary);
+}
+
 test.describe('Keyboard navigation', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockRoutes(page);
@@ -161,7 +191,7 @@ test.describe('Keyboard navigation', () => {
     expect(hasCloseButton, 'drawer should contain a close button').toBe(true);
   });
 
-  test('Shift+Tab navigates backwards through drawer elements', async ({ page }) => {
+  test('Shift+Tab wraps from the first visible drawer element to the last', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await launcher.click();
@@ -169,16 +199,15 @@ test.describe('Keyboard navigation', () => {
     const drawer = page.locator('.gengage-chat-drawer');
     await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
 
-    const input = page.locator('.gengage-chat-input');
-    await expect(input).toBeVisible({ timeout: 5000 });
-    await input.focus();
+    const before = await focusDrawerBoundaryElement(page, 'first');
+    expect(before.className.length).toBeGreaterThan(0);
 
-    // Shift+Tab should move backwards but stay inside the drawer
-    for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('Shift+Tab');
-      const inDrawer = await isFocusInDrawer(page);
-      expect(inDrawer, `Shift+Tab #${i + 1} should keep focus in drawer`).toBe(true);
-    }
+    await page.keyboard.press('Shift+Tab');
+
+    const inDrawer = await isFocusInDrawer(page);
+    const after = await getFocusedElementInfo(page);
+    expect(inDrawer).toBe(true);
+    expect(`${after.tag}.${after.className}`).not.toBe(`${before.tag}.${before.className}`);
   });
 
   test('focus-visible styles are defined for close button', async ({ page }) => {

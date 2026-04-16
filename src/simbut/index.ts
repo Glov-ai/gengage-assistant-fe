@@ -98,6 +98,32 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
     this._button.disabled = !canFire;
   }
 
+  // SimBut mounts into a merchant-owned element (the product image wrapper).
+  // BaseWidget.hide() would set root.style.display = 'none', hiding the whole gallery.
+  // BaseWidget.destroy() would call root.innerHTML = '', wiping all gallery children.
+  // We override both to operate only on the pill button, never on the host mount.
+
+  override hide(): void {
+    if (!this.isVisible) return;
+    this.isVisible = false;
+    if (this._button) this._button.style.display = 'none';
+    this.onHide();
+    this.emit('hide');
+  }
+
+  override show(): void {
+    if (this.isVisible) return;
+    this.isVisible = true;
+    if (this._button) this._button.style.display = '';
+    this.onShow();
+    this.emit('show');
+  }
+
+  protected override _cleanupRoot(): void {
+    // Intentionally empty: root is the merchant's image wrapper.
+    // The pill button is removed in onDestroy(); root must not be touched.
+  }
+
   protected onShow(): void {}
 
   protected onHide(): void {}

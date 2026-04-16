@@ -23,6 +23,8 @@ import { renderProsAndCons } from './ProsAndCons.js';
 import { renderCategoriesContainer } from './CategoriesContainer.js';
 import { renderHandoffNotice } from './HandoffNotice.js';
 import { renderProductSummaryCard } from './ProductSummaryCard.js';
+import { beautyConsultingRegistry } from '../features/beauty-consulting/registry.js';
+import { detectConsultingGrid, renderConsultingGrid } from '../features/beauty-consulting/consulting-grid.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
 import {
   clampRating,
@@ -75,6 +77,7 @@ const DEFAULT_CHAT_UI_SPEC_REGISTRY: ChatUISpecRegistry = {
   HandoffNotice: ({ element, context }) => renderHandoffNotice(element, context),
   ProductSummaryCard: ({ element, context }) => renderProductSummaryCard(element, context),
   Divider: ({ element }) => renderDivider(element),
+  ...beautyConsultingRegistry,
 };
 
 export const defaultChatUnknownUISpecRenderer: UISpecDomUnknownRenderer<UISpecRenderContext> = ({
@@ -307,7 +310,7 @@ function fillProductDetailsPriceRow(
   }
 }
 
-function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
+export function renderProductCard(element: UIElement, ctx: UISpecRenderContext): HTMLElement {
   const card = document.createElement('div');
   card.className = 'gengage-chat-product-card gds-card gds-product-card gds-card-interactive';
 
@@ -1707,12 +1710,15 @@ function renderProductGrid(
   const wrapper = document.createElement('div');
   wrapper.className = 'gengage-chat-product-grid-wrapper';
 
+  const consultingResult = detectConsultingGrid(element);
+  const hasConsultingVariations = consultingResult.isConsulting;
+
   const childIds = element.children ?? [];
   const grid = document.createElement('div');
   grid.className = 'gengage-chat-product-grid';
 
   const inlineHead = ctx?.panelProductListHeading;
-  const hasSortToolbar = childIds.length > 1 && ctx?.onSortChange;
+  const hasSortToolbar = !hasConsultingVariations && childIds.length > 1 && ctx?.onSortChange;
 
   // Sort + compare toolbar (only when >1 children and context has sort support)
   if (hasSortToolbar) {
@@ -1926,13 +1932,17 @@ function renderProductGrid(
     wrapper.appendChild(head);
   }
 
-  const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
-  for (const childId of sortedIds) {
-    if (!spec.elements[childId]) continue;
-    const rendered = renderElement(childId);
-    if (rendered) {
-      rendered.dataset['elementId'] = childId;
-      grid.appendChild(rendered);
+  if (hasConsultingVariations) {
+    renderConsultingGrid(wrapper, grid, consultingResult, ctx);
+  } else {
+    const sortedIds = getSortedChildIds(childIds, spec, ctx?.productSort);
+    for (const childId of sortedIds) {
+      if (!spec.elements[childId]) continue;
+      const rendered = renderElement(childId);
+      if (rendered) {
+        rendered.dataset['elementId'] = childId;
+        grid.appendChild(rendered);
+      }
     }
   }
 
@@ -1945,7 +1955,7 @@ function renderProductGrid(
 
   // "View More" button (only when endOfList is not true)
   const endOfList = element.props?.['endOfList'] as boolean | undefined;
-  if (endOfList !== true && childIds.length > 0) {
+  if (!hasConsultingVariations && endOfList !== true && childIds.length > 0) {
     const viewMoreTitle = ctx?.i18n?.viewMoreLabel ?? 'Show More';
     const viewMoreBtn = document.createElement('button');
     viewMoreBtn.className = 'gengage-chat-product-grid-view-more';

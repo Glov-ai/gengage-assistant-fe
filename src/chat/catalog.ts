@@ -287,6 +287,21 @@ export const HandoffNoticeSchema = z.object({
   user_sentiment: z.string().optional(),
 });
 
+export const PhotoAnalysisCardSchema = z.object({
+  summary: z.string(),
+  clues: z.array(z.string()),
+  next_question: z.string().optional(),
+  style_images: z.array(z.string()).optional(),
+});
+
+export const BeautyPhotoStepSchema = z.object({
+  processing: z.boolean().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  upload_label: z.string().optional(),
+  skip_label: z.string().optional(),
+});
+
 // ---------------------------------------------------------------------------
 // Catalog definition
 //
@@ -360,6 +375,14 @@ export const chatCatalog = {
     HandoffNotice: {
       schema: HandoffNoticeSchema,
       description: 'A notice shown when the conversation is escalated to a human agent.',
+    },
+    PhotoAnalysisCard: {
+      schema: PhotoAnalysisCardSchema,
+      description: 'Structured photo analysis card with summary, clues, and follow-up question.',
+    },
+    BeautyPhotoStep: {
+      schema: BeautyPhotoStepSchema,
+      description: 'Transient selfie upload prompt for beauty consulting init flow.',
     },
   },
 } as const;

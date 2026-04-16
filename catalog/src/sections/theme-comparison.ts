@@ -1,5 +1,5 @@
 /**
- * Theme comparison: renders the same component with all 12 merchant themes side-by-side.
+ * Theme comparison: renders the same component with all configured merchant themes side-by-side.
  */
 
 import { renderUISpecWithRegistry } from '@gengage/assistant-fe/common';

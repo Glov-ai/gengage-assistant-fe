@@ -1,11 +1,21 @@
 /**
- * Full widget showcase: Chat + QNA + SimRel running with mock fetch backend.
+ * Full widget showcase: Chat + QNA + SimRel + SimBut running with mock fetch backend.
  */
 
 import { installMockBackend } from '../utils/mock-backend.js';
+import { PRODUCTS } from '../mock-data/products.js';
+import { createSimbutPreviewFrame } from '../utils/simbut-frame.js';
 
 type DestroyableWidget = { destroy: () => void };
-type QnaBridgeAction = { title: string; type: string; payload?: unknown };
+type WidgetBridgeAction = { title: string; type: string; payload?: unknown };
+
+const defaultSimbutProduct = PRODUCTS[0];
+
+if (!defaultSimbutProduct) {
+  throw new Error('Missing default product fixture for SimBut full-widget preview.');
+}
+
+const simbutProduct = defaultSimbutProduct;
 
 export function renderFullWidgets(container: HTMLElement): void {
   const h2 = document.createElement('h2');
@@ -15,7 +25,7 @@ export function renderFullWidgets(container: HTMLElement): void {
 
   const note = document.createElement('p');
   note.textContent =
-    'All widgets are running with an intercepted fetch() returning canned NDJSON. Open DevTools console to see action callbacks.';
+    'All widgets are running with an intercepted fetch() returning canned NDJSON. Click the SimBut pill to open chat with a findSimilar action.';
   note.style.color = '#666';
   note.style.fontSize = '13px';
   note.style.marginBottom = '20px';
@@ -59,6 +69,24 @@ export function renderFullWidgets(container: HTMLElement): void {
   simrelBody.id = 'catalog-simrel-mount';
   simrelCol.appendChild(simrelBody);
   layout.appendChild(simrelCol);
+
+  // SimBut column
+  const simbutCol = document.createElement('div');
+  simbutCol.className = 'catalog-full-widget-col';
+  const simbutHeader = document.createElement('h4');
+  simbutHeader.textContent = 'SimBut Widget';
+  simbutCol.appendChild(simbutHeader);
+  const simbutBody = document.createElement('div');
+  simbutBody.className = 'catalog-full-widget-body';
+  const { frame: simbutFrame } = createSimbutPreviewFrame({
+    product: simbutProduct,
+    mountId: 'catalog-simbut-mount',
+    title: 'Product Image Overlay',
+    note: 'Uses the real widget implementation and forwards clicks into the chat preview.',
+  });
+  simbutBody.appendChild(simbutFrame);
+  simbutCol.appendChild(simbutBody);
+  layout.appendChild(simbutCol);
 
   container.appendChild(layout);
 
@@ -107,6 +135,7 @@ async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Arr
   const { GengageChat } = await import('@gengage/assistant-fe/chat');
   const { GengageQNA } = await import('@gengage/assistant-fe/qna');
   const { GengageSimRel } = await import('@gengage/assistant-fe/simrel');
+  const { GengageSimBut } = await import('@gengage/assistant-fe/simbut');
 
   const baseConfig = {
     accountId: 'koctascomtr',
@@ -122,7 +151,7 @@ async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Arr
 
   let chatApi: {
     open: () => void;
-    openWithAction: (action: QnaBridgeAction) => void;
+    openWithAction: (action: WidgetBridgeAction, pageContext?: { sku?: string }) => void;
   } | null = null;
 
   // Init Chat (floating launcher + drawer)
@@ -162,7 +191,7 @@ async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Arr
   // Wire QNA → Chat bridge for full widget interaction parity with demos.
   if (chatApi) {
     const onQnaAction = (ev: Event) => {
-      const detail = (ev as CustomEvent<QnaBridgeAction>).detail;
+      const detail = (ev as CustomEvent<WidgetBridgeAction>).detail;
       if (!detail) return;
       chatApi?.openWithAction(detail);
     };
@@ -188,6 +217,44 @@ async function initWidgets(widgets: Array<DestroyableWidget>, routeCleanups: Arr
     console.warn('[catalog] SimRel init failed:', err);
     const mount = document.getElementById('catalog-simrel-mount');
     if (mount) mount.textContent = `SimRel init error: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  // Init SimBut
+  try {
+    const simbutMount = document.getElementById('catalog-simbut-mount');
+    if (!simbutMount) {
+      throw new Error('Missing SimBut mount target.');
+    }
+
+    const simbut = new GengageSimBut();
+    await simbut.init({
+      ...baseConfig,
+      mountTarget: simbutMount,
+      sku: simbutProduct.sku,
+      imageUrl: simbutProduct.imageUrl,
+      locale: 'tr',
+      i18n: { findSimilarLabel: 'Benzerlerini Bul' },
+      onFindSimilar: ({ sku, imageUrl }) => {
+        if (!chatApi) {
+          console.warn('[catalog] SimBut clicked but chat is unavailable');
+          return;
+        }
+
+        chatApi.openWithAction(
+          {
+            title: 'Benzerlerini Bul',
+            type: 'findSimilar',
+            payload: imageUrl ? { sku, image_url: imageUrl } : { sku },
+          },
+          { sku },
+        );
+      },
+    });
+    widgets.push(simbut);
+  } catch (err) {
+    console.warn('[catalog] SimBut init failed:', err);
+    const mount = document.getElementById('catalog-simbut-mount');
+    if (mount) mount.textContent = `SimBut init error: ${err instanceof Error ? err.message : String(err)}`;
   }
 
   // Chat uses a floating launcher pattern, so we keep explanatory text in-column.

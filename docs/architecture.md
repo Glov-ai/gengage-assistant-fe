@@ -2,21 +2,22 @@
 
 ## Overview
 
-`gengage-assistant-fe` is a collection of three independent, embeddable frontend widgets
+`gengage-assistant-fe` is a collection of four embeddable frontend widgets
 that connect to the Gengage AI backend. The widgets are decoupled —
-a customer can embed just the chat, just the QNA buttons, or all three together.
+a customer can embed chat, QNA, SimRel, SimBut, or any combination that fits the page.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     Customer Website                     │
 │                                                          │
-│  ┌──────────┐   ┌──────────┐   ┌──────────────────────┐ │
-│  │ GengageQNA│   │GengageSimRel│      GengageChat      │ │
-│  │  (qna/)  │   │ (simrel/)│   │     (chat/)          │ │
-│  └────┬─────┘   └────┬─────┘   └──────────┬───────────┘ │
-│       │              │                    │              │
-│       └──────────────┴──── event bus ─────┘              │
-│                    (gengage:* CustomEvents)               │
+│  ┌──────────┐   ┌─────────────┐   ┌────────────┐   ┌──────────────────────┐ │
+│  │GengageQNA│   │GengageSimRel│   │GengageSimBut│   │      GengageChat      │ │
+│  │  (qna/)  │   │  (simrel/)  │   │  (simbut/) │   │       (chat/)         │ │
+│  └────┬─────┘   └─────┬───────┘   └──────┬─────┘   └──────────┬───────────┘ │
+│       │               │                  │                    │              │
+│       └───────────────┴──── event bus ───┘                    │              │
+│                    (gengage:* CustomEvents)                   │              │
+│                                      findSimilar openWithAction ────────────┘ │
 └─────────────────────────────────────────────────────────┘
              │                         │
              ▼                         ▼
@@ -38,19 +39,29 @@ a customer can embed just the chat, just the QNA buttons, or all three together.
 
 ## Widget Anatomy
 
-Each widget follows the same pattern:
+Each widget follows the same public lifecycle (`init/update/show/hide/destroy`),
+but there are two implementation families:
 
 ```
-src/<widget>/
+src/<uispec-widget>/
   index.ts       → Public class extending BaseWidget (init/update/show/hide/destroy)
   types.ts       → Widget config interface + domain types
   catalog.ts     → json-render component schemas (Zod)
   components/    → Vanilla TS renderers (per-component files)
 ```
 
+```text
+src/simbut/
+  index.ts       → Public class extending BaseWidget
+  types.ts       → Widget config + i18n types
+  locales.ts     → Built-in labels (TR/EN)
+  simbut.css     → Direct DOM styling for the overlay pill
+```
+
 Current migration status:
 - Chat, QNA, and SimRel use the shared `src/common/renderer/` UISpec DOM renderer foundation.
 - Each widget can override component renderers via `config.renderer.registry` or replace rendering entirely via `config.renderer.renderUISpec`.
+- SimBut is a direct DOM overlay widget; it does not use backend UISpec catalogs or a renderer registry.
 
 ### Why json-render?
 
@@ -126,7 +137,8 @@ POST /chat/process_action  →  NDJSON stream (backend event types)
       │   text_chunk, ui_spec, action, metadata, done
       │
       └── json-render resolves each ui_spec to:
-               ProductCard / ActionButtons / AITopPicks / ComparisonTable / etc.
+               ProductCard / ActionButtons / AITopPicks / ComparisonTable /
+               PhotoAnalysisCard / BeautyPhotoStep / etc.
 ```
 
 ## Data Flow: QNA Widget
@@ -171,6 +183,24 @@ GengageSimRel.init({ sku })
                                 ▼ (user taps card)
                      dispatch('gengage:similar:product-click', {...})
                      config.onProductNavigate(url, sku, sessionId)
+```
+
+## Data Flow: SimBut Widget
+
+```
+PDP image wrapper mount is available
+  │
+  ▼
+GengageSimBut.init({ sku, imageUrl, chat | onFindSimilar })
+  │
+  ▼
+Render absolute pill into the product image wrapper
+  │
+  ▼ (user taps pill)
+Build findSimilar action payload from current SKU (+ optional imageUrl)
+  │
+  ├── config.onFindSimilar(detail)        → host-defined behavior
+  └── chat.openWithAction(action, { sku }) → opens chat and triggers similar-search flow
 ```
 
 ---
@@ -373,7 +403,8 @@ const sessionId = bootstrapSession();
 ## Shadow DOM
 
 The Chat widget renders inside a Shadow DOM to prevent CSS bleed from the host page.
-QNA and SimRel render into a normal div (they are expected to fit the page's design).
+QNA and SimRel render into a normal div, and SimBut renders into the host page's
+existing product-image wrapper so it can visually sit on top of the PDP image.
 
 ---
 
@@ -394,12 +425,12 @@ updatePageContext({ pageType: 'pdp', sku: newSku });
 ## Shadow DOM Decision
 
 The Chat widget uses Shadow DOM for CSS isolation. This decision lives entirely inside
-`src/chat/` — it has no impact on QNA or SimRel.
+`src/chat/` — it has no impact on QNA, SimRel, or SimBut.
 
 **Why Shadow DOM for Chat:**
 - Chat has a rich, fully-custom UI that must not be affected by host-page stylesheets.
 
-**Why NOT for QNA and SimRel:**
+**Why NOT for QNA, SimRel, and SimBut:**
 - These widgets are expected to blend with the host page's design.
 - Customers style them via CSS custom properties and their own stylesheets.
 - Shadow DOM would complicate that without benefit.
@@ -408,19 +439,20 @@ The Chat widget uses Shadow DOM for CSS isolation. This decision lives entirely 
 
 ## Component Catalog
 
-The `catalog/` directory contains a visual component catalog that renders every widget
-component with mock data — no backend needed. It resolves package aliases directly to
-`src/` so component changes are visible immediately during development.
+The `catalog/` directory contains a visual component catalog that renders every UISpec
+component plus a live SimBut widget preview with mock data — no backend needed. It resolves
+package aliases directly to `src/` so component changes are visible immediately during development.
 
 ```bash
 npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 Key details:
-- **Hash-based SPA** with sidebar navigation for all 25+ components
-- **Global theme selector** applies any of the 12 merchant presets catalog-wide
-- **Realistic frames**: chat components in a chat-drawer frame, QNA in a PDP frame, SimRel in a product section
+- **Hash-based SPA** with sidebar navigation for all 30+ components and widget previews
+- **Global theme selector** applies any configured merchant preset catalog-wide
+- **Realistic frames**: chat components in a chat-drawer frame, QNA in a PDP frame, SimRel in a product section, SimBut over a PDP image wrapper
 - **Isolated rendering** via `renderUISpecWithRegistry()` with stub contexts (no widget lifecycle)
+- **Live-widget preview for SimBut** because it is not UISpec-driven
 - **CSS loading**: Chat CSS is `?inline` (bundled for Shadow DOM), so the catalog imports it via TypeScript (`import '../../src/chat/components/chat.css'`). HTML `<link>` tags won't work.
 
 ---

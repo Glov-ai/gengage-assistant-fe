@@ -29,9 +29,18 @@ import {
   basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
+import { debugLog } from '../common/debug.js';
 import { validateImageFile } from './attachment-utils.js';
 import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
+import { AssistantModeController } from './features/beauty-consulting/mode-controller.js';
+import {
+  createBeautyStreamState,
+  handleBeautyUISpec,
+  isPhotoAnalysisMessage,
+  flushBeautyStreamComplete,
+  flushBeautyStreamError,
+} from './features/beauty-consulting/stream-handler.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
 import { playTtsAudio } from '../common/tts-player.js';
@@ -114,6 +123,9 @@ function isSafeCSSColor(value: string): boolean {
 function isActionLike(value: unknown): value is ActionPayload {
   return typeof value === 'object' && value !== null && typeof (value as Record<string, unknown>).type === 'string';
 }
+
+import type { AssistantMode } from './assistant-mode.js';
+import { asRecord } from './assistant-mode.js';
 
 /**
  * Floating AI chat widget with streaming NDJSON responses, product cards, and comparison tables.
@@ -242,6 +254,21 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _consecutiveErrorCount = 0;
   /** Last error message text for deduplication. */
   private _lastErrorMessage = '';
+  private _modeController = new AssistantModeController();
+  /** @deprecated Alias for backward compat in tests. Use _modeController.mode. */
+  get _assistantMode(): AssistantMode {
+    return this._modeController.mode;
+  }
+  set _assistantMode(value: AssistantMode) {
+    this._modeController.mode = value;
+  }
+  /** @deprecated Alias for backward compat in tests. Use _modeController.uiHints. */
+  get _uiHints(): Record<string, unknown> | null {
+    return this._modeController.uiHints;
+  }
+  set _uiHints(value: Record<string, unknown> | null) {
+    this._modeController.uiHints = value;
+  }
 
   protected async onInit(config: ChatWidgetConfig): Promise<void> {
     this._i18n = this._resolveI18n(config);
@@ -417,6 +444,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         onReleasePresentationFocus: () => this._releasePresentationFocus(),
       },
     });
+    this._applyUiHints();
 
     // Extended mode manager for host PDP maximize/minimize
     this._extendedModeManager = new ExtendedModeManager({
@@ -815,6 +843,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._presentation.reset();
     this._drawer?.setPresentationFocus(null);
     this._drawer?.setFormerMessagesButtonVisible(false);
+    if (this._modeController.reset()) {
+      this._drawer?.setInputPlaceholder(this._i18n.inputPlaceholder);
+      this._drawer?.setAttachmentControlsVisible(true);
+      this._drawer?.setBeautyPhotoStepCard({ visible: false });
+    }
   }
 
   /**
@@ -1397,10 +1430,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!hasUserMessages) {
       ga.trackConversationStart();
     }
-    // Image upload from Chat Input uses findSimilar (not inputText) per wire protocol
+    debugLog('chat', 'sendMessage', {
+      mode: this._assistantMode,
+      hasAttachment: attachment !== undefined,
+      textLength: text.length,
+    });
     const action: ActionPayload =
       attachment !== undefined
-        ? { title: text, type: 'findSimilar', payload: text ? { text } : {} }
+        ? { title: text, type: this._modeController.resolveAttachmentActionType(), payload: text ? { text } : {} }
         : { title: text, type: 'user_message', payload: text };
     if (attachment !== undefined) {
       this._sendAction(action, { attachment });
@@ -1416,6 +1453,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     for (const item of queued) {
       this._sendMessage(item.text, item.attachment);
     }
+  }
+
+  /** Apply ui_hints from the backend CONTEXT event — delegates to mode controller. */
+  private _applyUiHints(): void {
+    this._modeController.applyUiHints(this._drawer, this._i18n.inputPlaceholder, () => {
+      this._choicePrompterEl?.remove();
+      this._choicePrompterEl = null;
+      this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+    });
+  }
+
+  private _handleRedirectMetadata(redirectPayload: unknown): void {
+    this._modeController.handleRedirect(redirectPayload);
   }
 
   private _sendAction(action: ActionPayload, options?: SendActionOptions): void {
@@ -1538,6 +1588,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const shouldShortCircuitUnavailableContext =
       !options?.silent &&
+      this._assistantMode === 'shopping' &&
       this._hasUnavailableProductContext() &&
       (action.type === 'user_message' || action.type === 'inputText');
     if (shouldShortCircuitUnavailableContext) {
@@ -1660,6 +1711,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isControlGroup: this.config.session?.abTestVariant === 'control',
       isMobile: this._isMobileViewport,
     };
+    if (!this._modeController.isShopping) {
+      meta.assistantMode = this._modeController.mode;
+    }
     if (this.config.session?.viewId !== undefined) {
       meta.viewId = this.config.session.viewId;
     }
@@ -1716,6 +1770,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     let panelListEligibleForAiZone = false;
     let aiAnalysisUiReceivedForPanel = false;
     let streamDone = false;
+    const beautyStreamState = createBeautyStreamState();
     /** AITopPicks / AIGroupingCards often arrive before product_list; flush when grid mounts. */
     let pendingPanelAiSpec: UISpec | null = null;
 
@@ -1757,6 +1812,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (extra?.conversationMode) {
             this._conversationMode = extra.conversationMode;
           }
+          if (extra?.renderHint) {
+            botMsg.renderHint = extra.renderHint;
+          }
 
           this.track(
             streamChunkEvent(this.analyticsContext(), {
@@ -1770,8 +1828,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           // KVKK filtering: always strip KVKK block from display text.
           // Show banner on first encounter only.
+          // Prefer backend `kvkk` flag; fall back to keyword scanning for old backends.
           let displayText = localBotText;
-          if (isFinal && containsKvkk(displayText)) {
+          const isKvkkContent = extra?.kvkk === true || containsKvkk(displayText);
+          if (isFinal && isKvkkContent) {
             const acctId = this.config.accountId;
             if (!isKvkkShown(acctId)) {
               const kvkkHtml = extractKvkkBlock(displayText);
@@ -1808,35 +1868,40 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             botMsg.status = 'done';
             ga.trackMessageReceived();
 
-            // Apply typewriter animation to the final bot text
-            const bubbleTextEl = this._shadow?.querySelector(
-              `[data-message-id="${botMsg.id}"] .gengage-chat-bubble-text`,
-            ) as HTMLElement | null;
-            if (bubbleTextEl) {
-              this._activeTypewriter?.cancel();
-              const mentions = extra?.productMentions;
-              this._activeTypewriter = typewriteHtml({
-                container: bubbleTextEl,
-                html: sanitizeHtml(displayText),
-                onTick: () => this._drawer?.scrollToBottomIfNeeded(),
-                onComplete: () => {
-                  this._activeTypewriter = null;
-                  // Link product mentions after typewriter finishes
-                  if (mentions && mentions.length > 0 && bubbleTextEl) {
-                    linkProductMentions({
-                      container: bubbleTextEl,
-                      mentions,
-                      onProductClick: (sku) => {
-                        this._sendAction({
-                          title: mentions.find((m) => m.sku === sku)?.short_name ?? sku,
-                          type: 'launchSingleProduct',
-                          payload: { sku },
-                        });
-                      },
-                    });
-                  }
-                },
-              });
+            // Photo analysis messages render a structured card — skip typewriter.
+            if (isPhotoAnalysisMessage(botMsg)) {
+              this._drawer?.updateBotMessage(botMsg.id, displayText, 'photo_analysis', botMsg.photoAnalysis);
+            } else {
+              // Apply typewriter animation to the final bot text
+              const bubbleTextEl = this._shadow?.querySelector(
+                `[data-message-id="${botMsg.id}"] .gengage-chat-bubble-text`,
+              ) as HTMLElement | null;
+              if (bubbleTextEl) {
+                this._activeTypewriter?.cancel();
+                const mentions = extra?.productMentions;
+                this._activeTypewriter = typewriteHtml({
+                  container: bubbleTextEl,
+                  html: sanitizeHtml(displayText),
+                  onTick: () => this._drawer?.scrollToBottomIfNeeded(),
+                  onComplete: () => {
+                    this._activeTypewriter = null;
+                    // Link product mentions after typewriter finishes
+                    if (mentions && mentions.length > 0 && bubbleTextEl) {
+                      linkProductMentions({
+                        container: bubbleTextEl,
+                        mentions,
+                        onProductClick: (sku) => {
+                          this._sendAction({
+                            title: mentions.find((m) => m.sku === sku)?.short_name ?? sku,
+                            type: 'launchSingleProduct',
+                            payload: { sku },
+                          });
+                        },
+                      });
+                    }
+                  },
+                });
+              }
             }
           }
         },
@@ -1854,6 +1919,29 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const rootElement = spec.elements[spec.root];
           const componentType = rootElement?.type ?? 'unknown';
+
+          // Beauty consulting UISpec components — delegated to feature handler.
+          if (
+            handleBeautyUISpec(
+              componentType,
+              rootElement?.props ?? {},
+              beautyStreamState,
+              {
+                drawer: this._drawer,
+                ensureRendered: () => this._ensureAssistantMessageRendered(botMsg),
+                cancelTypewriter: () => {
+                  this._activeTypewriter?.cancel();
+                  this._activeTypewriter = null;
+                },
+                sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
+                streamDone,
+              },
+              botMsg,
+            )
+          ) {
+            return;
+          }
+
           const similarsAppendGrid = componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
           /** PDP akışında yan panel kapalı: tam detay + benzer ürün grid’i yalnızca sohbette. */
           const skipSidePanelForUISpec =
@@ -1944,6 +2032,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
             this._panel.updateTopBar(titleType, backendTitle);
             this._panel.updateExtendedMode(componentType);
+            if (this._isMobileViewport && isPdpAutoLaunch) {
+              this._drawer?.hideMobilePanel();
+            }
 
             // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
             if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
@@ -2106,6 +2197,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             effectivePanelHint === 'panel' &&
             !skipSidePanelForUISpec &&
             productGridChildCount > 1 &&
+            !this._modeController.isChoicePrompterHidden &&
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
@@ -2262,6 +2354,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               event.meta.message_id !== undefined
             ) {
               this._lastBackendContext = event.meta as import('../common/types.js').BackendContext;
+              const panel = asRecord(event.meta.panel);
+              if (panel) {
+                this._modeController.updateFromContext(panel);
+                this._applyUiHints();
+              }
             }
 
             // Panel loading indicator
@@ -2314,6 +2411,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 target: event.meta.redirectTarget ?? null,
                 payload: event.meta.redirect ?? null,
               });
+              debugLog('redirect', 'redirect dispatched', {
+                target: event.meta.redirectTarget ?? null,
+              });
+              this._handleRedirectMetadata(event.meta.redirect);
             }
 
             // Analyze animation — show panel loading skeleton with pulse
@@ -2332,12 +2433,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               const thinkingMessages = Array.isArray(event.meta.thinkingMessages)
                 ? event.meta.thinkingMessages.filter((item): item is string => typeof item === 'string')
                 : [];
+              const loadingText = typeof event.meta.loadingText === 'string' ? event.meta.loadingText : undefined;
               if (thinkingMessages.length > 0) {
-                this._drawer?.setThinkingSteps(thinkingMessages);
+                // Beauty/watch modes: condense long thinking lists to 2 steps + loading text.
+                // Standard shopping mode: show all thinking messages unmodified.
+                const normalizedThinking =
+                  loadingText && this._modeController.shouldCondenseThinking()
+                    ? [...thinkingMessages.slice(0, 2), loadingText]
+                    : thinkingMessages;
+                this._drawer?.setThinkingSteps(normalizedThinking);
               }
-              if (typeof event.meta.loadingText === 'string') {
-                this._drawer?.addThinkingStep(event.meta.loadingText);
-                this._bridge?.send('loadingMessage', { text: event.meta.loadingText });
+              if (typeof loadingText === 'string' && loadingText.length > 0) {
+                this._drawer?.addThinkingStep(loadingText);
+                this._bridge?.send('loadingMessage', { text: loadingText });
               }
             }
 
@@ -2390,6 +2498,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
           this._drawer?.clearInputAreaChips();
+          flushBeautyStreamError(beautyStreamState, {
+            drawer: this._drawer,
+            ensureRendered: () => {},
+            cancelTypewriter: () => {},
+            sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
+            streamDone: true,
+          });
           // Capture panel state before resetting — needed for error gating below
           const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
@@ -2528,19 +2643,27 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
+          flushBeautyStreamComplete(beautyStreamState, {
+            drawer: this._drawer,
+            ensureRendered: () => {},
+            cancelTypewriter: () => {},
+            sendSkipMessage: () => this._sendMessage(this._i18n.beautyPhotoStepSkipMessage),
+            streamDone: true,
+          });
+          const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
-          panelContentReceived = false;
           // Detect failed PDP auto-launch: silent launch action that produced
           // no visible content (no bot text, no panel). Show a soft fallback
           // message so the user isn't left with an empty chat.
-          if (isPdpAutoLaunch && !localBotText && !panelContentReceived) {
+          if (isPdpAutoLaunch && !localBotText && !hadPanelContent) {
             const fallback = this._i18n.productNotFoundMessage;
             botMsg.content = fallback;
             this._ensureAssistantMessageRendered(botMsg);
             this._drawer?.updateBotMessage(botMsg.id, fallback);
             this._markUnavailableProductContext();
           }
+          panelContentReceived = false;
           if (isPdpAutoLaunch) {
             this._pdpPrimingInFlight = false;
             const hadQueuedMessages = this._queuedUserMessages.length > 0;

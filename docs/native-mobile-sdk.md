@@ -4,14 +4,15 @@ This guide covers direct Android/iOS app integration with `@gengage/assistant-fe
 
 ## What You Get
 
-- One WebView overlay that hosts chat + QNA + simrel widgets.
+- One WebView overlay that hosts chat plus optional PDP widgets.
 - Inbound native commands (`openChat`, `closeChat`, `updateContext`, `updateSku`, `setSession`, `destroy`).
 - Outbound widget/native events through JSON messages.
 - Pre-ready command queue: native commands sent before overlay init are replayed after controller attach.
 - Mobile-safe defaults in `initNativeOverlayWidgets(...)`:
   - `onAddToCart` and `onProductNavigate` auto-forward to native bridge messages.
-  - QNA/SimRel auto-disable when no mount exists (avoids noisy mount warnings).
-  - If QNA/SimRel are explicitly enabled but mount is missing, a default mount is auto-created.
+  - QNA and SimRel auto-disable when no mount exists (avoids noisy mount warnings).
+  - If QNA or SimRel are explicitly enabled but mount is missing, a default mount is auto-created.
+  - SimBut does not auto-create mounts in native mode; provide an explicit PDP image-wrapper target if you want the find-similar pill in the WebView.
 
 ## Runtime Bridge Targets
 
@@ -54,6 +55,8 @@ Minimal bootstrap:
   });
 </script>
 ```
+
+If you also want SimBut in native mode, include a relatively positioned PDP image wrapper in the WebView HTML and pass `simbut: { mountTarget: '#your-gallery-wrapper' }`. Unlike QNA and SimRel, the native bootstrap does not synthesize a SimBut mount for you.
 
 ## Native -> WebView Commands
 

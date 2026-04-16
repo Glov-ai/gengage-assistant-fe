@@ -34,6 +34,8 @@ Rules:
 - `correlation_id` must map to the same journey identifier used in backend requests.
 - `event_name` is lowercase snake-case with dot namespaces (example: `stream.start`).
 
+Implementation note: the current typed stream and widget lifecycle helpers in code use `chat | qna | simrel` as the first-class widget union. SimBut currently contributes through GA `gengage-find-similars` events and host callbacks rather than a dedicated stream analytics family.
+
 ## Event Families
 
 ### Stream Lifecycle
@@ -179,7 +181,7 @@ in GA dashboards:
 | `gengage-cart-add` | Product added to cart | `gengage_sku`, `gengage_quantity` |
 | `gengage-like-product` | Favorite heart toggled | `gengage_sku` |
 | `gengage-like-list` | Favorites list opened | — |
-| `gengage-find-similars` | Similar products requested | `gengage_sku` |
+| `gengage-find-similars` | Find-similar requested from chat or SimBut | `gengage_sku` |
 | `gengage-compare-selected` | Compare selected products | `gengage_skus`, `gengage_product_count` |
 | `gengage-compare-preselection` | Product pre-selected for compare | `gengage_sku` |
 | `gengage-compare-clear` | Comparison selection cleared | — |

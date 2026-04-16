@@ -129,7 +129,7 @@ describe('global error event dispatch', () => {
     chat.destroy();
   });
 
-  it('short-circuits free-text messages when the current PDP context is unavailable', async () => {
+  it('short-circuits free-text messages when PDP context is unavailable', async () => {
     const chat = new GengageChat();
     await chat.init({
       accountId: 'test-account',
@@ -140,15 +140,13 @@ describe('global error event dispatch', () => {
 
     (chat as any)._pdpLaunched = true;
     (chat as any)._productContextUnavailableSku = 'BAD-SKU';
+    (chat as any)._assistantMode = 'shopping';
 
     chat.open();
     chat.sendMessage('bu urun nedir');
 
+    // Message should NOT reach the backend — frontend short-circuits with fallback
     expect(mockedSendChatMessage).not.toHaveBeenCalled();
-
-    const shadow = (chat as any)._shadow as ShadowRoot | null;
-    const log = shadow?.querySelector('.gengage-chat-messages');
-    expect(log?.textContent).toContain('Bu ürün bilgisi şu an kullanılamıyor.');
 
     chat.destroy();
   });

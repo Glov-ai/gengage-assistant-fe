@@ -8,6 +8,8 @@ import { createKvkkBanner } from './KvkkBanner.js';
 import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
 import type { ThumbnailEntry } from './ThumbnailsColumn.js';
+import { applyBeautyPhotoStepCard } from '../features/beauty-consulting/drawer-extensions.js';
+import { renderPhotoAnalysisBubble } from './PhotoAnalysisCard.js';
 
 /** Generic fallback icon (right-arrow) used when a pill specifies an icon name not in the map. */
 const DEFAULT_ACTION_ICON =
@@ -238,6 +240,15 @@ export class ChatDrawer {
   private _typingLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelLoadingBinding: LoadingSequenceBinding | null = null;
   private _panelAiZoneLoadingBinding: LoadingSequenceBinding | null = null;
+  private _beautyPhotoStepEl: HTMLElement | null = null;
+
+  private _renderPhotoAnalysisCard(
+    container: HTMLElement,
+    content: string,
+    structured?: { summary: string; clues: string[]; nextQuestion?: string },
+  ): void {
+    renderPhotoAnalysisBubble(container, content, this.i18n.photoAnalysisBadge, structured);
+  }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
     this._options = options;
@@ -291,7 +302,7 @@ export class ChatDrawer {
       _handleEl = handleEl;
     }
 
-    // Header — branded dark bar
+    // Header — branded surface bar
     const header = document.createElement('div');
     header.className = 'gengage-chat-header gds-shell-header';
     header.dataset['gengagePart'] = 'chat-header';
@@ -1147,7 +1158,12 @@ export class ChatDrawer {
       text.className = 'gengage-chat-bubble-text';
       text.dataset['gengagePart'] = 'chat-message-text';
       if (message.role === 'assistant') {
-        text.innerHTML = sanitizeHtml(message.content);
+        if (message.renderHint === 'photo_analysis') {
+          bubble.classList.add('gengage-chat-bubble--photo-analysis');
+          this._renderPhotoAnalysisCard(text, message.content, message.photoAnalysis);
+        } else {
+          text.innerHTML = sanitizeHtml(message.content);
+        }
         // Intercept all links in bot HTML
         if (this._onLinkClick) {
           const links = text.querySelectorAll('a[href]');
@@ -1421,6 +1437,37 @@ export class ChatDrawer {
 
   getElement(): HTMLElement {
     return this.root;
+  }
+
+  /** Opens the hidden file picker used by the attachment flow. */
+  openAttachmentPicker(): void {
+    this._fileInput.click();
+  }
+
+  /** Show/hide camera attach controls in the input shell. */
+  setAttachmentControlsVisible(visible: boolean): void {
+    if (!this._attachWrapEl) return;
+    this._attachWrapEl.style.display = visible ? '' : 'none';
+    if (!visible) this._closeAttachMenu();
+  }
+
+  /** Beauty mode selfie helper card shown above the input area. */
+  setBeautyPhotoStepCard(options: {
+    visible: boolean;
+    processing?: boolean;
+    onSkip?: (() => void) | undefined;
+    title?: string | undefined;
+    description?: string | undefined;
+    uploadLabel?: string | undefined;
+    skipLabel?: string | undefined;
+  }): void {
+    this._beautyPhotoStepEl = applyBeautyPhotoStepCard(
+      this._beautyPhotoStepEl,
+      this._conversationEl ?? null,
+      options,
+      this.i18n,
+      () => this.openAttachmentPicker(),
+    );
   }
 
   /** Stage a file attachment for sending. Shows preview. */
@@ -2305,7 +2352,12 @@ export class ChatDrawer {
   }
 
   /** Update a bot message's text content in the DOM (e.g. for fallback messages). */
-  updateBotMessage(messageId: string, html: string): void {
+  updateBotMessage(
+    messageId: string,
+    html: string,
+    renderHint?: string,
+    photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string },
+  ): void {
     const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
     let textEl = bubble.querySelector('.gengage-chat-bubble-text');
@@ -2314,7 +2366,13 @@ export class ChatDrawer {
       textEl.className = 'gengage-chat-bubble-text';
       bubble.appendChild(textEl);
     }
-    textEl.innerHTML = sanitizeHtml(html);
+    if (renderHint === 'photo_analysis') {
+      bubble.classList.add('gengage-chat-bubble--photo-analysis');
+      this._renderPhotoAnalysisCard(textEl as HTMLElement, html, photoAnalysis);
+    } else {
+      bubble.classList.remove('gengage-chat-bubble--photo-analysis');
+      textEl.innerHTML = sanitizeHtml(html);
+    }
     this._scrollToBottom(false);
   }
 
@@ -2403,6 +2461,10 @@ export class ChatDrawer {
     if (this._formerMessagesBtn) {
       this._formerMessagesBtn.style.display = visible ? '' : 'none';
     }
+  }
+
+  setInputPlaceholder(placeholder: string): void {
+    this.inputEl.placeholder = placeholder;
   }
 
   private _applyPresentationCollapsed(): void {
@@ -2524,16 +2586,32 @@ export class ChatDrawer {
 
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      const focusable = this.root.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusable = Array.from(
+        this.root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => {
+        const styles = getComputedStyle(el);
+        if (el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
+        if (styles.display === 'none' || styles.visibility === 'hidden') return false;
+        return el.getClientRects().length > 0;
+      });
       if (focusable.length === 0) return;
       const first = focusable[0]!;
       const last = focusable[focusable.length - 1]!;
 
-      // Use getRootNode() to resolve activeElement inside Shadow DOM
+      const composedTarget =
+        e.composedPath().find((node): node is HTMLElement => node instanceof HTMLElement && this.root.contains(node)) ??
+        null;
       const rootNode = this.root.getRootNode();
-      const active = rootNode instanceof ShadowRoot ? rootNode.activeElement : document.activeElement;
+      const activeCandidate =
+        composedTarget ??
+        (rootNode instanceof ShadowRoot && rootNode.activeElement instanceof HTMLElement
+          ? rootNode.activeElement
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null);
+      const active = activeCandidate && this.root.contains(activeCandidate) ? activeCandidate : null;
 
       if (e.shiftKey) {
         if (active === first || !this.root.contains(active)) {
