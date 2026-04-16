@@ -73,12 +73,12 @@ test.describe('Catalog — SimRel Components', () => {
 });
 
 test.describe('Catalog — Theme Comparison', () => {
-  test('theme grid renders with all 12 merchants', async ({ page }) => {
+  test('theme grid renders merchant presets', async ({ page }) => {
     await page.goto('http://localhost:3002/#/themes');
     await page.waitForSelector('.catalog-theme-grid');
     await page.waitForTimeout(500);
     const cards = page.locator('.catalog-theme-card');
-    await expect(cards).toHaveCount(12);
+    expect(await cards.count()).toBeGreaterThanOrEqual(12);
     await expect(page.locator('.catalog-theme-grid')).toHaveScreenshot('theme-grid.png');
   });
 });

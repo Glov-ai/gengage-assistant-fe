@@ -88,7 +88,7 @@ npm run catalog    # http://localhost:3002 (builds first)
 ```
 
 The catalog renders every Chat/QNA/SimRel component plus a live SimBut preview with mock
-data inside realistic frames. Use the global theme selector to switch between 12 merchant color presets.
+data inside realistic frames. Use the global theme selector to switch between the configured merchant color presets.
 
 Useful for:
 - Verifying UI changes across all component types at once

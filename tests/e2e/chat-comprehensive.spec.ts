@@ -29,14 +29,24 @@ test.describe('Chat widget — launcher positioning & style', () => {
     expect(centerY).toBeGreaterThan(viewport!.height / 2);
   });
 
-  test('launcher renders the configured image-mode presentation', async ({ page }) => {
+  test('launcher renders the configured pill-style image-mode presentation', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
     await expect(launcher.locator('img')).toBeVisible();
+    await expect(launcher).toContainText("Koçtaş'a Sor");
 
-    const bgColor = await launcher.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)' || bgColor.includes('0, 0, 0, 0')).toBe(true);
+    const styles = await launcher.evaluate((el) => {
+      const computed = getComputedStyle(el);
+      return {
+        width: parseFloat(computed.width),
+        height: parseFloat(computed.height),
+        backgroundColor: computed.backgroundColor,
+      };
+    });
+    expect(styles.width).toBeGreaterThan(styles.height);
+    expect(styles.height).toBeGreaterThanOrEqual(56);
+    expect(styles.backgroundColor === 'transparent' || styles.backgroundColor.includes('0, 0, 0, 0')).toBe(false);
   });
 
   test('launcher z-index is high (>= 1000)', async ({ page }) => {
@@ -64,7 +74,7 @@ test.describe('Chat widget — drawer structure', () => {
     await expect(drawer).not.toHaveClass(/gengage-chat-drawer--hidden/, { timeout: 5000 });
   });
 
-  test('header has a dark background color', async ({ page }) => {
+  test('header uses a solid light surface background', async ({ page }) => {
     const header = page.locator('.gengage-chat-header');
     await expect(header).toBeVisible({ timeout: 5000 });
 
@@ -72,10 +82,9 @@ test.describe('Chat widget — drawer structure', () => {
     const match = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     expect(match).toBeTruthy();
     const [, r, g, b] = match!;
-    // Dark background: all channels should be below ~100
-    expect(Number(r)).toBeLessThan(100);
-    expect(Number(g)).toBeLessThan(100);
-    expect(Number(b)).toBeLessThan(100);
+    expect(Number(r)).toBeGreaterThan(180);
+    expect(Number(g)).toBeGreaterThan(180);
+    expect(Number(b)).toBeGreaterThan(180);
   });
 
   test('input placeholder contains the configured text', async ({ page }) => {
@@ -88,14 +97,13 @@ test.describe('Chat widget — drawer structure', () => {
     expect(placeholder!.length).toBeGreaterThan(0);
   });
 
-  test('header contains powered-by text', async ({ page }) => {
+  test('header contains the configured powered-by link', async ({ page }) => {
     const header = page.locator('.gengage-chat-header');
     await expect(header).toBeVisible({ timeout: 5000 });
 
-    const headerText = await header.textContent();
-    expect(headerText).toBeTruthy();
-    // The header renders the title + "Powered by Gengage" link
-    expect(headerText).toContain('Gengage');
+    const poweredByLink = header.locator('a');
+    await expect(poweredByLink).toBeVisible();
+    await expect(poweredByLink).toContainText('AI Asistan');
   });
 
   test('messages container has aria-live="polite"', async ({ page }) => {

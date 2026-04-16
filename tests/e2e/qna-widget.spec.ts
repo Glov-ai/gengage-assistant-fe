@@ -45,12 +45,16 @@ test.describe('QNA widget', () => {
     expect(text).toBeTruthy();
   });
 
-  test('QNA text input and send button are rendered', async ({ page }) => {
+  test('QNA text input renders and send button activates when text is entered', async ({ page }) => {
     const input = page.locator('#koctas-qna-section .gengage-qna-input');
     await expect(input).toBeVisible({ timeout: 10000 });
 
     const send = page.locator('#koctas-qna-section .gengage-qna-send');
+    await expect(send).toHaveClass(/gengage-qna-icon-btn--hidden/);
+
+    await input.fill('Merhaba');
     await expect(send).toBeVisible({ timeout: 10000 });
+    await expect(send).toBeEnabled();
   });
 
   test('QNA has button group with accessible role', async ({ page }) => {

@@ -449,7 +449,7 @@ npm run catalog    # http://localhost:3002 (builds first)
 
 Key details:
 - **Hash-based SPA** with sidebar navigation for all 30+ components and widget previews
-- **Global theme selector** applies any of the 12 merchant presets catalog-wide
+- **Global theme selector** applies any configured merchant preset catalog-wide
 - **Realistic frames**: chat components in a chat-drawer frame, QNA in a PDP frame, SimRel in a product section, SimBut over a PDP image wrapper
 - **Isolated rendering** via `renderUISpecWithRegistry()` with stub contexts (no widget lifecycle)
 - **Live-widget preview for SimBut** because it is not UISpec-driven
