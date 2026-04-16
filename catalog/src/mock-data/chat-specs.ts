@@ -448,14 +448,24 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
   },
 
   PhotoAnalysisCard: {
-    description: 'Structured photo analysis card with summary, clues, and follow-up question.',
+    description: 'Structured photo analysis card with strengths, focus points, celeb vibe, and follow-up question.',
     spec: {
       root: 'root',
       elements: {
         root: {
           type: 'PhotoAnalysisCard',
           props: {
-            summary: 'Cildiniz karma tip gorunuyor — T bolgesi yagli, yanaklar kuru.',
+            summary: 'Yuz hatlarinizda yumusak ama belirgin bir denge var.',
+            strengths: ['Belirgin goz cercevesi', 'Dolgun dudak hatti'],
+            focus_points: ['T bolgesinde parlama kontrolu', 'Yanaklarda ton esitleme'],
+            celeb_style: 'Hailey Bieber temiz isiltisi',
+            celeb_style_reason: 'Dogal parlakligi koruyup yumusak vurgularla guzel calisir.',
+            details: [
+              'T bolgesinde parlama ve genis gozenekler mevcut',
+              'Yanak bolgesinde hafif kuruluk ve soyulma',
+              'Genel cilt tonu esit, belirgin lekelenme yok',
+              'Dudak cevresi hafif dehidrate gorunuyor',
+            ],
             clues: [
               'T bolgesinde parlama ve genis gozenekler mevcut',
               'Yanak bolgesinde hafif kuruluk ve soyulma',

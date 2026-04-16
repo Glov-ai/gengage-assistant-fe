@@ -220,8 +220,13 @@ test.describe('Beauty consulting components', () => {
 
     const card = page.locator('.gengage-chat-photo-analysis-card');
     await expect(card).toBeVisible();
-    await expect(card.locator('.gengage-chat-photo-analysis-summary')).toContainText('Cildiniz karma tip gorunuyor');
-    await expect(card.locator('.gengage-chat-photo-analysis-points li')).toHaveCount(4);
+    await expect(card.locator('.gengage-chat-photo-analysis-summary')).toContainText(
+      'Yuz hatlarinizda yumusak ama belirgin bir denge var',
+    );
+    await expect(card.locator('.gengage-chat-photo-analysis-section--strengths li')).toHaveCount(2);
+    await expect(card.locator('.gengage-chat-photo-analysis-section--focus li')).toHaveCount(2);
+    await expect(card.locator('.gengage-chat-photo-analysis-celeb-name')).toContainText('Hailey Bieber');
+    await expect(card.locator('.gengage-chat-photo-analysis-details-summary')).toContainText('Detayli analizi gor');
     await expect(card.locator('.gengage-chat-photo-analysis-next')).toContainText('Gunluk bakim rutininiz var mi');
   });
 

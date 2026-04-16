@@ -355,6 +355,10 @@ await chatWidget.init({
 
     // PhotoAnalysisCard — skin analysis badge
     photoAnalysisBadge: 'Cilt Analizi',
+    photoAnalysisStrengthsLabel: 'One Cikanlar',
+    photoAnalysisFocusLabel: 'Odak Noktalari',
+    photoAnalysisCelebStyleLabel: 'Celeb Vibe Eslesmesi',
+    photoAnalysisSeeMoreLabel: 'Detayli analizi gor',
   },
 });
 ```

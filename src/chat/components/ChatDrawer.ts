@@ -245,9 +245,29 @@ export class ChatDrawer {
   private _renderPhotoAnalysisCard(
     container: HTMLElement,
     content: string,
-    structured?: { summary: string; clues: string[]; nextQuestion?: string },
+    structured?: {
+      summary: string;
+      clues: string[];
+      strengths?: string[];
+      focusPoints?: string[];
+      celebStyle?: string;
+      celebStyleReason?: string;
+      details?: string[];
+      nextQuestion?: string;
+    },
   ): void {
-    renderPhotoAnalysisBubble(container, content, this.i18n.photoAnalysisBadge, structured);
+    renderPhotoAnalysisBubble(
+      container,
+      content,
+      {
+        badge: this.i18n.photoAnalysisBadge,
+        strengths: this.i18n.photoAnalysisStrengthsLabel,
+        focus: this.i18n.photoAnalysisFocusLabel,
+        celebStyle: this.i18n.photoAnalysisCelebStyleLabel,
+        seeMore: this.i18n.photoAnalysisSeeMoreLabel,
+      },
+      structured,
+    );
   }
 
   constructor(container: HTMLElement, options: ChatDrawerOptions) {
@@ -2355,7 +2375,16 @@ export class ChatDrawer {
     messageId: string,
     html: string,
     renderHint?: string,
-    photoAnalysis?: { summary: string; clues: string[]; nextQuestion?: string },
+    photoAnalysis?: {
+      summary: string;
+      clues: string[];
+      strengths?: string[];
+      focusPoints?: string[];
+      celebStyle?: string;
+      celebStyleReason?: string;
+      details?: string[];
+      nextQuestion?: string;
+    },
   ): void {
     const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
     if (!bubble) return;
