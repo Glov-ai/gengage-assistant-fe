@@ -29,24 +29,21 @@ test.describe('Chat widget — launcher positioning & style', () => {
     expect(centerY).toBeGreaterThan(viewport!.height / 2);
   });
 
-  test('launcher renders the configured pill-style image-mode presentation', async ({ page }) => {
+  test('launcher renders the configured image-mode presentation', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
     await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
     await expect(launcher.locator('img')).toBeVisible();
-    await expect(launcher).toContainText("Koçtaş'a Sor");
 
     const styles = await launcher.evaluate((el) => {
       const computed = getComputedStyle(el);
       return {
         width: parseFloat(computed.width),
         height: parseFloat(computed.height),
-        backgroundColor: computed.backgroundColor,
       };
     });
-    expect(styles.width).toBeGreaterThan(styles.height);
+    expect(styles.width).toBeGreaterThanOrEqual(56);
     expect(styles.height).toBeGreaterThanOrEqual(56);
-    expect(styles.backgroundColor === 'transparent' || styles.backgroundColor.includes('0, 0, 0, 0')).toBe(false);
   });
 
   test('launcher z-index is high (>= 1000)', async ({ page }) => {

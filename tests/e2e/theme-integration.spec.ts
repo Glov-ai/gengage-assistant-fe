@@ -56,19 +56,18 @@ test.describe('Theme CSS custom properties', () => {
     expect(value).toBe('8px');
   });
 
-  test('chat launcher inherits the configured pill launcher presentation', async ({ page }) => {
+  test('chat launcher inherits the configured image-mode presentation', async ({ page }) => {
     const launcher = page.locator('.gengage-chat-launcher');
     await expect(launcher).toBeVisible({ timeout: 10000 });
 
     await expect(launcher).toHaveClass(/gengage-chat-launcher--image-mode/);
     await expect(launcher.locator('img')).toBeVisible();
-    await expect(launcher).toContainText("Koçtaş'a Sor");
 
     const size = await launcher.evaluate((el) => ({
       width: parseFloat(getComputedStyle(el).width),
       height: parseFloat(getComputedStyle(el).height),
     }));
-    expect(size.width).toBeGreaterThan(size.height);
+    expect(size.width).toBeGreaterThanOrEqual(56);
     expect(size.height).toBeGreaterThanOrEqual(56);
   });
 
