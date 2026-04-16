@@ -47,7 +47,7 @@ export interface AccountConfig {
 }
 ```
 
-`widgets.simbut` defaults to `false` in the runtime schema because it requires a PDP image-wrapper mount.
+`widgets.simbut` defaults to `false` in the runtime schema because it requires a merchant-provided PDP image-wrapper mount (`mounts.simbut`). Unlike QNA and SimRel, SimBut mounts directly into an existing host-page element and will not inject its own container.
 
 Additional optional fields:
 
@@ -66,7 +66,7 @@ Override default mount targets for QNA, SimRel, and optional SimBut widgets:
 | `mounts.chat` | `string` | (auto-injected) | CSS selector for chat mount point |
 | `mounts.qna` | `string` | (auto-injected) | CSS selector for QNA button row |
 | `mounts.simrel` | `string` | (auto-injected) | CSS selector for similar products grid |
-| `mounts.simbut` | `string` | `#gengage-simbut` | CSS selector for the relatively positioned PDP image wrapper |
+| `mounts.simbut` | `string` | **(merchant-provided, required)** | CSS selector for the relatively positioned PDP image wrapper. Must point to an existing element in the host page — unlike `qna`/`simrel`, SimBut does not inject its own mount node. `preflightDiagnostics` will report an error if SimBut is enabled but this is not set. |
 
 ### Analytics (`analytics`)
 

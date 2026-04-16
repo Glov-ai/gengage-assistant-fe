@@ -169,7 +169,7 @@ src/
   simrel/     # Similar products widget (GengageSimRel class + components)
   simbut/     # PDP image overlay pill widget (GengageSimBut class)
   native/     # Native WebView bridge exports
-  demos/        # Merchant-branded demo pages and framework integration examples
+demos/        # Merchant-branded demo pages and framework integration examples
 catalog/      # Visual component catalog (mock data, no backend)
 docs/         # Architecture, wire protocol, customization, analytics
 tests/        # Vitest unit tests + Playwright E2E

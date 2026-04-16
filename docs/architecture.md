@@ -185,23 +185,23 @@ GengageSimRel.init({ sku })
                      config.onProductNavigate(url, sku, sessionId)
 ```
 
-              ## Data Flow: SimBut Widget
+## Data Flow: SimBut Widget
 
-              ```
-              PDP image wrapper mount is available
-                │
-                ▼
-              GengageSimBut.init({ sku, imageUrl, chat | onFindSimilar })
-                │
-                ▼
-              Render absolute pill into the product image wrapper
-                │
-                ▼ (user taps pill)
-              Build findSimilar action payload from current SKU (+ optional imageUrl)
-                │
-                ├── config.onFindSimilar(detail)        → host-defined behavior
-                └── chat.openWithAction(action, { sku }) → opens chat and triggers similar-search flow
-              ```
+```
+PDP image wrapper mount is available
+  │
+  ▼
+GengageSimBut.init({ sku, imageUrl, chat | onFindSimilar })
+  │
+  ▼
+Render absolute pill into the product image wrapper
+  │
+  ▼ (user taps pill)
+Build findSimilar action payload from current SKU (+ optional imageUrl)
+  │
+  ├── config.onFindSimilar(detail)        → host-defined behavior
+  └── chat.openWithAction(action, { sku }) → opens chat and triggers similar-search flow
+```
 
 ---
 

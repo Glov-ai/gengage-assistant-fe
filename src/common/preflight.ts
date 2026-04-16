@@ -55,6 +55,22 @@ export function preflightDiagnostics(
     }
   }
 
+  // SimBut requires a merchant-provided mount target (the product image wrapper).
+  // If simbut is enabled but no mountTarget is explicitly configured, the overlay
+  // falls back to '#gengage-simbut'. That element does not exist on real merchant
+  // pages and must be provided explicitly. Validate the effective selector here so
+  // the merchant sees a clear diagnostic instead of a silent runtime no-op.
+  if (config.widgets.simbut.enabled && mounts.simbut === undefined) {
+    const defaultSimButSelector = '#gengage-simbut';
+    if (!document.querySelector(defaultSimButSelector)) {
+      warnings.push({
+        code: 'SIMBUT_MOUNT_REQUIRED',
+        message: `[gengage preflight] SimBut is enabled but no mount target is configured. Set mounts.simbut to your product image wrapper selector (e.g. "#product-gallery"). The default "${defaultSimButSelector}" was not found in the DOM.`,
+        severity: 'error',
+      });
+    }
+  }
+
   const idempotencyKey = config.gtm.idempotencyKey;
   if ((window as unknown as Record<string, unknown>)[idempotencyKey] !== undefined) {
     warnings.push({

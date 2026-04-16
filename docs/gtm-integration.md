@@ -17,7 +17,7 @@ await initOverlayWidgets({
   chat: { variant: 'floating', mobileBreakpoint: 992, mobileInitialState: 'half' },
   qna: { mountTarget: '#gengage-qna' },
   simrel: { mountTarget: '#gengage-simrel' },
-   simbut: { mountTarget: '#product-gallery' },
+  simbut: { mountTarget: '#product-gallery' },
 });
 ```
 
