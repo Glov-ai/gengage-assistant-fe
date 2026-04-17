@@ -254,6 +254,24 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
   },
 
+  sephoracomtr: {
+    accountId: 'sephoracomtr',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#101010',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#151515',
+      borderRadius: '12px',
+      fontFamily: '"Avenir Next", "Helvetica Neue", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatI18n: {
+      inputPlaceholder: 'Güzellik ürünü ara veya soru sor',
+      poweredBy: 'Sephora AI Asistan',
+    },
+  },
+
   saatvesaatcomtr: {
     accountId: 'saatvesaatcomtr',
     locale: 'tr',

@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Dev — sephoracomtr</title>
+    <style>
+      :root {
+        --brand-primary: #101010;
+        --brand-accent: #d21245;
+        --brand-bg: #f6f2f3;
+        --brand-surface: #ffffff;
+        --brand-text: #151515;
+        --brand-muted: #69616a;
+        --brand-border: #e8dde1;
+        --brand-font: 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(210, 18, 69, 0.08), transparent 28%),
+          linear-gradient(180deg, #fbf9fa 0%, var(--brand-bg) 100%);
+        color: var(--brand-text);
+        font-family: var(--brand-font);
+        line-height: 1.45;
+      }
+
+      .dev-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #111827;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1f2937;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 10px 16px;
+      }
+
+      .dev-header__title {
+        color: #f8fafc;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 0 6px;
+        letter-spacing: 0.02em;
+      }
+
+      .dev-header__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+      }
+
+      .dev-header__item strong {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+
+      .dev-header__item span {
+        color: #e2e8f0;
+      }
+
+      .host-shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+
+      .host-topbar {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--brand-border);
+        border-radius: 18px;
+        padding: 16px 20px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        backdrop-filter: blur(16px);
+      }
+
+      .host-topbar__brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--brand-primary);
+      }
+
+      .host-topbar__mark {
+        width: 22px;
+        height: 36px;
+        border-radius: 999px;
+        background: linear-gradient(
+          180deg,
+          #000 0 16%,
+          #fff 16% 32%,
+          #000 32% 48%,
+          #fff 48% 64%,
+          #000 64% 80%,
+          #fff 80% 100%
+        );
+        border: 1px solid #000;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+      }
+
+      .host-topbar__name {
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: 0.28em;
+      }
+
+      .host-topbar__sub {
+        display: block;
+        margin-top: 2px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--brand-muted);
+      }
+
+      .host-nav {
+        display: flex;
+        gap: 14px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: auto;
+      }
+
+      .host-nav span {
+        padding: 4px 0;
+      }
+
+      .host-nav span:first-child {
+        color: var(--brand-text);
+        font-weight: 700;
+        border-bottom: 2px solid var(--brand-accent);
+      }
+
+      .host-breadcrumb {
+        font-size: 12px;
+        color: var(--brand-muted);
+        margin: 10px 4px 16px;
+      }
+
+      .host-breadcrumb strong {
+        color: var(--brand-text);
+      }
+
+      .hero-layout {
+        display: grid;
+        grid-template-columns: minmax(340px, 1fr) minmax(360px, 500px);
+        gap: 22px;
+        align-items: start;
+        margin-bottom: 22px;
+      }
+
+      .gallery-card,
+      .summary-card,
+      .content-card,
+      .simrel-card {
+        background: var(--brand-surface);
+        border: 1px solid var(--brand-border);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(17, 17, 17, 0.04);
+      }
+
+      .gallery-card {
+        padding: 18px;
+      }
+
+      .gallery-main {
+        min-height: clamp(320px, 36vw, 480px);
+        border-radius: 16px;
+        border: 1px solid var(--brand-border);
+        background:
+          radial-gradient(circle at top right, rgba(210, 18, 69, 0.18), transparent 28%),
+          linear-gradient(135deg, #f7f3f4 0%, #ffffff 52%, #f3eef0 100%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        position: relative;
+      }
+
+      .gallery-main::before,
+      .gallery-main::after {
+        content: '';
+        position: absolute;
+        inset: 26px auto 26px 26px;
+        width: 8px;
+        border-radius: 999px;
+        background: linear-gradient(
+          180deg,
+          #111 0 15%,
+          #fff 15% 30%,
+          #111 30% 45%,
+          #fff 45% 60%,
+          #111 60% 75%,
+          #fff 75% 90%,
+          #111 90% 100%
+        );
+        box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.12);
+      }
+
+      .gallery-main::after {
+        inset: auto 26px 26px auto;
+      }
+
+      .bottle-wrap {
+        width: min(72%, 340px);
+        aspect-ratio: 0.72;
+        border-radius: 24px 24px 34px 34px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(249, 224, 219, 0.85)),
+          linear-gradient(180deg, #f5f5f5, #f1d4d9);
+        border: 1px solid rgba(17, 17, 17, 0.08);
+        display: grid;
+        place-items: center;
+        position: relative;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          0 30px 60px rgba(210, 18, 69, 0.12);
+      }
+
+      .bottle-wrap::before {
+        content: '';
+        position: absolute;
+        top: -36px;
+        width: 34%;
+        height: 54px;
+        border-radius: 14px 14px 6px 6px;
+        background: linear-gradient(180deg, #1a1a1a, #050505);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+      }
+
+      .bottle-label {
+        text-align: center;
+      }
+
+      .bottle-label strong {
+        display: block;
+        font-size: clamp(18px, 2vw, 24px);
+        letter-spacing: 0.18em;
+      }
+
+      .bottle-label span {
+        display: block;
+        margin-top: 8px;
+        color: var(--brand-muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+      }
+
+      .gallery-thumbs {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .gallery-thumb {
+        height: 86px;
+        border-radius: 12px;
+        border: 1px solid var(--brand-border);
+        background:
+          radial-gradient(circle at 70% 25%, rgba(210, 18, 69, 0.16), transparent 26%),
+          linear-gradient(140deg, #fff, #f3edef);
+      }
+
+      .summary-card {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 520px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .badge-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--brand-primary);
+      }
+
+      .eyebrow-note {
+        color: var(--brand-accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .summary-title {
+        margin: 0;
+        font-size: clamp(28px, 3vw, 38px);
+        line-height: 1.06;
+        letter-spacing: -0.03em;
+      }
+
+      .summary-copy {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
+      .summary-meta {
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .price-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .price-main {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--brand-primary);
+        letter-spacing: -0.03em;
+      }
+
+      .price-old {
+        font-size: 16px;
+        color: var(--brand-muted);
+        text-decoration: line-through;
+      }
+
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-accent);
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 11px 17px;
+        cursor: pointer;
+      }
+
+      .btn--primary {
+        background: var(--brand-primary);
+        color: #fff;
+      }
+
+      .btn--ghost {
+        background: rgba(210, 18, 69, 0.06);
+        color: var(--brand-accent);
+        border-color: rgba(210, 18, 69, 0.16);
+      }
+
+      .tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        color: var(--brand-muted);
+        background: #f8f4f5;
+        border: 1px solid var(--brand-border);
+      }
+
+      .feature-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--brand-muted);
+        font-size: 13px;
+        display: grid;
+        gap: 7px;
+      }
+
+      .content-card {
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+
+      .tab-pill {
+        border: 1px solid var(--brand-border);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 13px;
+        color: var(--brand-muted);
+        background: #fff;
+      }
+
+      .tab-pill--active {
+        color: var(--brand-primary);
+        border-color: rgba(17, 17, 17, 0.14);
+        background: rgba(17, 17, 17, 0.04);
+      }
+
+      .content-card p {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
+      .qna-section {
+        margin-top: 14px;
+        min-height: 72px;
+      }
+
+      .simrel-card {
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+
+      .simrel-mount {
+        min-height: 180px;
+      }
+
+      @media (max-width: 1060px) {
+        .hero-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-card {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .host-shell {
+          padding: 12px;
+        }
+
+        .host-topbar,
+        .gallery-card,
+        .summary-card,
+        .content-card,
+        .simrel-card {
+          border-radius: 14px;
+        }
+
+        .host-topbar {
+          padding: 14px 16px;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .host-topbar__name {
+          font-size: 22px;
+        }
+
+        .gallery-main {
+          min-height: 300px;
+        }
+
+        .gallery-thumbs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dev-header">
+      <p class="dev-header__title">Gengage Dev — sephoracomtr</p>
+      <div class="dev-header__row">
+        <span class="dev-header__item"><strong>sku:</strong> <span id="dev-sku">—</span></span>
+        <span class="dev-header__item"><strong>account:</strong> <span>sephoracomtr</span></span>
+        <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
+      </div>
+    </div>
+
+    <main class="host-shell">
+      <section class="host-topbar">
+        <div class="host-topbar__brand">
+          <span class="host-topbar__mark" aria-hidden="true"></span>
+          <div>
+            <div class="host-topbar__name">SEPHORA</div>
+            <span class="host-topbar__sub">Beauty Hub Demo</span>
+          </div>
+        </div>
+        <nav class="host-nav" aria-label="Main navigation">
+          <span>Yeni Gelenler</span>
+          <span>Makyaj</span>
+          <span>Cilt Bakımı</span>
+          <span>Parfüm</span>
+          <span>Saç</span>
+          <span>Kampanyalar</span>
+        </nav>
+      </section>
+
+      <p class="host-breadcrumb">Ana Sayfa / Makyaj / Ten / Fondöten / <strong id="breadcrumb-sku">—</strong></p>
+
+      <section class="hero-layout">
+        <article class="gallery-card">
+          <div class="gallery-main">
+            <div class="bottle-wrap" aria-label="Demo ürün görseli">
+              <div class="bottle-label">
+                <strong>SEPHORA</strong>
+                <span>BADgal BANG!</span>
+              </div>
+            </div>
+          </div>
+          <div class="gallery-thumbs" aria-hidden="true">
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb"></div>
+          </div>
+        </article>
+
+        <article class="summary-card">
+          <div class="eyebrow">
+            <span class="badge-chip">Exclusive</span>
+            <span class="eyebrow-note">Yeni Sezon Ten Rutini</span>
+          </div>
+
+          <h1 class="summary-title">BANGIN' Lashes - BADgal BANG! Maskara Seti</h1>
+          <p class="summary-copy">
+            Benefit Cosmetics'in BADgal BANG! maskarasını ve mini boy hediyesini içeren set. Bu PDP kabuğu, sephoracomtr
+            hesabı için gerçek bir Sephora ürün sayfasındaki ürün koduyla yerel geliştirmeyi test etmek amacıyla
+            hazırlandı.
+          </p>
+
+          <div class="summary-meta">
+            <span>Ürün Kodu: <span id="summary-sku">—</span></span>
+            <span>&bull;</span>
+            <span>4.8 / 5 (1.248 değerlendirme)</span>
+            <span>&bull;</span>
+            <span>8,5 g + 4 g</span>
+          </div>
+
+          <div class="price-wrap">
+            <div class="price-main">₺2.349,00</div>
+          </div>
+
+          <div class="cta-row">
+            <button class="btn btn--primary" type="button">Sepete Ekle</button>
+            <button class="btn btn--ghost" type="button">Favorilere Kaydet</button>
+          </div>
+
+          <div class="tags" aria-label="Ürün etiketleri">
+            <span class="tag">Maskara Seti</span>
+            <span class="tag">Mini Hediye</span>
+            <span class="tag">Göz Makyajı</span>
+            <span class="tag">Benefit Cosmetics</span>
+          </div>
+
+          <ul class="feature-list">
+            <li>BADgal BANG! maskara ve mini boy ürünü tek sette sunar</li>
+            <li>Göz makyajı odaklı product context ile backend testine uygundur</li>
+            <li>Gerçek Sephora PDP URL'sindeki ürün koduyla eşleşir</li>
+            <li>Sohbet ve soru-cevap akışlarını aynı PDP bağlamında dener</li>
+            <li>Benzer ürün önerileri için stabil bir referans PDP olarak kullanılabilir</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="content-card">
+        <div class="tabs">
+          <span class="tab-pill tab-pill--active">Ürün Detayı</span>
+          <span class="tab-pill">İçerik</span>
+          <span class="tab-pill">Nasıl Kullanılır</span>
+          <span class="tab-pill">Yorumlar</span>
+        </div>
+        <p>
+          Bu sayfadaki host PDP kabuğu statik demo verisi kullanır; ancak chat, QNA ve benzer ürün alanları sephoracomtr
+          hesabı üzerinden middleware yanıtlarıyla yüklenir. Varsayılan ürün kodu, Sephora Türkiye'deki "BANGIN' Lashes
+          - BADgal BANG! Maskara Seti" ürününün kodu olan 769798 olarak ayarlanmıştır.
+        </p>
+      </section>
+
+      <div id="sephora-qna-section" class="qna-section"></div>
+
+      <section class="simrel-card">
+        <h2 class="section-title">Benzer Ürünler</h2>
+        <div id="sephora-similar-products" class="simrel-mount"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
+
+      const PRODUCT_URL =
+        'https://www.sephora.com.tr/p/bangin%E2%80%99-lashes---badgal-bang--maskara-seti-P1000207331.html';
+      const params = new URLSearchParams(location.search);
+      const sku = params.get('sku') ?? '769798';
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+
+      const skuDisplay = sku ?? '—';
+      document.getElementById('dev-sku').textContent = skuDisplay;
+      document.getElementById('breadcrumb-sku').textContent = skuDisplay;
+      document.getElementById('summary-sku').textContent = skuDisplay;
+
+      const controller = await initOverlayWidgets({
+        accountId: 'sephoracomtr',
+        middlewareUrl,
+        locale: 'tr',
+        sku,
+        pageContext: { pageType: sku ? 'pdp' : 'other', sku, url: PRODUCT_URL },
+        theme: {
+          primaryColor: '#101010',
+          primaryForeground: '#ffffff',
+          backgroundColor: '#ffffff',
+          foregroundColor: '#151515',
+          borderRadius: '12px',
+          fontFamily: '"Avenir Next", "Helvetica Neue", Arial, sans-serif',
+          fontSize: '14px',
+          zIndex: '1000',
+          '--client-primary': '#101010',
+          '--client-primary-hover': 'color-mix(in srgb, #101010 88%, white 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #101010 78%, white 22%)',
+          '--client-primary-subtle': 'rgba(16, 16, 16, 0.06)',
+          '--client-primary-soft': 'rgba(16, 16, 16, 0.1)',
+          '--client-on-primary': '#ffffff',
+          '--client-focus-ring': 'rgba(16, 16, 16, 0.22)',
+          '--root-wrapper-background-color': '#ffffff',
+          '--root-wrapper-border-color': '#e8dde1',
+        },
+        chat: {
+          variant: 'floating',
+          mobileBreakpoint: 768,
+          headerTitle: "Sephora'ya Sor",
+          i18n: {
+            inputPlaceholder: 'Güzellik ürünü ara veya soru sor',
+            poweredBy: 'Sephora AI Asistan',
+          },
+        },
+        qna: {
+          mountTarget: '#sephora-qna-section',
+          headerTitle: "Sephora'ya Sor",
+          hideButtonRowCta: true,
+          inputPlaceholder: true,
+          i18n: {
+            sendButton: 'Bu ürünle ilgili soru sor',
+          },
+        },
+        simrel: {
+          mountTarget: '#sephora-similar-products',
+          discountType: 'badge',
+        },
+        onAddToCart: (p) => {
+          console.log('[sephoracomtr] add-to-cart', p);
+          alert(`Sepete eklendi: ${p.sku} (adet: ${p.quantity})`);
+        },
+        onProductNavigate: (url, prodSku, sid) => {
+          controller.chat?.saveSession(sid ?? '', prodSku);
+          window.location.href = url;
+        },
+      });
+
+      document.getElementById('dev-session').textContent = controller.session.sessionId;
+    </script>
+  </body>
+</html>
