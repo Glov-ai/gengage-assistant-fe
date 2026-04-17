@@ -11,12 +11,7 @@
  *   npm run dev -- vanilla-script
  *   npm run dev -- react --sku=DEMO-001 --port=3005
  *
- * Available demos:
- *   Account demos  — koctascomtr, arcelikcomtr, n11com, hepsiburadacom, yatasbeddingcomtr,
- *                     penticom, trendyolcom, boynercomtr, evideacom, aygazcomtr,
- *                     divanpastanelericomtr, screwfixcom, pazaramacom, lcwcom, flocomtr,
- *                     defactocomtr, avansascom, teknosacom
- *   Framework demos — vanilla-script, vanilla-esm, react, nextjs, native, gtm-custom
+ * Demo entries are discovered dynamically from merchant folders under demos/.
  */
 
 import { createServer, type Plugin } from 'vite';

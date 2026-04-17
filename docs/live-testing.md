@@ -131,6 +131,7 @@ npm run dev -- koctascomtr --sku=1000465056
 | `n11com` | Marketplace, tests product grid with mixed categories |
 | `hepsiburadacom` | High-traffic marketplace, tests performance |
 | `yatasbeddingcomtr` | Furniture, tests large product images and variants |
+| `sephoracomtr` | Beauty retail, uses PDP product code `769798` for the BADgal BANG! maskara set demo |
 
 Use real SKUs from each account's catalog. The dev server startup log prints demo,
 SKU, backend, and local URL (including sticky query params).
