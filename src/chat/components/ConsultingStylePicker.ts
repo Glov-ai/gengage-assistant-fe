@@ -80,7 +80,11 @@ export function renderConsultingStylePicker(
     grid.innerHTML = '';
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
     const recommendationGroups =
-      source === 'watch_expert' ? [] : Array.isArray(variation.recommendation_groups) ? variation.recommendation_groups : [];
+      source === 'watch_expert'
+        ? []
+        : Array.isArray(variation.recommendation_groups)
+          ? variation.recommendation_groups
+          : [];
 
     if (recommendationGroups.length > 0) {
       const productBySku = new Map<string, StyleVariationProduct>();
