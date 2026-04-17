@@ -117,7 +117,6 @@ See [docs/customization.md](docs/customization.md) for the fork and merchant-cus
 ```bash
 npm install
 npm run dev -- koctascomtr --sku=1000465056   # Local dev server with HMR
-npm run dev sephoracomtr -- --sku=769798      # Sephora TR PDP shell with real product code
 npm run typecheck                              # TypeScript strict check
 npm run test                                   # Unit tests
 npm run build                                  # Build to dist/
