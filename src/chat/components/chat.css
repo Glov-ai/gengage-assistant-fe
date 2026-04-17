@@ -6457,6 +6457,17 @@ button.gengage-chat-product-details-rating {
   grid-template-columns: 1fr;
 }
 
+.gengage-chat-root--mobile .gengage-chat-consulting-group-grid.gengage-chat-consulting-group-grid--single-group {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-group-grid .gengage-chat-product-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
 .gengage-chat-product-grid-head {
   display: flex;
   align-items: center;

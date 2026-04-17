@@ -79,7 +79,8 @@ export function renderConsultingStylePicker(
   const renderVariationProducts = (variation: StyleVariation): void => {
     grid.innerHTML = '';
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
-    const recommendationGroups = Array.isArray(variation.recommendation_groups) ? variation.recommendation_groups : [];
+    const recommendationGroups =
+      source === 'watch_expert' ? [] : Array.isArray(variation.recommendation_groups) ? variation.recommendation_groups : [];
 
     if (recommendationGroups.length > 0) {
       const productBySku = new Map<string, StyleVariationProduct>();
@@ -87,19 +88,19 @@ export function renderConsultingStylePicker(
         const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : undefined;
         if (sku) productBySku.set(sku, product);
       }
-
-      const renderedSkus = new Set<string>();
-      for (const group of recommendationGroups) {
+      const visibleGroupCount = recommendationGroups.filter((group) => {
         const skus = Array.isArray(group.skus)
           ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
           : [];
-        const groupedProducts = skus
-          .map((sku) => {
-            renderedSkus.add(sku);
-            return productBySku.get(sku);
-          })
-          .filter((product): product is StyleVariationProduct => !!product);
-        if (groupedProducts.length === 0) continue;
+        return skus.some((sku) => productBySku.has(sku));
+      }).length;
+
+      const renderGroupSection = (
+        labelText: string,
+        groupedProducts: StyleVariationProduct[],
+        reasonText?: string,
+      ): void => {
+        if (groupedProducts.length === 0) return;
 
         const section = document.createElement('section');
         section.className = 'gengage-chat-consulting-group';
@@ -109,21 +110,24 @@ export function renderConsultingStylePicker(
 
         const label = document.createElement('h4');
         label.className = 'gengage-chat-consulting-group-label';
-        const labelText = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
-        label.textContent = skus.length > 0 ? `${labelText} (${skus.length})` : labelText;
+        label.textContent = `${labelText} (${groupedProducts.length})`;
         header.appendChild(label);
 
-        if (typeof group.reason === 'string' && group.reason.trim().length > 0) {
+        if (typeof reasonText === 'string' && reasonText.trim().length > 0) {
           const reason = document.createElement('p');
           reason.className = 'gengage-chat-consulting-group-reason';
-          reason.textContent = group.reason;
+          reason.textContent = reasonText;
           header.appendChild(reason);
         }
 
         section.appendChild(header);
 
         const groupGrid = document.createElement('div');
-        groupGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+        groupGrid.className =
+          'gengage-chat-product-grid gengage-chat-product-grid--mobile gengage-chat-consulting-group-grid';
+        if (visibleGroupCount <= 1) {
+          groupGrid.classList.add('gengage-chat-consulting-group-grid--single-group');
+        }
         groupGrid.style.setProperty(
           '--consulting-group-columns',
           String(Math.max(1, Math.min(4, groupedProducts.length))),
@@ -141,6 +145,23 @@ export function renderConsultingStylePicker(
         }
         section.appendChild(groupGrid);
         grid.appendChild(section);
+      };
+
+      const renderedSkus = new Set<string>();
+      for (const group of recommendationGroups) {
+        const skus = Array.isArray(group.skus)
+          ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
+          : [];
+        const groupedProducts = skus
+          .map((sku) => {
+            renderedSkus.add(sku);
+            return productBySku.get(sku);
+          })
+          .filter((product): product is StyleVariationProduct => !!product);
+        if (groupedProducts.length === 0) continue;
+        const labelText = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
+        const reasonText = typeof group.reason === 'string' ? group.reason : undefined;
+        renderGroupSection(labelText, groupedProducts, reasonText);
       }
 
       const leftovers = products.filter((product) => {
@@ -148,24 +169,7 @@ export function renderConsultingStylePicker(
         return sku.length > 0 && !renderedSkus.has(sku);
       });
       if (leftovers.length > 0) {
-        const fallbackGrid = document.createElement('div');
-        fallbackGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
-        fallbackGrid.style.setProperty(
-          '--consulting-group-columns',
-          String(Math.max(1, Math.min(4, leftovers.length))),
-        );
-        for (const product of leftovers) {
-          const cardElement: UIElement = {
-            type: 'ProductCard',
-            props: { product },
-          };
-          const card = renderProductCard(
-            cardElement,
-            ctx ?? ({ onAction: () => undefined } as ChatUISpecRenderContext),
-          );
-          fallbackGrid.appendChild(card);
-        }
-        grid.appendChild(fallbackGrid);
+        renderGroupSection('Diğer Uyumlu Ürünler', leftovers);
       }
       return;
     }
@@ -201,7 +205,6 @@ export function renderConsultingStylePicker(
       addImageErrorHandler(img);
       media.appendChild(img);
     }
-
     const caption = document.createElement('span');
     caption.className = 'gengage-chat-consulting-style-caption';
     caption.textContent = variation.style_label ?? `Style ${index + 1}`;

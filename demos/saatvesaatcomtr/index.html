@@ -448,8 +448,8 @@
         </article>
 
         <article class="summary-card">
-          <div class="badge-chip">%37 İndirim</div>
-          <h1 class="summary-title">GUU1461L2M Erkek Kol Saati — Harley Serisi</h1>
+          <div class="badge-chip">%50 İndirim</div>
+          <h1 class="summary-title">GUU1435G3M Erkek Kol Saati — Guess Classic</h1>
           <div class="summary-meta">
             <span>Marka: Guess</span>
             <span>&bull;</span>
@@ -472,9 +472,9 @@
           </div>
 
           <div class="price-wrap">
-            <div class="price-old">₺7.088,60</div>
-            <div class="price-main">₺4.469,00</div>
-            <div class="price-discount">%37</div>
+            <div class="price-old">₺7.028,30</div>
+            <div class="price-main">₺3.514,15</div>
+            <div class="price-discount">%50</div>
           </div>
 
           <div class="cta-row">
@@ -483,9 +483,9 @@
           </div>
 
           <ul class="feature-list">
-            <li>Su Geçirmezlik: 3 ATM</li>
-            <li>Mekanizma: Quartz</li>
-            <li>Kasa: Çelik, 40mm çap</li>
+            <li>Tarz: Erkek klasik saat</li>
+            <li>Marka: Guess</li>
+            <li>Kasa materyali: Çelik</li>
             <li>Garanti: 2 Yıl</li>
             <li>30 gün içinde iade ve değişim</li>
           </ul>
@@ -501,9 +501,9 @@
           <span class="tab-pill">Değerlendirmeler</span>
         </div>
         <p>
-          Guess Harley Serisi erkek kol saati, şık çelik kasası ve kaliteli quartz mekanizmasıyla dikkat çeken bir
-          tasarıma sahiptir. 40mm kasa çapı ve 3 ATM su geçirmezlik özelliğiyle günlük kullanıma uygundur. Widget
-          verileri bu sayfadaki içerikten bağımsız olarak backend tarafından sağlanır.
+          Bu demo PDP artık backend'de canlı karşılığı bulunan `GUU1435G3M` Guess erkek klasik saat SKU'sunu
+          varsayılan olarak kullanır. Böylece QNA, benzer ürünler ve watch expert akışları boş dönmeden test
+          edilebilir. Widget verileri bu sayfadaki içerikten bağımsız olarak backend tarafından sağlanır.
         </p>
       </section>
 
@@ -521,7 +521,7 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? 'GUU1461L2M';
+      const sku = params.get('sku') ?? 'guess-erkek-kol-saati-p-guu1435g3m';
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
