@@ -240,6 +240,8 @@ export interface ChatI18n {
   beautyStylesPreparedTitle: string;
   /** Title shown above watch-expert style cards. Supports {count} placeholder. */
   watchStylesPreparedTitle: string;
+  /** Label for products that were not included in a backend recommendation group. */
+  consultingOtherCompatibleProductsLabel: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -416,6 +418,7 @@ export interface ChatUISpecRenderContext {
     | 'galleryNextAriaLabel'
     | 'beautyStylesPreparedTitle'
     | 'watchStylesPreparedTitle'
+    | 'consultingOtherCompatibleProductsLabel'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'

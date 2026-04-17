@@ -400,6 +400,116 @@ describe('renderUISpec', () => {
       expect(grid).toBeTruthy();
       expect(grid.querySelectorAll('.gengage-chat-product-card')).toHaveLength(2);
     });
+
+    it('renders a single consulting recommendation group without the generic mobile grid class', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Daily',
+                  product_list: [
+                    { sku: 'A', name: 'Product A', url: '/a' },
+                    { sku: 'B', name: 'Product B', url: '/b' },
+                  ],
+                  recommendation_groups: [{ label: 'Core Picks', reason: 'Works well together', skus: ['A', 'B'] }],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+      const groupGrid = result.querySelector('.gengage-chat-consulting-group-grid')!;
+
+      expect(result.querySelectorAll('.gengage-chat-consulting-group')).toHaveLength(1);
+      expect(groupGrid.classList.contains('gengage-chat-product-grid--mobile')).toBe(false);
+      expect(groupGrid.classList.contains('gengage-chat-consulting-group-grid--single-group')).toBe(true);
+      expect(result.querySelector('.gengage-chat-consulting-group-label')?.textContent).toBe('Core Picks (2)');
+    });
+
+    it('counts leftover consulting products as their own section before applying single-group layout', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Daily',
+                  product_list: [
+                    { sku: 'A', name: 'Product A', url: '/a' },
+                    { sku: 'B', name: 'Product B', url: '/b' },
+                  ],
+                  recommendation_groups: [{ label: 'Core Picks', skus: ['A'] }],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(
+        spec,
+        makeContext({
+          i18n: {
+            consultingOtherCompatibleProductsLabel: 'More matches',
+          } as UISpecRenderContext['i18n'],
+        }),
+      );
+      const groupGrids = result.querySelectorAll('.gengage-chat-consulting-group-grid');
+      const labels = Array.from(result.querySelectorAll('.gengage-chat-consulting-group-label')).map(
+        (label) => label.textContent,
+      );
+
+      expect(result.querySelectorAll('.gengage-chat-consulting-group')).toHaveLength(2);
+      expect(labels).toEqual(['Core Picks (1)', 'More matches (1)']);
+      expect(Array.from(groupGrids).some((grid) => grid.classList.contains('gengage-chat-product-grid--mobile'))).toBe(
+        false,
+      );
+      expect(
+        Array.from(groupGrids).some((grid) =>
+          grid.classList.contains('gengage-chat-consulting-group-grid--single-group'),
+        ),
+      ).toBe(false);
+    });
+
+    it('ignores recommendation groups for watch expert consulting grids', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'watch_expert',
+              styleVariations: [
+                {
+                  style_label: 'Classic',
+                  product_list: [
+                    { sku: 'A', name: 'Product A', url: '/a' },
+                    { sku: 'B', name: 'Product B', url: '/b' },
+                  ],
+                  recommendation_groups: [{ label: 'Should not render', skus: ['A'] }],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+
+      expect(result.querySelector('.gengage-chat-consulting-group')).toBeNull();
+      expect(result.querySelectorAll('.gengage-chat-product-card')).toHaveLength(2);
+      expect(result.textContent).not.toContain('Should not render');
+    });
   });
 
   describe('Image Gallery', () => {

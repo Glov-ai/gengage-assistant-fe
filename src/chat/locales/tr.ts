@@ -66,6 +66,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   galleryNextAriaLabel: 'Sonraki görsel',
   beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
   watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+  consultingOtherCompatibleProductsLabel: 'Diğer Uyumlu Ürünler',
   choicePrompterHeading: 'Kararsız mı kaldın?',
   choicePrompterSuggestion: 'Ürünleri seçip karşılaştırabilirsin',
   choicePrompterCta: 'Seç ve Karşılaştır',

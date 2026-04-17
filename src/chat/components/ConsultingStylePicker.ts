@@ -22,6 +22,12 @@ export type StyleVariation = {
   recommendation_groups?: Array<{ label?: string; reason?: string; skus?: string[] }>;
 };
 
+type ConsultingProductSection = {
+  labelText: string;
+  products: StyleVariationProduct[];
+  reasonText?: string;
+};
+
 /** Normalise a consulting image URL from the backend (absolute or relative). */
 export function toConsultingImageUrl(input: unknown): string | undefined {
   if (typeof input !== 'string') return undefined;
@@ -92,16 +98,11 @@ export function renderConsultingStylePicker(
         const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : undefined;
         if (sku) productBySku.set(sku, product);
       }
-      const visibleGroupCount = recommendationGroups.filter((group) => {
-        const skus = Array.isArray(group.skus)
-          ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
-          : [];
-        return skus.some((sku) => productBySku.has(sku));
-      }).length;
 
       const renderGroupSection = (
         labelText: string,
         groupedProducts: StyleVariationProduct[],
+        isSingleSection: boolean,
         reasonText?: string,
       ): void => {
         if (groupedProducts.length === 0) return;
@@ -127,9 +128,8 @@ export function renderConsultingStylePicker(
         section.appendChild(header);
 
         const groupGrid = document.createElement('div');
-        groupGrid.className =
-          'gengage-chat-product-grid gengage-chat-product-grid--mobile gengage-chat-consulting-group-grid';
-        if (visibleGroupCount <= 1) {
+        groupGrid.className = 'gengage-chat-product-grid gengage-chat-consulting-group-grid';
+        if (isSingleSection) {
           groupGrid.classList.add('gengage-chat-consulting-group-grid--single-group');
         }
         groupGrid.style.setProperty(
@@ -152,6 +152,7 @@ export function renderConsultingStylePicker(
       };
 
       const renderedSkus = new Set<string>();
+      const sections: ConsultingProductSection[] = [];
       for (const group of recommendationGroups) {
         const skus = Array.isArray(group.skus)
           ? group.skus.filter((sku): sku is string => typeof sku === 'string' && sku.trim().length > 0)
@@ -165,7 +166,11 @@ export function renderConsultingStylePicker(
         if (groupedProducts.length === 0) continue;
         const labelText = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
         const reasonText = typeof group.reason === 'string' ? group.reason : undefined;
-        renderGroupSection(labelText, groupedProducts, reasonText);
+        sections.push({
+          labelText,
+          products: groupedProducts,
+          ...(reasonText !== undefined ? { reasonText } : {}),
+        });
       }
 
       const leftovers = products.filter((product) => {
@@ -173,7 +178,15 @@ export function renderConsultingStylePicker(
         return sku.length > 0 && !renderedSkus.has(sku);
       });
       if (leftovers.length > 0) {
-        renderGroupSection('Diğer Uyumlu Ürünler', leftovers);
+        sections.push({
+          labelText: ctx?.i18n?.consultingOtherCompatibleProductsLabel ?? 'Other compatible products',
+          products: leftovers,
+        });
+      }
+
+      const isSingleSection = sections.length === 1;
+      for (const section of sections) {
+        renderGroupSection(section.labelText, section.products, isSingleSection, section.reasonText);
       }
       return;
     }
