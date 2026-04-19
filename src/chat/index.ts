@@ -1583,6 +1583,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           userMsg.attachment = options.attachment;
         }
         this._drawer?.addMessage(userMsg);
+        if (options?.attachment !== undefined && this._modeController.isBeautyConsulting) {
+          this._drawer?.setBeautyPhotoStepCard({ visible: false });
+        }
         this._messages.push(userMsg);
       }
     }
