@@ -84,6 +84,7 @@ export function renderConsultingStylePicker(
 
   const renderVariationProducts = (variation: StyleVariation): void => {
     grid.innerHTML = '';
+    grid.classList.remove('gengage-chat-product-grid--consulting-groups');
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
     const recommendationGroups =
       source === 'watch_expert'
@@ -93,6 +94,7 @@ export function renderConsultingStylePicker(
           : [];
 
     if (recommendationGroups.length > 0) {
+      grid.classList.add('gengage-chat-product-grid--consulting-groups');
       const productBySku = new Map<string, StyleVariationProduct>();
       for (const product of products) {
         const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : undefined;
