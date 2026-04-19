@@ -16,7 +16,7 @@ export interface PhotoAnalysisData {
   focusPoints?: string[];
   celebStyle?: string;
   celebStyleReason?: string;
-  details: string[];
+  details?: string[];
   nextQuestion?: string;
 }
 
@@ -34,12 +34,13 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
     : [];
   if (!summary && strengths.length === 0 && focusPoints.length === 0 && details.length === 0) return null;
 
-  const result: PhotoAnalysisData = { summary, details };
+  const result: PhotoAnalysisData = { summary };
   const celebStyle = typeof props['celeb_style'] === 'string' ? props['celeb_style'] : undefined;
   const celebStyleReason = typeof props['celeb_style_reason'] === 'string' ? props['celeb_style_reason'] : undefined;
   const nextQuestion = typeof props['next_question'] === 'string' ? props['next_question'] : undefined;
   if (strengths.length > 0) result.strengths = strengths;
   if (focusPoints.length > 0) result.focusPoints = focusPoints;
+  if (details.length > 0) result.details = details;
   if (celebStyle) result.celebStyle = celebStyle;
   if (celebStyleReason) result.celebStyleReason = celebStyleReason;
   if (nextQuestion) result.nextQuestion = nextQuestion;
@@ -47,23 +48,20 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
 }
 
 function deriveFallbackStructuredData(data: PhotoAnalysisData): PhotoAnalysisData {
-  const details = data.details;
+  const details = data.details ?? [];
   if ((data.strengths && data.strengths.length > 0) || (data.focusPoints && data.focusPoints.length > 0)) {
-    return {
-      ...data,
-      details,
-    };
+    return details.length > 0 ? { ...data, details } : data;
   }
   // Need at least 3 items to split meaningfully into two sections;
   // otherwise just show the collapsible details to avoid redundancy.
   if (details.length < 3) {
-    return { ...data, details };
+    return details.length > 0 ? { ...data, details } : data;
   }
   return {
     ...data,
     strengths: details.slice(0, 2),
     focusPoints: details.slice(2, 4),
-    details,
+    ...(details.length > 0 ? { details } : {}),
   };
 }
 
@@ -97,7 +95,6 @@ function buildAnalysisCardDom(
     strengths: string;
     focus: string;
     celebStyle: string;
-    seeMore: string;
   },
   data: PhotoAnalysisData,
 ): HTMLElement {
@@ -155,28 +152,6 @@ function buildAnalysisCardDom(
     body.appendChild(section);
   }
 
-  const detailItems = data.details.filter(Boolean);
-  if (detailItems.length > 0) {
-    const details = document.createElement('details');
-    details.className = 'gengage-chat-photo-analysis-details';
-
-    const summary = document.createElement('summary');
-    summary.className = 'gengage-chat-photo-analysis-details-summary';
-    summary.textContent = labels.seeMore;
-
-    const detailList = document.createElement('ul');
-    detailList.className = 'gengage-chat-photo-analysis-points';
-    for (const clue of detailItems) {
-      const item = document.createElement('li');
-      item.textContent = clue;
-      detailList.appendChild(item);
-    }
-
-    details.appendChild(summary);
-    details.appendChild(detailList);
-    body.appendChild(details);
-  }
-
   if (data.nextQuestion) {
     const p = document.createElement('p');
     p.className = 'gengage-chat-photo-analysis-next';
@@ -194,14 +169,12 @@ function analysisLabels(ctx?: ChatUISpecRenderContext): {
   strengths: string;
   focus: string;
   celebStyle: string;
-  seeMore: string;
 } {
   return {
     badge: ctx?.i18n?.photoAnalysisBadge ?? 'Skin Analysis',
     strengths: ctx?.i18n?.photoAnalysisStrengthsLabel ?? 'Your strengths',
     focus: ctx?.i18n?.photoAnalysisFocusLabel ?? 'Focus points',
     celebStyle: ctx?.i18n?.photoAnalysisCelebStyleLabel ?? 'Celeb style match',
-    seeMore: ctx?.i18n?.photoAnalysisSeeMoreLabel ?? 'See detailed analysis',
   };
 }
 
@@ -226,7 +199,6 @@ export function renderPhotoAnalysisBubble(
     strengths: string;
     focus: string;
     celebStyle: string;
-    seeMore: string;
   },
   structured?: PhotoAnalysisData,
 ): void {

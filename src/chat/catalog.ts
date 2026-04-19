@@ -293,7 +293,7 @@ export const PhotoAnalysisCardSchema = z.object({
   focus_points: z.array(z.string()).optional(),
   celeb_style: z.string().optional(),
   celeb_style_reason: z.string().optional(),
-  details: z.array(z.string()),
+  details: z.array(z.string()).optional(),
   next_question: z.string().optional(),
   style_images: z.array(z.string()).optional(),
 });

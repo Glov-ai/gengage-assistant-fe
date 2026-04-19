@@ -509,7 +509,7 @@ export interface ChatMessage {
     focusPoints?: string[];
     celebStyle?: string;
     celebStyleReason?: string;
-    details: string[];
+    details?: string[];
     nextQuestion?: string;
   };
 

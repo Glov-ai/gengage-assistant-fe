@@ -251,7 +251,7 @@ export class ChatDrawer {
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details: string[];
+      details?: string[];
       nextQuestion?: string;
     },
   ): void {
@@ -263,7 +263,6 @@ export class ChatDrawer {
         strengths: this.i18n.photoAnalysisStrengthsLabel,
         focus: this.i18n.photoAnalysisFocusLabel,
         celebStyle: this.i18n.photoAnalysisCelebStyleLabel,
-        seeMore: this.i18n.photoAnalysisSeeMoreLabel,
       },
       structured,
     );
@@ -2380,7 +2379,7 @@ export class ChatDrawer {
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details: string[];
+      details?: string[];
       nextQuestion?: string;
     },
   ): void {
