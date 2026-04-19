@@ -15,9 +15,11 @@ import { renderProductCard } from './renderUISpec.js';
 export type StyleVariationProduct = Record<string, unknown>;
 
 export type StyleVariation = {
+  style_id?: string;
   style_label?: string;
   style_mood?: string;
   image_url?: string;
+  status?: string;
   product_list?: StyleVariationProduct[];
   recommendation_groups?: Array<{ label?: string; reason?: string; skus?: string[] }>;
 };
@@ -66,6 +68,40 @@ export function renderConsultingStylePicker(
   styleVariations: StyleVariation[],
   ctx?: ChatUISpecRenderContext,
 ): void {
+  const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable'): void => {
+    grid.innerHTML = '';
+    grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+
+    const stateCard = document.createElement('section');
+    stateCard.className = 'gengage-chat-consulting-loading-panel';
+
+    const title = document.createElement('h4');
+    title.className = 'gengage-chat-consulting-loading-panel-title';
+    title.textContent = variation.style_label ?? (mode === 'loading' ? 'Bu stil yükleniyor' : 'Bu stil şu an hazır değil');
+    stateCard.appendChild(title);
+
+    const desc = document.createElement('p');
+    desc.className = 'gengage-chat-consulting-loading-panel-copy';
+    desc.textContent =
+      mode === 'loading'
+        ? 'Bu stil için ürünleri toplamaya devam ediyorum. Birkaç saniye içinde panel yenilenir.'
+        : 'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım. Diğer stilleri inceleyebilirsiniz.';
+    stateCard.appendChild(desc);
+
+    if (mode === 'loading') {
+      const skeletonGrid = document.createElement('div');
+      skeletonGrid.className = 'gengage-chat-consulting-loading-grid';
+      for (let index = 0; index < 3; index += 1) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'gengage-chat-consulting-loading-card';
+        skeletonGrid.appendChild(skeleton);
+      }
+      stateCard.appendChild(skeletonGrid);
+    }
+
+    grid.appendChild(stateCard);
+  };
+
   const picker = document.createElement('div');
   picker.className = 'gengage-chat-consulting-style-picker';
 
@@ -85,6 +121,15 @@ export function renderConsultingStylePicker(
   const renderVariationProducts = (variation: StyleVariation): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+    const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
+    if (variationStatus === 'loading') {
+      renderVariationPendingState(variation, 'loading');
+      return;
+    }
+    if (variationStatus !== 'ready' && (!Array.isArray(variation.product_list) || variation.product_list.length === 0)) {
+      renderVariationPendingState(variation, 'unavailable');
+      return;
+    }
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
     const recommendationGroups =
       source === 'watch_expert'
@@ -209,6 +254,12 @@ export function renderConsultingStylePicker(
     btn.type = 'button';
     btn.className = 'gengage-chat-consulting-style-btn gds-card';
     if (index === 0) btn.classList.add('gengage-chat-consulting-style-btn--active');
+    const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
+    if (variationStatus === 'loading') {
+      btn.classList.add('gengage-chat-consulting-style-btn--loading');
+    } else if (variationStatus !== 'ready') {
+      btn.classList.add('gengage-chat-consulting-style-btn--muted');
+    }
     btn.setAttribute('aria-label', variation.style_label ?? `Style ${index + 1}`);
 
     const media = document.createElement('div');
@@ -228,6 +279,13 @@ export function renderConsultingStylePicker(
     caption.className = 'gengage-chat-consulting-style-caption';
     caption.textContent = variation.style_label ?? `Style ${index + 1}`;
     media.appendChild(caption);
+
+    if (variationStatus === 'loading' || variationStatus !== 'ready') {
+      const badge = document.createElement('span');
+      badge.className = 'gengage-chat-consulting-style-status';
+      badge.textContent = variationStatus === 'loading' ? 'Yukleniyor' : 'Hazir degil';
+      media.appendChild(badge);
+    }
     btn.appendChild(media);
 
     btn.addEventListener('click', () => {

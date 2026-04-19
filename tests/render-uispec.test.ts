@@ -510,6 +510,62 @@ describe('renderUISpec', () => {
       expect(result.querySelectorAll('.gengage-chat-product-card')).toHaveLength(2);
       expect(result.textContent).not.toContain('Should not render');
     });
+
+    it('renders consulting loading states even before products arrive', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Glow',
+                  status: 'loading',
+                  product_list: [],
+                  recommendation_groups: [],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+
+      expect(result.querySelector('.gengage-chat-consulting-loading-panel-title')?.textContent).toBe('Glow');
+      expect(result.querySelectorAll('.gengage-chat-consulting-loading-card')).toHaveLength(3);
+      expect(result.textContent).toContain('Bu stil için ürünleri toplamaya devam ediyorum.');
+    });
+
+    it('renders consulting unavailable states when a variation has no matched products', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Bold',
+                  status: 'unavailable',
+                  product_list: [],
+                  recommendation_groups: [],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+
+      expect(result.querySelector('.gengage-chat-consulting-loading-panel-title')?.textContent).toBe('Bold');
+      expect(result.querySelectorAll('.gengage-chat-consulting-loading-card')).toHaveLength(0);
+      expect(result.textContent).toContain('Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım.');
+    });
   });
 
   describe('Image Gallery', () => {

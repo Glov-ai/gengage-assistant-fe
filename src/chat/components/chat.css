@@ -6287,6 +6287,14 @@ button.gengage-chat-product-details-rating {
     var(--shadow-1);
 }
 
+.gengage-chat-consulting-style-btn--loading {
+  border-style: dashed;
+}
+
+.gengage-chat-consulting-style-btn--muted {
+  opacity: 0.78;
+}
+
 .gengage-chat-consulting-style-media {
   position: relative;
   overflow: hidden;
@@ -6313,6 +6321,73 @@ button.gengage-chat-product-details-rating {
   color: white;
   line-height: 1.2;
   background: color-mix(in srgb, black 55%, transparent);
+}
+
+.gengage-chat-consulting-style-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: color-mix(in srgb, white 88%, var(--client-primary) 12%);
+  border: 1px solid color-mix(in srgb, var(--client-primary) 18%, var(--border-default));
+}
+
+.gengage-chat-consulting-loading-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--client-primary) 14%, var(--border-default));
+  background: linear-gradient(180deg, var(--surface-card-soft), var(--surface-card));
+}
+
+.gengage-chat-consulting-loading-panel-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.gengage-chat-consulting-loading-panel-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.gengage-chat-consulting-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gengage-chat-consulting-loading-card {
+  min-height: 240px;
+  border-radius: 18px;
+  border: 1px solid var(--border-default);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--surface-card-soft) 94%, white) 20%,
+      color-mix(in srgb, white 86%, var(--surface-card-soft) 14%) 50%,
+      color-mix(in srgb, var(--surface-card-soft) 94%, white) 80%
+    );
+  background-size: 220% 100%;
+  animation: gengage-chat-consulting-loading-shimmer 1.2s linear infinite;
+}
+
+@keyframes gengage-chat-consulting-loading-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .gengage-chat-consulting-group {
@@ -6465,7 +6540,7 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card {
   width: 100%;
   min-width: 0;
-  max-width: none;
+  max-width: 340px;
   margin-inline: auto;
 }
 
@@ -6490,6 +6565,10 @@ button.gengage-chat-product-details-rating {
   width: 100%;
   min-width: 0;
   max-width: none;
+}
+
+.gengage-chat-root--mobile .gengage-chat-consulting-loading-grid {
+  grid-template-columns: 1fr;
 }
 
 .gengage-chat-product-grid-head {

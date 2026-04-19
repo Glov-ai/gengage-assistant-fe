@@ -113,6 +113,43 @@ describe('adaptBackendEvent', () => {
     });
   });
 
+  it('preserves consulting variation status and replace_panel metadata on productList', () => {
+    const raw = {
+      type: 'productList',
+      payload: {
+        replace_panel: true,
+        source: 'beauty_consulting',
+        style_variations: [
+          {
+            style_label: 'Glow',
+            style_mood: 'Soft focus glow',
+            status: 'loading',
+            product_list: [],
+            recommendation_groups: [],
+          },
+        ],
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    const rootProps = uiSpec.spec.elements['root']!.props!;
+    expect(rootProps['replacePanel']).toBe(true);
+    expect(rootProps['source']).toBe('beauty_consulting');
+    expect(rootProps['styleVariations']).toEqual([
+      {
+        style_label: 'Glow',
+        style_mood: 'Soft focus glow',
+        status: 'loading',
+        product_list: [],
+        recommendation_groups: [],
+      },
+    ]);
+  });
+
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
     const raw = {
       type: 'productDetails',

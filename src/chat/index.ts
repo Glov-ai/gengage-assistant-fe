@@ -1985,15 +1985,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (effectivePanelHint === 'panel' && this._panel && !skipSidePanelForUISpec) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
+            const forceReplacePanel = rootElement?.props?.['replacePanel'] === true;
 
-            const panelAction = determinePanelUpdateAction({
-              componentType,
-              similarsAppend: rootElement?.props?.['similarsAppend'] === true,
-              currentPanelType: this._panel.currentType,
-              hasPanelContent: this._drawer?.hasPanelContent() ?? false,
-              isPanelLoading: this._drawer?.isPanelLoading() ?? false,
-              isFirstPanelContentInStream,
-            });
+            const panelAction = forceReplacePanel
+              ? 'replace'
+              : determinePanelUpdateAction({
+                  componentType,
+                  similarsAppend: rootElement?.props?.['similarsAppend'] === true,
+                  currentPanelType: this._panel.currentType,
+                  hasPanelContent: this._drawer?.hasPanelContent() ?? false,
+                  isPanelLoading: this._drawer?.isPanelLoading() ?? false,
+                  isFirstPanelContentInStream,
+                });
 
             renderContext.panelProductListHeading = undefined;
             if (componentType === 'ProductGrid') {

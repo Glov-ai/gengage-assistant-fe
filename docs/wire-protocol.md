@@ -1180,6 +1180,11 @@ The backend streams the event types listed above. The wire protocol adapter
 
 Unknown event types are logged and safely ignored.
 
+For consulting `productList` payloads, the adapter also preserves:
+
+- `style_variations[].status` so the chat renderer can show `loading`, `ready`, or unavailable variation states before products are complete.
+- `replace_panel: true`, mapped to `replacePanel`, to force the incoming panel UISpec to replace existing panel content instead of following the default append/replace heuristics.
+
 ---
 
 ## Analytics Transport/Auth
