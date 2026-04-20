@@ -214,7 +214,7 @@ test.describe('QNA Components', () => {
 });
 
 test.describe('Beauty consulting components', () => {
-  test('PhotoAnalysisCard renders structured analysis details', async ({ page }) => {
+  test('PhotoAnalysisCard renders structured analysis highlights', async ({ page }) => {
     await page.goto('http://localhost:3002/#/chat/PhotoAnalysisCard');
     await page.waitForSelector('.catalog-card-preview');
 
@@ -226,7 +226,7 @@ test.describe('Beauty consulting components', () => {
     await expect(card.locator('.gengage-chat-photo-analysis-section--strengths li')).toHaveCount(2);
     await expect(card.locator('.gengage-chat-photo-analysis-section--focus li')).toHaveCount(2);
     await expect(card.locator('.gengage-chat-photo-analysis-celeb-name')).toContainText('Hailey Bieber');
-    await expect(card.locator('.gengage-chat-photo-analysis-details-summary')).toContainText('Detayli analizi gor');
+    await expect(card.locator('details')).toHaveCount(0);
     await expect(card.locator('.gengage-chat-photo-analysis-next')).toContainText('Gunluk bakim rutininiz var mi');
   });
 

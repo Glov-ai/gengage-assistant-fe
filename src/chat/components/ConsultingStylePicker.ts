@@ -18,6 +18,7 @@ export type StyleVariation = {
   style_label?: string;
   style_mood?: string;
   image_url?: string;
+  status?: string;
   product_list?: StyleVariationProduct[];
   recommendation_groups?: Array<{ label?: string; reason?: string; skus?: string[] }>;
 };
@@ -37,7 +38,7 @@ export function toConsultingImageUrl(input: unknown): string | undefined {
   // If the backend sends an absolute URL, use it directly.
   if (/^https?:\/\//i.test(raw)) return raw;
 
-  // Relative path fallback for old backends that don't send absolute URLs.
+  // Account style-guide configs may store relative asset paths.
   let path = raw.split(/[?#]/)[0];
   if (!path) return undefined;
 
@@ -66,6 +67,45 @@ export function renderConsultingStylePicker(
   styleVariations: StyleVariation[],
   ctx?: ChatUISpecRenderContext,
 ): void {
+  const loadingBadge = ctx?.i18n?.consultingStyleLoadingBadge ?? 'Loading';
+  const unavailableBadge = ctx?.i18n?.consultingStyleUnavailableBadge ?? 'Not ready';
+
+  const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable'): void => {
+    grid.innerHTML = '';
+    grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+
+    const stateCard = document.createElement('section');
+    stateCard.className = 'gengage-chat-consulting-loading-panel';
+
+    const title = document.createElement('h4');
+    title.className = 'gengage-chat-consulting-loading-panel-title';
+    title.textContent = variation.style_label ?? (mode === 'loading' ? loadingBadge : unavailableBadge);
+    stateCard.appendChild(title);
+
+    const desc = document.createElement('p');
+    desc.className = 'gengage-chat-consulting-loading-panel-copy';
+    desc.textContent =
+      mode === 'loading'
+        ? (ctx?.i18n?.consultingStyleLoadingDescription ??
+          'I am still collecting products for this style. The panel will refresh shortly.')
+        : (ctx?.i18n?.consultingStyleUnavailableDescription ??
+          'I could not find enough product matches for this style yet. You can review the other styles.');
+    stateCard.appendChild(desc);
+
+    if (mode === 'loading') {
+      const skeletonGrid = document.createElement('div');
+      skeletonGrid.className = 'gengage-chat-consulting-loading-grid';
+      for (let index = 0; index < 3; index += 1) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'gengage-chat-consulting-loading-card';
+        skeletonGrid.appendChild(skeleton);
+      }
+      stateCard.appendChild(skeletonGrid);
+    }
+
+    grid.appendChild(stateCard);
+  };
+
   const picker = document.createElement('div');
   picker.className = 'gengage-chat-consulting-style-picker';
 
@@ -84,6 +124,19 @@ export function renderConsultingStylePicker(
 
   const renderVariationProducts = (variation: StyleVariation): void => {
     grid.innerHTML = '';
+    grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+    const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
+    if (variationStatus === 'loading') {
+      renderVariationPendingState(variation, 'loading');
+      return;
+    }
+    if (
+      variationStatus !== 'ready' &&
+      (!Array.isArray(variation.product_list) || variation.product_list.length === 0)
+    ) {
+      renderVariationPendingState(variation, 'unavailable');
+      return;
+    }
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
     const recommendationGroups =
       source === 'watch_expert'
@@ -93,6 +146,7 @@ export function renderConsultingStylePicker(
           : [];
 
     if (recommendationGroups.length > 0) {
+      grid.classList.add('gengage-chat-product-grid--consulting-groups');
       const productBySku = new Map<string, StyleVariationProduct>();
       for (const product of products) {
         const sku = typeof product?.['sku'] === 'string' ? (product['sku'] as string) : undefined;
@@ -207,6 +261,12 @@ export function renderConsultingStylePicker(
     btn.type = 'button';
     btn.className = 'gengage-chat-consulting-style-btn gds-card';
     if (index === 0) btn.classList.add('gengage-chat-consulting-style-btn--active');
+    const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
+    if (variationStatus === 'loading') {
+      btn.classList.add('gengage-chat-consulting-style-btn--loading');
+    } else if (variationStatus !== 'ready') {
+      btn.classList.add('gengage-chat-consulting-style-btn--muted');
+    }
     btn.setAttribute('aria-label', variation.style_label ?? `Style ${index + 1}`);
 
     const media = document.createElement('div');
@@ -226,6 +286,13 @@ export function renderConsultingStylePicker(
     caption.className = 'gengage-chat-consulting-style-caption';
     caption.textContent = variation.style_label ?? `Style ${index + 1}`;
     media.appendChild(caption);
+
+    if (variationStatus === 'loading' || variationStatus !== 'ready') {
+      const badge = document.createElement('span');
+      badge.className = 'gengage-chat-consulting-style-status';
+      badge.textContent = variationStatus === 'loading' ? loadingBadge : unavailableBadge;
+      media.appendChild(badge);
+    }
     btn.appendChild(media);
 
     btn.addEventListener('click', () => {

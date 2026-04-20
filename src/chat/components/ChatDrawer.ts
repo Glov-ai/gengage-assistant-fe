@@ -244,26 +244,22 @@ export class ChatDrawer {
 
   private _renderPhotoAnalysisCard(
     container: HTMLElement,
-    content: string,
     structured?: {
       summary: string;
       strengths?: string[];
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details: string[];
       nextQuestion?: string;
     },
   ): void {
     renderPhotoAnalysisBubble(
       container,
-      content,
       {
         badge: this.i18n.photoAnalysisBadge,
         strengths: this.i18n.photoAnalysisStrengthsLabel,
         focus: this.i18n.photoAnalysisFocusLabel,
         celebStyle: this.i18n.photoAnalysisCelebStyleLabel,
-        seeMore: this.i18n.photoAnalysisSeeMoreLabel,
       },
       structured,
     );
@@ -1179,7 +1175,7 @@ export class ChatDrawer {
       if (message.role === 'assistant') {
         if (message.renderHint === 'photo_analysis') {
           bubble.classList.add('gengage-chat-bubble--photo-analysis');
-          this._renderPhotoAnalysisCard(text, message.content, message.photoAnalysis);
+          this._renderPhotoAnalysisCard(text, message.photoAnalysis);
         } else {
           text.innerHTML = sanitizeHtml(message.content);
         }
@@ -2380,7 +2376,6 @@ export class ChatDrawer {
       focusPoints?: string[];
       celebStyle?: string;
       celebStyleReason?: string;
-      details: string[];
       nextQuestion?: string;
     },
   ): void {
@@ -2394,7 +2389,7 @@ export class ChatDrawer {
     }
     if (renderHint === 'photo_analysis') {
       bubble.classList.add('gengage-chat-bubble--photo-analysis');
-      this._renderPhotoAnalysisCard(textEl as HTMLElement, html, photoAnalysis);
+      this._renderPhotoAnalysisCard(textEl as HTMLElement, photoAnalysis);
     } else {
       bubble.classList.remove('gengage-chat-bubble--photo-analysis');
       textEl.innerHTML = sanitizeHtml(html);

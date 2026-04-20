@@ -342,9 +342,13 @@ Beauty and watch consultant strings are also localizable:
 await chatWidget.init({
   locale: 'tr',
   i18n: {
-    // Style variation picker titles ({count} replaced at runtime)
+    // Style variation picker
     beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
     watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+    consultingStyleLoadingDescription: 'Bu stil için ürünleri toplamaya devam ediyorum.',
+    consultingStyleUnavailableDescription: 'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım.',
+    consultingStyleLoadingBadge: 'Yükleniyor',
+    consultingStyleUnavailableBadge: 'Hazır değil',
 
     // BeautyPhotoStep — selfie upload prompt card
     beautyPhotoStepTitle: 'Selfie Paylaşın',
@@ -358,7 +362,6 @@ await chatWidget.init({
     photoAnalysisStrengthsLabel: 'One Cikanlar',
     photoAnalysisFocusLabel: 'Odak Noktalari',
     photoAnalysisCelebStyleLabel: 'Celeb Vibe Eslesmesi',
-    photoAnalysisSeeMoreLabel: 'Detayli analizi gor',
   },
 });
 ```

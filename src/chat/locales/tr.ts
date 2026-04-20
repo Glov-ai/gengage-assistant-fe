@@ -67,6 +67,12 @@ export const CHAT_I18N_TR: ChatI18n = {
   beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
   watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
   consultingOtherCompatibleProductsLabel: 'Diğer Uyumlu Ürünler',
+  consultingStyleLoadingDescription:
+    'Bu stil için ürünleri toplamaya devam ediyorum. Panel kısa süre içinde yenilenir.',
+  consultingStyleUnavailableDescription:
+    'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım. Diğer stilleri inceleyebilirsiniz.',
+  consultingStyleLoadingBadge: 'Yükleniyor',
+  consultingStyleUnavailableBadge: 'Hazır değil',
   choicePrompterHeading: 'Kararsız mı kaldın?',
   choicePrompterSuggestion: 'Ürünleri seçip karşılaştırabilirsin',
   choicePrompterCta: 'Seç ve Karşılaştır',
@@ -128,7 +134,6 @@ export const CHAT_I18N_TR: ChatI18n = {
   photoAnalysisStrengthsLabel: 'Öne Çıkanlar',
   photoAnalysisFocusLabel: 'Odak Noktaları',
   photoAnalysisCelebStyleLabel: 'Celeb Vibe Eşleşmesi',
-  photoAnalysisSeeMoreLabel: 'Detaylı analizi gör',
   beautyPhotoStepTitle: 'Selfie ile kişiselleştir',
   beautyPhotoStepDescription: 'İstersen net bir profil fotoğrafı yükle, sana özel önerilerde bulunayım.',
   beautyPhotoStepUpload: 'Fotoğraf Yükle',

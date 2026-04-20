@@ -460,12 +460,6 @@ export const CHAT_SPECS: Record<string, { spec: Record<string, unknown>; descrip
             focus_points: ['T bolgesinde parlama kontrolu', 'Yanaklarda ton esitleme'],
             celeb_style: 'Hailey Bieber temiz isiltisi',
             celeb_style_reason: 'Dogal parlakligi koruyup yumusak vurgularla guzel calisir.',
-            details: [
-              'T bolgesinde parlama ve genis gozenekler mevcut',
-              'Yanak bolgesinde hafif kuruluk ve soyulma',
-              'Genel cilt tonu esit, belirgin lekelenme yok',
-              'Dudak cevresi hafif dehidrate gorunuyor',
-            ],
             next_question: 'Gunluk bakim rutininiz var mi, yoksa sifirdan olusturalim mi?',
           },
         },

@@ -591,7 +591,7 @@ Source: `src/chat/components/HandoffNotice.ts`
 
 **Delivered as**: `ui_spec` event with root element type `PhotoAnalysisCard`.
 
-**Props**: `summary` (string), `strengths` (string[], optional), `focus_points` (string[], optional), `celeb_style` (string, optional), `celeb_style_reason` (string, optional), `details` (string[]), `next_question` (string, optional), `style_images` (string[], optional)
+**Props**: `summary` (string), `strengths` (string[], optional), `focus_points` (string[], optional), `celeb_style` (string, optional), `celeb_style_reason` (string, optional), `next_question` (string, optional), `style_images` (string[], optional)
 
 ```
 ┌─────────────────────────────────┐
@@ -611,8 +611,6 @@ Source: `src/chat/components/HandoffNotice.ts`
 │  Celeb style match                │  ← celeb_style + reason
 │  "Zendaya red carpet balance"    │
 │                                  │
-│  "See detailed analysis"         │  ← details expander
-│                                  │
 │  "Shall we build a routine?"     │  ← next_question (optional)
 └─────────────────────────────────┘
 ```
@@ -620,9 +618,7 @@ Source: `src/chat/components/HandoffNotice.ts`
 The backend emits this UISpec during the beauty consulting flow when the user uploads a selfie.
 The `PhotoAnalysisCard` is intercepted by the chat widget and attached as structured data on
 the bot message (not rendered in the panel). The `ChatDrawer` renders it inline using the
-`_renderPhotoAnalysisCard()` method, with a fallback to sentence-splitting heuristic for
-older backends that send unstructured text instead. When only the legacy minimal payload is
-available, the frontend derives lightweight strengths and focus sections from `details`.
+`_renderPhotoAnalysisCard()` method.
 
 Source: `src/chat/components/PhotoAnalysisCard.ts`
 

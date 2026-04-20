@@ -61,7 +61,8 @@ describe('PhotoAnalysisCard typewriter race', () => {
       'PhotoAnalysisCard',
       {
         summary: 'Your skin looks dry.',
-        details: ['Redness observed', 'Wide pores'],
+        strengths: ['Defined eye frame'],
+        focus_points: ['Hydration support'],
         next_question: 'Shall we recommend a moisturizer?',
       },
       beautyState,
@@ -87,7 +88,8 @@ describe('PhotoAnalysisCard typewriter race', () => {
     expect(botMsg.renderHint).toBe('photo_analysis');
     expect(botMsg.photoAnalysis).toEqual({
       summary: 'Your skin looks dry.',
-      details: ['Redness observed', 'Wide pores'],
+      strengths: ['Defined eye frame'],
+      focusPoints: ['Hydration support'],
       nextQuestion: 'Shall we recommend a moisturizer?',
     });
 
@@ -177,7 +179,7 @@ describe('PhotoAnalysisCard typewriter race', () => {
       'PhotoAnalysisCard',
       {
         summary: 'Skin analysis complete.',
-        details: ['Hydration low'],
+        strengths: ['Balanced tone'],
       },
       beautyState,
       {
@@ -198,7 +200,6 @@ describe('PhotoAnalysisCard typewriter race', () => {
     expect(cancelTypewriterMock).toHaveBeenCalledOnce();
     // ensureRendered creates the bubble for UISpec-only streams
     expect(ensureRenderedMock).toHaveBeenCalledOnce();
-    // updateBotMessage renders the card with empty content fallback
     expect(updateBotMessageMock).toHaveBeenCalledWith('msg-3', '', 'photo_analysis', botMsg.photoAnalysis);
   });
 });

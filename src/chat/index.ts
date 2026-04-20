@@ -1583,6 +1583,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           userMsg.attachment = options.attachment;
         }
         this._drawer?.addMessage(userMsg);
+        if (options?.attachment !== undefined && this._modeController.isBeautyConsulting) {
+          this._drawer?.setBeautyPhotoStepCard({ visible: false });
+        }
         this._messages.push(userMsg);
       }
     }
@@ -1982,15 +1985,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (effectivePanelHint === 'panel' && this._panel && !skipSidePanelForUISpec) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
+            const forceReplacePanel = rootElement?.props?.['replacePanel'] === true;
 
-            const panelAction = determinePanelUpdateAction({
-              componentType,
-              similarsAppend: rootElement?.props?.['similarsAppend'] === true,
-              currentPanelType: this._panel.currentType,
-              hasPanelContent: this._drawer?.hasPanelContent() ?? false,
-              isPanelLoading: this._drawer?.isPanelLoading() ?? false,
-              isFirstPanelContentInStream,
-            });
+            const panelAction = forceReplacePanel
+              ? 'replace'
+              : determinePanelUpdateAction({
+                  componentType,
+                  similarsAppend: rootElement?.props?.['similarsAppend'] === true,
+                  currentPanelType: this._panel.currentType,
+                  hasPanelContent: this._drawer?.hasPanelContent() ?? false,
+                  isPanelLoading: this._drawer?.isPanelLoading() ?? false,
+                  isFirstPanelContentInStream,
+                });
 
             renderContext.panelProductListHeading = undefined;
             if (componentType === 'ProductGrid') {
@@ -2099,6 +2105,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           }
 
           const isAiAnalysisComponent = componentType === 'AITopPicks' || componentType === 'AIGroupingCards';
+          const actionButtons = componentType === 'ActionButtons' ? rootElement?.props?.['buttons'] : undefined;
+          const shouldInlineQuestionActionButtons =
+            componentType === 'ActionButtons' &&
+            this._modeController.mode !== 'shopping' &&
+            Array.isArray(actionButtons) &&
+            actionButtons.length > 0 &&
+            actionButtons.every((btn) => {
+              const action = (btn as Record<string, unknown>)['action'] as Record<string, unknown> | undefined;
+              return action?.['type'] === 'inputText';
+            });
           let routeAiAnalysisToPanel = false;
           let deferAiPanelUntilGrid = false;
           if (skipSidePanelForUISpec && similarsAppendGrid) {
@@ -2125,7 +2141,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               (skipSidePanelForUISpec &&
                 componentType === 'ProductGrid' &&
                 (!similarsAppendGrid || this._isMobileViewport))) &&
-            componentType !== 'ActionButtons' && // ActionButtons render as bottom pills only
+            (componentType !== 'ActionButtons' || shouldInlineQuestionActionButtons) &&
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
 
@@ -2255,7 +2271,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                   description?: string;
                 }>
               | undefined;
-            if (buttons && buttons.length > 0) {
+            if (buttons && buttons.length > 0 && !shouldInlineQuestionActionButtons) {
               const inputChips: Array<{ label: string; icon?: string | undefined; action: ActionPayload }> = [];
               const pillButtons: typeof buttons = [];
 

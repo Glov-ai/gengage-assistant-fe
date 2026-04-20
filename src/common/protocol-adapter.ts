@@ -623,6 +623,7 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
   const normalizedStyleVariations = rawStyleVariations
     .map((variation) => {
       const styleLabel = firstNonEmptyString(variation.style_label);
+      if (!styleLabel) return null;
       const styleMood = firstNonEmptyString(variation.style_mood);
       const imageUrl = firstNonEmptyString(variation.image_url ?? undefined);
       const productList = Array.isArray(variation.product_list) ? variation.product_list : [];
@@ -646,14 +647,15 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
         : [];
 
       return {
-        style_label: styleLabel ?? '',
+        style_label: styleLabel,
         style_mood: styleMood ?? '',
         ...(imageUrl ? { image_url: imageUrl } : {}),
+        ...(typeof variation.status === 'string' ? { status: variation.status } : {}),
         product_list: normalizedProducts,
         recommendation_groups: recommendationGroups,
       };
     })
-    .filter((variation) => variation.product_list.length > 0);
+    .filter(isNonNullable);
 
   const fallbackProducts = event.payload.product_list ?? [];
 
@@ -678,6 +680,7 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
     if (typeof event.payload.title === 'string') extra['panelTitle'] = event.payload.title;
     if (typeof event.payload.source === 'string') extra['source'] = event.payload.source;
     if (normalizedStyleVariations.length > 0) extra['styleVariations'] = normalizedStyleVariations;
+    if (event.payload.replace_panel === true) extra['replacePanel'] = true;
     if (Object.keys(extra).length > 0) root.props = { ...root.props, ...extra };
   }
   return spec;

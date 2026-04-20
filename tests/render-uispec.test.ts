@@ -510,6 +510,105 @@ describe('renderUISpec', () => {
       expect(result.querySelectorAll('.gengage-chat-product-card')).toHaveLength(2);
       expect(result.textContent).not.toContain('Should not render');
     });
+
+    it('renders consulting loading states even before products arrive', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Glow',
+                  status: 'loading',
+                  product_list: [],
+                  recommendation_groups: [],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(
+        spec,
+        makeContext({
+          i18n: {
+            consultingStyleLoadingDescription: 'Loading localized copy.',
+            consultingStyleLoadingBadge: 'Loading localized',
+          } as UISpecRenderContext['i18n'],
+        }),
+      );
+
+      expect(result.querySelector('.gengage-chat-consulting-loading-panel-title')?.textContent).toBe('Glow');
+      expect(result.querySelectorAll('.gengage-chat-consulting-loading-card')).toHaveLength(3);
+      expect(result.textContent).toContain('Loading localized copy.');
+    });
+
+    it('renders consulting unavailable states when a variation has no matched products', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: 'Bold',
+                  status: 'unavailable',
+                  product_list: [],
+                  recommendation_groups: [],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(
+        spec,
+        makeContext({
+          i18n: {
+            consultingStyleUnavailableDescription: 'Unavailable localized copy.',
+            consultingStyleUnavailableBadge: 'Unavailable localized',
+          } as UISpecRenderContext['i18n'],
+        }),
+      );
+
+      expect(result.querySelector('.gengage-chat-consulting-loading-panel-title')?.textContent).toBe('Bold');
+      expect(result.querySelectorAll('.gengage-chat-consulting-loading-card')).toHaveLength(0);
+      expect(result.textContent).toContain('Unavailable localized copy.');
+    });
+
+    it('ignores consulting variations without a non-empty label', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductGrid',
+            props: {
+              source: 'beauty_consulting',
+              styleVariations: [
+                {
+                  style_label: '   ',
+                  status: 'loading',
+                  product_list: [],
+                  recommendation_groups: [],
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext());
+
+      expect(result.querySelector('.gengage-chat-consulting-style-picker')).toBeNull();
+      expect(result.querySelector('.gengage-chat-consulting-loading-panel')).toBeNull();
+    });
   });
 
   describe('Image Gallery', () => {

@@ -3,8 +3,7 @@
  *
  * The backend sends a `PhotoAnalysisCard` UISpec with skin/beauty analysis
  * findings. This component renders them as a visually distinct card so the
- * user can scan the highlights quickly and expand the longer analysis only if
- * they want more detail.
+ * user can scan the highlights quickly.
  */
 
 import type { UIElement } from '../../common/types.js';
@@ -16,7 +15,6 @@ export interface PhotoAnalysisData {
   focusPoints?: string[];
   celebStyle?: string;
   celebStyleReason?: string;
-  details: string[];
   nextQuestion?: string;
 }
 
@@ -29,12 +27,9 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
   const focusPoints = Array.isArray(props['focus_points'])
     ? (props['focus_points'] as string[]).filter((c) => typeof c === 'string')
     : [];
-  const details = Array.isArray(props['details'])
-    ? (props['details'] as string[]).filter((c) => typeof c === 'string')
-    : [];
-  if (!summary && strengths.length === 0 && focusPoints.length === 0 && details.length === 0) return null;
+  if (!summary && strengths.length === 0 && focusPoints.length === 0) return null;
 
-  const result: PhotoAnalysisData = { summary, details };
+  const result: PhotoAnalysisData = { summary };
   const celebStyle = typeof props['celeb_style'] === 'string' ? props['celeb_style'] : undefined;
   const celebStyleReason = typeof props['celeb_style_reason'] === 'string' ? props['celeb_style_reason'] : undefined;
   const nextQuestion = typeof props['next_question'] === 'string' ? props['next_question'] : undefined;
@@ -44,27 +39,6 @@ export function parsePhotoAnalysisProps(props: Record<string, unknown>): PhotoAn
   if (celebStyleReason) result.celebStyleReason = celebStyleReason;
   if (nextQuestion) result.nextQuestion = nextQuestion;
   return result;
-}
-
-function deriveFallbackStructuredData(data: PhotoAnalysisData): PhotoAnalysisData {
-  const details = data.details;
-  if ((data.strengths && data.strengths.length > 0) || (data.focusPoints && data.focusPoints.length > 0)) {
-    return {
-      ...data,
-      details,
-    };
-  }
-  // Need at least 3 items to split meaningfully into two sections;
-  // otherwise just show the collapsible details to avoid redundancy.
-  if (details.length < 3) {
-    return { ...data, details };
-  }
-  return {
-    ...data,
-    strengths: details.slice(0, 2),
-    focusPoints: details.slice(2, 4),
-    details,
-  };
 }
 
 function buildSection(title: string, items: string[], className: string): HTMLElement | null {
@@ -97,7 +71,6 @@ function buildAnalysisCardDom(
     strengths: string;
     focus: string;
     celebStyle: string;
-    seeMore: string;
   },
   data: PhotoAnalysisData,
 ): HTMLElement {
@@ -155,28 +128,6 @@ function buildAnalysisCardDom(
     body.appendChild(section);
   }
 
-  const detailItems = data.details.filter(Boolean);
-  if (detailItems.length > 0) {
-    const details = document.createElement('details');
-    details.className = 'gengage-chat-photo-analysis-details';
-
-    const summary = document.createElement('summary');
-    summary.className = 'gengage-chat-photo-analysis-details-summary';
-    summary.textContent = labels.seeMore;
-
-    const detailList = document.createElement('ul');
-    detailList.className = 'gengage-chat-photo-analysis-points';
-    for (const clue of detailItems) {
-      const item = document.createElement('li');
-      item.textContent = clue;
-      detailList.appendChild(item);
-    }
-
-    details.appendChild(summary);
-    details.appendChild(detailList);
-    body.appendChild(details);
-  }
-
   if (data.nextQuestion) {
     const p = document.createElement('p');
     p.className = 'gengage-chat-photo-analysis-next';
@@ -194,66 +145,35 @@ function analysisLabels(ctx?: ChatUISpecRenderContext): {
   strengths: string;
   focus: string;
   celebStyle: string;
-  seeMore: string;
 } {
   return {
     badge: ctx?.i18n?.photoAnalysisBadge ?? 'Skin Analysis',
     strengths: ctx?.i18n?.photoAnalysisStrengthsLabel ?? 'Your strengths',
     focus: ctx?.i18n?.photoAnalysisFocusLabel ?? 'Focus points',
     celebStyle: ctx?.i18n?.photoAnalysisCelebStyleLabel ?? 'Celeb style match',
-    seeMore: ctx?.i18n?.photoAnalysisSeeMoreLabel ?? 'See detailed analysis',
   };
 }
 
 export function renderPhotoAnalysisCard(element: UIElement, ctx: ChatUISpecRenderContext): HTMLElement {
   const parsed = parsePhotoAnalysisProps(element.props ?? {});
-  const data: PhotoAnalysisData = deriveFallbackStructuredData(parsed ?? { summary: '', details: [] });
+  const data: PhotoAnalysisData = parsed ?? { summary: '' };
   return buildAnalysisCardDom(analysisLabels(ctx), data);
 }
 
-/**
- * Renders a photo analysis card into a chat message bubble.
- *
- * When structured data is available (from a PhotoAnalysisCard UISpec), it renders
- * the summary, sections, and follow-up question directly. Otherwise, falls back
- * to a sentence-splitting heuristic for old backends that don't send the UISpec.
- */
+/** Renders the structured PhotoAnalysisCard data captured from the UISpec. */
 export function renderPhotoAnalysisBubble(
   container: HTMLElement,
-  content: string,
   labels: {
     badge: string;
     strengths: string;
     focus: string;
     celebStyle: string;
-    seeMore: string;
   },
   structured?: PhotoAnalysisData,
 ): void {
   container.innerHTML = '';
 
   if (structured) {
-    container.appendChild(buildAnalysisCardDom(labels, deriveFallbackStructuredData(structured)));
-    return;
+    container.appendChild(buildAnalysisCardDom(labels, structured));
   }
-
-  // Fallback: sentence-splitting heuristic for old backends without PhotoAnalysisCard UISpec.
-  const parts = content
-    .split(/(?<=[.!?])\s+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const summaryText = parts[0] ?? content;
-  const details = parts
-    .slice(1)
-    .filter((part) => !part.includes('?'))
-    .slice(0, 4);
-  const question = parts.find((part) => part.includes('?'));
-
-  const data: PhotoAnalysisData = deriveFallbackStructuredData({
-    summary: summaryText,
-    details,
-    ...(question ? { nextQuestion: question } : {}),
-  });
-  container.appendChild(buildAnalysisCardDom(labels, data));
 }
