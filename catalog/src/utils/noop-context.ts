@@ -77,7 +77,12 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     photoAnalysisStrengthsLabel: 'Öne Çıkanlar',
     photoAnalysisFocusLabel: 'Odak Noktaları',
     photoAnalysisCelebStyleLabel: 'Celeb Vibe Eşleşmesi',
-    photoAnalysisSeeMoreLabel: 'Detayli analizi gor',
+    consultingStyleLoadingDescription:
+      'Bu stil için ürünleri toplamaya devam ediyorum. Panel kısa süre içinde yenilenir.',
+    consultingStyleUnavailableDescription:
+      'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım. Diğer stilleri inceleyebilirsiniz.',
+    consultingStyleLoadingBadge: 'Yükleniyor',
+    consultingStyleUnavailableBadge: 'Hazır değil',
   };
 
   return {

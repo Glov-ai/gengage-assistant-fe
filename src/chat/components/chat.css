@@ -1268,40 +1268,6 @@
   color: var(--text-secondary);
 }
 
-.gengage-chat-photo-analysis-details {
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--client-primary) 12%, var(--border-default));
-  background: color-mix(in srgb, var(--surface-card-soft) 54%, white);
-  overflow: hidden;
-}
-
-.gengage-chat-photo-analysis-details-summary {
-  cursor: pointer;
-  list-style: none;
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--client-primary);
-}
-
-.gengage-chat-photo-analysis-details-summary::-webkit-details-marker {
-  display: none;
-}
-
-.gengage-chat-photo-analysis-points {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-primary);
-}
-
-.gengage-chat-photo-analysis-details .gengage-chat-photo-analysis-points {
-  padding: 0 16px 14px 32px;
-}
-
 .gengage-chat-photo-analysis-next {
   margin: 0;
   padding: 10px 12px;
@@ -2877,7 +2843,7 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-panel .gengage-chat-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
   overflow-x: visible;
   gap: 12px;
   min-height: auto;
@@ -8406,6 +8372,10 @@ button.gengage-chat-product-details-rating {
   .gengage-skeleton-text,
   .gengage-skeleton-price {
     background: var(--ds-neutral-100);
+  }
+
+  .gengage-chat-consulting-loading-card {
+    animation: none;
   }
 }
 

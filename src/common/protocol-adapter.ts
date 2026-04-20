@@ -623,6 +623,7 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
   const normalizedStyleVariations = rawStyleVariations
     .map((variation) => {
       const styleLabel = firstNonEmptyString(variation.style_label);
+      if (!styleLabel) return null;
       const styleMood = firstNonEmptyString(variation.style_mood);
       const imageUrl = firstNonEmptyString(variation.image_url ?? undefined);
       const productList = Array.isArray(variation.product_list) ? variation.product_list : [];
@@ -646,7 +647,7 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
         : [];
 
       return {
-        style_label: styleLabel ?? '',
+        style_label: styleLabel,
         style_mood: styleMood ?? '',
         ...(imageUrl ? { image_url: imageUrl } : {}),
         ...(typeof variation.status === 'string' ? { status: variation.status } : {}),
@@ -654,6 +655,7 @@ function adaptProductList(event: V1ProductList): StreamEventUISpec {
         recommendation_groups: recommendationGroups,
       };
     })
+    .filter(isNonNullable);
 
   const fallbackProducts = event.payload.product_list ?? [];
 

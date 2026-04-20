@@ -15,7 +15,6 @@ import { renderProductCard } from './renderUISpec.js';
 export type StyleVariationProduct = Record<string, unknown>;
 
 export type StyleVariation = {
-  style_id?: string;
   style_label?: string;
   style_mood?: string;
   image_url?: string;
@@ -39,7 +38,7 @@ export function toConsultingImageUrl(input: unknown): string | undefined {
   // If the backend sends an absolute URL, use it directly.
   if (/^https?:\/\//i.test(raw)) return raw;
 
-  // Relative path fallback for old backends that don't send absolute URLs.
+  // Account style-guide configs may store relative asset paths.
   let path = raw.split(/[?#]/)[0];
   if (!path) return undefined;
 
@@ -68,6 +67,9 @@ export function renderConsultingStylePicker(
   styleVariations: StyleVariation[],
   ctx?: ChatUISpecRenderContext,
 ): void {
+  const loadingBadge = ctx?.i18n?.consultingStyleLoadingBadge ?? 'Loading';
+  const unavailableBadge = ctx?.i18n?.consultingStyleUnavailableBadge ?? 'Not ready';
+
   const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable'): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
@@ -77,15 +79,17 @@ export function renderConsultingStylePicker(
 
     const title = document.createElement('h4');
     title.className = 'gengage-chat-consulting-loading-panel-title';
-    title.textContent = variation.style_label ?? (mode === 'loading' ? 'Bu stil yükleniyor' : 'Bu stil şu an hazır değil');
+    title.textContent = variation.style_label ?? (mode === 'loading' ? loadingBadge : unavailableBadge);
     stateCard.appendChild(title);
 
     const desc = document.createElement('p');
     desc.className = 'gengage-chat-consulting-loading-panel-copy';
     desc.textContent =
       mode === 'loading'
-        ? 'Bu stil için ürünleri toplamaya devam ediyorum. Birkaç saniye içinde panel yenilenir.'
-        : 'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım. Diğer stilleri inceleyebilirsiniz.';
+        ? (ctx?.i18n?.consultingStyleLoadingDescription ??
+          'I am still collecting products for this style. The panel will refresh shortly.')
+        : (ctx?.i18n?.consultingStyleUnavailableDescription ??
+          'I could not find enough product matches for this style yet. You can review the other styles.');
     stateCard.appendChild(desc);
 
     if (mode === 'loading') {
@@ -126,7 +130,10 @@ export function renderConsultingStylePicker(
       renderVariationPendingState(variation, 'loading');
       return;
     }
-    if (variationStatus !== 'ready' && (!Array.isArray(variation.product_list) || variation.product_list.length === 0)) {
+    if (
+      variationStatus !== 'ready' &&
+      (!Array.isArray(variation.product_list) || variation.product_list.length === 0)
+    ) {
       renderVariationPendingState(variation, 'unavailable');
       return;
     }
@@ -283,7 +290,7 @@ export function renderConsultingStylePicker(
     if (variationStatus === 'loading' || variationStatus !== 'ready') {
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-consulting-style-status';
-      badge.textContent = variationStatus === 'loading' ? 'Yukleniyor' : 'Hazir degil';
+      badge.textContent = variationStatus === 'loading' ? loadingBadge : unavailableBadge;
       media.appendChild(badge);
     }
     btn.appendChild(media);

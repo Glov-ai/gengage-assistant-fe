@@ -242,6 +242,10 @@ export interface ChatI18n {
   watchStylesPreparedTitle: string;
   /** Label for products that were not included in a backend recommendation group. */
   consultingOtherCompatibleProductsLabel: string;
+  consultingStyleLoadingDescription: string;
+  consultingStyleUnavailableDescription: string;
+  consultingStyleLoadingBadge: string;
+  consultingStyleUnavailableBadge: string;
   choicePrompterHeading: string;
   choicePrompterSuggestion: string;
   choicePrompterCta: string;
@@ -314,8 +318,6 @@ export interface ChatI18n {
   photoAnalysisFocusLabel: string;
   /** Photo analysis section label: celeb style match. */
   photoAnalysisCelebStyleLabel: string;
-  /** Photo analysis expander summary text. */
-  photoAnalysisSeeMoreLabel: string;
   /** Beauty photo step card: title. */
   beautyPhotoStepTitle: string;
   /** Beauty photo step card: description. */
@@ -419,6 +421,10 @@ export interface ChatUISpecRenderContext {
     | 'beautyStylesPreparedTitle'
     | 'watchStylesPreparedTitle'
     | 'consultingOtherCompatibleProductsLabel'
+    | 'consultingStyleLoadingDescription'
+    | 'consultingStyleUnavailableDescription'
+    | 'consultingStyleLoadingBadge'
+    | 'consultingStyleUnavailableBadge'
     | 'viewMoreLabel'
     | 'similarProductsLabel'
     | 'addToCartButton'
@@ -448,7 +454,6 @@ export interface ChatUISpecRenderContext {
     | 'photoAnalysisStrengthsLabel'
     | 'photoAnalysisFocusLabel'
     | 'photoAnalysisCelebStyleLabel'
-    | 'photoAnalysisSeeMoreLabel'
     | 'beautyPhotoStepTitle'
     | 'beautyPhotoStepDescription'
     | 'beautyPhotoStepUpload'
@@ -502,14 +507,13 @@ export interface ChatMessage {
   silent?: boolean;
   /** Backend render hint for special rendering (e.g. "photo_analysis"). */
   renderHint?: string;
-  /** Structured photo analysis data from PhotoAnalysisCard UISpec (preferred over sentence-splitting). */
+  /** Structured photo analysis data from PhotoAnalysisCard UISpec. */
   photoAnalysis?: {
     summary: string;
     strengths?: string[];
     focusPoints?: string[];
     celebStyle?: string;
     celebStyleReason?: string;
-    details?: string[];
     nextQuestion?: string;
   };
 

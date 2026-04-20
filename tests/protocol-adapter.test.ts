@@ -150,6 +150,32 @@ describe('adaptBackendEvent', () => {
     ]);
   });
 
+  it('drops consulting style variations without a non-empty label', () => {
+    const raw = {
+      type: 'productList',
+      payload: {
+        source: 'beauty_consulting',
+        style_variations: [
+          {
+            style_label: '   ',
+            status: 'loading',
+            product_list: [],
+            recommendation_groups: [],
+          },
+        ],
+      },
+    };
+    const result = adaptBackendEvent(raw)!;
+
+    expect(result.type).toBe('ui_spec');
+    const uiSpec = result as {
+      spec: { elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+    const rootProps = uiSpec.spec.elements['root']!.props!;
+    expect(rootProps['source']).toBe('beauty_consulting');
+    expect(rootProps['styleVariations']).toBeUndefined();
+  });
+
   it('adapts productDetails to panel ui_spec with ProductDetailsPanel', () => {
     const raw = {
       type: 'productDetails',
@@ -1170,7 +1196,6 @@ describe('adaptBackendEvent — handoff', () => {
         focus_points: ['T bolgesinde parlama'],
         celeb_style: 'Hailey Bieber temiz isiltisi',
         celeb_style_reason: 'Dogal parlakligi temiz bir tabanla destekliyor.',
-        details: ['Kizariklik belirgin', 'Gozenekler genis', 'Dudak cevresi hafif kuru'],
         next_question: 'Hangi ürün grubunu tercih edersiniz?',
       },
     };
@@ -1188,7 +1213,6 @@ describe('adaptBackendEvent — handoff', () => {
     expect(root.props?.['focus_points']).toEqual(['T bolgesinde parlama']);
     expect(root.props?.['celeb_style']).toBe('Hailey Bieber temiz isiltisi');
     expect(root.props?.['celeb_style_reason']).toBe('Dogal parlakligi temiz bir tabanla destekliyor.');
-    expect(root.props?.['details']).toEqual(['Kizariklik belirgin', 'Gozenekler genis', 'Dudak cevresi hafif kuru']);
     expect(root.props?.['next_question']).toBe('Hangi ürün grubunu tercih edersiniz?');
   });
 });

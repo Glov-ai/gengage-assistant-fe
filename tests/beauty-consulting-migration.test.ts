@@ -368,7 +368,6 @@ describe('beauty consulting migration', () => {
           focusPoints?: string[];
           celebStyle?: string;
           celebStyleReason?: string;
-          details: string[];
           nextQuestion?: string;
         };
       };
@@ -378,14 +377,12 @@ describe('beauty consulting migration', () => {
     // Verify the message interface supports photoAnalysis
     msg.photoAnalysis = {
       summary: 'Cildiniz kuru görünüyor.',
-      details: ['Kızarıklık var', 'Gözenekler geniş'],
       strengths: ['Belirgin göz hattı'],
       focusPoints: ['T bölgesinde parlama'],
       celebStyle: 'Hailey Bieber temiz ışıltısı',
       nextQuestion: 'Nemlendirici önerelim mi?',
     };
     expect(msg.photoAnalysis.summary).toBe('Cildiniz kuru görünüyor.');
-    expect(msg.photoAnalysis.details).toHaveLength(2);
     expect(msg.photoAnalysis.strengths).toContain('Belirgin göz hattı');
     expect(msg.photoAnalysis.focusPoints).toContain('T bölgesinde parlama');
     expect(msg.photoAnalysis.celebStyle).toBe('Hailey Bieber temiz ışıltısı');

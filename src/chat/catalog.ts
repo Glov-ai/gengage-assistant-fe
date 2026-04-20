@@ -293,7 +293,6 @@ export const PhotoAnalysisCardSchema = z.object({
   focus_points: z.array(z.string()).optional(),
   celeb_style: z.string().optional(),
   celeb_style_reason: z.string().optional(),
-  details: z.array(z.string()).optional(),
   next_question: z.string().optional(),
   style_images: z.array(z.string()).optional(),
 });
@@ -382,8 +381,7 @@ export const chatCatalog = {
     },
     PhotoAnalysisCard: {
       schema: PhotoAnalysisCardSchema,
-      description:
-        'Structured photo analysis card with strengths, focus points, celeb vibe, details, and follow-up question.',
+      description: 'Structured photo analysis card with strengths, focus points, celeb vibe, and follow-up question.',
     },
     BeautyPhotoStep: {
       schema: BeautyPhotoStepSchema,
