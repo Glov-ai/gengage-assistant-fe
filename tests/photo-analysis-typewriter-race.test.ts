@@ -200,7 +200,6 @@ describe('PhotoAnalysisCard typewriter race', () => {
     expect(cancelTypewriterMock).toHaveBeenCalledOnce();
     // ensureRendered creates the bubble for UISpec-only streams
     expect(ensureRenderedMock).toHaveBeenCalledOnce();
-    // updateBotMessage renders the card with empty content fallback
     expect(updateBotMessageMock).toHaveBeenCalledWith('msg-3', '', 'photo_analysis', botMsg.photoAnalysis);
   });
 });

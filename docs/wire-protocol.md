@@ -564,9 +564,16 @@ the new data, re-saves to storage, and dispatches `invalidateMessage` to trigger
 }
 ```
 
-- `source` values: `"search"` | `"similars"` | `"ai_response"`
+- `source` values: `"search"` | `"similars"` | `"ai_response"` | `"beauty_consulting"` | `"watch_expert"`
 - Backend re-orders `product_list` by `llm_ranked_skus` if present (max 20)
 - Empty `product_list` is silently dropped (not sent to frontend)
+
+**Consulting sources** (`beauty_consulting`, `watch_expert`) extend the payload with:
+
+- `style_variations[]` — each variation has `style_label`, `style_mood`, `image_url`, `product_list`, `recommendation_groups`, and optional `status` (`"loading"` | `"ready"` or absent).
+- `replace_panel` (boolean) — when `true`, the frontend replaces existing panel content instead of following the default append/replace heuristics.
+
+The protocol adapter drops variations whose `style_label` is empty or whitespace-only.
 
 ### `productListPreview` — Preview products before full list
 
@@ -1180,10 +1187,11 @@ The backend streams the event types listed above. The wire protocol adapter
 
 Unknown event types are logged and safely ignored.
 
-For consulting `productList` payloads, the adapter also preserves:
+For consulting `productList` payloads the adapter additionally:
 
-- `style_variations[].status` so the chat renderer can show `loading`, `ready`, or unavailable variation states before products are complete.
-- `replace_panel: true`, mapped to `replacePanel`, to force the incoming panel UISpec to replace existing panel content instead of following the default append/replace heuristics.
+- Drops style variations whose `style_label` is empty or whitespace-only.
+- Preserves `style_variations[].status` so the renderer can show loading/unavailable placeholder states.
+- Maps `replace_panel: true` → `replacePanel` on the UISpec root props.
 
 ---
 

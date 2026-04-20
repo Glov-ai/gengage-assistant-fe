@@ -342,7 +342,7 @@ Beauty and watch consultant strings are also localizable:
 await chatWidget.init({
   locale: 'tr',
   i18n: {
-    // Style variation picker titles ({count} replaced at runtime)
+    // Style variation picker
     beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
     watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
     consultingStyleLoadingDescription: 'Bu stil için ürünleri toplamaya devam ediyorum.',
