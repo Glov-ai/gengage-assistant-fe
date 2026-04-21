@@ -4804,12 +4804,14 @@ button.gengage-chat-product-card-cta {
  */
 .gengage-chat-ai-toppick-card--winner,
 .gengage-chat-ai-toppick-card--compact {
+  --_badge-inset-top: 12px;
+  --_badge-height: 30px; /* 8px pad + 11px * 1.25 lh + 8px pad */
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   box-sizing: border-box;
-  padding: 48px 12px 12px;
+  padding: calc(var(--_badge-inset-top) + var(--_badge-height) + 6px) 12px 12px;
   border-radius: var(--radius-card);
   background: var(--surface-card);
   overflow: visible;
@@ -4838,10 +4840,10 @@ button.gengage-chat-product-card-cta {
   transform: translateY(-1px);
 }
 
-/* Role badge: absolute -top-2.5 left-3 (no translateY — prevent overlap) */
+/* Role badge inside card — top offset synced via --_badge-inset-top */
 .gengage-chat-ai-toppick-badge {
   position: absolute;
-  top: 12px;
+  top: var(--_badge-inset-top, 12px);
   left: 14px;
   z-index: 2;
   display: inline-flex;
@@ -7020,9 +7022,7 @@ button.gengage-chat-product-details-rating {
   display: none;
 }
 
-.gengage-chat-root--mobile
-  .gengage-chat-panel--visible.gengage-chat-panel--scrolled
-  ~ .gengage-chat-comparison-dock-slot:not(:empty) {
+.gengage-chat-root--mobile .gengage-chat-comparison-dock-slot:not(:empty) {
   display: block;
   position: absolute;
   left: 0;
@@ -8241,6 +8241,14 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-product-details-share:focus-visible {
   outline: 2px solid var(--client-focus-ring);
   outline-offset: 2px;
+}
+
+/* Mobile: hide prompter until the panel scrolls past the product grid header */
+.gengage-chat-root--mobile
+  .gengage-chat-panel--visible:not(.gengage-chat-panel--scrolled)
+  ~ .gengage-chat-comparison-dock-slot
+  .gengage-chat-choice-prompter {
+  display: none;
 }
 
 /* Mobile touch targets — WCAG 2.5.5 (44px minimum) */

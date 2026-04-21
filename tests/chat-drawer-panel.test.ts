@@ -121,6 +121,44 @@ describe('ChatDrawer panel collapse/expand', () => {
     expect(panel?.classList.contains('gengage-chat-panel--visible')).toBe(true);
   });
 
+  it('setComparisonDockContent mounts element in the dock slot', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const prompter = document.createElement('div');
+    prompter.className = 'gengage-chat-choice-prompter';
+    prompter.textContent = 'Compare?';
+    drawer.setComparisonDockContent(prompter);
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(1);
+    expect(slot?.querySelector('.gengage-chat-choice-prompter')?.textContent).toBe('Compare?');
+  });
+
+  it('setComparisonDockContent(null) clears the dock slot', () => {
+    const prompter = document.createElement('div');
+    prompter.className = 'gengage-chat-choice-prompter';
+    drawer.setComparisonDockContent(prompter);
+    drawer.setComparisonDockContent(null);
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(0);
+  });
+
+  it('clearPanel clears the dock slot alongside panel content', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const dockEl = document.createElement('div');
+    dockEl.className = 'gengage-chat-comparison-floating-btn';
+    drawer.setComparisonDockContent(dockEl);
+
+    drawer.clearPanel();
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(0);
+  });
+
   it('clearPanel keeps collapsed preference for the next panel render', () => {
     const content = document.createElement('div');
     drawer.setPanelContent(content);
