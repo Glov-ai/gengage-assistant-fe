@@ -44,6 +44,7 @@ function buildInitialPageContext(options: OverlayWidgetsOptions): PageContext {
 
   const incoming = options.pageContext;
   if (incoming?.sku !== undefined) base.sku = incoming.sku;
+  if (incoming?.skuList !== undefined) base.skuList = incoming.skuList;
   if (incoming?.price !== undefined) base.price = incoming.price;
   if (incoming?.categoryTree !== undefined) base.categoryTree = incoming.categoryTree;
   if (incoming?.url !== undefined) base.url = incoming.url;

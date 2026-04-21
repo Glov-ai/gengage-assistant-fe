@@ -197,6 +197,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
   private _pdpLaunched = false;
+  private _plpLaunched = false;
+  private _homepageLaunched = false;
   private _entryContextPrimed = false;
   /** True while the initial silent PDP launch request is in flight. */
   private _pdpPrimingInFlight = false;
@@ -608,6 +610,32 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         { silent: true, isPdpPrime: true, preservePills: true },
       );
     }
+
+    // Auto-launch PLP context on first open when skuList is available
+    if (!this._plpLaunched && this.config.pageContext?.pageType === 'plp' && this.config.pageContext.skuList?.length) {
+      this._plpLaunched = true;
+      this._sendAction(
+        {
+          title: '',
+          type: 'launchProductList',
+          payload: { sku_list: this.config.pageContext.skuList },
+        },
+        { silent: true, preservePills: true },
+      );
+    }
+
+    // Auto-launch homepage context on first open when on home page
+    if (!this._homepageLaunched && this.config.pageContext?.pageType === 'home') {
+      this._homepageLaunched = true;
+      this._sendAction(
+        {
+          title: '',
+          type: 'launchHomepage',
+          payload: {},
+        },
+        { silent: true, preservePills: true },
+      );
+    }
   }
 
   protected onHide(): void {
@@ -834,8 +862,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._lastThreadId = null;
     this._lastBackendContext = null;
     this._chatCreatedAt = new Date().toISOString();
-    // Allow PDP auto-launch for new SKU
+    // Allow PDP/PLP/homepage auto-launch for new context
     this._pdpLaunched = false;
+    this._plpLaunched = false;
+    this._homepageLaunched = false;
     this._entryContextPrimed = false;
     this._pdpPrimingInFlight = false;
     this._queuedUserMessages = [];
@@ -1545,7 +1575,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._lastThreadId = threadId;
     // Preserve the active grid intent during product drilldowns. A product click
     // should not relabel an existing search-result panel as "similar products".
-    if (this._panel && action.type !== 'launchSingleProduct') {
+    if (
+      this._panel &&
+      action.type !== 'launchSingleProduct' &&
+      action.type !== 'launchProductList' &&
+      action.type !== 'launchHomepage'
+    ) {
       this._panel.lastActionType = action.type;
     }
     // For preservePanel actions (like/addToCart), don't overwrite _activeRequestThreadId
