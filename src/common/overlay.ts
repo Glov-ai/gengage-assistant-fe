@@ -186,6 +186,16 @@ export interface OverlayWidgetsController {
   openChat(options?: { state?: 'half' | 'full' }): void;
   closeChat(): void;
   updateContext(patch: Partial<PageContext>): Promise<void>;
+  /**
+   * Merge-only page context update (alias of {@link updateContext}).
+   * Host injectors often call this after SPA route changes; same behavior as `updateContext`.
+   */
+  updatePageContext(patch: Partial<PageContext>): Promise<void>;
+  /**
+   * Merge-only page context update (alias of {@link updateContext}).
+   * Same as `updatePageContext` — not a full replace of `PageContext`.
+   */
+  setPageContext(patch: Partial<PageContext>): Promise<void>;
   updateSku(sku: string, pageType?: PageContext['pageType']): Promise<void>;
   destroy(): void;
 }
@@ -279,6 +289,14 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
 
   async updateSku(sku: string, pageType: PageContext['pageType'] = 'pdp'): Promise<void> {
     await this.updateContext({ sku, pageType });
+  }
+
+  async updatePageContext(patch: Partial<PageContext>): Promise<void> {
+    await this.updateContext(patch);
+  }
+
+  async setPageContext(patch: Partial<PageContext>): Promise<void> {
+    await this.updateContext(patch);
   }
 
   destroy(): void {
