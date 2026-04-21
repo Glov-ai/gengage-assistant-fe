@@ -24,6 +24,7 @@ async function createChat(): Promise<GengageChat> {
   const chat = new GengageChat();
   await chat.init({
     accountId: 'test-account',
+    middlewareUrl: 'https://test.example.com',
     session: { sessionId: 'test-session' },
   });
   return chat;
