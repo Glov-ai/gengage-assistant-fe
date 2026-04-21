@@ -374,9 +374,7 @@ reason, expert_quality_score, review_highlight, product_item, requestDetails }`)
 
 ```
 ┌─────────────────────────────────┐
-│  AI Top Picks                    │
-│                                  │
-│  🏆 Winner: Product A (large)   │  ← TopPickCard variant
+│  🏆 Top Pick: Product A         │  ← TopPickCard variant
 │  ┌────────────────────────────┐  │
 │  │ [img 28x28]                 │  │
 │  │ Score: 8.5/10               │  │
@@ -394,15 +392,17 @@ reason, expert_quality_score, review_highlight, product_item, requestDetails }`)
 ```
 
 **Card variants**:
-- **Top Pick card** (first/winner): Vertical layout, primary border, large image (28×28), "TOP MATCH" badge
+- **Top Pick card** (first/winner): Vertical layout, primary border, large image (28×28), localized role badge
 - **Compact card** (others): Horizontal flex, smaller image (20×20), role label inline
 
-**Roles**: `winner` → "My Favorite" / "TOP MATCH", `best_value` → "Best Value",
+**Roles**: `winner` → localized "Top Pick" copy, `best_value` → "Best Value",
 `best_alternative` → "Best Alternative"
 
 **Label chips**: `positive` sentiment → green, `negative` → red, `neutral` → gray.
 
 **Discount badge**: Shows `%{discountPercent}` when discount > 0 and account config enables it.
+
+**Section heading**: The renderer no longer injects a standalone "AI Top Picks" heading above the cards; the card group is rendered directly inside the panel/chat container.
 
 **Mobile**: Horizontal scroll with snap, cards fixed at 280px width.
 **Desktop**: Vertical stack, full-width cards.

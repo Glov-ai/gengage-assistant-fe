@@ -33,6 +33,7 @@ describe('createChoicePrompter', () => {
     expect(el.querySelector('.gengage-chat-choice-prompter-suggestion')?.textContent).toBe(
       'Ürünleri seçip karşılaştırabilirsin',
     );
+    expect(el.querySelector('.gengage-chat-choice-prompter-actions')).not.toBeNull();
     expect(el.querySelector('.gengage-chat-choice-prompter-cta')?.textContent).toBe('Seç ve Karşılaştır');
     expect(el.querySelector('.gengage-chat-choice-prompter-dismiss')).not.toBeNull();
   });

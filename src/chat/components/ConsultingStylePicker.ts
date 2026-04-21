@@ -71,10 +71,16 @@ export function renderConsultingStylePicker(
   const i18n = { ...CHAT_I18N_TR, ...(ctx?.i18n ?? {}) };
   const loadingBadge = i18n.consultingStyleLoadingBadge;
   const unavailableBadge = i18n.consultingStyleUnavailableBadge;
-  const fallbackStyleLabel = (index: number): string => i18n.consultingFallbackStyleLabel.replace('{index}', String(index));
-  const variationLabel = (variation: StyleVariation, index: number): string => variation.style_label ?? fallbackStyleLabel(index);
+  const fallbackStyleLabel = (index: number): string =>
+    i18n.consultingFallbackStyleLabel.replace('{index}', String(index));
+  const variationLabel = (variation: StyleVariation, index: number): string =>
+    variation.style_label ?? fallbackStyleLabel(index);
 
-  const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable', index: number): void => {
+  const renderVariationPendingState = (
+    variation: StyleVariation,
+    mode: 'loading' | 'unavailable',
+    index: number,
+  ): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
 
@@ -89,9 +95,7 @@ export function renderConsultingStylePicker(
     const desc = document.createElement('p');
     desc.className = 'gengage-chat-consulting-loading-panel-copy';
     desc.textContent =
-      mode === 'loading'
-        ? i18n.consultingStyleLoadingDescription
-        : i18n.consultingStyleUnavailableDescription;
+      mode === 'loading' ? i18n.consultingStyleLoadingDescription : i18n.consultingStyleUnavailableDescription;
     stateCard.appendChild(desc);
 
     if (mode === 'loading') {
@@ -221,7 +225,9 @@ export function renderConsultingStylePicker(
           .filter((product): product is StyleVariationProduct => !!product);
         if (groupedProducts.length === 0) continue;
         const labelText =
-          typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : i18n.consultingFallbackGroupLabel;
+          typeof group.label === 'string' && group.label.trim().length > 0
+            ? group.label
+            : i18n.consultingFallbackGroupLabel;
         const reasonText = typeof group.reason === 'string' ? group.reason : undefined;
         sections.push({
           labelText,

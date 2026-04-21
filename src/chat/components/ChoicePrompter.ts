@@ -39,6 +39,9 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
 
   card.appendChild(copy);
 
+  const actions = document.createElement('div');
+  actions.className = 'gengage-chat-choice-prompter-actions';
+
   const cta = document.createElement('button');
   cta.type = 'button';
   cta.className = 'gengage-chat-choice-prompter-cta gds-btn gds-btn-primary';
@@ -49,7 +52,7 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
     card.remove();
     options.onCtaClick();
   });
-  card.appendChild(cta);
+  actions.appendChild(cta);
 
   const dismiss = document.createElement('button');
   dismiss.type = 'button';
@@ -62,7 +65,9 @@ export function createChoicePrompter(options: ChoicePrompterOptions): HTMLElemen
     card.remove();
     options.onDismiss?.();
   });
-  card.appendChild(dismiss);
+  actions.appendChild(dismiss);
+
+  card.appendChild(actions);
 
   return card;
 }

@@ -68,7 +68,8 @@ export function renderBeautyPhotoStep(
 
   const desc = document.createElement('p');
   desc.className = 'gengage-chat-beauty-photo-step-desc';
-  desc.textContent = (typeof props['description'] === 'string' ? props['description'] : undefined) ?? i18n.beautyPhotoStepDescription;
+  desc.textContent =
+    (typeof props['description'] === 'string' ? props['description'] : undefined) ?? i18n.beautyPhotoStepDescription;
 
   const actions = document.createElement('div');
   actions.className = 'gengage-chat-beauty-photo-step-actions';
@@ -78,8 +79,7 @@ export function renderBeautyPhotoStep(
   uploadBtn.className = 'gengage-chat-beauty-photo-step-upload gds-btn gds-btn-primary';
   uploadBtn.textContent = processing
     ? i18n.beautyPhotoStepProcessing
-    : ((typeof props['upload_label'] === 'string' ? props['upload_label'] : undefined) ??
-      i18n.beautyPhotoStepUpload);
+    : ((typeof props['upload_label'] === 'string' ? props['upload_label'] : undefined) ?? i18n.beautyPhotoStepUpload);
   uploadBtn.disabled = processing;
   if (callbacks?.onUpload) {
     uploadBtn.addEventListener('click', () => callbacks.onUpload!());
@@ -88,7 +88,8 @@ export function renderBeautyPhotoStep(
   const skipBtn = document.createElement('button');
   skipBtn.type = 'button';
   skipBtn.className = 'gengage-chat-beauty-photo-step-skip gds-btn gds-btn-ghost';
-  skipBtn.textContent = (typeof props['skip_label'] === 'string' ? props['skip_label'] : undefined) ?? i18n.beautyPhotoStepSkip;
+  skipBtn.textContent =
+    (typeof props['skip_label'] === 'string' ? props['skip_label'] : undefined) ?? i18n.beautyPhotoStepSkip;
   if (callbacks?.onSkip) {
     skipBtn.addEventListener('click', () => callbacks.onSkip!());
   }

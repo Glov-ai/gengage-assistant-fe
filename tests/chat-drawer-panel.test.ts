@@ -104,6 +104,61 @@ describe('ChatDrawer panel collapse/expand', () => {
     expect(divider.classList.contains('gengage-chat-panel-divider--hidden')).toBe(true);
   });
 
+  it('reopens the panel when new content is mounted after a mobile hide', () => {
+    const content = document.createElement('div');
+    content.textContent = 'First panel';
+    drawer.setPanelContent(content);
+
+    // Mobile back hides the panel without clearing content. A later fresh panel render
+    // should force the panel visible again instead of trusting stale internal state.
+    (drawer as unknown as { hideMobilePanel: () => void }).hideMobilePanel();
+
+    const nextContent = document.createElement('div');
+    nextContent.textContent = 'Updated panel';
+    drawer.setPanelContent(nextContent);
+
+    const panel = container.querySelector('.gengage-chat-panel');
+    expect(panel?.classList.contains('gengage-chat-panel--visible')).toBe(true);
+  });
+
+  it('setComparisonDockContent mounts element in the dock slot', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const prompter = document.createElement('div');
+    prompter.className = 'gengage-chat-choice-prompter';
+    prompter.textContent = 'Compare?';
+    drawer.setComparisonDockContent(prompter);
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(1);
+    expect(slot?.querySelector('.gengage-chat-choice-prompter')?.textContent).toBe('Compare?');
+  });
+
+  it('setComparisonDockContent(null) clears the dock slot', () => {
+    const prompter = document.createElement('div');
+    prompter.className = 'gengage-chat-choice-prompter';
+    drawer.setComparisonDockContent(prompter);
+    drawer.setComparisonDockContent(null);
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(0);
+  });
+
+  it('clearPanel clears the dock slot alongside panel content', () => {
+    const content = document.createElement('div');
+    drawer.setPanelContent(content);
+
+    const dockEl = document.createElement('div');
+    dockEl.className = 'gengage-chat-comparison-floating-btn';
+    drawer.setComparisonDockContent(dockEl);
+
+    drawer.clearPanel();
+
+    const slot = container.querySelector('[data-gengage-part="comparison-dock-slot"]');
+    expect(slot?.children).toHaveLength(0);
+  });
+
   it('clearPanel keeps collapsed preference for the next panel render', () => {
     const content = document.createElement('div');
     drawer.setPanelContent(content);

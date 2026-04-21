@@ -13,7 +13,7 @@ function makeContext(overrides?: Partial<ChatUISpecRenderContext>): ChatUISpecRe
     i18n: {
       productCtaLabel: 'İncele',
       aiTopPicksTitle: 'Sizin İçin En İyiler',
-      roleWinner: 'En Beğendiğim',
+      roleWinner: 'Size Özel Seçimim',
       roleBestValue: 'En Uygun Fiyatlı',
       roleBestAlternative: 'En İyi Alternatif',
       viewDetails: 'Detayları Gör',
@@ -45,13 +45,13 @@ function makeElement(suggestions: unknown[]): UIElement {
 }
 
 describe('renderAITopPicks', () => {
-  it('renders title', () => {
+  it('does not render a section title', () => {
     const el = makeElement([{ product: { sku: '1', name: 'Product A' }, role: 'winner' }]);
     const ctx = makeContext();
     const dom = renderAITopPicks(el, ctx);
 
     const title = dom.querySelector('.gengage-chat-ai-top-picks-title');
-    expect(title?.textContent).toBe('Sizin İçin En İyiler');
+    expect(title).toBeNull();
   });
 
   it('wraps non-hero picks in ai-top-picks-rest for mobile horizontal scroll layout', () => {
@@ -82,7 +82,7 @@ describe('renderAITopPicks', () => {
     const winner = cards[0]!;
     expect(winner.classList.contains('gengage-chat-ai-toppick-card--winner')).toBe(true);
     const badge = winner.querySelector('.gengage-chat-ai-toppick-badge');
-    expect(badge?.textContent).toBe('En Beğendiğim');
+    expect(badge?.textContent).toBe('Size Özel Seçimim');
 
     const compact = cards[1]!;
     expect(compact.classList.contains('gengage-chat-ai-toppick-card--compact')).toBe(true);
@@ -103,6 +103,27 @@ describe('renderAITopPicks', () => {
     // Role pills (same badge component as winner)
     expect(compactCards[0]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En Uygun Fiyatlı');
     expect(compactCards[1]!.querySelector('.gengage-chat-ai-toppick-badge')?.textContent).toBe('En İyi Alternatif');
+  });
+
+  it('keeps role labels locale-driven for English copy too', () => {
+    const el = makeElement([
+      { product: { sku: '1', name: 'Product A' }, role: 'winner' },
+      { product: { sku: '2', name: 'Product B' }, role: 'best_value' },
+    ]);
+    const base = makeContext();
+    const ctx = makeContext({
+      i18n: {
+        ...base.i18n,
+        roleWinner: 'Top Pick',
+        roleBestValue: 'Best Value',
+        roleBestAlternative: 'Best Alternative',
+      },
+    });
+    const dom = renderAITopPicks(el, ctx);
+    const badges = dom.querySelectorAll('.gengage-chat-ai-toppick-badge');
+
+    expect(badges[0]!.textContent).toBe('Top Pick');
+    expect(badges[1]!.textContent).toBe('Best Value');
   });
 
   it('mobil kompaktta rol metni rozet yerine gövde içi satırda; CTA yok', () => {

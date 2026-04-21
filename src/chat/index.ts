@@ -922,8 +922,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    * `restoreOrClearPanel()`. Used for `clearPanel` chunks and PDP chat layout (`productDetailsExtended` off).
    */
   private _clearAssistantPanelLikeStreamClearPanel(): void {
-    this._choicePrompterEl?.remove();
-    this._choicePrompterEl = null;
+    this._clearChoicePrompter();
     this._drawer?.clearPanel();
     this._currentPanelSource = null;
     this._thumbnailEntries = [];
@@ -1537,9 +1536,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Apply ui_hints from the backend CONTEXT event — delegates to mode controller. */
   private _applyUiHints(): void {
     this._modeController.applyUiHints(this._drawer, this._i18n.inputPlaceholder, () => {
-      this._choicePrompterEl?.remove();
-      this._choicePrompterEl = null;
-      this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+      this._clearChoicePrompter();
     });
   }
 
@@ -1566,8 +1563,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Remove ChoicePrompter on new action
-    this._choicePrompterEl?.remove();
-    this._choicePrompterEl = null;
+    this._clearChoicePrompter();
     // Fresh user request: reset ChoicePrompter dismiss so it can show again on the next grid
     if (!options?.preservePanel) {
       clearChoicePrompterDismissState();
@@ -2300,8 +2296,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             !this._comparisonSelectMode &&
             !isChoicePrompterDismissed(this._currentThreadId ?? '')
           ) {
-            this._choicePrompterEl?.remove();
-            this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+            this._clearChoicePrompter();
             this._choicePrompterEl = createChoicePrompter({
               heading: this._i18n.choicePrompterHeading,
               suggestion: this._i18n.choicePrompterSuggestion,
@@ -2317,12 +2312,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 this._choicePrompterEl = null;
               },
             });
-            // Mount in the panel float anchor — the prompter floats at the
-            // bottom-right of the details pane (panel), not the conversation pane.
-            const mountEl = this._shadow?.querySelector('.gengage-chat-panel-float');
-            if (mountEl) {
-              mountEl.appendChild(this._choicePrompterEl);
-
+            if (this._mountChoicePrompter()) {
               // Dismiss ChoicePrompter when the mobile keyboard opens (viewport shrinks)
               if (this._isMobileViewport && window.visualViewport) {
                 const prompterRef = this._choicePrompterEl;
@@ -2338,8 +2328,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 };
                 window.visualViewport.addEventListener('resize', dismissOnKeyboard);
               }
-            } else {
-              this._choicePrompterEl = null;
             }
           }
 
@@ -3347,9 +3335,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._comparisonSelectionWarning = null;
       if (this._comparisonSelectMode) {
         recordChoicePrompterDismissedForThread(this._currentThreadId ?? '');
-        this._choicePrompterEl?.remove();
-        this._choicePrompterEl = null;
-        this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+        this._clearChoicePrompter();
       }
       if (!this._comparisonSelectMode) {
         this._comparisonSelectedSkus = [];
@@ -3505,6 +3491,27 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     } else {
       this._drawer?.setComparisonDockContent(null);
     }
+  }
+
+  private _clearChoicePrompter(): void {
+    this._choicePrompterEl?.remove();
+    this._choicePrompterEl = null;
+    this._shadow?.querySelectorAll('.gengage-chat-choice-prompter').forEach((el) => el.remove());
+  }
+
+  private _mountChoicePrompter(): boolean {
+    if (!this._choicePrompterEl) return false;
+    if (this._isMobileViewport) {
+      this._drawer?.setComparisonDockContent(this._choicePrompterEl);
+      return true;
+    }
+    const mountEl = this._shadow?.querySelector('.gengage-chat-panel-float');
+    if (!mountEl) {
+      this._choicePrompterEl = null;
+      return false;
+    }
+    mountEl.appendChild(this._choicePrompterEl);
+    return true;
   }
 
   private _parseAddToCartActionPayload(payload: unknown): { sku: string; cartCode: string; quantity: number } | null {

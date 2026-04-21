@@ -28,7 +28,7 @@ export function createNoopChatContext(): ChatUISpecRenderContext {
     invalidFileType: 'Sadece JPEG, PNG ve WebP dosyaları destekleniyor.',
     fileTooLarge: "Dosya boyutu 5 MB'dan küçük olmalıdır.",
     aiTopPicksTitle: 'Sizin İçin En İyiler',
-    roleWinner: 'En Beğendiğim',
+    roleWinner: 'Size Özel Seçimim',
     roleBestValue: 'En Uygun Fiyatlı',
     roleBestAlternative: 'En İyi Alternatif',
     viewDetails: 'Detayları Gör',
