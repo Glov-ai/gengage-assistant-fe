@@ -10,6 +10,7 @@ import type { UIElement } from '../../common/types.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 import { isSafeUrl, safeSetAttribute } from '../../common/safe-html.js';
 import { addImageErrorHandler } from '../../common/product-utils.js';
+import { CHAT_I18N_TR } from '../locales/index.js';
 import { renderProductCard } from './renderUISpec.js';
 
 export type StyleVariationProduct = Record<string, unknown>;
@@ -67,10 +68,13 @@ export function renderConsultingStylePicker(
   styleVariations: StyleVariation[],
   ctx?: ChatUISpecRenderContext,
 ): void {
-  const loadingBadge = ctx?.i18n?.consultingStyleLoadingBadge ?? 'Loading';
-  const unavailableBadge = ctx?.i18n?.consultingStyleUnavailableBadge ?? 'Not ready';
+  const i18n = { ...CHAT_I18N_TR, ...(ctx?.i18n ?? {}) };
+  const loadingBadge = i18n.consultingStyleLoadingBadge;
+  const unavailableBadge = i18n.consultingStyleUnavailableBadge;
+  const fallbackStyleLabel = (index: number): string => i18n.consultingFallbackStyleLabel.replace('{index}', String(index));
+  const variationLabel = (variation: StyleVariation, index: number): string => variation.style_label ?? fallbackStyleLabel(index);
 
-  const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable'): void => {
+  const renderVariationPendingState = (variation: StyleVariation, mode: 'loading' | 'unavailable', index: number): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
 
@@ -79,17 +83,15 @@ export function renderConsultingStylePicker(
 
     const title = document.createElement('h4');
     title.className = 'gengage-chat-consulting-loading-panel-title';
-    title.textContent = variation.style_label ?? (mode === 'loading' ? loadingBadge : unavailableBadge);
+    title.textContent = variationLabel(variation, index);
     stateCard.appendChild(title);
 
     const desc = document.createElement('p');
     desc.className = 'gengage-chat-consulting-loading-panel-copy';
     desc.textContent =
       mode === 'loading'
-        ? (ctx?.i18n?.consultingStyleLoadingDescription ??
-          'I am still collecting products for this style. The panel will refresh shortly.')
-        : (ctx?.i18n?.consultingStyleUnavailableDescription ??
-          'I could not find enough product matches for this style yet. You can review the other styles.');
+        ? i18n.consultingStyleLoadingDescription
+        : i18n.consultingStyleUnavailableDescription;
     stateCard.appendChild(desc);
 
     if (mode === 'loading') {
@@ -112,9 +114,7 @@ export function renderConsultingStylePicker(
   const pickerTitle = document.createElement('div');
   pickerTitle.className = 'gengage-chat-consulting-style-picker-title';
   const stylePreparedTemplate =
-    source === 'watch_expert'
-      ? (ctx?.i18n?.watchStylesPreparedTitle ?? 'Prepared {count} style directions for you')
-      : (ctx?.i18n?.beautyStylesPreparedTitle ?? 'Prepared {count} beauty styles for you');
+    source === 'watch_expert' ? i18n.watchStylesPreparedTitle : i18n.beautyStylesPreparedTitle;
   pickerTitle.textContent = stylePreparedTemplate.replace('{count}', String(styleVariations.length));
   picker.appendChild(pickerTitle);
 
@@ -127,14 +127,16 @@ export function renderConsultingStylePicker(
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
     const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
     if (variationStatus === 'loading') {
-      renderVariationPendingState(variation, 'loading');
+      const index = Math.max(0, styleVariations.indexOf(variation)) + 1;
+      renderVariationPendingState(variation, 'loading', index);
       return;
     }
     if (
       variationStatus !== 'ready' &&
       (!Array.isArray(variation.product_list) || variation.product_list.length === 0)
     ) {
-      renderVariationPendingState(variation, 'unavailable');
+      const index = Math.max(0, styleVariations.indexOf(variation)) + 1;
+      renderVariationPendingState(variation, 'unavailable', index);
       return;
     }
     const products = Array.isArray(variation.product_list) ? variation.product_list : [];
@@ -218,7 +220,8 @@ export function renderConsultingStylePicker(
           })
           .filter((product): product is StyleVariationProduct => !!product);
         if (groupedProducts.length === 0) continue;
-        const labelText = typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : 'Öneri';
+        const labelText =
+          typeof group.label === 'string' && group.label.trim().length > 0 ? group.label : i18n.consultingFallbackGroupLabel;
         const reasonText = typeof group.reason === 'string' ? group.reason : undefined;
         sections.push({
           labelText,
@@ -233,7 +236,7 @@ export function renderConsultingStylePicker(
       });
       if (leftovers.length > 0) {
         sections.push({
-          labelText: ctx?.i18n?.consultingOtherCompatibleProductsLabel ?? 'Other compatible products',
+          labelText: i18n.consultingOtherCompatibleProductsLabel,
           products: leftovers,
         });
       }
@@ -267,7 +270,7 @@ export function renderConsultingStylePicker(
     } else if (variationStatus !== 'ready') {
       btn.classList.add('gengage-chat-consulting-style-btn--muted');
     }
-    btn.setAttribute('aria-label', variation.style_label ?? `Style ${index + 1}`);
+    btn.setAttribute('aria-label', variationLabel(variation, index + 1));
 
     const media = document.createElement('div');
     media.className = 'gengage-chat-consulting-style-media';
@@ -277,14 +280,14 @@ export function renderConsultingStylePicker(
       const img = document.createElement('img');
       img.className = 'gengage-chat-consulting-style-image';
       safeSetAttribute(img, 'src', imageUrl);
-      img.alt = variation.style_label ?? `Style ${index + 1}`;
+      img.alt = variationLabel(variation, index + 1);
       img.loading = 'lazy';
       addImageErrorHandler(img);
       media.appendChild(img);
     }
     const caption = document.createElement('span');
     caption.className = 'gengage-chat-consulting-style-caption';
-    caption.textContent = variation.style_label ?? `Style ${index + 1}`;
+    caption.textContent = variationLabel(variation, index + 1);
     media.appendChild(caption);
 
     if (variationStatus === 'loading' || variationStatus !== 'ready') {

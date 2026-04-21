@@ -345,6 +345,8 @@ await chatWidget.init({
     // Style variation picker
     beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
     watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
+    consultingFallbackGroupLabel: 'Öneri',
+    consultingFallbackStyleLabel: 'Stil {index}',
     consultingStyleLoadingDescription: 'Bu stil için ürünleri toplamaya devam ediyorum.',
     consultingStyleUnavailableDescription: 'Bu stil için şu anda yeterli ürün eşleşmesi çıkaramadım.',
     consultingStyleLoadingBadge: 'Yükleniyor',
