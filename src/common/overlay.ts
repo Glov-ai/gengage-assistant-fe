@@ -277,10 +277,10 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       if (!window.gengage) window.gengage = {};
       window.gengage.pageContext = this._pageContext;
 
-      this._chat?.update(patch);
-      this._qna?.update(patch);
-      this._simrel?.update(patch);
-      this._simbut?.update(patch);
+      this._chat?.update(this._pageContext);
+      this._qna?.update(this._pageContext);
+      this._simrel?.update(this._pageContext);
+      this._simbut?.update(this._pageContext);
       await this._syncPdpWidgets();
     });
   }

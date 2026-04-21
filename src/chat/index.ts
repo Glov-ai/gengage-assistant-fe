@@ -1748,6 +1748,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
+      if (this._contextPrimingInFlight) {
+        this._contextPrimingInFlight = false;
+        this._queuedUserMessages = [];
+      }
       this._abortAllActiveRequests();
     }
 
@@ -2603,11 +2607,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           panelContentReceived = false;
           // When the stream already delivered partial content (bot text, panel, etc.),
           // still show backend error text + recovery pills — not only clear stale chips.
-          const hasContent =
-            botMsg.silent ||
+          const hasVisibleContent =
             (botMsg.content != null && botMsg.content.length > 0) ||
             localBotText.length > 0 ||
             hadPanelContent;
+          const hasContent = botMsg.silent || hasVisibleContent;
           const shouldSuppressOfflineError =
             typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
 
@@ -2664,7 +2668,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             this._drawer?.showRecoveryPillsOnly(recoveryActions);
           };
 
-          if (!hasContent) {
+          if (isContextAutoLaunch && !hasVisibleContent) {
             if (isPdpAutoLaunch || this._hasUnavailableProductContext()) {
               this._drawer?.setPills([]);
               const fallback = this._i18n.productNotFoundMessage;
@@ -2673,15 +2677,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._ensureAssistantMessageRendered(botMsg);
               this._drawer?.updateBotMessage(botMsg.id, fallback);
               this._markUnavailableProductContext();
-            } else if (isContextAutoLaunch) {
-              // PLP/homepage prime error: degrade silently — product list or greeting
-              // may have already rendered, shopper can still type.
-              botMsg.status = 'done';
             } else {
-              applyStreamErrorRecovery();
-              if (shouldSuppressOfflineError) {
-                return;
-              }
+              botMsg.status = 'done';
+            }
+          } else if (!hasContent) {
+            applyStreamErrorRecovery();
+            if (shouldSuppressOfflineError) {
+              return;
             }
           } else {
             this._drawer?.setPills([]);
