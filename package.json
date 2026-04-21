@@ -1,6 +1,6 @@
 {
   "name": "@gengage/assistant-fe",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "description": "Source-available frontend widgets for Gengage AI Assistant — chat, Q&A, and similar-products. Backend is SaaS (gengage.ai).",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -124,7 +124,8 @@
     }
   },
   "dependencies": {
-    "@json-render/core": "^0.17.0",
+    "@anthropic-ai/sdk": "^0.90.0",
+    "@json-render/core": "^0.18.0",
     "zod": "^4.3.6"
   },
   "gengage": {
