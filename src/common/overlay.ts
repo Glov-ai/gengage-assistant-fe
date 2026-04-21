@@ -63,8 +63,15 @@ function mergePageContext(current: PageContext, patch: Partial<PageContext>): Pa
     ...patch,
     pageType: patch.pageType ?? current.pageType,
   };
-  if (patch.sku === undefined && current.sku !== undefined) {
-    next.sku = current.sku;
+  const pageTypeChanged = patch.pageType !== undefined && patch.pageType !== current.pageType;
+  if (pageTypeChanged) {
+    // Shopper navigated to a different page type — clear fields that belong to the old context
+    if (patch.pageType !== 'pdp' && patch.sku === undefined) delete next.sku;
+    if (patch.pageType !== 'plp' && patch.skuList === undefined) delete next.skuList;
+  } else {
+    // Same page type — preserve existing fields when the patch doesn't mention them
+    if (patch.sku === undefined && current.sku !== undefined) next.sku = current.sku;
+    if (patch.skuList === undefined && current.skuList !== undefined) next.skuList = current.skuList;
   }
   return next;
 }
