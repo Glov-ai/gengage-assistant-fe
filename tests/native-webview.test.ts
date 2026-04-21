@@ -115,12 +115,16 @@ describe('native-webview bridge', () => {
     bridge.receive({ type: 'openChat', payload: { state: 'half' } });
     bridge.receive({ type: 'closeChat' });
     bridge.receive({ type: 'updateContext', payload: { pageType: 'pdp', sku: 'SKU-1' } });
+    bridge.receive({ type: 'updatePageContext', payload: { sku: 'SKU-1B' } });
+    bridge.receive({ type: 'setPageContext', payload: { sku: 'SKU-1C' } });
     bridge.receive({ type: 'updateSku', payload: { sku: 'SKU-2', pageType: 'pdp' } });
     bridge.receive({ type: 'destroy' });
 
     expect(controller.openChat).toHaveBeenCalledWith({ state: 'half' });
     expect(controller.closeChat).toHaveBeenCalledTimes(1);
     expect(controller.updateContext).toHaveBeenCalledWith({ pageType: 'pdp', sku: 'SKU-1' });
+    expect(controller.updateContext).toHaveBeenCalledWith({ sku: 'SKU-1B' });
+    expect(controller.updateContext).toHaveBeenCalledWith({ sku: 'SKU-1C' });
     expect(controller.updateSku).toHaveBeenCalledWith('SKU-2', 'pdp');
     expect(controller.destroy).toHaveBeenCalledTimes(1);
 

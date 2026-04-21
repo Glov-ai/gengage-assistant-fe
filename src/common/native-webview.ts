@@ -16,7 +16,15 @@ export const DEFAULT_NATIVE_TRACKED_EVENTS = [
 ] as const;
 
 export type NativeTrackedEvent = (typeof DEFAULT_NATIVE_TRACKED_EVENTS)[number];
-export type NativeInboundMessage = 'openChat' | 'closeChat' | 'updateContext' | 'updateSku' | 'setSession' | 'destroy';
+export type NativeInboundMessage =
+  | 'openChat'
+  | 'closeChat'
+  | 'updateContext'
+  | 'updatePageContext'
+  | 'setPageContext'
+  | 'updateSku'
+  | 'setSession'
+  | 'destroy';
 
 export type NativeBridgeEnvironment = 'ios' | 'android' | 'react-native' | 'browser';
 
@@ -362,13 +370,15 @@ export function createNativeWebViewBridge(options: NativeWebViewBridgeOptions = 
         return;
       }
 
-      case 'updateContext': {
+      case 'updateContext':
+      case 'updatePageContext':
+      case 'setPageContext': {
         if (controller && payload && typeof payload === 'object') {
           void controller.updateContext(payload as Partial<PageContext>);
         } else if (!controller) {
           queueCommand(incoming);
         } else {
-          console.warn('[gengage:native-bridge] updateContext: missing payload');
+          console.warn(`[gengage:native-bridge] ${type}: missing payload`);
         }
         return;
       }
