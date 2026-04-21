@@ -8,6 +8,8 @@
  * Or call `makePillLauncher` + `apply()` manually when you need custom control.
  */
 
+import { escapeCssIdentifier } from './css-escape.js';
+
 export interface PillLauncherOptions {
   /** Text label shown beside the avatar inside the pill */
   label: string;
@@ -171,7 +173,7 @@ button[data-gengage-part="chat-launcher-button"] img {
     root.appendChild(style);
   };
 
-  const escapedClassName = CSS.escape(labelClassName);
+  const escapedClassName = escapeCssIdentifier(labelClassName);
 
   const applyOnce = (root: ShadowRoot): boolean => {
     injectStyle(root);

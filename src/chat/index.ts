@@ -30,6 +30,7 @@ import {
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
 import { debugLog } from '../common/debug.js';
+import { escapeCssIdentifier } from '../common/css-escape.js';
 import { validateImageFile } from './attachment-utils.js';
 import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
@@ -845,7 +846,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Remove inline UISpec nodes (data-thread-id but no data-message-id) that may
           // have arrived before any outputText — removeMessageBubble only targets the bubble.
           this._shadow
-            ?.querySelectorAll(`[data-thread-id="${CSS.escape(m.threadId)}"]:not([data-message-id])`)
+            ?.querySelectorAll(`[data-thread-id="${escapeCssIdentifier(m.threadId)}"]:not([data-message-id])`)
             .forEach((el) => el.remove());
           if (this._panel) {
             this._panel.threads = this._panel.threads.filter((t) => t !== m.threadId);
@@ -1594,7 +1595,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._messages = this._messages.filter((m) => !m.threadId || m.threadId <= cutoff);
       // Remove their DOM nodes
       for (const msg of removed) {
-        this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`)?.remove();
+        this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`)?.remove();
         this._panel!.snapshots.delete(msg.id);
         this._panel!.snapshotTypes.delete(msg.id);
       }
@@ -2617,7 +2618,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
 
           const removeAssistantPlaceholderBubble = (): void => {
-            this._shadow?.querySelector(`[data-message-id="${CSS.escape(botMsg.id)}"]`)?.remove();
+            this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(botMsg.id)}"]`)?.remove();
             const idx = this._messages.indexOf(botMsg);
             if (idx >= 0) this._messages.splice(idx, 1);
           };
@@ -3008,7 +3009,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Toggle visibility of messages after the cutoff
     for (const msg of this._messages) {
-      const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+      const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
       if (!bubble) continue;
       if (msg.threadId && msg.threadId > threadId) {
         bubble.classList.add('gengage-chat-bubble--hidden');
@@ -3111,7 +3112,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _ensureAssistantMessageRendered(msg: ChatMessage): void {
-    const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+    const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
     if (bubble || !this._drawer) return;
     if (msg.role === 'assistant' && msg.threadId && !this._threadsWithFirstBot.has(msg.threadId)) {
       this._threadsWithFirstBot.add(msg.threadId);
@@ -3263,7 +3264,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const cutoff = this._currentThreadId;
       for (const msg of this._messages) {
         if (msg.threadId && msg.threadId > cutoff) {
-          const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+          const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
           bubble?.classList.add('gengage-chat-bubble--hidden');
         }
       }
@@ -3704,7 +3705,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Revert optimistic heart UI after a failed host favorite callback. */
   private _revertFavoriteHeartUi(sku: string): void {
-    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${CSS.escape(sku)}"]`);
+    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${escapeCssIdentifier(sku)}"]`);
     if (!btns?.length) return;
     for (const btn of btns) {
       if (!(btn instanceof HTMLButtonElement)) continue;

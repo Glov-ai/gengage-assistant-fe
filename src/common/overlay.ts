@@ -193,7 +193,18 @@ export interface OverlayWidgetsController {
   readonly analyticsClient: import('./analytics.js').AnalyticsClient | null;
   openChat(options?: { state?: 'half' | 'full' }): void;
   closeChat(): void;
+  /**
+   * Merges partial page context (SKU, page type, category, …) into the active
+   * widgets. Use after SPA navigation so chat and PDP stay aligned.
+   */
   updateContext(patch: Partial<PageContext>): Promise<void>;
+  /** @see {@link updateContext} */
+  updatePageContext(patch: Partial<PageContext>): Promise<void>;
+  /**
+   * Merge-only page context update. This is an alias of {@link updateContext},
+   * not a full replacement of the existing PageContext.
+   */
+  setPageContext(patch: Partial<PageContext>): Promise<void>;
   updateSku(sku: string, pageType?: PageContext['pageType']): Promise<void>;
   destroy(): void;
 }
@@ -287,6 +298,14 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
 
   async updateSku(sku: string, pageType: PageContext['pageType'] = 'pdp'): Promise<void> {
     await this.updateContext({ sku, pageType });
+  }
+
+  async updatePageContext(patch: Partial<PageContext>): Promise<void> {
+    await this.updateContext(patch);
+  }
+
+  async setPageContext(patch: Partial<PageContext>): Promise<void> {
+    await this.updateContext(patch);
   }
 
   destroy(): void {
