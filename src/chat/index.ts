@@ -575,6 +575,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   protected onUpdate(context: Partial<PageContext>): void {
+    // BaseWidget.update() spread-merges context over old pageContext, which
+    // re-introduces stale fields that mergePageContext already deleted.
+    // Clean them so request metadata never sends e.g. a PDP sku on a homepage action.
+    if (this.config.pageContext && context.pageType !== undefined) {
+      const { sku, skuList, ...rest } = this.config.pageContext;
+      const cleaned: typeof this.config.pageContext = { ...rest };
+      if (cleaned.pageType === 'pdp' && sku !== undefined) cleaned.sku = sku;
+      if (cleaned.pageType === 'plp' && skuList !== undefined) cleaned.skuList = skuList;
+      this.config = { ...this.config, pageContext: cleaned };
+    }
+
     let shouldReset = false;
 
     if (context.sku !== undefined && context.sku !== this._lastSku) {
