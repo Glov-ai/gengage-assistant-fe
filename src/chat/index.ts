@@ -624,11 +624,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._maybePrimeEntryContextOpening();
 
     // Auto-launch PDP context on first open when SKU is available
-    if (
-      !this._pdpLaunched &&
-      this.config.pageContext?.pageType === 'pdp' &&
-      this.config.pageContext?.sku
-    ) {
+    if (!this._pdpLaunched && this.config.pageContext?.pageType === 'pdp' && this.config.pageContext?.sku) {
       this._pdpLaunched = true;
       this._contextPrimingInFlight = true;
       this._sendAction(
@@ -650,11 +646,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
 
     // Auto-launch PLP context on first open when skuList is available
-    if (
-      !this._plpLaunched &&
-      this.config.pageContext?.pageType === 'plp' &&
-      this.config.pageContext.skuList?.length
-    ) {
+    if (!this._plpLaunched && this.config.pageContext?.pageType === 'plp' && this.config.pageContext.skuList?.length) {
       this._plpLaunched = true;
       this._contextPrimingInFlight = true;
       this._sendAction(
@@ -2619,9 +2611,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // When the stream already delivered partial content (bot text, panel, etc.),
           // still show backend error text + recovery pills — not only clear stale chips.
           const hasVisibleContent =
-            (botMsg.content != null && botMsg.content.length > 0) ||
-            localBotText.length > 0 ||
-            hadPanelContent;
+            (botMsg.content != null && botMsg.content.length > 0) || localBotText.length > 0 || hadPanelContent;
           const hasContent = botMsg.silent || hasVisibleContent;
           const shouldSuppressOfflineError =
             typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
