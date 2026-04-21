@@ -1312,7 +1312,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   /**
-   * Scroll lock + dimming backdrop apply only in this state:
+   * Dimming backdrop + click-through scrim only in this state:
    * - overlay: drawer open (full-screen modal)
    * - floating: drawer open and side panel visible (split / “maximized” layout)
    */
@@ -1321,6 +1321,16 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const variant = this.config.variant ?? 'floating';
     if (variant === 'inline') return false;
     if (variant === 'overlay') return true;
+    return this._drawer?.isPanelVisible() ?? false;
+  }
+
+  /** Host page scroll (touch/wheel) blocked; separate from backdrop so mobile floating drawer locks without split panel. */
+  private _shouldLockHostDocumentScroll(): boolean {
+    if (!this._drawerVisible) return false;
+    const variant = this.config.variant ?? 'floating';
+    if (variant === 'inline') return false;
+    if (variant === 'overlay') return true;
+    if (this._isMobileViewport) return true;
     return this._drawer?.isPanelVisible() ?? false;
   }
 
@@ -1347,7 +1357,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._releaseHostDocumentScrollLock();
       return;
     }
-    if (this._isMaximizedForHostChrome()) {
+    if (this._shouldLockHostDocumentScroll()) {
       this._applyHostDocumentScrollLock();
     } else {
       this._releaseHostDocumentScrollLock();

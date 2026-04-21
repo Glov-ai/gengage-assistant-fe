@@ -131,7 +131,8 @@ describe('renderUISpec', () => {
         }),
       );
       const card = result.querySelector('.gengage-chat-product-card')!;
-      expect(card.querySelector('.gengage-chat-campaign-reason')?.textContent).toBe("Oliz'e Özel");
+      expect(card.querySelector('.gengage-chat-campaign-reason')).toBeNull();
+      expect(card.querySelector('.gengage-chat-campaign-price-badge__reason')?.textContent).toBe("Oliz'e Özel");
       expect(card.querySelector('.gengage-chat-product-card-price-sep')).toBeTruthy();
       expect(card.querySelector('.gengage-chat-product-card-price-block--inline')).toBeTruthy();
     });
