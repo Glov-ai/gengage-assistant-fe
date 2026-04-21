@@ -2855,7 +2855,8 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--consulting-groups {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
+  justify-content: start;
 }
 
 /*
@@ -6522,6 +6523,7 @@ button.gengage-chat-product-details-rating {
 }
 
 .gengage-chat-panel .gengage-chat-consulting-group {
+  min-width: 0;
   padding: 14px;
   border-radius: 18px;
 }
@@ -6529,8 +6531,8 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card {
   width: 100%;
   min-width: 0;
-  max-width: 340px;
-  margin-inline: auto;
+  max-width: 100%;
+  margin-inline: 0;
 }
 
 .gengage-chat-root--mobile .gengage-chat-consulting-style-grid {

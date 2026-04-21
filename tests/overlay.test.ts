@@ -18,6 +18,7 @@ vi.mock('../src/qna/index.js', () => ({
     this.init = vi.fn().mockResolvedValue(undefined);
     this.update = vi.fn();
     this.show = vi.fn();
+    this.hide = vi.fn();
     this.destroy = vi.fn();
   }),
 }));
@@ -27,6 +28,7 @@ vi.mock('../src/simrel/index.js', () => ({
     this.init = vi.fn().mockResolvedValue(undefined);
     this.update = vi.fn();
     this.show = vi.fn();
+    this.hide = vi.fn();
     this.destroy = vi.fn();
   }),
 }));
@@ -196,6 +198,40 @@ describe('overlay', () => {
 
       controller.closeChat();
       expect(controller.chat!.close).toHaveBeenCalled();
+    });
+
+    it('updates page context through controller aliases', async () => {
+      const controller = await initOverlayWidgets({
+        accountId: 'context-aliases',
+        middlewareUrl: 'https://example.com',
+        pageContext: { pageType: 'pdp', sku: 'SKU-OLD', categoryTree: ['Root'] },
+      });
+
+      await controller.updatePageContext({ sku: 'SKU-NEW' });
+
+      expect(window.gengage?.pageContext).toEqual({
+        pageType: 'pdp',
+        sku: 'SKU-NEW',
+        categoryTree: ['Root'],
+      });
+      expect(controller.chat!.update).toHaveBeenLastCalledWith({
+        pageType: 'pdp',
+        sku: 'SKU-NEW',
+        categoryTree: ['Root'],
+      });
+
+      await controller.setPageContext({ pageType: 'plp', skuList: ['SKU-A', 'SKU-B'] });
+
+      expect(window.gengage?.pageContext).toEqual({
+        pageType: 'plp',
+        categoryTree: ['Root'],
+        skuList: ['SKU-A', 'SKU-B'],
+      });
+      expect(controller.chat!.update).toHaveBeenLastCalledWith({
+        pageType: 'plp',
+        categoryTree: ['Root'],
+        skuList: ['SKU-A', 'SKU-B'],
+      });
     });
   });
 

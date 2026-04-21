@@ -8,13 +8,15 @@
  * Or:     npm run build:iife
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
+import { resolve } from 'path';
 
 const widgets = ['chat', 'qna', 'simrel', 'simbut', 'native'] as const;
+const viteBin = resolve('node_modules/vite/bin/vite.js');
 
 for (const widget of widgets) {
   console.log(`\n  Building IIFE: ${widget}...\n`);
-  execSync(`npx vite build --config vite.config.iife.ts`, {
+  execFileSync(process.execPath, [viteBin, 'build', '--config', 'vite.config.iife.ts'], {
     stdio: 'inherit',
     env: { ...process.env, GENGAGE_IIFE_WIDGET: widget },
   });

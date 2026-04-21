@@ -67,6 +67,8 @@ export const CHAT_I18N_TR: ChatI18n = {
   beautyStylesPreparedTitle: 'Sizin için {count} farklı stil hazırladım',
   watchStylesPreparedTitle: 'Sizin için {count} farklı stil yönü hazırladım',
   consultingOtherCompatibleProductsLabel: 'Diğer Uyumlu Ürünler',
+  consultingFallbackGroupLabel: 'Öneri',
+  consultingFallbackStyleLabel: 'Stil {index}',
   consultingStyleLoadingDescription:
     'Bu stil için ürünleri toplamaya devam ediyorum. Panel kısa süre içinde yenilenir.',
   consultingStyleUnavailableDescription:

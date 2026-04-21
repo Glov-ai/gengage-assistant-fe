@@ -30,6 +30,7 @@ import {
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
 import { debugLog } from '../common/debug.js';
+import { escapeCssIdentifier } from '../common/css-escape.js';
 import { validateImageFile } from './attachment-utils.js';
 import { sendChatMessage, enrichActionPayload } from './api.js';
 import { ChatDrawer } from './components/ChatDrawer.js';
@@ -103,11 +104,13 @@ type PanelSource =
   | { kind: 'spec'; spec: UISpec }
   | { kind: 'productDetailsWithSimilars'; pdpSpec: UISpec; similarsSpec: UISpec }
   | { kind: 'favorites' };
+const CONTEXT_LAUNCH_TYPES = new Set(['launchSingleProduct', 'launchProductList', 'launchHomepage']);
+
 type SendActionOptions = {
   silent?: boolean;
   attachment?: File;
   preservePanel?: boolean;
-  isPdpPrime?: boolean;
+  isContextPrime?: boolean;
   preservePills?: boolean;
 };
 
@@ -185,6 +188,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _lastBackendContext: import('../common/types.js').BackendContext | null = null;
   private _productSort: ProductSortState = { type: 'related' };
   private _lastSku: string | undefined;
+  private _lastPageType: string | undefined;
+  private _lastSkuListKey: string | undefined;
   private _comparisonSelectMode = false;
   private _comparisonSelectedSkus: string[] = [];
   private _comparisonSelectionWarning: string | null = null;
@@ -197,10 +202,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
   private _pdpLaunched = false;
+  private _plpLaunched = false;
+  private _homepageLaunched = false;
   private _entryContextPrimed = false;
-  /** True while the initial silent PDP launch request is in flight. */
-  private _pdpPrimingInFlight = false;
-  /** User messages queued until silent PDP priming completes. */
+  /** True while a silent context-prime launch (PDP/PLP/homepage) is in flight. */
+  private _contextPrimingInFlight = false;
+  /** User messages queued until context priming completes. */
   private _queuedUserMessages: Array<{ text: string; attachment?: File }> = [];
   private _productContextUnavailableSku: string | null = null;
   private _i18n: ChatI18n = CHAT_I18N_TR;
@@ -546,8 +553,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (config.allowedOrigins !== undefined) bridgeOpts.allowedOrigins = config.allowedOrigins;
     this._bridge = new CommunicationBridge(bridgeOpts);
 
-    // Track initial SKU for page-change detection
+    // Track initial page context for SPA navigation detection
     this._lastSku = this.config.pageContext?.sku;
+    this._lastPageType = this.config.pageContext?.pageType;
+    this._lastSkuListKey = this.config.pageContext?.skuList?.slice(0, 48).join(',');
 
     // Mark init complete and drain pending actions queue
     this._initComplete = true;
@@ -567,10 +576,36 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   protected onUpdate(context: Partial<PageContext>): void {
+    // BaseWidget.update() spread-merges context over old pageContext, which
+    // re-introduces stale fields that mergePageContext already deleted.
+    // Clean them so request metadata never sends e.g. a PDP sku on a homepage action.
+    if (this.config.pageContext && context.pageType !== undefined) {
+      const { sku, skuList, ...rest } = this.config.pageContext;
+      const cleaned: typeof this.config.pageContext = { ...rest };
+      if (cleaned.pageType === 'pdp' && sku !== undefined) cleaned.sku = sku;
+      if (cleaned.pageType === 'plp' && skuList !== undefined) cleaned.skuList = skuList;
+      this.config = { ...this.config, pageContext: cleaned };
+    }
+
+    let shouldReset = false;
+
     if (context.sku !== undefined && context.sku !== this._lastSku) {
       this._lastSku = context.sku;
-      this._resetForNewPage();
+      shouldReset = true;
     }
+    if (context.pageType !== undefined && context.pageType !== this._lastPageType) {
+      this._lastPageType = context.pageType;
+      shouldReset = true;
+    }
+    if (context.skuList !== undefined) {
+      const key = context.skuList.slice(0, 48).join(',');
+      if (key !== this._lastSkuListKey) {
+        this._lastSkuListKey = key;
+        shouldReset = true;
+      }
+    }
+
+    if (shouldReset) this._resetForNewPage();
   }
 
   protected onShow(): void {
@@ -580,7 +615,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     ga.trackShow('chat');
     this.config.onOpen?.();
 
-    // Show welcome message on first open with empty history
+    // Show welcome message on first open with empty history.
+    // Dedicated context launches (PDP/PLP/homepage) provide their own greeting,
+    // so skip the generic welcome bubble for those page types.
     this._showWelcomeIfNeeded();
 
     // Prime a contextual opening for blank / homepage / listing states when
@@ -588,9 +625,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._maybePrimeEntryContextOpening();
 
     // Auto-launch PDP context on first open when SKU is available
-    if (!this._pdpLaunched && this.config.pageContext?.sku) {
+    if (!this._pdpLaunched && this.config.pageContext?.pageType === 'pdp' && this.config.pageContext?.sku) {
       this._pdpLaunched = true;
-      this._pdpPrimingInFlight = true;
+      this._contextPrimingInFlight = true;
       this._sendAction(
         {
           title: '',
@@ -605,7 +642,35 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               : {}),
           },
         },
-        { silent: true, isPdpPrime: true, preservePills: true },
+        { silent: true, isContextPrime: true, preservePills: true },
+      );
+    }
+
+    // Auto-launch PLP context on first open when skuList is available
+    if (!this._plpLaunched && this.config.pageContext?.pageType === 'plp' && this.config.pageContext.skuList?.length) {
+      this._plpLaunched = true;
+      this._contextPrimingInFlight = true;
+      this._sendAction(
+        {
+          title: '',
+          type: 'launchProductList',
+          payload: { sku_list: this.config.pageContext.skuList.slice(0, 48) },
+        },
+        { silent: true, isContextPrime: true, preservePills: true },
+      );
+    }
+
+    // Auto-launch homepage context on first open
+    if (!this._homepageLaunched && this.config.pageContext?.pageType === 'home') {
+      this._homepageLaunched = true;
+      this._contextPrimingInFlight = true;
+      this._sendAction(
+        {
+          title: '',
+          type: 'launchHomepage',
+          payload: {},
+        },
+        { silent: true, isContextPrime: true, preservePills: true },
       );
     }
   }
@@ -781,7 +846,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Remove inline UISpec nodes (data-thread-id but no data-message-id) that may
           // have arrived before any outputText — removeMessageBubble only targets the bubble.
           this._shadow
-            ?.querySelectorAll(`[data-thread-id="${CSS.escape(m.threadId)}"]:not([data-message-id])`)
+            ?.querySelectorAll(`[data-thread-id="${escapeCssIdentifier(m.threadId)}"]:not([data-message-id])`)
             .forEach((el) => el.remove());
           if (this._panel) {
             this._panel.threads = this._panel.threads.filter((t) => t !== m.threadId);
@@ -834,10 +899,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._lastThreadId = null;
     this._lastBackendContext = null;
     this._chatCreatedAt = new Date().toISOString();
-    // Allow PDP auto-launch for new SKU
+    // Allow PDP/PLP/homepage auto-launch for new context
     this._pdpLaunched = false;
+    this._plpLaunched = false;
+    this._homepageLaunched = false;
     this._entryContextPrimed = false;
-    this._pdpPrimingInFlight = false;
+    this._contextPrimingInFlight = false;
     this._queuedUserMessages = [];
     this._productContextUnavailableSku = null;
     this._presentation.reset();
@@ -1078,11 +1145,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       );
     }
 
-    if (contextKey === 'product' && this.config.pageContext?.sku) {
-      return;
-    }
+    // Dedicated context launches provide their own backend-generated greeting —
+    // skip the local generic welcome bubble so the shopper doesn't see two greetings.
+    if (this._hasDedicatedContextLaunch()) return;
 
-    if (this._shouldPrimeContextualOpening(contextKey)) {
+    if (this._shouldPrimeContextualOpening()) {
       return;
     }
 
@@ -1232,9 +1299,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return Object.keys(pageDetails).length > 0 ? pageDetails : undefined;
   }
 
-  private _shouldPrimeContextualOpening(contextKey = this._resolveOpeningContextKey()): boolean {
-    if (this._messages.length !== 0 || this._entryContextPrimed || this._pdpPrimingInFlight) return false;
-    if (contextKey === 'product') return false;
+  /** True when the current page type has a dedicated silent auto-launch that provides its own greeting. */
+  private _hasDedicatedContextLaunch(): boolean {
+    const ctx = this.config.pageContext;
+    if (!ctx) return false;
+    if (ctx.pageType === 'pdp' && ctx.sku) return true;
+    if (ctx.pageType === 'plp' && ctx.skuList?.length) return true;
+    if (ctx.pageType === 'home') return true;
+    return false;
+  }
+
+  private _shouldPrimeContextualOpening(): boolean {
+    if (this._messages.length !== 0 || this._entryContextPrimed || this._contextPrimingInFlight) return false;
+    // Dedicated launches handle context priming — skip generic contextual opening
+    if (this._hasDedicatedContextLaunch()) return false;
     return Boolean(
       this.config.openingMessagesByContext ||
       this.config.openingGuidanceByContext ||
@@ -1244,7 +1322,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   private _maybePrimeEntryContextOpening(): void {
     const contextKey = this._resolveOpeningContextKey();
-    if (!this._shouldPrimeContextualOpening(contextKey)) return;
+    if (!this._shouldPrimeContextualOpening()) return;
 
     this._entryContextPrimed = true;
 
@@ -1410,9 +1488,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _sendMessage(text: string, attachment?: File): void {
-    if (this._pdpPrimingInFlight) {
+    if (this._contextPrimingInFlight) {
       this._abortAllActiveRequests();
-      this._pdpPrimingInFlight = false;
+      this._contextPrimingInFlight = false;
       this._queuedUserMessages = [];
     }
 
@@ -1447,7 +1525,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _flushQueuedUserMessages(): void {
-    if (this._pdpPrimingInFlight || this._queuedUserMessages.length === 0) return;
+    if (this._contextPrimingInFlight || this._queuedUserMessages.length === 0) return;
     const queued = [...this._queuedUserMessages];
     this._queuedUserMessages = [];
     for (const item of queued) {
@@ -1513,7 +1591,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._messages = this._messages.filter((m) => !m.threadId || m.threadId <= cutoff);
       // Remove their DOM nodes
       for (const msg of removed) {
-        this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`)?.remove();
+        this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`)?.remove();
         this._panel!.snapshots.delete(msg.id);
         this._panel!.snapshotTypes.delete(msg.id);
       }
@@ -1541,14 +1619,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._lastThreadId = threadId;
     // Preserve the active grid intent during product drilldowns. A product click
     // should not relabel an existing search-result panel as "similar products".
-    if (this._panel && action.type !== 'launchSingleProduct') {
+    if (this._panel && !CONTEXT_LAUNCH_TYPES.has(action.type)) {
       this._panel.lastActionType = action.type;
     }
     // For preservePanel actions (like/addToCart), don't overwrite _activeRequestThreadId
     // to avoid silencing concurrent streams. Instead, track validity locally.
     const isPreservePanel = options?.preservePanel === true;
-    const isPdpAutoLaunch =
-      action.type === 'launchSingleProduct' && options?.silent === true && options?.isPdpPrime === true;
+    const isContextAutoLaunch = options?.silent === true && options?.isContextPrime === true;
+    const isPdpAutoLaunch = isContextAutoLaunch && action.type === 'launchSingleProduct';
     if (!isPreservePanel) {
       this._activeRequestThreadId = threadId;
     }
@@ -1670,6 +1748,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
+      if (this._contextPrimingInFlight && !isContextAutoLaunch) {
+        this._contextPrimingInFlight = false;
+        this._queuedUserMessages = [];
+      }
       this._abortAllActiveRequests();
     }
 
@@ -2116,7 +2198,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (skipSidePanelForUISpec && similarsAppendGrid) {
             renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
           }
-          if (isAiAnalysisComponent && !this._isMobileViewport && !botMsg.silent) {
+          if (isAiAnalysisComponent && !this._isMobileViewport && (!botMsg.silent || isContextAutoLaunch)) {
             if (panelListEligibleForAiZone) {
               const aiEl = this._renderUISpec(spec, renderContext);
               aiAnalysisUiReceivedForPanel = true;
@@ -2129,7 +2211,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             }
           }
 
-          const inlineOkWhenSilentPrime = isPdpAutoLaunch && componentType === 'GroundingReviewCard';
+          const inlineOkWhenSilentPrime =
+            isContextAutoLaunch && (componentType === 'GroundingReviewCard' || isAiAnalysisComponent);
           const shouldRenderInline =
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
@@ -2517,16 +2600,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           panelContentReceived = false;
           // When the stream already delivered partial content (bot text, panel, etc.),
           // still show backend error text + recovery pills — not only clear stale chips.
-          const hasContent =
-            botMsg.silent ||
-            (botMsg.content != null && botMsg.content.length > 0) ||
-            localBotText.length > 0 ||
-            hadPanelContent;
+          const hasVisibleContent =
+            (botMsg.content != null && botMsg.content.length > 0) || localBotText.length > 0 || hadPanelContent;
+          const hasContent = botMsg.silent || hasVisibleContent;
           const shouldSuppressOfflineError =
             typeof navigator !== 'undefined' && navigator.onLine === false && isLikelyConnectivityIssue(err);
 
           const removeAssistantPlaceholderBubble = (): void => {
-            this._shadow?.querySelector(`[data-message-id="${CSS.escape(botMsg.id)}"]`)?.remove();
+            this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(botMsg.id)}"]`)?.remove();
             const idx = this._messages.indexOf(botMsg);
             if (idx >= 0) this._messages.splice(idx, 1);
           };
@@ -2578,10 +2659,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             this._drawer?.showRecoveryPillsOnly(recoveryActions);
           };
 
-          if (!hasContent) {
+          if (isContextAutoLaunch && !hasVisibleContent) {
             if (isPdpAutoLaunch || this._hasUnavailableProductContext()) {
               this._drawer?.setPills([]);
-              // Show soft fallback instead of generic error for auto-launch
               const fallback = this._i18n.productNotFoundMessage;
               botMsg.content = fallback;
               botMsg.status = 'done';
@@ -2589,10 +2669,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               this._drawer?.updateBotMessage(botMsg.id, fallback);
               this._markUnavailableProductContext();
             } else {
-              applyStreamErrorRecovery();
-              if (shouldSuppressOfflineError) {
-                return;
-              }
+              botMsg.status = 'done';
+            }
+          } else if (!hasContent) {
+            applyStreamErrorRecovery();
+            if (shouldSuppressOfflineError) {
+              return;
             }
           } else {
             this._drawer?.setPills([]);
@@ -2600,8 +2682,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               applyStreamErrorRecovery();
             }
           }
-          if (isPdpAutoLaunch) {
-            this._pdpPrimingInFlight = false;
+          if (isContextAutoLaunch) {
+            this._contextPrimingInFlight = false;
             this._flushQueuedUserMessages();
           }
           if (!placeholderBubbleRemoved && botMsg.status === 'streaming') {
@@ -2658,9 +2740,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const hadPanelContent = panelContentReceived;
           if (panelLoadingSeen && !panelContentReceived) restoreOrClearPanel();
           panelLoadingSeen = false;
-          // Detect failed PDP auto-launch: silent launch action that produced
-          // no visible content (no bot text, no panel). Show a soft fallback
-          // message so the user isn't left with an empty chat.
+          // Detect failed PDP auto-launch: silent launch that produced no visible
+          // content. Show a soft fallback so the shopper isn't left with an empty chat.
           if (isPdpAutoLaunch && !localBotText && !hadPanelContent) {
             const fallback = this._i18n.productNotFoundMessage;
             botMsg.content = fallback;
@@ -2669,11 +2750,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             this._markUnavailableProductContext();
           }
           panelContentReceived = false;
-          if (isPdpAutoLaunch) {
-            this._pdpPrimingInFlight = false;
+          if (isContextAutoLaunch) {
+            this._contextPrimingInFlight = false;
             const hadQueuedMessages = this._queuedUserMessages.length > 0;
             this._flushQueuedUserMessages();
-            if (!hadQueuedMessages) {
+            if (!hadQueuedMessages && isPdpAutoLaunch) {
               this._ensurePdpPrimeSuggestedUiIfNeeded();
             }
           }
@@ -2917,7 +2998,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Toggle visibility of messages after the cutoff
     for (const msg of this._messages) {
-      const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+      const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
       if (!bubble) continue;
       if (msg.threadId && msg.threadId > threadId) {
         bubble.classList.add('gengage-chat-bubble--hidden');
@@ -3020,7 +3101,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _ensureAssistantMessageRendered(msg: ChatMessage): void {
-    const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+    const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
     if (bubble || !this._drawer) return;
     if (msg.role === 'assistant' && msg.threadId && !this._threadsWithFirstBot.has(msg.threadId)) {
       this._threadsWithFirstBot.add(msg.threadId);
@@ -3172,7 +3253,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const cutoff = this._currentThreadId;
       for (const msg of this._messages) {
         if (msg.threadId && msg.threadId > cutoff) {
-          const bubble = this._shadow?.querySelector(`[data-message-id="${CSS.escape(msg.id)}"]`);
+          const bubble = this._shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(msg.id)}"]`);
           bubble?.classList.add('gengage-chat-bubble--hidden');
         }
       }
@@ -3632,7 +3713,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
   /** Revert optimistic heart UI after a failed host favorite callback. */
   private _revertFavoriteHeartUi(sku: string): void {
-    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${CSS.escape(sku)}"]`);
+    const btns = this._shadow?.querySelectorAll(`[data-gengage-favorite-sku="${escapeCssIdentifier(sku)}"]`);
     if (!btns?.length) return;
     for (const btn of btns) {
       if (!(btn instanceof HTMLButtonElement)) continue;
