@@ -4808,7 +4808,7 @@ button.gengage-chat-product-card-cta {
   flex-direction: column;
   align-items: stretch;
   box-sizing: border-box;
-  padding: 12px;
+  padding: 48px 12px 12px;
   border-radius: var(--radius-card);
   background: var(--surface-card);
   overflow: visible;
@@ -4840,30 +4840,35 @@ button.gengage-chat-product-card-cta {
 /* Role badge: absolute -top-2.5 left-3 (no translateY — prevent overlap) */
 .gengage-chat-ai-toppick-badge {
   position: absolute;
-  top: -10px;
-  left: 12px;
+  top: 12px;
+  left: 14px;
   z-index: 2;
-  max-width: calc(100% - 24px);
+  display: inline-flex;
+  align-items: center;
+  max-width: calc(100% - 28px);
   box-sizing: border-box;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   line-height: 1.25;
-  padding: 2px 10px;
+  padding: 8px 14px;
   border-radius: 999px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   pointer-events: none;
   white-space: normal;
+  margin: 0;
 }
 
 .gengage-chat-ai-toppick-card--winner .gengage-chat-ai-toppick-badge {
   background: var(--client-primary);
   color: var(--client-on-primary);
+  box-shadow: 0 10px 18px color-mix(in srgb, var(--client-primary) 20%, transparent);
 }
 
 .gengage-chat-ai-toppick-card--compact .gengage-chat-ai-toppick-badge {
-  background: var(--surface-card-muted);
-  color: var(--text-secondary);
+  background: var(--surface-card);
+  color: color-mix(in srgb, var(--client-primary) 72%, var(--text-primary));
+  border: 1px solid color-mix(in srgb, var(--client-primary) 24%, var(--border-default));
 }
 
 .gengage-chat-ai-toppick-media {
@@ -7732,8 +7737,8 @@ button.gengage-chat-product-details-rating {
   box-shadow: var(--shadow-2);
   z-index: 5;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
   align-items: center;
   opacity: 0;
   transform: translateY(12px);
@@ -7766,6 +7771,14 @@ button.gengage-chat-product-details-rating {
   min-width: 0;
 }
 
+.gengage-chat-choice-prompter-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
 .gengage-chat-choice-prompter-cta {
   display: inline-flex;
   width: auto;
@@ -7789,22 +7802,24 @@ button.gengage-chat-product-details-rating {
 }
 
 .gengage-chat-choice-prompter-dismiss {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   padding: 0;
-  min-width: 32px;
-  min-height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-default);
-  border-radius: 12px;
-  background: var(--surface-card-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-card-soft) 92%, white);
   color: var(--text-muted);
   font-size: 16px;
   cursor: pointer;
   line-height: 1;
+  flex: 0 0 auto;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .gengage-chat-choice-prompter-dismiss:hover {
@@ -8239,6 +8254,12 @@ button.gengage-chat-product-details-rating {
   grid-template-columns: 1fr;
 }
 
+.gengage-chat-root--mobile .gengage-chat-choice-prompter-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .gengage-chat-root--mobile .gengage-chat-choice-prompter-cta {
   width: 100%;
 }
@@ -8284,8 +8305,8 @@ button.gengage-chat-product-details-rating {
 }
 
 .gengage-chat-root--mobile .gengage-chat-choice-prompter-dismiss {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
 }
 
 .gengage-chat-root--mobile .gengage-chat-panel-divider-toggle {

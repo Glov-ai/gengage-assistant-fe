@@ -427,12 +427,6 @@ export function renderAITopPicks(element: UIElement, ctx: ChatUISpecRenderContex
   const suggestions = (element.props?.['suggestions'] ?? []) as AITopPickItem[];
   if (suggestions.length === 0) return container;
 
-  const title = document.createElement('h3');
-  title.className = 'gengage-chat-ai-top-picks-title';
-  title.dataset['gengagePart'] = 'ai-top-picks-title';
-  title.textContent = ctx.i18n?.aiTopPicksTitle ?? 'Top Picks';
-  container.appendChild(title);
-
   const scrollRow = document.createElement('div');
   scrollRow.className = 'gengage-chat-ai-top-picks-scroll';
   scrollRow.dataset['gengagePart'] = 'ai-top-picks-scroll';
