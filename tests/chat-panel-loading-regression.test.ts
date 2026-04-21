@@ -24,6 +24,7 @@ async function createChat(): Promise<GengageChat> {
   const chat = new GengageChat();
   await chat.init({
     accountId: 'test-account',
+    middlewareUrl: 'https://test.example.com',
     session: { sessionId: 'test-session' },
   });
   return chat;
@@ -124,6 +125,77 @@ describe('Chat panel loading regression', () => {
 
     const title = shadow.querySelector('.gengage-chat-product-details-title');
     expect(title?.textContent).toContain('Ornek Urun');
+    chat.destroy();
+  });
+
+  it('clears stale panel content when a text request ends after panel loading without new panel ui', async () => {
+    mockedSendChatMessage.mockImplementation((_request, callbacks) => {
+      const callIndex = mockedSendChatMessage.mock.calls.length;
+
+      if (callIndex === 1) {
+        callbacks.onUISpec(
+          {
+            root: 'root',
+            elements: {
+              root: {
+                type: 'ProductCard',
+                props: {
+                  product: {
+                    sku: 'SKU-1',
+                    name: 'Ornek Urun',
+                    price: '1.000 TL',
+                    url: 'https://example.com/p/SKU-1',
+                  },
+                },
+              },
+            },
+          },
+          'chat',
+          'panel',
+        );
+        callbacks.onDone();
+        return new AbortController();
+      }
+
+      callbacks.onMetadata({
+        type: 'metadata',
+        sessionId: '',
+        model: '',
+        meta: { panelLoading: true, panelPendingType: 'productList' },
+      } as never);
+
+      setTimeout(() => callbacks.onDone(), 0);
+      return new AbortController();
+    });
+
+    const chat = await createChat();
+    chat.openWithAction({
+      title: 'Detay',
+      type: 'user_message',
+      payload: 'Ilk urunu goster',
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    let shadow = getChatShadow();
+    expect(shadow.querySelector('.gengage-chat-panel--visible')).toBeTruthy();
+    expect(shadow.querySelector('.gengage-chat-product-details-title')?.textContent).toContain('Ornek Urun');
+
+    chat.openWithAction({
+      title: 'Ara',
+      type: 'user_message',
+      payload: 'matkap bul',
+    });
+
+    shadow = getChatShadow();
+    expect(shadow.querySelector('.gengage-chat-panel-skeleton')).toBeTruthy();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    shadow = getChatShadow();
+    expect(shadow.querySelector('.gengage-chat-panel-skeleton')).toBeNull();
+    expect(shadow.querySelector('.gengage-chat-drawer--with-panel')).toBeNull();
+    expect(shadow.querySelector('.gengage-chat-product-details-title')).toBeNull();
     chat.destroy();
   });
 });

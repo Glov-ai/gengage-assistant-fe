@@ -1691,9 +1691,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Exception: getComparisonTable shows the panel skeleton immediately (desktop + mobile)
     // so users see progress while the table streams in.
     // Captures the panel source (UISpec/kind) so it can be re-rendered with fresh
-    // event listeners if the backend fails to deliver new panel content.
+    // event listeners if a non-text action fails to deliver new panel content.
     let prePanelSource = this._currentPanelSource;
     let prePanelSourceCaptured = false;
+    const shouldClearStalePanelOnEmptyResponse = action.type === 'user_message' || action.type === 'inputText';
     const capturePanelSourceIfNeeded = (): void => {
       if (prePanelSourceCaptured || options?.preservePanel) return;
       prePanelSource = this._currentPanelSource;
@@ -1701,7 +1702,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     };
     const restoreOrClearPanel = (): void => {
       if (!this._drawer?.isPanelLoading()) return;
-      if (prePanelSource) {
+      if (!shouldClearStalePanelOnEmptyResponse && prePanelSource) {
         const ctx = this._buildRenderContext();
         const el = this._renderPanelFromSource(prePanelSource, ctx);
         this._drawer.setPanelContent(el);
