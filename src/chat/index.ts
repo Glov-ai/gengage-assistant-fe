@@ -555,7 +555,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Track initial page context for SPA navigation detection
     this._lastSku = this.config.pageContext?.sku;
     this._lastPageType = this.config.pageContext?.pageType;
-    this._lastSkuListKey = this.config.pageContext?.skuList?.slice(0, 12).join(',');
+    this._lastSkuListKey = this.config.pageContext?.skuList?.slice(0, 48).join(',');
 
     // Mark init complete and drain pending actions queue
     this._initComplete = true;
@@ -597,7 +597,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       shouldReset = true;
     }
     if (context.skuList !== undefined) {
-      const key = context.skuList.slice(0, 12).join(',');
+      const key = context.skuList.slice(0, 48).join(',');
       if (key !== this._lastSkuListKey) {
         this._lastSkuListKey = key;
         shouldReset = true;
@@ -1759,7 +1759,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
-      if (this._contextPrimingInFlight) {
+      if (this._contextPrimingInFlight && !isContextAutoLaunch) {
         this._contextPrimingInFlight = false;
         this._queuedUserMessages = [];
       }
