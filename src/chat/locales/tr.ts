@@ -36,7 +36,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   invalidFileType: 'Sadece JPEG, PNG ve WebP dosyaları destekleniyor.',
   fileTooLarge: "Dosya boyutu 5 MB'dan küçük olmalıdır.",
   aiTopPicksTitle: 'Sizin İçin En İyiler',
-  roleWinner: 'Size Özel Seçimim',
+  roleWinner: 'SİZE ÖZEL SEÇİMİM',
   roleBestValue: 'En Uygun Fiyatlı',
   roleBestAlternative: 'En İyi Alternatif',
   viewDetails: 'Detayları Gör',

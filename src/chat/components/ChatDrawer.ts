@@ -1698,11 +1698,9 @@ export class ChatDrawer {
     this._panelEl.appendChild(this._panelFloatingEl);
     this._syncPanelTopBarFromContent(el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
-    if (!this._panelVisible) {
-      this._panelVisible = true;
-      this._panelEl.classList.add('gengage-chat-panel--visible');
-      this.root.classList.add('gengage-chat-drawer--with-panel');
-    }
+    this._panelVisible = true;
+    this._panelEl.classList.add('gengage-chat-panel--visible');
+    this.root.classList.add('gengage-chat-drawer--with-panel');
     if (this._panelCollapsed) {
       this._panelEl.classList.add('gengage-chat-panel--collapsed');
     }
@@ -1724,11 +1722,9 @@ export class ChatDrawer {
     this._panelEl.insertBefore(el, ref);
     this._syncPanelTopBarFromContent(this.getPanelContentElement() ?? el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
-    if (!this._panelVisible) {
-      this._panelVisible = true;
-      this._panelEl.classList.add('gengage-chat-panel--visible');
-      this.root.classList.add('gengage-chat-drawer--with-panel');
-    }
+    this._panelVisible = true;
+    this._panelEl.classList.add('gengage-chat-panel--visible');
+    this.root.classList.add('gengage-chat-drawer--with-panel');
     this._syncDividerPreview();
     this._emitHostShellSync();
   }
@@ -1949,11 +1945,9 @@ export class ChatDrawer {
     this._panelEl.appendChild(skeleton);
     this._panelEl.appendChild(this._thumbnailsColumn.getElement());
     this._panelEl.appendChild(this._panelFloatingEl);
-    if (!this._panelVisible) {
-      this._panelVisible = true;
-      this._panelEl.classList.add('gengage-chat-panel--visible');
-      this.root.classList.add('gengage-chat-drawer--with-panel');
-    }
+    this._panelVisible = true;
+    this._panelEl.classList.add('gengage-chat-panel--visible');
+    this.root.classList.add('gengage-chat-drawer--with-panel');
     this._syncDividerPreview();
     this._emitHostShellSync();
   }
