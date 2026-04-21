@@ -19,7 +19,11 @@
         --radius: 10px;
       }
 
-      *, *::before, *::after { box-sizing: border-box; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
 
       body {
         margin: 0;
@@ -53,8 +57,13 @@
         margin-right: 12px;
       }
 
-      .dev-header__item strong { color: #94a3b8; font-weight: 400; }
-      .dev-header__item span { color: #e2e8f0; }
+      .dev-header__item strong {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      .dev-header__item span {
+        color: #e2e8f0;
+      }
 
       /* ── Top bar ── */
       .topbar {
@@ -85,7 +94,9 @@
         scrollbar-width: none;
       }
 
-      .topbar__nav::-webkit-scrollbar { display: none; }
+      .topbar__nav::-webkit-scrollbar {
+        display: none;
+      }
 
       .topbar__search {
         flex: 1;
@@ -161,14 +172,16 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: box-shadow 0.15s, transform 0.15s;
+        transition:
+          box-shadow 0.15s,
+          transform 0.15s;
         cursor: pointer;
         text-decoration: none;
         color: inherit;
       }
 
       .product-card:hover {
-        box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.09);
         transform: translateY(-2px);
       }
 
@@ -262,8 +275,13 @@
       }
 
       @media (max-width: 600px) {
-        .topbar__nav { display: none; }
-        .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .topbar__nav {
+          display: none;
+        }
+        .product-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
       }
     </style>
   </head>
@@ -304,23 +322,51 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const SKU_LIST = [
-        '726304379', '726304706', '725043727', '596288104', '586291279',
-        '738223600', '732354310', '681802913', '642921322', '680505856',
-        '598866734', '732525217', '594645607', '595093696', '627341706',
-        '738664813', '717180938', '725928085', '586934442', '665748563',
+        '726304379',
+        '726304706',
+        '725043727',
+        '596288104',
+        '586291279',
+        '738223600',
+        '732354310',
+        '681802913',
+        '642921322',
+        '680505856',
+        '598866734',
+        '732525217',
+        '594645607',
+        '595093696',
+        '627341706',
+        '738664813',
+        '717180938',
+        '725928085',
+        '586934442',
+        '665748563',
       ];
 
       // Mock product data for the visual shell — realistic-feeling but fictional
       const MOCK_PRODUCTS = [
         { name: 'Kablosuz Bluetooth Kulaklık Pro', price: '1.299', oldPrice: '1.799', discount: 28, sku: SKU_LIST[0] },
-        { name: 'Akıllı Saat Serisi 5 Sport Edition', price: '3.449', oldPrice: '4.299', discount: 20, sku: SKU_LIST[1] },
+        {
+          name: 'Akıllı Saat Serisi 5 Sport Edition',
+          price: '3.449',
+          oldPrice: '4.299',
+          discount: 20,
+          sku: SKU_LIST[1],
+        },
         { name: 'Taşınabilir Şarj Cihazı 20000 mAh', price: '389', oldPrice: '549', discount: 29, sku: SKU_LIST[2] },
         { name: 'Mekanik Oyuncu Klavyesi RGB', price: '899', oldPrice: '1.199', discount: 25, sku: SKU_LIST[3] },
         { name: 'Kablosuz Mouse Sessiz Tıklama', price: '249', oldPrice: '329', discount: 24, sku: SKU_LIST[4] },
         { name: '4K UHD Webcam Geniş Açı', price: '1.149', oldPrice: '1.499', discount: 23, sku: SKU_LIST[5] },
         { name: 'USB-C Hub 7-in-1 Çok Portlu', price: '449', oldPrice: '599', discount: 25, sku: SKU_LIST[6] },
         { name: 'Oyuncu Kulaklık 7.1 Surround', price: '699', oldPrice: '899', discount: 22, sku: SKU_LIST[7] },
-        { name: 'Akıllı Bluetooth Hoparlör Su Geçirmez', price: '579', oldPrice: '749', discount: 23, sku: SKU_LIST[8] },
+        {
+          name: 'Akıllı Bluetooth Hoparlör Su Geçirmez',
+          price: '579',
+          oldPrice: '749',
+          discount: 23,
+          sku: SKU_LIST[8],
+        },
         { name: 'Monopod Selfie Çubuğu Tripod', price: '189', oldPrice: '249', discount: 24, sku: SKU_LIST[9] },
         { name: 'Masaüstü LED Şarj İstasyonu', price: '329', oldPrice: '449', discount: 27, sku: SKU_LIST[10] },
         { name: 'Hızlı Şarj Adaptörü 65W GaN', price: '279', oldPrice: '379', discount: 26, sku: SKU_LIST[11] },
@@ -328,7 +374,13 @@
         { name: 'Laptop Soğutucu Stand Ayarlanabilir', price: '219', oldPrice: '299', discount: 27, sku: SKU_LIST[13] },
         { name: 'RGB Masa Lambası Dokunmatik', price: '399', oldPrice: '549', discount: 27, sku: SKU_LIST[14] },
         { name: 'Kablo Yönetim Seti 50 Parça', price: '89', oldPrice: '129', discount: 31, sku: SKU_LIST[15] },
-        { name: 'Taşınabilir Mini Projeksiyon Cihazı', price: '2.799', oldPrice: '3.499', discount: 20, sku: SKU_LIST[16] },
+        {
+          name: 'Taşınabilir Mini Projeksiyon Cihazı',
+          price: '2.799',
+          oldPrice: '3.499',
+          discount: 20,
+          sku: SKU_LIST[16],
+        },
         { name: 'Akıllı Fiş Enerji Takip', price: '169', oldPrice: '229', discount: 26, sku: SKU_LIST[17] },
         { name: 'Kablosuz Şarj Pad 15W Hızlı', price: '199', oldPrice: '279', discount: 29, sku: SKU_LIST[18] },
         { name: 'Katlanabilir Klavye Bluetooth İnce', price: '449', oldPrice: '599', discount: 25, sku: SKU_LIST[19] },
@@ -336,7 +388,8 @@
 
       // Render product cards
       const grid = document.getElementById('product-grid');
-      grid.innerHTML = MOCK_PRODUCTS.map((p) => `
+      grid.innerHTML = MOCK_PRODUCTS.map(
+        (p) => `
         <a class="product-card" href="?sku=${p.sku}" aria-label="${p.name}">
           <div class="product-card__image">
             <span>${p.sku}</span>
@@ -351,7 +404,8 @@
             </div>
           </div>
         </a>
-      `).join('');
+      `,
+      ).join('');
 
       // Boot assistant
       const params = new URLSearchParams(location.search);
