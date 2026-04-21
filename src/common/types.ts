@@ -25,6 +25,9 @@ export interface PageContext {
   /** Product SKU — required on PDP pages for QNA and Similar Products. */
   sku?: string;
 
+  /** Product SKU list — for PLP pages, used with the launchProductList init action. */
+  skuList?: string[];
+
   /** Product price, formatted as a string (e.g. "149.99"). */
   price?: string;
 

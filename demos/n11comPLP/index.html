@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Gengage Dev — n11com PLP</title>
+    <style>
+      :root {
+        --brand: #ff44ef;
+        --brand-dark: #cc22cc;
+        --brand-subtle: color-mix(in srgb, #ff44ef 10%, white);
+        --bg: #f5f5f7;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --text: #1a1a2e;
+        --muted: #6b7280;
+        --font: 'Poppins', 'Open Sans', Arial, sans-serif;
+        --radius: 10px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        line-height: 1.5;
+      }
+
+      /* ── Dev header ── */
+      .dev-header {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        background: #111827;
+        color: #cbd5e1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 8px 16px;
+        border-bottom: 1px solid #1f2937;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+      }
+
+      .dev-header__title {
+        color: #f8fafc;
+        font-weight: 700;
+        font-size: 13px;
+        margin-right: 12px;
+      }
+
+      .dev-header__item strong {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      .dev-header__item span {
+        color: #e2e8f0;
+      }
+
+      /* ── Top bar ── */
+      .topbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 56px;
+        gap: 12px;
+      }
+
+      .topbar__logo {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--brand);
+        letter-spacing: -0.03em;
+        text-decoration: none;
+      }
+
+      .topbar__nav {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        color: var(--muted);
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .topbar__nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .topbar__search {
+        flex: 1;
+        max-width: 360px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 7px 16px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* ── Shell ── */
+      .shell {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 20px 16px 100px;
+      }
+
+      /* ── Category bar ── */
+      .category-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .category-bar h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        flex: 1;
+      }
+
+      .filter-chip {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 5px 14px;
+        font-size: 12px;
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .filter-chip--active {
+        border-color: var(--brand);
+        color: var(--brand);
+        background: var(--brand-subtle);
+        font-weight: 600;
+      }
+
+      .result-count {
+        font-size: 12px;
+        color: var(--muted);
+        margin-left: auto;
+      }
+
+      /* ── Product grid ── */
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+      }
+
+      .product-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition:
+          box-shadow 0.15s,
+          transform 0.15s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .product-card:hover {
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.09);
+        transform: translateY(-2px);
+      }
+
+      .product-card__image {
+        aspect-ratio: 1 / 1;
+        background: linear-gradient(145deg, var(--brand-subtle), #ffffff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .product-card__image::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 55%),
+          radial-gradient(circle at 75% 70%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 50%);
+      }
+
+      .product-card__image span {
+        position: relative;
+        z-index: 1;
+        font-size: 13px;
+        font-weight: 600;
+        color: color-mix(in srgb, var(--brand) 60%, #1a1a2e);
+      }
+
+      .product-card__badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        z-index: 2;
+      }
+
+      .product-card__body {
+        padding: 10px 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .product-card__name {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .product-card__meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .product-card__price-row {
+        margin-top: auto;
+        padding-top: 8px;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .product-card__price {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--brand-dark);
+      }
+
+      .product-card__price-old {
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+
+      @media (max-width: 600px) {
+        .topbar__nav {
+          display: none;
+        }
+        .product-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dev-header">
+      <span class="dev-header__title">Gengage Dev — n11com PLP</span>
+      <span class="dev-header__item"><strong>account:</strong> <span>n11com</span></span>
+      <span class="dev-header__item"><strong>pageType:</strong> <span>plp</span></span>
+      <span class="dev-header__item"><strong>session:</strong> <span id="dev-session">—</span></span>
+    </div>
+
+    <header class="topbar">
+      <a class="topbar__logo" href="#">n11</a>
+      <div class="topbar__search">🔍 Ürün, marka veya kategori ara...</div>
+      <nav class="topbar__nav" aria-label="Ana menü">
+        <span>Elektronik</span>
+        <span>Moda</span>
+        <span>Ev &amp; Yaşam</span>
+        <span>Kozmetik</span>
+        <span>Spor</span>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <div class="category-bar">
+        <h1>Tüm Ürünler</h1>
+        <span class="filter-chip filter-chip--active">Tümü</span>
+        <span class="filter-chip">Fiyata Göre</span>
+        <span class="filter-chip">Marka</span>
+        <span class="filter-chip">Kategori</span>
+        <span class="result-count">20 ürün listeleniyor</span>
+      </div>
+
+      <div class="product-grid" id="product-grid"></div>
+    </main>
+
+    <script type="module">
+      import { initOverlayWidgets } from '@gengage/assistant-fe';
+
+      const SKU_LIST = [
+        '726304379',
+        '726304706',
+        '725043727',
+        '596288104',
+        '586291279',
+        '738223600',
+        '732354310',
+        '681802913',
+        '642921322',
+        '680505856',
+        '598866734',
+        '732525217',
+        '594645607',
+        '595093696',
+        '627341706',
+        '738664813',
+        '717180938',
+        '725928085',
+        '586934442',
+        '665748563',
+      ];
+
+      // Mock product data for the visual shell — realistic-feeling but fictional
+      const MOCK_PRODUCTS = [
+        { name: 'Kablosuz Bluetooth Kulaklık Pro', price: '1.299', oldPrice: '1.799', discount: 28, sku: SKU_LIST[0] },
+        {
+          name: 'Akıllı Saat Serisi 5 Sport Edition',
+          price: '3.449',
+          oldPrice: '4.299',
+          discount: 20,
+          sku: SKU_LIST[1],
+        },
+        { name: 'Taşınabilir Şarj Cihazı 20000 mAh', price: '389', oldPrice: '549', discount: 29, sku: SKU_LIST[2] },
+        { name: 'Mekanik Oyuncu Klavyesi RGB', price: '899', oldPrice: '1.199', discount: 25, sku: SKU_LIST[3] },
+        { name: 'Kablosuz Mouse Sessiz Tıklama', price: '249', oldPrice: '329', discount: 24, sku: SKU_LIST[4] },
+        { name: '4K UHD Webcam Geniş Açı', price: '1.149', oldPrice: '1.499', discount: 23, sku: SKU_LIST[5] },
+        { name: 'USB-C Hub 7-in-1 Çok Portlu', price: '449', oldPrice: '599', discount: 25, sku: SKU_LIST[6] },
+        { name: 'Oyuncu Kulaklık 7.1 Surround', price: '699', oldPrice: '899', discount: 22, sku: SKU_LIST[7] },
+        {
+          name: 'Akıllı Bluetooth Hoparlör Su Geçirmez',
+          price: '579',
+          oldPrice: '749',
+          discount: 23,
+          sku: SKU_LIST[8],
+        },
+        { name: 'Monopod Selfie Çubuğu Tripod', price: '189', oldPrice: '249', discount: 24, sku: SKU_LIST[9] },
+        { name: 'Masaüstü LED Şarj İstasyonu', price: '329', oldPrice: '449', discount: 27, sku: SKU_LIST[10] },
+        { name: 'Hızlı Şarj Adaptörü 65W GaN', price: '279', oldPrice: '379', discount: 26, sku: SKU_LIST[11] },
+        { name: 'Oyuncu Mouse Pad XL Su Geçirmez', price: '149', oldPrice: '199', discount: 25, sku: SKU_LIST[12] },
+        { name: 'Laptop Soğutucu Stand Ayarlanabilir', price: '219', oldPrice: '299', discount: 27, sku: SKU_LIST[13] },
+        { name: 'RGB Masa Lambası Dokunmatik', price: '399', oldPrice: '549', discount: 27, sku: SKU_LIST[14] },
+        { name: 'Kablo Yönetim Seti 50 Parça', price: '89', oldPrice: '129', discount: 31, sku: SKU_LIST[15] },
+        {
+          name: 'Taşınabilir Mini Projeksiyon Cihazı',
+          price: '2.799',
+          oldPrice: '3.499',
+          discount: 20,
+          sku: SKU_LIST[16],
+        },
+        { name: 'Akıllı Fiş Enerji Takip', price: '169', oldPrice: '229', discount: 26, sku: SKU_LIST[17] },
+        { name: 'Kablosuz Şarj Pad 15W Hızlı', price: '199', oldPrice: '279', discount: 29, sku: SKU_LIST[18] },
+        { name: 'Katlanabilir Klavye Bluetooth İnce', price: '449', oldPrice: '599', discount: 25, sku: SKU_LIST[19] },
+      ];
+
+      // Render product cards
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = MOCK_PRODUCTS.map(
+        (p) => `
+        <a class="product-card" href="?sku=${p.sku}" aria-label="${p.name}">
+          <div class="product-card__image">
+            <span>${p.sku}</span>
+            ${p.discount >= 25 ? `<span class="product-card__badge">%${p.discount}</span>` : ''}
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__name">${p.name}</div>
+            <div class="product-card__meta">SKU: ${p.sku}</div>
+            <div class="product-card__price-row">
+              <span class="product-card__price">${p.price} TL</span>
+              <span class="product-card__price-old">${p.oldPrice} TL</span>
+            </div>
+          </div>
+        </a>
+      `,
+      ).join('');
+
+      // Boot assistant
+      const params = new URLSearchParams(location.search);
+      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+
+      const controller = await initOverlayWidgets({
+        accountId: 'n11com',
+        middlewareUrl,
+        locale: 'tr',
+        pageContext: {
+          pageType: 'plp',
+          skuList: SKU_LIST,
+        },
+        theme: {
+          primaryColor: '#ff44ef',
+          primaryForeground: '#ffffff',
+          backgroundColor: '#ffffff',
+          foregroundColor: '#222222',
+          borderRadius: '4px',
+          fontFamily: '"Poppins", "Open Sans", Arial, sans-serif',
+          fontSize: '13px',
+          zIndex: '1050',
+          '--client-primary': '#ff44ef',
+          '--client-primary-hover': 'color-mix(in srgb, #ff44ef 88%, black 12%)',
+          '--client-primary-active': 'color-mix(in srgb, #ff44ef 78%, black 22%)',
+          '--client-primary-subtle': 'color-mix(in srgb, #ff44ef 12%, white)',
+          '--client-primary-soft': 'color-mix(in srgb, #ff44ef 20%, white)',
+          '--client-on-primary': '#ffffff',
+          '--client-focus-ring': 'color-mix(in srgb, #ff44ef 32%, transparent)',
+          '--gengage-chat-launcher-size': '56px',
+          '--gengage-chat-launcher-mobile-right': '16px',
+          '--gengage-chat-launcher-mobile-bottom': '24px',
+          '--root-wrapper-background-color': '#f2f2f2',
+          '--root-wrapper-border-color': '#e5e5e5',
+        },
+        chat: {
+          variant: 'floating',
+          mobileBreakpoint: 768,
+          headerTitle: "N11'e Sor",
+          i18n: {
+            inputPlaceholder: 'N11 asistanına sorun...',
+            poweredBy: 'N11 AI Asistan',
+          },
+        },
+        onProductNavigate: (url, prodSku, sid) => {
+          controller.chat?.saveSession(sid ?? '', prodSku);
+          window.location.href = url;
+        },
+      });
+
+      document.getElementById('dev-session').textContent = controller.session.sessionId;
+    </script>
+  </body>
+</html>

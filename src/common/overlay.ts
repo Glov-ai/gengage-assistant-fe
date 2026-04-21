@@ -44,6 +44,7 @@ function buildInitialPageContext(options: OverlayWidgetsOptions): PageContext {
 
   const incoming = options.pageContext;
   if (incoming?.sku !== undefined) base.sku = incoming.sku;
+  if (incoming?.skuList !== undefined) base.skuList = incoming.skuList;
   if (incoming?.price !== undefined) base.price = incoming.price;
   if (incoming?.categoryTree !== undefined) base.categoryTree = incoming.categoryTree;
   if (incoming?.url !== undefined) base.url = incoming.url;
@@ -62,8 +63,15 @@ function mergePageContext(current: PageContext, patch: Partial<PageContext>): Pa
     ...patch,
     pageType: patch.pageType ?? current.pageType,
   };
-  if (patch.sku === undefined && current.sku !== undefined) {
-    next.sku = current.sku;
+  const pageTypeChanged = patch.pageType !== undefined && patch.pageType !== current.pageType;
+  if (pageTypeChanged) {
+    // Shopper navigated to a different page type — clear fields that belong to the old context
+    if (patch.pageType !== 'pdp' && patch.sku === undefined) delete next.sku;
+    if (patch.pageType !== 'plp' && patch.skuList === undefined) delete next.skuList;
+  } else {
+    // Same page type — preserve existing fields when the patch doesn't mention them
+    if (patch.sku === undefined && current.sku !== undefined) next.sku = current.sku;
+    if (patch.skuList === undefined && current.skuList !== undefined) next.skuList = current.skuList;
   }
   return next;
 }
@@ -192,6 +200,11 @@ export interface OverlayWidgetsController {
   updateContext(patch: Partial<PageContext>): Promise<void>;
   /** @see {@link updateContext} */
   updatePageContext(patch: Partial<PageContext>): Promise<void>;
+  /**
+   * Merge-only page context update. This is an alias of {@link updateContext},
+   * not a full replacement of the existing PageContext.
+   */
+  setPageContext(patch: Partial<PageContext>): Promise<void>;
   updateSku(sku: string, pageType?: PageContext['pageType']): Promise<void>;
   destroy(): void;
 }
@@ -275,10 +288,10 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       if (!window.gengage) window.gengage = {};
       window.gengage.pageContext = this._pageContext;
 
-      this._chat?.update(patch);
-      this._qna?.update(patch);
-      this._simrel?.update(patch);
-      this._simbut?.update(patch);
+      this._chat?.update(this._pageContext);
+      this._qna?.update(this._pageContext);
+      this._simrel?.update(this._pageContext);
+      this._simbut?.update(this._pageContext);
       await this._syncPdpWidgets();
     });
   }
@@ -288,6 +301,10 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
   }
 
   async updatePageContext(patch: Partial<PageContext>): Promise<void> {
+    await this.updateContext(patch);
+  }
+
+  async setPageContext(patch: Partial<PageContext>): Promise<void> {
     await this.updateContext(patch);
   }
 

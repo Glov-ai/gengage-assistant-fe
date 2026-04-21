@@ -4,6 +4,7 @@ import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { dispatch } from '../../common/events.js';
 import { CHAT_I18N_TR } from '../locales/index.js';
 import { VoiceInput, isVoiceInputSupported } from '../../common/voice-input.js';
+import { escapeCssIdentifier } from '../../common/css-escape.js';
 import { createKvkkBanner } from './KvkkBanner.js';
 import { PanelTopBar } from './PanelTopBar.js';
 import { ThumbnailsColumn } from './ThumbnailsColumn.js';
@@ -1224,7 +1225,7 @@ export class ChatDrawer {
   /** Remove one transcript bubble (e.g. superseded empty assistant placeholder). */
   removeMessageBubble(messageId: string): void {
     this._firstBotMessageIds.delete(messageId);
-    this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)?.remove();
+    this.messagesEl.querySelector(`[data-message-id="${escapeCssIdentifier(messageId)}"]`)?.remove();
     if (this._presentationFocusThreadId) {
       this._applyPresentationCollapsed();
     }
@@ -2379,7 +2380,7 @@ export class ChatDrawer {
       nextQuestion?: string;
     },
   ): void {
-    const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    const bubble = this.messagesEl.querySelector(`[data-message-id="${escapeCssIdentifier(messageId)}"]`);
     if (!bubble) return;
     let textEl = bubble.querySelector('.gengage-chat-bubble-text');
     if (!textEl) {
@@ -2400,7 +2401,7 @@ export class ChatDrawer {
   /** Mark a message as the first bot message in its thread (for special styling). */
   markFirstBotMessage(messageId: string): void {
     this._firstBotMessageIds.add(messageId);
-    const bubble = this.messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    const bubble = this.messagesEl.querySelector(`[data-message-id="${escapeCssIdentifier(messageId)}"]`);
     if (bubble) {
       bubble.classList.add('gengage-chat-bubble--first');
     }
@@ -2419,7 +2420,7 @@ export class ChatDrawer {
       return;
     }
     this._programmaticScrollUntil = Date.now() + 700;
-    const target = this.messagesEl.querySelector(`[data-thread-id="${CSS.escape(lastThreadId)}"]`);
+    const target = this.messagesEl.querySelector(`[data-thread-id="${escapeCssIdentifier(lastThreadId)}"]`);
     if (target) {
       requestAnimationFrame(() => {
         target.scrollIntoView({ block: 'start', behavior: 'auto' });
@@ -2435,7 +2436,7 @@ export class ChatDrawer {
    * Used by centralized presentation scroll requests.
    */
   scrollThreadIntoView(threadId: string, behavior: ScrollBehavior = 'smooth'): boolean {
-    const matches = this.messagesEl.querySelectorAll(`[data-thread-id="${CSS.escape(threadId)}"]`);
+    const matches = this.messagesEl.querySelectorAll(`[data-thread-id="${escapeCssIdentifier(threadId)}"]`);
     let target: HTMLElement | null = null;
     for (let i = 0; i < matches.length; i++) {
       const el = matches[i];

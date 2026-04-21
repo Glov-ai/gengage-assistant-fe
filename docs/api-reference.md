@@ -106,6 +106,8 @@ The returned controller exposes:
 - `openChat(...)`
 - `closeChat()`
 - `updateContext(...)`
+- `updatePageContext(...)` — merge-only alias of `updateContext(...)` for SPA route changes
+- `setPageContext(...)` — merge-only alias of `updateContext(...)`; it does not replace the full context
 - `updateSku(...)`
 - `destroy()`
 - widget instances via `controller.chat`, `controller.qna`, `controller.simrel`, `controller.simbut`

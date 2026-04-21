@@ -114,6 +114,15 @@ export function enrichActionPayload(
       return action;
     }
 
+    case 'launchProductList': {
+      // sku_list must be provided by the caller in the payload; no additional enrichment
+      return action;
+    }
+
+    case 'launchHomepage': {
+      return action;
+    }
+
     case 'addToCart': {
       const additions: Record<string, unknown> = {};
       if (!('error_message' in existing)) additions['error_message'] = '';
