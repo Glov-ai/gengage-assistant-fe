@@ -67,6 +67,8 @@ export const CHAT_I18N_EN: ChatI18n = {
   beautyStylesPreparedTitle: 'Prepared {count} beauty styles for you',
   watchStylesPreparedTitle: 'Prepared {count} style directions for you',
   consultingOtherCompatibleProductsLabel: 'Other compatible products',
+  consultingFallbackGroupLabel: 'Recommendation',
+  consultingFallbackStyleLabel: 'Style {index}',
   consultingStyleLoadingDescription: 'I am still collecting products for this style. The panel will refresh shortly.',
   consultingStyleUnavailableDescription:
     'I could not find enough product matches for this style yet. You can review the other styles.',
