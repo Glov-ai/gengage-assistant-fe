@@ -2313,7 +2313,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               },
             });
             if (this._mountChoicePrompter()) {
-
               // Dismiss ChoicePrompter when the mobile keyboard opens (viewport shrinks)
               if (this._isMobileViewport && window.visualViewport) {
                 const prompterRef = this._choicePrompterEl;
