@@ -7,6 +7,7 @@
  */
 
 import type { UIElement } from '../../common/types.js';
+import { CHAT_I18N_TR } from '../locales/index.js';
 import type { ChatUISpecRenderContext } from '../types.js';
 
 export interface PhotoAnalysisData {
@@ -146,11 +147,12 @@ function analysisLabels(ctx?: ChatUISpecRenderContext): {
   focus: string;
   celebStyle: string;
 } {
+  const i18n = { ...CHAT_I18N_TR, ...(ctx?.i18n ?? {}) };
   return {
-    badge: ctx?.i18n?.photoAnalysisBadge ?? 'Skin Analysis',
-    strengths: ctx?.i18n?.photoAnalysisStrengthsLabel ?? 'Your strengths',
-    focus: ctx?.i18n?.photoAnalysisFocusLabel ?? 'Focus points',
-    celebStyle: ctx?.i18n?.photoAnalysisCelebStyleLabel ?? 'Celeb style match',
+    badge: i18n.photoAnalysisBadge,
+    strengths: i18n.photoAnalysisStrengthsLabel,
+    focus: i18n.photoAnalysisFocusLabel,
+    celebStyle: i18n.photoAnalysisCelebStyleLabel,
   };
 }
 

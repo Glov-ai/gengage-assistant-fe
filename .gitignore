@@ -5,8 +5,7 @@ dist-demos/
 .env.local
 *.local
 .DS_Store
-docs/.vitepress/dist
-docs/.vitepress/cache
+docs/.vitepress/
 coverage/
 playwright-report/
 test-results/

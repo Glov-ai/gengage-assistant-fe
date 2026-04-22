@@ -5,7 +5,7 @@ This guide covers direct Android/iOS app integration with `@gengage/assistant-fe
 ## What You Get
 
 - One WebView overlay that hosts chat plus optional PDP widgets.
-- Inbound native commands (`openChat`, `closeChat`, `updateContext`, `updateSku`, `setSession`, `destroy`).
+- Inbound native commands (`openChat`, `closeChat`, `updateContext`, `updatePageContext`, `setPageContext`, `updateSku`, `setSession`, `destroy`).
 - Outbound widget/native events through JSON messages.
 - Pre-ready command queue: native commands sent before overlay init are replayed after controller attach.
 - Mobile-safe defaults in `initNativeOverlayWidgets(...)`:
@@ -81,6 +81,8 @@ Supported `type` values:
 - `openChat`
 - `closeChat`
 - `updateContext`
+- `updatePageContext` (alias of `updateContext`)
+- `setPageContext` (alias of `updateContext`)
 - `updateSku`
 - `setSession`
 - `destroy`

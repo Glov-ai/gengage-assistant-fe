@@ -242,6 +242,10 @@ export interface ChatI18n {
   watchStylesPreparedTitle: string;
   /** Label for products that were not included in a backend recommendation group. */
   consultingOtherCompatibleProductsLabel: string;
+  /** Fallback label for an unnamed consulting recommendation group. */
+  consultingFallbackGroupLabel: string;
+  /** Fallback label for a consulting style card. Supports {index} placeholder. */
+  consultingFallbackStyleLabel: string;
   consultingStyleLoadingDescription: string;
   consultingStyleUnavailableDescription: string;
   consultingStyleLoadingBadge: string;
@@ -421,6 +425,8 @@ export interface ChatUISpecRenderContext {
     | 'beautyStylesPreparedTitle'
     | 'watchStylesPreparedTitle'
     | 'consultingOtherCompatibleProductsLabel'
+    | 'consultingFallbackGroupLabel'
+    | 'consultingFallbackStyleLabel'
     | 'consultingStyleLoadingDescription'
     | 'consultingStyleUnavailableDescription'
     | 'consultingStyleLoadingBadge'

@@ -12,6 +12,7 @@ import type { CommunicationBridge } from '../common/communication-bridge.js';
 import type { ExtendedModeManager, PanelContentType } from './extendedModeManager.js';
 import type { ChatI18n } from './types.js';
 import type { UISpec, UIElement } from '../common/types.js';
+import { escapeCssIdentifier } from '../common/css-escape.js';
 
 /** Minimal interface the panel manager needs from its host widget. */
 export interface PanelManagerDeps {
@@ -80,12 +81,12 @@ export class PanelManager {
 
     // De-highlight previous active message
     if (this.activePanelMessageId) {
-      const prev = shadow?.querySelector(`[data-message-id="${CSS.escape(this.activePanelMessageId)}"]`);
+      const prev = shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(this.activePanelMessageId)}"]`);
       prev?.classList.remove('gengage-chat-bubble--active');
     }
 
     // Highlight the clicked message
-    const current = shadow?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+    const current = shadow?.querySelector(`[data-message-id="${escapeCssIdentifier(messageId)}"]`);
     current?.classList.add('gengage-chat-bubble--active');
     this.activePanelMessageId = messageId;
 
