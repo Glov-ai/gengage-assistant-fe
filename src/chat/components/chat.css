@@ -6561,7 +6561,10 @@ button.gengage-chat-product-details-rating {
 }
 
 /* Panel: image block + text must not push past the grid cell (flex min-size fix). */
-.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-img-wrapper {
+.gengage-chat-panel
+  .gengage-chat-consulting-group-grid
+  .gengage-chat-product-card
+  .gengage-chat-product-card-img-wrapper {
   min-width: 0;
   max-width: 100%;
   flex-shrink: 1;
@@ -6575,7 +6578,10 @@ button.gengage-chat-product-details-rating {
 
 .gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-name,
 .gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-price,
-.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-price-block {
+.gengage-chat-panel
+  .gengage-chat-consulting-group-grid
+  .gengage-chat-product-card
+  .gengage-chat-product-card-price-block {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
