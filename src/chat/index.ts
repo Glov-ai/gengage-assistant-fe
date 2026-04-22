@@ -956,6 +956,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
+  private _focusPresentationThread(
+    threadId: string,
+    behavior: ScrollBehavior = 'smooth',
+    syncDrawerFocus = false,
+  ): void {
+    this._presentation.requestThreadFocus(threadId, behavior);
+    if (syncDrawerFocus) {
+      this._drawer?.setPresentationFocus(threadId);
+    }
+    this._drawer?.setFormerMessagesButtonVisible(false);
+    setTimeout(() => this._flushPresentationScroll(), 40);
+  }
+
   private _releasePresentationFocus(): void {
     this._presentation.releaseFocusedThread();
     this._drawer?.setPresentationFocus(null);
@@ -1749,13 +1762,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._messages.push(botMsg);
 
     this._presentation.registerAssistantActivity(threadId);
-    this._presentation.requestThreadFocus(threadId, 'smooth');
     // User-visible non-preservePanel: focus was already set before the user bubble.
-    if (options?.silent || isPreservePanel) {
-      this._drawer?.setPresentationFocus(threadId);
-    }
-    this._drawer?.setFormerMessagesButtonVisible(false);
-    setTimeout(() => this._flushPresentationScroll(), 40);
+    this._focusPresentationThread(threadId, 'smooth', options?.silent || isPreservePanel);
 
     // Abort previous request(s) — skip for preservePanel to avoid killing concurrent streams
     if (!options?.preservePanel) {
@@ -1965,6 +1973,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             // Photo analysis messages render a structured card — skip typewriter.
             if (isPhotoAnalysisMessage(botMsg)) {
               this._drawer?.updateBotMessage(botMsg.id, displayText, 'photo_analysis', botMsg.photoAnalysis);
+              if (botMsg.threadId) {
+                this._focusPresentationThread(botMsg.threadId, 'auto');
+              }
             } else {
               // Apply typewriter animation to the final bot text
               const bubbleTextEl = this._shadow?.querySelector(
@@ -2033,6 +2044,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               botMsg,
             )
           ) {
+            if (componentType === 'PhotoAnalysisCard' && botMsg.threadId) {
+              this._focusPresentationThread(botMsg.threadId, 'auto');
+            }
             return;
           }
 

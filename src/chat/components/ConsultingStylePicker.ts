@@ -83,6 +83,7 @@ export function renderConsultingStylePicker(
   ): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+    grid.style.removeProperty('--consulting-sections-columns');
 
     const stateCard = document.createElement('section');
     stateCard.className = 'gengage-chat-consulting-loading-panel';
@@ -129,6 +130,7 @@ export function renderConsultingStylePicker(
   const renderVariationProducts = (variation: StyleVariation): void => {
     grid.innerHTML = '';
     grid.classList.remove('gengage-chat-product-grid--consulting-groups');
+    grid.style.removeProperty('--consulting-sections-columns');
     const variationStatus = typeof variation.status === 'string' ? variation.status : 'ready';
     if (variationStatus === 'loading') {
       const index = Math.max(0, styleVariations.indexOf(variation)) + 1;
@@ -248,6 +250,7 @@ export function renderConsultingStylePicker(
       }
 
       const isSingleSection = sections.length === 1;
+      grid.style.setProperty('--consulting-sections-columns', String(Math.max(1, sections.length)));
       for (const section of sections) {
         renderGroupSection(section.labelText, section.products, isSingleSection, section.reasonText);
       }

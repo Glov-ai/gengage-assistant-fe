@@ -484,7 +484,8 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '1543302';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
       const beymenHeaderAvatarUrl = 'https://configs.gengage.ai/beymencom/glov-beymencom-logo.png';
 
