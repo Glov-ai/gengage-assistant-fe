@@ -1470,16 +1470,21 @@
 }
 
 .gengage-chat-input-pill {
+  --gengage-chat-input-control-size: 40px;
+  --gengage-chat-input-shell-pad: 6px;
+  --gengage-chat-input-shell-radius: 18px;
+  --gengage-chat-input-control-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
-  min-height: 52px;
+  min-height: calc(var(--gengage-chat-input-control-size) + (var(--gengage-chat-input-shell-pad) * 2));
   background: var(--surface-card);
   border: 1px solid var(--border-default);
-  border-radius: 16px;
-  padding: 6px 6px 6px 14px;
+  border-radius: var(--gengage-chat-input-shell-radius);
+  padding: var(--gengage-chat-input-shell-pad);
+  box-sizing: border-box;
   /* overflow:visible — attach menu overflows upward; hidden would clip it */
   overflow: visible;
   transition:
@@ -1514,8 +1519,10 @@
 
 /* On mobile, keep single-line appearance and meet WCAG 2.5.5 touch targets */
 .gengage-chat-root--mobile .gengage-chat-input-pill {
-  min-height: 52px;
-  padding: 6px 6px 6px 14px;
+  --gengage-chat-input-control-size: 44px;
+  --gengage-chat-input-shell-radius: 20px;
+  --gengage-chat-input-control-radius: 14px;
+  min-height: calc(var(--gengage-chat-input-control-size) + (var(--gengage-chat-input-shell-pad) * 2));
 }
 
 .gengage-chat-root--mobile .gengage-chat-input {
@@ -1537,12 +1544,12 @@
 }
 
 .gengage-chat-send {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: var(--gengage-chat-input-control-size, 40px);
+  height: var(--gengage-chat-input-control-size, 40px);
+  min-width: var(--gengage-chat-input-control-size, 40px);
   padding: 0;
   border: 1px solid var(--ds-button-primary-border);
-  border-radius: 12px;
+  border-radius: var(--gengage-chat-input-control-radius, 12px);
   background: var(--ds-button-primary-bg);
   color: var(--ds-button-primary-fg);
   font-weight: 700;
@@ -3482,15 +3489,15 @@ button.gengage-chat-product-card-cta {
   background: var(--surface-card-soft);
   border: 1px solid var(--border-default);
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: var(--gengage-chat-input-control-size, 40px);
+  height: var(--gengage-chat-input-control-size, 40px);
   padding: 0;
   line-height: 1;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--gengage-chat-input-control-radius, 12px);
   color: var(--text-primary);
   transition:
     color 0.15s,
@@ -3658,9 +3665,10 @@ button.gengage-chat-product-card-cta {
 .gengage-chat-root--mobile .gengage-chat-attach-btn,
 .gengage-chat-root--mobile .gengage-chat-mic-btn,
 .gengage-chat-root--mobile .gengage-chat-send {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: var(--gengage-chat-input-control-size, 44px);
+  height: var(--gengage-chat-input-control-size, 44px);
+  min-width: var(--gengage-chat-input-control-size, 44px);
+  border-radius: var(--gengage-chat-input-control-radius, 14px);
 }
 
 .gengage-chat-root--mobile .gengage-chat-attach-btn svg,
