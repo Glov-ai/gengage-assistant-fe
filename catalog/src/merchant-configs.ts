@@ -454,6 +454,25 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
     },
   },
 
+  ebebekcom: {
+    accountId: 'ebebekcom',
+    locale: 'tr',
+    theme: {
+      primaryColor: '#0091d5',
+      primaryForeground: '#ffffff',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#212738',
+      borderRadius: '8px',
+      fontFamily: '"Quicksand", "Nunito Sans", Arial, sans-serif',
+      fontSize: '14px',
+    },
+    chatHeaderAvatarUrl: 'https://www.e-bebek.com/assets/icons/apple-touch-icon-180x180.png',
+    chatI18n: {
+      inputPlaceholder: 'Bebek ürünü ara veya soru sor',
+      poweredBy: 'ebebek AI Asistan',
+    },
+  },
+
   'ozdilekteyimcom-market': {
     accountId: 'ozdilekteyimcom-market',
     locale: 'tr',

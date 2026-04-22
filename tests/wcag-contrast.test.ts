@@ -28,6 +28,7 @@ const MERCHANT_THEMES: Array<{ name: string; primary: string; foreground: string
   { name: 'aygazcomtr', primary: '#e30613', foreground: '#ffffff' },
   { name: 'divanpastanelericomtr', primary: '#8b1a2d', foreground: '#ffffff' },
   { name: 'screwfixcom', primary: '#f6a623', foreground: '#1a1a1a' },
+  { name: 'ebebekcom', primary: '#0091d5', foreground: '#ffffff' },
 ];
 
 // Brand colors we cannot change — document their contrast shortfalls
@@ -134,7 +135,7 @@ describe('WCAG contrast ratio', () => {
     }
   });
 
-  it('all 11 merchants are covered', () => {
-    expect(MERCHANT_THEMES).toHaveLength(11);
+  it('all 12 merchants are covered', () => {
+    expect(MERCHANT_THEMES).toHaveLength(12);
   });
 });
