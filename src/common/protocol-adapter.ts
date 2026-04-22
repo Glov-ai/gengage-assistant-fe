@@ -1914,8 +1914,8 @@ export function productToNormalized(p: V1Product): NormalizedProduct {
   const image = p.images?.[0];
   if (image) result.imageUrl = image;
   if (p.images && p.images.length > 1) result.images = p.images;
-  if (price != null) result.price = String(price);
-  if (originalPrice != null) result.originalPrice = String(originalPrice);
+  if (price != null && price > 0) result.price = String(price);
+  if (originalPrice != null && originalPrice > 0) result.originalPrice = String(originalPrice);
   if (discountPercent !== undefined) result.discountPercent = discountPercent;
   if (brand !== undefined) result.brand = brand;
   if (p.rating !== undefined) result.rating = p.rating;
