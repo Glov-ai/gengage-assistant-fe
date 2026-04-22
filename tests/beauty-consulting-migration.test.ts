@@ -433,4 +433,45 @@ describe('beauty consulting migration', () => {
       expect(request.type).toBe('inputText');
     }
   });
+
+  it('reuses presentation-thread focus flow for photo-analysis rendering', () => {
+    vi.useFakeTimers();
+    try {
+      const chat = new GengageChat();
+      const requestThreadFocus = vi.fn();
+      const setPresentationFocus = vi.fn();
+      const setFormerMessagesButtonVisible = vi.fn();
+      const flushPresentationScroll = vi.fn();
+
+      const accessor = chat as unknown as {
+        _presentation: { requestThreadFocus(threadId: string, behavior: ScrollBehavior): void };
+        _drawer?: {
+          setPresentationFocus(threadId: string | null): void;
+          setFormerMessagesButtonVisible(visible: boolean): void;
+        };
+        _flushPresentationScroll(): void;
+        _focusPresentationThread(threadId: string, behavior?: ScrollBehavior, syncDrawerFocus?: boolean): void;
+      };
+
+      accessor._presentation = { requestThreadFocus };
+      accessor._drawer = {
+        setPresentationFocus,
+        setFormerMessagesButtonVisible,
+      };
+      accessor._flushPresentationScroll = flushPresentationScroll;
+
+      accessor._focusPresentationThread('thread-photo', 'auto', true);
+
+      expect(requestThreadFocus).toHaveBeenCalledWith('thread-photo', 'auto');
+      expect(setPresentationFocus).toHaveBeenCalledWith('thread-photo');
+      expect(setFormerMessagesButtonVisible).toHaveBeenCalledWith(false);
+      expect(flushPresentationScroll).not.toHaveBeenCalled();
+
+      vi.runAllTimers();
+
+      expect(flushPresentationScroll).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
