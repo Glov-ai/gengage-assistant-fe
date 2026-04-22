@@ -175,9 +175,30 @@ export function renderProductSummaryCard(element: UIElement, ctx: ChatUISpecRend
 
   card.appendChild(content);
 
-  // --- CTA link (right edge) ---
+  // --- CTA (right edge): add-to-cart when purchasable, else safe product URL link ---
   const url = product['url'] as string | undefined;
-  if (url && isSafeUrl(url)) {
+  const sku = product['sku'] as string | undefined;
+  const cartCodeRaw = product['cartCode'] ?? product['cart_code'];
+  const cartCode = typeof cartCodeRaw === 'string' && cartCodeRaw.trim() ? cartCodeRaw.trim() : undefined;
+  const inStock = product['inStock'];
+  const hasCart = !!(sku && cartCode && inStock !== false);
+
+  if (hasCart) {
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'gengage-chat-product-summary__cta gds-chip gds-chip-active';
+    cta.dataset['gengagePart'] = 'product-summary-cta';
+    cta.textContent = ctx.i18n?.addToCartButton ?? 'Add to Cart';
+    cta.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ctx.onAction({
+        title: ctx.i18n?.addToCartButton ?? 'Add to Cart',
+        type: 'addToCart',
+        payload: { sku: sku!, cartCode: cartCode!, quantity: 1 },
+      });
+    });
+    card.appendChild(cta);
+  } else if (url && isSafeUrl(url)) {
     const cta = document.createElement('a');
     cta.className = 'gengage-chat-product-summary__cta gds-chip gds-chip-active';
     cta.dataset['gengagePart'] = 'product-summary-cta';

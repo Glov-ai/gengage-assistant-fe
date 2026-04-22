@@ -448,7 +448,11 @@ export function renderProductCard(element: UIElement, ctx: UISpecRenderContext):
   const campaignReason = campaignReasonForDisplay(ctx, product);
   const priceStyle = resolveOriginalPriceStyle(ctx, product);
   const hasCardDiscount = !!(originalPrice && price && originalPrice !== price && parseFloat(price) > 0);
-  const useCardPriceStack = !!(campaignReason || (hasCardDiscount && priceStyle === 'inline'));
+  const useCampaignPriceBadge = !!(campaignReason && hasCardDiscount);
+  const useCardPriceStack = !!(
+    (campaignReason && !useCampaignPriceBadge) ||
+    (hasCardDiscount && priceStyle === 'inline')
+  );
 
   const hasNumericRating = typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
   const metaRow = document.createElement('div');
@@ -462,7 +466,9 @@ export function renderProductCard(element: UIElement, ctx: UISpecRenderContext):
     ? (() => {
         const stack = document.createElement('div');
         stack.className = 'gengage-chat-product-card-price-stack';
-        if (campaignReason) stack.appendChild(createCampaignReasonElement(campaignReason));
+        if (campaignReason && !useCampaignPriceBadge) {
+          stack.appendChild(createCampaignReasonElement(campaignReason));
+        }
         stack.appendChild(priceBlock);
         return stack;
       })()
@@ -1177,8 +1183,9 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
   }
 
   {
+    const useCampaignPriceBadgeDetails = !!(campaignReason && hasDiscountDetails);
     let priceAppendTarget: HTMLElement = content;
-    if (campaignReason) {
+    if (campaignReason && !useCampaignPriceBadgeDetails) {
       const stack = document.createElement('div');
       stack.className = 'gengage-chat-product-details-price-stack';
       stack.appendChild(createCampaignReasonElement(campaignReason));

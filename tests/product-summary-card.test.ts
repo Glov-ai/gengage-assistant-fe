@@ -16,6 +16,7 @@ function makeElement(product: Record<string, unknown> | undefined): UIElement {
 
 function makeContext(overrides: Partial<ChatUISpecRenderContext> = {}): ChatUISpecRenderContext {
   return {
+    onAction: vi.fn(),
     onProductSelect: vi.fn(),
     ...overrides,
   };
@@ -23,6 +24,7 @@ function makeContext(overrides: Partial<ChatUISpecRenderContext> = {}): ChatUISp
 
 const FULL_PRODUCT = {
   sku: 'SKU-1',
+  cartCode: 'CART-1',
   name: 'Tekno-Tel Ekmek Sepeti',
   brand: 'Tekno-Tel',
   url: 'https://example.com/p/1',
@@ -102,10 +104,18 @@ describe('ProductSummaryCard', () => {
     expect(card.querySelector('.gengage-chat-product-summary__image')).toBeNull();
   });
 
-  it('skips CTA when url is missing', () => {
-    const product = { ...FULL_PRODUCT, url: undefined };
+  it('skips CTA when url is missing and product is not add-to-cartable', () => {
+    const product = { ...FULL_PRODUCT, url: undefined, cartCode: undefined };
     const card = renderProductSummaryCard(makeElement(product), makeContext());
     expect(card.querySelector('.gengage-chat-product-summary__cta')).toBeNull();
+  });
+
+  it('shows add-to-cart CTA when url is missing but sku and cartCode are present', () => {
+    const product = { ...FULL_PRODUCT, url: undefined };
+    const card = renderProductSummaryCard(makeElement(product), makeContext());
+    const cta = card.querySelector('.gengage-chat-product-summary__cta');
+    expect(cta?.tagName).toBe('BUTTON');
+    expect(cta?.textContent).toBe('Add to Cart');
   });
 
   it('rejects javascript: URLs for image', () => {
@@ -115,20 +125,31 @@ describe('ProductSummaryCard', () => {
   });
 
   it('rejects javascript: URLs for CTA', () => {
-    const product = { ...FULL_PRODUCT, url: 'javascript:alert(1)' };
+    const product = { ...FULL_PRODUCT, url: 'javascript:alert(1)', cartCode: undefined };
     const card = renderProductSummaryCard(makeElement(product), makeContext());
     expect(card.querySelector('.gengage-chat-product-summary__cta')).toBeNull();
   });
 
-  it('uses custom CTA label from i18n', () => {
-    const ctx = makeContext({ i18n: { productCtaLabel: 'View' } as ChatUISpecRenderContext['i18n'] });
+  it('uses custom add-to-cart label from i18n when sku and cartCode are present', () => {
+    const ctx = makeContext({
+      i18n: { addToCartButton: 'Sepete Ekle' } as ChatUISpecRenderContext['i18n'],
+    });
     const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), ctx);
-    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('View');
+    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('Sepete Ekle');
   });
 
-  it('defaults CTA label to View', () => {
+  it('defaults add-to-cart CTA label when sku and cartCode are present', () => {
     const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), makeContext());
-    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('View');
+    expect(card.querySelector('.gengage-chat-product-summary__cta')?.textContent).toBe('Add to Cart');
+  });
+
+  it('uses product CTA link label when not add-to-cartable', () => {
+    const product = { ...FULL_PRODUCT, cartCode: undefined };
+    const ctx = makeContext({ i18n: { productCtaLabel: 'Siteye git' } as ChatUISpecRenderContext['i18n'] });
+    const card = renderProductSummaryCard(makeElement(product), ctx);
+    const cta = card.querySelector('.gengage-chat-product-summary__cta');
+    expect(cta?.tagName).toBe('A');
+    expect(cta?.textContent).toBe('Siteye git');
   });
 
   // --- Click handling ---
@@ -140,12 +161,18 @@ describe('ProductSummaryCard', () => {
     expect(onProductSelect).toHaveBeenCalledWith(FULL_PRODUCT);
   });
 
-  it('does not call onProductSelect when CTA link is clicked', () => {
+  it('does not call onProductSelect when CTA is clicked', () => {
     const onProductSelect = vi.fn();
-    const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), makeContext({ onProductSelect }));
+    const onAction = vi.fn();
+    const card = renderProductSummaryCard(makeElement(FULL_PRODUCT), makeContext({ onProductSelect, onAction }));
     const cta = card.querySelector('.gengage-chat-product-summary__cta') as HTMLElement;
     cta.click();
     expect(onProductSelect).not.toHaveBeenCalled();
+    expect(onAction).toHaveBeenCalledWith({
+      title: 'Add to Cart',
+      type: 'addToCart',
+      payload: { sku: 'SKU-1', cartCode: 'CART-1', quantity: 1 },
+    });
   });
 
   // --- Edge cases ---

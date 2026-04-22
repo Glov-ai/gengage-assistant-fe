@@ -2185,6 +2185,12 @@ button.gengage-chat-product-card-cta {
   outline-offset: 2px;
 }
 
+button.gengage-chat-product-summary__cta {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
 .gengage-chat-product-grid {
   display: flex;
   gap: 12px;
@@ -5041,10 +5047,10 @@ button.gengage-chat-product-card-cta {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   box-sizing: border-box;
   max-width: 100%;
-  padding: 10px 12px;
+  padding: 7px 9px;
   border-radius: var(--radius-control, 10px);
   border: 1px solid transparent;
   background-image:
@@ -5063,8 +5069,8 @@ button.gengage-chat-product-card-cta {
 
 .gengage-chat-campaign-price-badge__logo img {
   display: block;
-  max-height: 32px;
-  max-width: 72px;
+  max-height: 26px;
+  max-width: 64px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -5075,15 +5081,15 @@ button.gengage-chat-product-card-cta {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .gengage-chat-campaign-price-badge__reason {
   max-width: 100%;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   margin: 0;
   letter-spacing: 0.02em;
   background: linear-gradient(90deg, var(--_gengage-campaign-reason-start), var(--_gengage-campaign-reason-end));
@@ -5093,31 +5099,31 @@ button.gengage-chat-product-card-cta {
 }
 
 .gengage-chat-campaign-price-badge__sale {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.15;
   color: var(--gengage-discounted-price-color, var(--text-primary));
 }
 
 .gengage-chat-product-card-price-row .gengage-chat-campaign-price-badge__sale {
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .gengage-chat-product-summary__price .gengage-chat-campaign-price-badge__sale {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .gengage-chat-product-details-price .gengage-chat-campaign-price-badge {
-  padding: 12px 14px;
+  padding: 9px 11px;
   border-radius: var(--radius-control, 12px);
 }
 
 .gengage-chat-product-details-price .gengage-chat-campaign-price-badge__reason {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .gengage-chat-product-details-price .gengage-chat-campaign-price-badge__sale {
-  font-size: 22px;
+  font-size: 18px;
 }
 
 /* Inline row with campaign badge: align last baselines so list price lines up with sale price inside badge */
