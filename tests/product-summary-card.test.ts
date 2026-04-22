@@ -125,7 +125,7 @@ describe('ProductSummaryCard', () => {
   });
 
   it('rejects javascript: URLs for CTA', () => {
-    const product = { ...FULL_PRODUCT, url: 'javascript:alert(1)' };
+    const product = { ...FULL_PRODUCT, url: 'javascript:alert(1)', cartCode: undefined };
     const card = renderProductSummaryCard(makeElement(product), makeContext());
     expect(card.querySelector('.gengage-chat-product-summary__cta')).toBeNull();
   });
