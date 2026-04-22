@@ -2854,9 +2854,18 @@ button.gengage-chat-product-card-cta {
   padding: 4px 0;
 }
 
+/* Recommendation group columns: equal width, full row (see --consulting-sections-columns in TS) */
 .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--consulting-groups {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
-  justify-content: start;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  grid-template-columns: repeat(var(--consulting-sections-columns, 3), minmax(0, 1fr));
+  justify-content: stretch;
+  justify-items: stretch;
+}
+
+.gengage-chat-root--mobile .gengage-chat-panel .gengage-chat-product-grid.gengage-chat-product-grid--consulting-groups {
+  grid-template-columns: 1fr;
 }
 
 /*
@@ -6386,6 +6395,9 @@ button.gengage-chat-product-details-rating {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--client-primary) 14%, var(--border-default));
@@ -6428,17 +6440,28 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-consulting-group-grid {
   margin-bottom: 2px;
   display: grid;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   grid-template-columns: repeat(var(--consulting-group-columns, 4), minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
   justify-content: stretch;
 }
 
+/* Override stream default fixed 160px card; keep cards inside group grid cells. */
 .gengage-chat-consulting-group-grid .gengage-chat-product-card {
   height: 100%;
   width: 100%;
   min-width: 0;
-  max-width: none;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-img-wrapper {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .gengage-chat-beauty-photo-step {
@@ -6537,6 +6560,26 @@ button.gengage-chat-product-details-rating {
   margin-inline: 0;
 }
 
+/* Panel: image block + text must not push past the grid cell (flex min-size fix). */
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-img-wrapper {
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 1;
+  align-self: stretch;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-name,
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-price,
+.gengage-chat-panel .gengage-chat-consulting-group-grid .gengage-chat-product-card .gengage-chat-product-card-price-block {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .gengage-chat-root--mobile .gengage-chat-consulting-style-grid {
   grid-template-columns: 1fr;
 }
@@ -6557,7 +6600,7 @@ button.gengage-chat-product-details-rating {
 .gengage-chat-root--mobile .gengage-chat-consulting-group-grid .gengage-chat-product-card {
   width: 100%;
   min-width: 0;
-  max-width: none;
+  max-width: 100%;
 }
 
 .gengage-chat-root--mobile .gengage-chat-consulting-loading-grid {
