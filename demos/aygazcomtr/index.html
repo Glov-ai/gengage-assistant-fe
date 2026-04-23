@@ -471,11 +471,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '860';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-aygazcomtr-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Aygaz', primaryColor: '#e30613' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -512,10 +514,10 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Aygaz Asistan',
-          headerAvatarUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "Aygaz'a Sor",
-            avatarUrl: brandRemoteLogoUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#e30613',
             secondaryColor: '#333333',
             fontFamily: 'Arial, Helvetica, sans-serif',
@@ -544,6 +546,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'aygazcomtr', sku, middlewareUrl, brandName: 'Aygaz' });
 
       // Demo: register add-to-cart callback hook via the generic addCallback API
       if (controller.chat) {

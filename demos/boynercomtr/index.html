@@ -481,11 +481,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '15600758';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-boynercomtr-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Boyner', primaryColor: '#EE403D' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -522,10 +524,10 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Boyner Asistan',
-          headerAvatarUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "Boyner'e Sor",
-            avatarUrl: brandRemoteLogoUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#EE403D',
             secondaryColor: '#333333',
             fontFamily: '"Montserrat", Arial, sans-serif',
@@ -554,6 +556,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'boynercomtr', sku, middlewareUrl, brandName: 'Boyner' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

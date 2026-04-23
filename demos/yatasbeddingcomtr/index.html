@@ -472,14 +472,16 @@
     <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
       import { renderYatasSimRelCard, renderYatasChatProductCard, renderYatasCardElement } from './yatas-cards.ts';
       import yatasCardsCss from './yatas-cards.css?inline';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '1066800';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
-      const yatasLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Yatas', primaryColor: '#c8102e' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -515,10 +517,10 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: "Yataş'a Sor",
-          headerAvatarUrl: yatasLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "Yataş'a Sor",
-            avatarUrl: yatasLogoUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#4097ca',
             secondaryColor: '#222222',
             fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
@@ -563,6 +565,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'yatasbeddingcomtr', sku, middlewareUrl, brandName: 'Yatas' });
 
       // Inject Yataş card CSS into chat Shadow DOM (Shadow DOM isolates styles)
       requestAnimationFrame(() => {

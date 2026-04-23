@@ -117,6 +117,8 @@ See [docs/customization.md](docs/customization.md) for the fork and merchant-cus
 ```bash
 npm install
 npm run dev -- koctascomtr --sku=1000465056   # Local dev server with HMR
+npm run koctascomtr                            # Merchant shortcut with the seeded demo SKU
+npm run trendyolcom                            # Another merchant shortcut using its default PDP SKU
 npm run typecheck                              # TypeScript strict check
 npm run test                                   # Unit tests
 npm run build                                  # Build to dist/
@@ -135,6 +137,8 @@ The default backend is `https://chatbe-dev.gengage.ai`. You can also set it via 
 ```bash
 MIDDLEWARE_URL=http://localhost:7860 npm run dev -- koctascomtr --sku=1000465056
 ```
+
+Merchant demo pages under `demos/` now seed a default PDP SKU for direct launch flows, and the affected PDP shells hydrate their breadcrumb, summary content, and gallery imagery from middleware `productDetails` when the backend is available.
 
 ---
 

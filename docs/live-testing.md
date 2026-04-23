@@ -13,10 +13,12 @@ npm run dev -- koctascomtr --sku=1000465056
 npm run dev -- arcelikcomtr --sku=ABC123 --port=3005
 npm run dev -- n11com --sku=XYZ789 --port=3010
 npm run dev -- --client=yatasbeddingcomtr --sku=1066800 --backend-url=https://staging.example.com
+npm run trendyolcom
 ```
 
 The dev server serves the corresponding `demos/<accountId>/index.html` with HMR.
 Backend URL can come from demo defaults or be overridden with `--backend-url`.
+Most merchant demos also expose a matching `npm run <accountId>` shortcut that boots the seeded sample SKU for that account.
 
 ---
 
@@ -136,3 +138,5 @@ npm run dev -- koctascomtr --sku=1000465056
 
 Use real SKUs from each account's catalog. The dev server startup log prints demo,
 SKU, backend, and local URL (including sticky query params).
+
+For merchant PDP demos that use the shared demo-shell hydrator, also verify the host page itself replaces placeholder copy with middleware-backed product title, pricing, features, and hero imagery rather than only validating the chat drawer.
