@@ -4229,6 +4229,17 @@ button.gengage-chat-product-summary__cta {
   color: var(--text-secondary);
 }
 
+.gengage-chat-comparison-table td ul,
+.gengage-chat-comparison-table td ol {
+  margin: 0;
+  padding-left: 18px;
+  text-align: left;
+}
+
+.gengage-chat-comparison-table td li + li {
+  margin-top: 4px;
+}
+
 /*
  * display:grid must not be used on th — table-cell breaks and columns stack vertically.
  * Grid is only on inner wrappers; prices stay horizontally aligned across the row.

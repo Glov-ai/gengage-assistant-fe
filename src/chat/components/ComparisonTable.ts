@@ -359,7 +359,12 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
         if (products[i]?.sku === recommended?.sku) {
           td.className = 'gengage-chat-comparison-selected gds-comparison-table-winner-cell';
         }
-        td.textContent = attr.values[i] ?? '';
+        const rawValue = attr.values[i] ?? '';
+        if (looksLikeHtml(rawValue)) {
+          td.innerHTML = sanitizeHtml(rawValue);
+        } else {
+          td.textContent = rawValue;
+        }
         row.appendChild(td);
       }
       tbody.appendChild(row);
