@@ -10,11 +10,11 @@ export const CHAT_I18N_EN: ChatI18n = {
   poweredBy: 'Powered by Gengage',
   errorMessage: 'Something went wrong. Please try again.',
   retryButton: 'Retry',
-  loadingMessage: 'Thinking...',
+  loadingMessage: 'Reviewing your request...',
   loadingSequenceGeneric: [
-    'Understanding what matters most',
-    'Reviewing products, reviews, and specs',
-    'Preparing the best options to review',
+    'Reviewing your request...',
+    'Looking through products and reviews...',
+    'Reviewing the details...',
   ],
   loadingSequencePanel: [
     'Reviewing the most relevant details',

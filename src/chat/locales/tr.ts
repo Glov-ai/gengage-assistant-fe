@@ -10,11 +10,11 @@ export const CHAT_I18N_TR: ChatI18n = {
   poweredBy: 'Gengage ile',
   errorMessage: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   retryButton: 'Tekrar Dene',
-  loadingMessage: 'Düşünüyorum...',
+  loadingMessage: 'İsteğinizi inceliyorum...',
   loadingSequenceGeneric: [
-    'Sizin için en önemli noktaları anlıyorum',
-    'Ürünleri, yorumları ve özellikleri inceliyorum',
-    'En güçlü seçenekleri hazırlıyorum',
+    'İsteğinizi inceliyorum...',
+    'Ürün ve yorumlara bakıyorum...',
+    'Detayları inceliyorum...',
   ],
   loadingSequencePanel: [
     'En ilgili detayları inceliyorum',

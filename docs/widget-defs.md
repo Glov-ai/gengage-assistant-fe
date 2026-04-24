@@ -684,6 +684,7 @@ Disappears when the first `outputText`, `productDetails`, or similar content arr
 
 The animated dots (`● ● ●`) are replaced by loading text if `loading.text` is set.
 When `loading.is_dynamic = true`, the thinking steps list is shown instead.
+Before the backend sends a specific loading event, the chat falls back to the locale's generic `loadingSequenceGeneric`, so those built-in strings should remain broadly correct for search, Q&A, and single-product questions.
 
 ### Panel loading
 
