@@ -148,6 +148,10 @@ import { asRecord } from './assistant-mode.js';
  * chat.open(); // Programmatically open the drawer
  * ```
  */
+export function isSimilarsAppendGrid(element: UIElement | undefined): boolean {
+  return element?.type === 'ProductGrid' && element.props?.['similarsAppend'] === true;
+}
+
 export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private static readonly _MAX_COMPARISON_SELECTION = 5;
   private _shadow: ShadowRoot | null = null;
@@ -2147,7 +2151,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             return;
           }
 
-          const similarsAppendGrid = componentType === 'ProductGrid' && rootElement?.props?.['similarsAppend'] === true;
+          const similarsAppendGrid = isSimilarsAppendGrid(rootElement);
           /** PDP akışında yan panel kapalı: tam detay + benzer ürün grid’i yalnızca sohbette. */
           const skipSidePanelForUISpec =
             this.config.productDetailsExtended !== true &&
@@ -4033,7 +4037,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // ComparisonTable is always panel-only.
     // ProductGrid with similarsAppend is panel-only (matches desktop + mobile behavior).
     if (componentType === 'ComparisonTable') return;
-    if (componentType === 'ProductGrid' && rootElement.props?.['similarsAppend'] === true) return;
+    if (isSimilarsAppendGrid(rootElement)) return;
 
     const renderContext = this._buildRenderContext();
     const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
