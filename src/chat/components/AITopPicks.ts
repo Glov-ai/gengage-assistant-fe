@@ -293,7 +293,8 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
       if ((e.target as HTMLElement).closest('.gengage-chat-ai-toppick-cta')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-favorite-btn')) return;
       if ((e.target as HTMLElement).closest('.gengage-chat-find-similar-pill')) return;
-      ctx.onProductClick?.({ sku, url });
+      const productName = product['name'] as string | undefined;
+      ctx.onProductClick?.({ sku, url, ...(productName ? { name: productName } : {}) });
     });
   } else if (action) {
     card.classList.add('gds-clickable');
@@ -407,7 +408,8 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
         }
         if (!action) return;
         if (action.type === 'findSimilar' && sku && ctx.onProductClick) {
-          ctx.onProductClick({ sku, url });
+          const productName = product['name'] as string | undefined;
+          ctx.onProductClick({ sku, url, ...(productName ? { name: productName } : {}) });
           return;
         }
         ctx.onAction(action);

@@ -489,6 +489,26 @@
     border-color 0.15s ease;
 }
 
+@media (max-width: 374px) {
+  .gengage-chat-header {
+    gap: 8px;
+    padding: 10px 10px;
+  }
+
+  .gengage-chat-header-right {
+    gap: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .gengage-chat-header-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
+}
+
 .gengage-chat-header-btn:hover {
   background: var(--client-primary-subtle);
   color: var(--client-primary);
@@ -3672,6 +3692,15 @@ button.gengage-chat-product-summary__cta {
   width: 44px;
   height: 44px;
   border-radius: 12px;
+}
+
+@media (max-width: 374px) {
+  .gengage-chat-root--mobile .gengage-chat-header-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
 }
 
 .gengage-chat-root--mobile .gengage-chat-attach-btn,
