@@ -6946,7 +6946,7 @@ button.gengage-chat-product-details-rating {
   border-color: transparent;
   outline: none;
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--client-primary) 26%, white),
+    0 0 0 2px color-mix(in srgb, var(--client-primary) 26%, white),
     var(--shadow-1);
   filter: saturate(1.02);
 }

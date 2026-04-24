@@ -40,6 +40,7 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
   protected async onInit(config: SimButWidgetConfig): Promise<void> {
     this._label = resolveLabel(config.locale, config.i18n);
     this.root.classList.add('gengage-simbut-root');
+    this.root.lang = config.locale ?? 'tr';
 
     // Mutlak pill için konum bağlamı; static bırakılırsa top/right görselin dışına kaçabilir.
     const pos = window.getComputedStyle(this.root).position;

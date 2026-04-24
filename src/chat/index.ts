@@ -321,6 +321,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Create root container
     const rootEl = document.createElement('div');
     rootEl.className = 'gengage-chat-root';
+    rootEl.lang = config.locale ?? 'tr';
     this._rootEl = rootEl;
     this._shadow.appendChild(rootEl);
 

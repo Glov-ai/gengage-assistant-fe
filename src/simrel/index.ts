@@ -67,6 +67,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-simrel-container';
     this._contentEl.dataset['gengagePart'] = 'simrel-container';
+    this._contentEl.lang = config.locale ?? 'tr';
     const gridCols = this._clampGridColumns(config.gridColumns);
     if (gridCols !== undefined) {
       this._contentEl.style.setProperty('--gengage-simrel-columns', String(gridCols));
