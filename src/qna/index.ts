@@ -14,6 +14,7 @@ import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
+import { resolveLocaleTag } from '../common/locale.js';
 import { dispatch } from '../common/events.js';
 import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
@@ -69,6 +70,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-qna-container';
     this._contentEl.dataset['gengagePart'] = 'qna-container';
+    this._contentEl.lang = resolveLocaleTag(config.locale);
     this.root.appendChild(this._contentEl);
 
     const sku = config.pageContext?.sku;
@@ -184,7 +186,7 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
         session_id: this.config.session?.sessionId ?? '',
         correlation_id: this.config.session?.sessionId ?? '',
         sku,
-        locale: this.config.locale ?? 'tr',
+        locale: resolveLocaleTag(this.config.locale),
       };
       const pageType = this.config.pageContext?.pageType;
       if (pageType !== undefined) launcherReq.page_type = pageType;

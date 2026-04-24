@@ -8,6 +8,7 @@
 
 import { sanitizeHtml, isSafeImageUrl } from '../../common/safe-html.js';
 import { formatPrice } from '../../common/price-formatter.js';
+import { resolveLocaleTag } from '../../common/locale.js';
 import type { PriceFormatConfig } from '../../common/price-formatter.js';
 
 /**
@@ -53,12 +54,20 @@ const CRITERIA_DISPLAY_NAMES: Record<string, string> = {
  * Checks locale-specific `criteriaLabels` first (from i18n), then the
  * built-in fallback map, then applies a formatting heuristic.
  */
-export function formatCriteriaName(rawName: string, criteriaLabels?: Record<string, string>): string {
+export function formatCriteriaName(rawName: string, criteriaLabels?: Record<string, string>, locale?: string): string {
   return (
     criteriaLabels?.[rawName] ??
     CRITERIA_DISPLAY_NAMES[rawName] ??
-    rawName.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+    rawName.replace(/_/g, ' ').replace(/^./u, (c) => toLocaleUpperCaseSafe(c, locale))
   );
+}
+
+function toLocaleUpperCaseSafe(value: string, locale: string | undefined): string {
+  try {
+    return value.toLocaleUpperCase(resolveLocaleTag(locale));
+  } catch {
+    return value.toLocaleUpperCase('tr');
+  }
 }
 
 export interface ComparisonProduct {
@@ -99,6 +108,7 @@ export interface ComparisonTableOptions {
   winnerHits?: Record<string, { positive?: string[]; negative?: string[] }> | undefined;
   productActions?: Record<string, { title: string; type: string; payload?: unknown }> | undefined;
   keyDifferencesHtml?: string | undefined;
+  locale?: string | undefined;
   i18n?: ComparisonTableI18n | undefined;
   pricing?: PriceFormatConfig | undefined;
 }
@@ -352,14 +362,19 @@ export function renderComparisonTable(options: ComparisonTableOptions): HTMLElem
       const row = document.createElement('tr');
       const labelTd = document.createElement('td');
       labelTd.className = 'gengage-chat-comparison-label';
-      labelTd.textContent = formatCriteriaName(attr.label, i18n?.criteriaLabels);
+      labelTd.textContent = formatCriteriaName(attr.label, i18n?.criteriaLabels, options.locale);
       row.appendChild(labelTd);
       for (let i = 0; i < attr.values.length; i++) {
         const td = document.createElement('td');
         if (products[i]?.sku === recommended?.sku) {
           td.className = 'gengage-chat-comparison-selected gds-comparison-table-winner-cell';
         }
-        td.textContent = attr.values[i] ?? '';
+        const rawValue = attr.values[i] ?? '';
+        if (looksLikeHtml(rawValue)) {
+          td.innerHTML = sanitizeHtml(rawValue);
+        } else {
+          td.textContent = rawValue;
+        }
         row.appendChild(td);
       }
       tbody.appendChild(row);

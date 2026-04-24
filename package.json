@@ -1,6 +1,6 @@
 {
   "name": "@gengage/assistant-fe",
-  "version": "0.3.35",
+  "version": "0.3.36",
   "description": "Source-available frontend widgets for Gengage AI Assistant — chat, Q&A, and similar-products. Backend is SaaS (gengage.ai).",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -115,7 +115,7 @@
     "test:demo-shell": "vitest run tests/demo-shell.test.ts",
     "test:ai-top-picks": "vitest run tests/ai-top-picks.test.ts",
     "test:choice-prompter": "vitest run tests/choice-prompter.test.ts",
-    "test:e2e": "playwright test --project=chromium",
+    "test:e2e": "env -u FORCE_COLOR -u NO_COLOR playwright test --project=chromium",
     "test:all": "npm run format && npm test && npm run test:e2e",
     "test:e2e:fullstack": "playwright test --project=full-stack",
     "docs:dev": "vitepress dev docs",

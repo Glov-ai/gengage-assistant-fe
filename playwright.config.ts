@@ -1,5 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Playwright forces color in worker/web-server processes; keeping FORCE_COLOR
+// or NO_COLOR set makes Node print a warning before every spawned process.
+delete process.env.FORCE_COLOR;
+delete process.env.NO_COLOR;
+
+const webServerEnv = { ...process.env };
+delete webServerEnv.FORCE_COLOR;
+delete webServerEnv.NO_COLOR;
+
 export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',
@@ -40,13 +49,15 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npx vite --port 3001',
+      command: 'env -u FORCE_COLOR -u NO_COLOR npx vite --port 3001',
+      env: webServerEnv,
       port: 3001,
       reuseExistingServer: !process.env.CI,
       timeout: 90_000,
     },
     {
-      command: 'npx vite --config catalog/vite.config.ts --port 3002',
+      command: 'env -u FORCE_COLOR -u NO_COLOR npx vite --config catalog/vite.config.ts --port 3002',
+      env: webServerEnv,
       port: 3002,
       reuseExistingServer: !process.env.CI,
       timeout: 90_000,

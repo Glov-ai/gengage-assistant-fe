@@ -11,6 +11,7 @@ import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
 import { mergeUISpecRegistry } from '../common/renderer/index.js';
 import { BaseWidget } from '../common/widget-base.js';
+import { resolveLocaleTag } from '../common/locale.js';
 import { dispatch } from '../common/events.js';
 import { trackConnectionWarningRequest } from '../common/connection-warning.js';
 import { getGlobalErrorMessage } from '../common/global-error-toast.js';
@@ -67,6 +68,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     this._contentEl = document.createElement('div');
     this._contentEl.className = 'gengage-simrel-container';
     this._contentEl.dataset['gengagePart'] = 'simrel-container';
+    this._contentEl.lang = resolveLocaleTag(config.locale);
     const gridCols = this._clampGridColumns(config.gridColumns);
     if (gridCols !== undefined) {
       this._contentEl.style.setProperty('--gengage-simrel-columns', String(gridCols));
