@@ -25,7 +25,13 @@
 
       body {
         margin: 0;
-        background: var(--brand-bg);
+        background:
+          radial-gradient(
+            circle at top left,
+            color-mix(in srgb, var(--brand-primary) 10%, transparent),
+            transparent 24%
+          ),
+          linear-gradient(180deg, #fbfbfc 0%, var(--brand-bg) 100%);
         color: var(--brand-text);
         font-family: var(--brand-font);
         line-height: 1.4;
@@ -94,6 +100,12 @@
         font-weight: 700;
         color: var(--brand-primary);
         font-size: 18px;
+      }
+
+      .host-topbar__logo {
+        width: 88px;
+        height: auto;
+        display: block;
       }
 
       .host-topbar__dot {
@@ -166,33 +178,93 @@
       }
 
       .gallery-main {
-        height: clamp(200px, 26vw, 320px);
+        min-height: clamp(320px, 34vw, 470px);
         border-radius: 10px;
         border: 1px solid var(--brand-border);
         background:
-          radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--brand-secondary) 14%, white), transparent 45%),
-          radial-gradient(circle at 70% 65%, color-mix(in srgb, var(--brand-primary) 12%, white), transparent 50%),
-          linear-gradient(160deg, #ffffff, color-mix(in srgb, var(--brand-primary) 4%, white));
-        padding: 16px;
+          radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--brand-secondary) 20%, white), transparent 35%),
+          radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--brand-primary) 14%, white), transparent 42%),
+          linear-gradient(165deg, #ffffff 0%, #fcf7fd 52%, #fff7fd 100%);
+        padding: 18px;
         position: relative;
+        overflow: hidden;
       }
 
       .gallery-main__inner {
         position: relative;
         width: 100%;
         height: 100%;
-        display: grid;
-        place-items: center;
-        color: color-mix(in srgb, var(--brand-primary) 72%, #1f2937);
-        font-weight: 700;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      .gallery-main__inner small {
-        display: block;
-        font-weight: 500;
-        color: var(--brand-muted);
-        margin-top: 6px;
+      .gallery-main__inner::before {
+        content: '';
+        position: absolute;
+        inset: 7% 16% auto auto;
+        width: 110px;
+        height: 110px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--brand-primary) 12%, white);
+        filter: blur(10px);
+      }
+
+      .gallery-main__inner::after {
+        content: '';
+        position: absolute;
+        inset: auto auto 8% 12%;
+        width: 150px;
+        height: 150px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--brand-secondary) 13%, white);
+        filter: blur(14px);
+      }
+
+      .gallery-main__image-shell {
+        position: relative;
+        z-index: 1;
+        width: min(82%, 430px);
+        aspect-ratio: 1;
+        border-radius: 32px;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 48%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7));
+        box-shadow:
+          0 20px 50px rgba(255, 68, 239, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        padding: 24px;
+      }
+
+      .gallery-main__image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 22px 38px rgba(17, 24, 39, 0.14));
+      }
+
+      .gallery-main__badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, white);
+        color: var(--brand-text);
+        font-size: 12px;
+        font-weight: 700;
+        backdrop-filter: blur(10px);
+      }
+
+      .gallery-main__badge strong {
+        color: var(--brand-primary);
       }
 
       .gallery-thumbs {
@@ -207,6 +279,20 @@
         border-radius: 8px;
         height: 70px;
         background: linear-gradient(140deg, #fff, color-mix(in srgb, var(--brand-primary) 5%, white));
+        overflow: hidden;
+      }
+
+      .gallery-thumb--active {
+        border-color: color-mix(in srgb, var(--brand-primary) 38%, white);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary) 10%, white);
+      }
+
+      .gallery-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        padding: 6px;
       }
 
       /* ── Summary card ── */
@@ -238,6 +324,12 @@
         letter-spacing: -0.01em;
       }
 
+      .summary-copy {
+        margin: -4px 0 0;
+        color: var(--brand-muted);
+        font-size: 14px;
+      }
+
       .summary-meta {
         color: var(--brand-muted);
         font-size: 13px;
@@ -264,6 +356,18 @@
         font-size: 16px;
         color: var(--brand-muted);
         text-decoration: line-through;
+      }
+
+      .price-discount {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
+      .installment-note {
+        margin: -6px 0 0;
+        color: var(--brand-muted);
+        font-size: 13px;
       }
 
       .cta-row {
@@ -299,6 +403,22 @@
         font-size: 13px;
         display: grid;
         gap: 6px;
+      }
+
+      .tag-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--brand-muted);
+        background: color-mix(in srgb, var(--brand-primary) 7%, white);
+        border: 1px solid color-mix(in srgb, var(--brand-primary) 14%, white);
       }
 
       /* ── Content card ── */
@@ -404,61 +524,86 @@
       <section class="host-topbar">
         <div class="host-topbar__brand">
           <span class="host-topbar__dot"></span>
-          <span>N11</span>
+          <img src="./n11-header-logo.png" alt="n11" class="host-topbar__logo" />
         </div>
         <nav class="host-nav" aria-label="Main navigation">
-          <span>Ürünler</span>
+          <span>Elektronik</span>
+          <span>Telefon & Aksesuar</span>
+          <span>Apple</span>
           <span>Kampanyalar</span>
-          <span>Yeni Gelenler</span>
-          <span>Markalar</span>
           <span>Destek</span>
         </nav>
       </section>
 
-      <p class="host-breadcrumb">Anasayfa / Kategori / Alt Kategori / <strong id="breadcrumb-sku">—</strong></p>
+      <p class="host-breadcrumb">
+        Anasayfa / Elektronik / Telefon & Aksesuarları / Bluetooth Kulaklık / <strong id="breadcrumb-sku">—</strong>
+      </p>
 
       <!-- Product hero -->
       <section class="pdp-layout">
         <article class="gallery-card">
           <div class="gallery-main">
             <div id="n11-pdp-image-wrap" class="gallery-main__inner">
-              <span>
-                Demo Ürün Görseli
-                <small>Bu sayfa bir yer tutucu PDP kabuğudur</small>
-              </span>
+              <div class="gallery-main__badge"><strong>n11</strong> Fırsatlı Teknoloji</div>
+              <div class="gallery-main__image-shell">
+                <img
+                  id="n11-main-image"
+                  class="gallery-main__image"
+                  alt="Apple AirPods Pro 2. Nesil ana ürün görseli"
+                />
+              </div>
             </div>
           </div>
           <div class="gallery-thumbs" aria-hidden="true">
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
-            <div class="gallery-thumb"></div>
+            <div class="gallery-thumb gallery-thumb--active"><img id="n11-thumb-1" alt="" /></div>
+            <div class="gallery-thumb"><img id="n11-thumb-2" alt="" /></div>
+            <div class="gallery-thumb"><img id="n11-thumb-3" alt="" /></div>
+            <div class="gallery-thumb"><img id="n11-thumb-4" alt="" /></div>
           </div>
         </article>
 
         <article class="summary-card">
-          <div class="badge-chip">Demo</div>
-          <h1 class="summary-title">Lorem Ipsum Demo Ürünü</h1>
+          <div class="badge-chip">Bugüne Özel</div>
+          <h1 class="summary-title">
+            Apple AirPods Pro 2. Nesil MTJV3TU/A USB-C Magsafe Bluetooth 5.3 Kulak İçi Kulaklık
+          </h1>
+          <p class="summary-copy">
+            Apple H2 çip, Aktif Gürültü Engelleme, Adaptif Ses ve USB-C MagSafe şarj kutusuyla gelen premium kulak içi
+            kulaklık deneyimi.
+          </p>
           <div class="summary-meta">
             <span>Ürün Kodu: <span id="summary-sku">—</span></span>
             <span>&bull;</span>
-            <span>0.0 / 5 (0 değerlendirme)</span>
+            <span>5.0 / 5 (307 değerlendirme)</span>
+            <span>&bull;</span>
+            <span>Apple</span>
           </div>
 
           <div class="price-wrap">
-            <div class="price-main">XXX TL</div>
-            <div class="price-old">XXX TL</div>
+            <div class="price-old">₺12.499,00</div>
+            <div class="price-main">₺10.999,00</div>
+            <div class="price-discount">Ücretsiz Kargo</div>
           </div>
+          <p class="installment-note">9 taksit seçeneği ve MagSafe şarj kutusu dahil.</p>
 
           <div class="cta-row">
             <button class="btn btn--primary" type="button">Sepete Ekle</button>
             <button class="btn btn--ghost" type="button">Favorilere Ekle</button>
           </div>
 
+          <div class="tag-list" aria-label="Ürün etiketleri">
+            <span class="tag">ANC</span>
+            <span class="tag">Bluetooth 5.3</span>
+            <span class="tag">IP54</span>
+            <span class="tag">USB-C</span>
+          </div>
+
           <ul class="feature-list">
-            <li>Lorem ipsum dolor sit amet</li>
-            <li>Consectetur adipiscing elit</li>
-            <li>Sed do eiusmod tempor incididunt</li>
+            <li>Önceki nesle göre 2 kata kadar daha güçlü Aktif Gürültü Engelleme</li>
+            <li>Şeffaf Mod, Adaptif Ses ve Sohbet Farkındalığı ile akıllı dinleme</li>
+            <li>Tek şarjla 6 saate, kutuyla toplam 30 saate kadar kullanım</li>
+            <li>Dokunmatik ses kontrolü ve U1 çipli MagSafe şarj kutusu</li>
+            <li>IP54 toz, ter ve su dayanıklılığı</li>
           </ul>
         </article>
       </section>
@@ -468,12 +613,14 @@
         <div class="tabs">
           <span class="tab-pill tab-pill--active">Ürün Bilgileri</span>
           <span class="tab-pill">Teknik Özellikler</span>
-          <span class="tab-pill">Kargo ve İade</span>
+          <span class="tab-pill">Teslimat</span>
+          <span class="tab-pill">Yorumlar</span>
         </div>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua. Bu alan yer tutucu içerik olarak kullanılmaktadır. Widget verileri bu sayfadaki içerikten
-          bağımsız olarak backend tarafından sağlanır.
+          AirPods Pro 2. Nesil; Apple H2 çip, Adaptif EQ ve Kişiselleştirilmiş Uzamsal Ses ile daha temiz tizler, derin
+          baslar ve ortama göre uyumlanan gelişmiş bir dinleme deneyimi sunar. Şeffaf Mod ve Sohbet Farkındalığı
+          özellikleri günlük kullanımda konforu artırırken, ürün detayları ve öneri widget'ları n11com hesabının gerçek
+          backend bağlamı üzerinden yüklenir.
         </p>
       </section>
 
@@ -491,13 +638,25 @@
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '738220152';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const demoImages = [
+        'https://n11scdn.akamaized.net/a1/750/10/00/55/35/IMG-8957242470457036188.jpg',
+        'https://n11scdn.akamaized.net/a1/750/01/63/49/11/IMG-1402692361329991593.jpg',
+        'https://n11scdn.akamaized.net/a1/750/14/29/84/84/IMG-6921867904082513772.jpg',
+        'https://n11scdn.akamaized.net/a1/750/14/72/35/08/IMG-600407502075807517.jpg',
+      ];
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
       document.getElementById('breadcrumb-sku').textContent = skuDisplay;
       document.getElementById('summary-sku').textContent = skuDisplay;
+      document.getElementById('n11-main-image').src = demoImages[0];
+      document.getElementById('n11-thumb-1').src = demoImages[0];
+      document.getElementById('n11-thumb-2').src = demoImages[1];
+      document.getElementById('n11-thumb-3').src = demoImages[2];
+      document.getElementById('n11-thumb-4').src = demoImages[3];
       const n11LauncherIconUrl = new URL('./n11-launcher-icon.svg', import.meta.url).href;
       const n11HeaderLogoUrl = new URL('./n11-header-logo.png', import.meta.url).href;
 

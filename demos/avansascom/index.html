@@ -472,9 +472,11 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '80601';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
@@ -546,6 +548,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'avansascom', sku, middlewareUrl, brandName: 'Avansas' });
 
       // Demo: register add-to-cart callback hook via the generic addCallback API
       if (controller.chat) {

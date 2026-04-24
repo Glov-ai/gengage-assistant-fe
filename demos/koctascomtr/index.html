@@ -480,12 +480,14 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '1000465056';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
-      const koctasLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-koctascomtr-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Koctas', primaryColor: '#ec6e00' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -524,8 +526,8 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Koçtaş Robotu',
-          headerAvatarUrl: koctasLogoUrl,
-          launcherImageUrl: koctasLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
+          launcherImageUrl: brandAvatarUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Koçtaş AI Asistan',
@@ -551,6 +553,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'koctascomtr', sku, middlewareUrl, brandName: 'Koctas' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

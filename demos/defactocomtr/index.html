@@ -480,11 +480,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '3377596';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-defactocomtr-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'DeFacto', primaryColor: '#f28100' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -521,10 +523,10 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'DeFacto Asistan',
-          headerAvatarUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "DeFacto'ya Sor",
-            avatarUrl: brandRemoteLogoUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#f28100',
             secondaryColor: '#22242a',
             fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -553,6 +555,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'defactocomtr', sku, middlewareUrl, brandName: 'DeFacto' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

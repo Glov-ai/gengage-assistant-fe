@@ -480,9 +480,11 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = '232700';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const skuDisplay = sku ?? '—';
@@ -554,6 +556,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'skecherscomtr', sku, middlewareUrl, brandName: 'Skechers' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).
