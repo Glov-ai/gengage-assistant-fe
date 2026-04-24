@@ -9,3 +9,9 @@ if (typeof CSS === 'undefined' || !CSS.escape) {
     escape: (v: string) => v.replace(/([^\w-])/g, '\\$1'),
   };
 }
+
+// Unit tests assert navigation intent, not browser navigation. Prevent the
+// fallback location assignment so jsdom does not emit navigation errors.
+window.addEventListener('gengage:navigate', (event) => {
+  event.preventDefault();
+});

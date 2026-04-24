@@ -121,20 +121,23 @@ describe('routeStreamAction', () => {
   });
 
   it('allows default navigation to https: URLs', () => {
+    const defaultNavigate = vi.fn();
     const event: StreamEventAction = {
       type: 'action',
       action: { kind: 'navigate', url: 'https://example.com/product' },
     };
-    // This would normally navigate; in test env, window.location.href is mocked/no-op
-    expect(() => routeStreamAction(event, {})).not.toThrow();
+    expect(() => routeStreamAction(event, {}, { defaultNavigate })).not.toThrow();
+    expect(defaultNavigate).toHaveBeenCalledWith('https://example.com/product', undefined);
   });
 
   it('allows default navigation to relative URLs', () => {
+    const defaultNavigate = vi.fn();
     const event: StreamEventAction = {
       type: 'action',
       action: { kind: 'navigate', url: '/product/123' },
     };
-    expect(() => routeStreamAction(event, {})).not.toThrow();
+    expect(() => routeStreamAction(event, {}, { defaultNavigate })).not.toThrow();
+    expect(defaultNavigate).toHaveBeenCalledWith('/product/123', undefined);
   });
 
   it('treats navigate without url string as unknown action', () => {

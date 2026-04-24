@@ -10,11 +10,14 @@
 import type { GengageIndexedDB, FavoriteData } from '../common/indexed-db.js';
 import type { CommunicationBridge } from '../common/communication-bridge.js';
 import { isSafeUrl } from '../common/safe-html.js';
+import { navigateToUrl } from '../common/navigation.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
 
 export type { FavoriteData };
+
+type NavigateFn = (url: string) => void;
 
 export interface PersistSessionParams {
   userId: string;
@@ -141,7 +144,14 @@ export class SessionPersistence {
    * after posting saveSessionAndOpenURL to the iframe. The clean-room runs in
    * the same window (Shadow DOM, not iframe), so it navigates directly.
    */
-  async saveAndOpenURL(url: string, persistFn: () => Promise<void>, bridge: CommunicationBridge | null): Promise<void> {
+  async saveAndOpenURL(
+    url: string,
+    persistFn: () => Promise<void>,
+    bridge: CommunicationBridge | null,
+    navigate: NavigateFn = (targetUrl) => {
+      navigateToUrl(targetUrl);
+    },
+  ): Promise<void> {
     try {
       await persistFn();
     } catch {
@@ -155,7 +165,7 @@ export class SessionPersistence {
     // on the gengage:navigate CustomEvent to suppress the fallback navigation.
     bridge?.send('openURLInNewTab', { url });
     if (isSafeUrl(url)) {
-      window.location.href = url;
+      navigate(url);
     }
   }
 
