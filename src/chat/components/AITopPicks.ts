@@ -408,8 +408,8 @@ function renderPickCard(item: AITopPickItem, ctx: ChatUISpecRenderContext, isWin
         }
         if (!action) return;
         if (action.type === 'findSimilar' && sku && ctx.onProductClick) {
-          const pName = product['name'] as string | undefined;
-          ctx.onProductClick({ sku, url, ...(pName ? { name: pName } : {}) });
+          const productName = product['name'] as string | undefined;
+          ctx.onProductClick({ sku, url, ...(productName ? { name: productName } : {}) });
           return;
         }
         ctx.onAction(action);

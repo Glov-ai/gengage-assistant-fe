@@ -222,9 +222,7 @@ describe('renderAITopPicks', () => {
 
   it('omits name from onProductClick when product has no name', () => {
     const onProductClick = vi.fn();
-    const el = makeElement([
-      { product: { sku: 'P2', url: 'https://example.com/p2' }, role: 'winner' },
-    ]);
+    const el = makeElement([{ product: { sku: 'P2', url: 'https://example.com/p2' }, role: 'winner' }]);
     const ctx = makeContext({ onProductClick });
     const dom = renderAITopPicks(el, ctx);
 
