@@ -46,3 +46,22 @@ export function renderConsultingGrid(
 ): void {
   renderConsultingStylePicker(wrapper, grid, detected.source!, detected.styleVariations, ctx);
 }
+
+/**
+ * Whether every variation in a consulting grid has completed (not `loading`).
+ *
+ * Backend may stream a consulting ProductGrid twice in one response: once
+ * with some variations still `loading`, then again with everything `ready`.
+ * The panel renderer uses this to skip the partial render and avoid a
+ * skeleton→partial→final flash; the skeleton stays visible until every
+ * variation is ready (or the stream ends with the partial spec as fallback).
+ */
+export function isConsultingGridReady(detected: ConsultingGridResult): boolean {
+  if (!detected.isConsulting) return true;
+  if (detected.styleVariations.length === 0) return true;
+  for (const variation of detected.styleVariations) {
+    const status = typeof variation.status === 'string' ? variation.status : 'ready';
+    if (status === 'loading') return false;
+  }
+  return true;
+}

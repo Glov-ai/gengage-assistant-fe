@@ -216,8 +216,6 @@ export class ChatDrawer {
   private _voiceEnabled = false;
   private _voiceLang = 'tr-TR';
   private _ignoreNextDividerClick = false;
-  /** Cancels in-flight panel list scroll-to-top tween when a new one starts. */
-  private _panelListScrollAnimToken = 0;
   private readonly _cleanups: Array<() => void> = [];
   private _focusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
   private _previouslyFocusedElement: HTMLElement | null = null;
@@ -1684,19 +1682,24 @@ export class ChatDrawer {
     this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
     this._panelAiZoneLoadingBinding = null;
     const wasVisible = this._panelVisible;
-    // Only apply opacity crossfade when swapping content in an already-visible panel.
-    // Applying it on first-show would hide the slide-in animation (opacity:0 masks the transform).
+    // Targeted replace when the panel is already visible: swap only the content
+    // slot (or the skeleton), leaving topbar, AI zone, thumbnails, and floating
+    // element attached. Keeps DOM layout stable so no crossfade or reflow flicker
+    // is needed across stream updates (skeleton→content, content→content).
+    // Full rebuild is reserved for the first-show path so the slide-in width
+    // transform has a clean starting state.
     if (wasVisible) {
-      this._panelEl.classList.add('gengage-chat-panel--transitioning');
+      this._swapPanelContent(el);
+    } else {
+      this._panelEl.innerHTML = '';
+      this._resetPanelAiZoneElement();
+      this._panelEl.appendChild(this._panelTopBar.getElement());
+      this._panelEl.appendChild(this._panelAiZoneEl);
+      this._panelTopBar.setActions(null);
+      this._panelEl.appendChild(el);
+      this._panelEl.appendChild(this._thumbnailsColumn.getElement());
+      this._panelEl.appendChild(this._panelFloatingEl);
     }
-    this._panelEl.innerHTML = '';
-    this._resetPanelAiZoneElement();
-    this._panelEl.appendChild(this._panelTopBar.getElement());
-    this._panelEl.appendChild(this._panelAiZoneEl);
-    this._panelTopBar.setActions(null);
-    this._panelEl.appendChild(el);
-    this._panelEl.appendChild(this._thumbnailsColumn.getElement());
-    this._panelEl.appendChild(this._panelFloatingEl);
     this._syncPanelTopBarFromContent(el);
     this._dividerEl.classList.remove('gengage-chat-panel-divider--hidden');
     this._panelVisible = true;
@@ -1707,13 +1710,41 @@ export class ChatDrawer {
     }
     this._syncDividerPreview();
     requestAnimationFrame(() => {
-      this._panelEl.classList.remove('gengage-chat-panel--transitioning');
       this._updateScrollAffordance();
       this._smoothScrollPanelListToTop();
     });
     // New content always reopens the panel — hide the reopen button
     if (this._reopenPanelBtn) this._reopenPanelBtn.style.display = 'none';
     this._emitHostShellSync();
+  }
+
+  /**
+   * Targeted content swap for an already-visible panel. Replaces the skeleton
+   * or the current content element with `el`, leaving topbar / AI zone /
+   * thumbnails column / floating element attached. Also resets topbar actions
+   * because the incoming content provides its own toolbar.
+   */
+  private _swapPanelContent(el: HTMLElement): void {
+    this._panelTopBar.setActions(null);
+    const skeletonEl = this._panelEl.querySelector<HTMLElement>('.gengage-chat-panel-skeleton');
+    if (skeletonEl) {
+      skeletonEl.replaceWith(el);
+      return;
+    }
+    const existing = this.getPanelContentElement();
+    if (existing) {
+      existing.replaceWith(el);
+      return;
+    }
+    // Panel is visible but has no content slot (edge case: prior clearPanel left
+    // only topbar + thumbnails). Insert `el` before the thumbnails column so the
+    // resulting order matches the full-build path.
+    const thumb = this._thumbnailsColumn.getElement();
+    if (thumb.parentElement === this._panelEl) {
+      this._panelEl.insertBefore(el, thumb);
+    } else {
+      this._panelEl.appendChild(el);
+    }
   }
 
   /** Append content to the panel without replacing existing content. */
@@ -2069,50 +2100,12 @@ export class ChatDrawer {
   }
 
   /**
-   * After new list/grid content is mounted, scroll the left panel toward the top smoothly.
-   * InnerHTML resets scrollTop to 0, so we nudge down first; a rAF tween (ease-out quint) replaces
-   * native smooth scroll for a softer deceleration.
+   * Reset the left panel scroll to the top after new list/grid content is mounted.
+   * innerHTML assignment already resets scrollTop to 0; this is a defensive pin in
+   * case subsequent DOM mutations (appended children, layout) shift it.
    */
   private _smoothScrollPanelListToTop(): void {
-    const panel = this._panelEl;
-    const reduceMotion =
-      typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
-
-    if (reduceMotion) {
-      panel.scrollTop = 0;
-      return;
-    }
-
-    this._panelListScrollAnimToken += 1;
-    const token = this._panelListScrollAnimToken;
-
-    requestAnimationFrame(() => {
-      if (token !== this._panelListScrollAnimToken) return;
-      const maxScroll = Math.max(0, panel.scrollHeight - panel.clientHeight);
-      if (maxScroll <= 0) return;
-
-      const startTop = Math.min(160, Math.max(48, maxScroll * 0.28));
-      panel.scrollTop = startTop;
-
-      const durationMs = Math.min(720, Math.max(380, 320 + Math.sqrt(startTop) * 28));
-      const t0 = performance.now();
-
-      const easeOutQuint = (t: number) => 1 - (1 - t) ** 5;
-
-      const step = (now: number) => {
-        if (token !== this._panelListScrollAnimToken) return;
-        const elapsed = now - t0;
-        const linear = Math.min(1, elapsed / durationMs);
-        const eased = easeOutQuint(linear);
-        panel.scrollTop = startTop * (1 - eased);
-        if (linear < 1) {
-          requestAnimationFrame(step);
-        } else {
-          panel.scrollTop = 0;
-        }
-      };
-      requestAnimationFrame(step);
-    });
+    this._panelEl.scrollTop = 0;
   }
 
   /** Update scroll affordance (bottom fade gradient) on the panel. */
@@ -2425,28 +2418,39 @@ export class ChatDrawer {
     }
   }
 
-  /**
-   * Smooth scroll transcript so the given thread’s first bubble is near the top.
-   * Used by centralized presentation scroll requests.
-   */
+  /** Scroll transcript so the thread’s first visible element sits near the top; skips
+   * empty/zero-height bubbles (silent or not-yet-streamed) so real content anchors instead. */
   scrollThreadIntoView(threadId: string, behavior: ScrollBehavior = 'smooth'): boolean {
     const matches = this.messagesEl.querySelectorAll(`[data-thread-id="${escapeCssIdentifier(threadId)}"]`);
     let target: HTMLElement | null = null;
+    let firstAny: HTMLElement | null = null;
     for (let i = 0; i < matches.length; i++) {
       const el = matches[i];
       if (!(el instanceof HTMLElement)) continue;
+      if (!firstAny) firstAny = el;
       if (el.classList.contains('gengage-chat-bubble--presentation-collapsed')) continue;
+      if (el.classList.contains('gengage-chat-bubble--hidden')) continue;
+      if (el.offsetHeight === 0) continue;
+      if (
+        el.classList.contains('gengage-chat-bubble--assistant') &&
+        (el.textContent?.trim().length ?? 0) === 0
+      ) {
+        continue;
+      }
       target = el;
       break;
     }
-    if (!target && matches.length > 0 && matches[0] instanceof HTMLElement) {
-      target = matches[0];
-    }
+    if (!target) target = firstAny;
     if (!target) return false;
-    const topInset = 20;
-    const nextTop = Math.max(target.offsetTop - topInset, 0);
-    this._programmaticScrollUntil = Date.now() + 700;
-    this._scrollMessagesTo(nextTop, behavior);
+    const now = Date.now();
+    this._programmaticScrollUntil = now + 1500;
+    this._scrollLockedUntil = Math.max(this._scrollLockedUntil, now + 1500);
+    this._userScrolledUp = true;
+    const performScroll = () => {
+      this._scrollMessagesTo(Math.max(target!.offsetTop - 20, 0), behavior);
+    };
+    performScroll();
+    requestAnimationFrame(performScroll);
     return true;
   }
 
