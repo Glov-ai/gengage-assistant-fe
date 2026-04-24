@@ -10,6 +10,7 @@
 import { BaseWidget } from '../common/widget-base.js';
 import type { PageContext } from '../common/types.js';
 import { isSafeUrl } from '../common/safe-html.js';
+import { resolveLocaleTag } from '../common/locale.js';
 import * as ga from '../common/ga-datalayer.js';
 import { SIMBUT_I18N_TR, SIMBUT_I18N_EN } from './locales.js';
 import type { GengageChat } from '../chat/index.js';
@@ -50,6 +51,7 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'gengage-chat-find-similar-pill';
+    btn.lang = resolveLocaleTag(config.locale);
     btn.textContent = this._label;
     this._button = btn;
 

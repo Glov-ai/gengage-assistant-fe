@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Playwright forces color in worker/web-server processes; keeping FORCE_COLOR
+// or NO_COLOR set makes Node print a warning before every spawned process.
 delete process.env.FORCE_COLOR;
+delete process.env.NO_COLOR;
 
 const webServerEnv = { ...process.env };
 delete webServerEnv.FORCE_COLOR;

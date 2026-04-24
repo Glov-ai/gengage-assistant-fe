@@ -17,6 +17,8 @@ import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
 
 export type { FavoriteData };
 
+type NavigateFn = (url: string) => void;
+
 export interface PersistSessionParams {
   userId: string;
   appId: string;
@@ -142,7 +144,14 @@ export class SessionPersistence {
    * after posting saveSessionAndOpenURL to the iframe. The clean-room runs in
    * the same window (Shadow DOM, not iframe), so it navigates directly.
    */
-  async saveAndOpenURL(url: string, persistFn: () => Promise<void>, bridge: CommunicationBridge | null): Promise<void> {
+  async saveAndOpenURL(
+    url: string,
+    persistFn: () => Promise<void>,
+    bridge: CommunicationBridge | null,
+    navigate: NavigateFn = (targetUrl) => {
+      navigateToUrl(targetUrl);
+    },
+  ): Promise<void> {
     try {
       await persistFn();
     } catch {
@@ -156,7 +165,7 @@ export class SessionPersistence {
     // on the gengage:navigate CustomEvent to suppress the fallback navigation.
     bridge?.send('openURLInNewTab', { url });
     if (isSafeUrl(url)) {
-      navigateToUrl(url);
+      navigate(url);
     }
   }
 

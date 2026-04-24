@@ -16,6 +16,20 @@ describe('Criteria Display Name Mapping', () => {
     expect(formatCriteriaName('usb_port_count')).toBe('Usb port count');
   });
 
+  it('uses Turkish locale-aware fallback capitalization by default', () => {
+    expect(formatCriteriaName('istanbul_ilcesi')).toBe('İstanbul ilcesi');
+    expect(formatCriteriaName('ışık_tipi')).toBe('Işık tipi');
+  });
+
+  it('uses the provided locale for fallback capitalization', () => {
+    expect(formatCriteriaName('istanbul_district', undefined, 'en-US')).toBe('Istanbul district');
+    expect(formatCriteriaName('istanbul_ilcesi', undefined, '')).toBe('İstanbul ilcesi');
+  });
+
+  it('falls back safely when the provided locale is invalid', () => {
+    expect(formatCriteriaName('istanbul_ilcesi', undefined, 'bad locale')).toBe('İstanbul ilcesi');
+  });
+
   it('passes through already-formatted labels unchanged', () => {
     expect(formatCriteriaName('Screen Size')).toBe('Screen Size');
   });
