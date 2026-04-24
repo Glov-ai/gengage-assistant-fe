@@ -2872,6 +2872,12 @@ button.gengage-chat-product-summary__cta {
   justify-content: start;
 }
 
+.gengage-chat-root--mobile
+  .gengage-chat-panel
+  .gengage-chat-product-grid.gengage-chat-product-grid--consulting-groups.gengage-chat-product-grid--mobile {
+  grid-template-columns: 1fr;
+}
+
 /*
  * Mobile panel search results: panel grid with `minmax(176px)` collapsed to single column on narrow screens.
  * `--mobile` forces two equal columns; no horizontal scroll, vertical list.
