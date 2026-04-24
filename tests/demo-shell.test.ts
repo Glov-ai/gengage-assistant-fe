@@ -40,12 +40,18 @@ function renderShell(): void {
 
 describe('demo-shell helpers', () => {
   beforeEach(() => {
+    sessionStorage.clear();
+    delete window.__gengageSessionId;
+    delete window.gengage;
     renderShell();
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
+    sessionStorage.clear();
+    delete window.__gengageSessionId;
+    delete window.gengage;
     document.body.innerHTML = '';
   });
 
@@ -100,9 +106,31 @@ describe('demo-shell helpers', () => {
     );
   });
 
+  it('clears placeholder copy when product details are sparse', () => {
+    applyDemoProductToHostShell(
+      {
+        sku: 'SPARSE-1',
+        name: 'Sparse Demo Product',
+      },
+      {
+        accountId: 'trendyolcom',
+        sku: 'SPARSE-1',
+        middlewareUrl: 'http://localhost:7860',
+        brandName: 'Trendyol',
+      },
+    );
+
+    expect(document.querySelector('.summary-title')?.textContent).toBe('Sparse Demo Product');
+    expect(document.querySelector('.feature-list')?.textContent).not.toContain('Placeholder');
+    expect(document.querySelector('.feature-list')?.textContent).toBe('');
+    expect(document.querySelector('.content-card p')?.textContent).toBe('');
+  });
+
   it('hydrates product details from the middleware stream', async () => {
-    globalThis.fetch = vi.fn(async () => {
+    sessionStorage.setItem('gengage_session_id', 'shared-demo-session');
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
       const streamBody = [
+        'not-json',
         JSON.stringify({ type: 'loading', payload: { text: 'loading' } }),
         JSON.stringify({
           type: 'productDetails',
@@ -124,7 +152,8 @@ describe('demo-shell helpers', () => {
         }),
       ].join('\n');
       return new Response(streamBody, { status: 200 });
-    }) as typeof globalThis.fetch;
+    });
+    globalThis.fetch = fetchMock as typeof globalThis.fetch;
 
     await hydrateDemoPdpShell({
       accountId: 'trendyolcom',
@@ -134,9 +163,81 @@ describe('demo-shell helpers', () => {
       locale: 'tr',
     });
 
-    expect(globalThis.fetch).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const init = fetchMock.mock.calls[0]![1];
+    const body = JSON.parse(String((init as RequestInit).body)) as {
+      session_id?: string;
+      correlation_id?: string;
+    };
+    expect(body.session_id).toBe('shared-demo-session');
+    expect(body.correlation_id).toBe('shared-demo-session');
     expect(document.querySelector('.summary-title')?.textContent).toBe('Trendyol Product');
     expect(document.querySelector('.summary-meta')?.textContent).toContain('86 değerlendirme');
     expect(document.querySelector('.feature-list')?.textContent).toContain('Renk: Turuncu');
+  });
+
+  it('hydrates from productDetails without waiting for the stream to close', async () => {
+    let aborted = false;
+    const encoder = new TextEncoder();
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const signal = init?.signal;
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          signal?.addEventListener(
+            'abort',
+            () => {
+              aborted = true;
+              controller.error(new DOMException('Aborted', 'AbortError'));
+            },
+            { once: true },
+          );
+          controller.enqueue(encoder.encode(`${JSON.stringify({ type: 'loading' })}\n`));
+          controller.enqueue(
+            encoder.encode(
+              `${JSON.stringify({
+                type: 'productDetails',
+                payload: {
+                  productDetails: {
+                    sku: 'EARLY-1',
+                    name: 'Early Product',
+                    features: [{ name: 'Signal', value: 'streamed' }],
+                  },
+                },
+              })}\n`,
+            ),
+          );
+        },
+      });
+      return new Response(stream, { status: 200 });
+    });
+    globalThis.fetch = fetchMock as typeof globalThis.fetch;
+
+    await hydrateDemoPdpShell({
+      accountId: 'trendyolcom',
+      sku: 'EARLY-1',
+      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      brandName: 'Trendyol',
+      locale: 'tr',
+    });
+
+    expect(aborted).toBe(true);
+    expect(document.querySelector('.summary-title')?.textContent).toBe('Early Product');
+    expect(document.querySelector('.feature-list')?.textContent).toContain('Signal: streamed');
+  });
+
+  it('keeps the placeholder shell when the middleware response is not ok', async () => {
+    const fetchMock = vi.fn(async () => new Response('', { status: 500 }));
+    globalThis.fetch = fetchMock as typeof globalThis.fetch;
+
+    await hydrateDemoPdpShell({
+      accountId: 'trendyolcom',
+      sku: '917839672',
+      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      brandName: 'Trendyol',
+      locale: 'tr',
+    });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(document.querySelector('.summary-title')?.textContent).toBe('Lorem Ipsum Demo Ürünü');
   });
 });

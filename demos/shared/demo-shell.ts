@@ -1,3 +1,6 @@
+import { bootstrapSession } from '../../src/common/context.js';
+import { consumeStream } from '../../src/common/streaming.js';
+
 interface DemoShellProduct {
   sku: string;
   name: string;
@@ -30,6 +33,8 @@ interface BrandAvatarOptions {
   textColor?: string;
   backgroundColor?: string;
 }
+
+const DEMO_SHELL_FETCH_TIMEOUT_MS = 8000;
 
 function escapeXml(value: string): string {
   return value
@@ -201,19 +206,28 @@ function formatMoney(value: number | undefined, currency = 'TRY', preferredLocal
   return new Intl.NumberFormat(priceLocale(currency, preferredLocale), {
     style: 'currency',
     currency,
-    maximumFractionDigits: currency === 'TRY' ? 2 : 2,
+    maximumFractionDigits: 2,
   }).format(value);
+}
+
+function productFromStreamEvent(event: unknown): DemoShellProduct | null {
+  const candidate = event as {
+    type?: string;
+    payload?: { productDetails?: DemoShellProduct };
+  };
+  if (candidate.type === 'productDetails' && candidate.payload?.productDetails?.name) {
+    return candidate.payload.productDetails;
+  }
+  return null;
 }
 
 async function fetchDemoProduct(options: DemoShellOptions): Promise<DemoShellProduct | null> {
   const url = `${options.middlewareUrl.replace(/\/+$/, '')}/chat/process_action`;
+  const sessionId = bootstrapSession();
   const payload = {
     account_id: options.accountId,
-    session_id: `demo-shell-${options.accountId}-${options.sku}`,
-    correlation_id:
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    session_id: sessionId,
+    correlation_id: sessionId,
     type: 'launchSingleProduct',
     payload: { sku: options.sku },
     sku: options.sku,
@@ -221,32 +235,43 @@ async function fetchDemoProduct(options: DemoShellOptions): Promise<DemoShellPro
     locale: options.locale ?? 'tr',
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), DEMO_SHELL_FETCH_TIMEOUT_MS);
+  let product: DemoShellProduct | null = null;
 
-  if (!response.ok) return null;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
 
-  const text = await response.text();
-  for (const line of text.split(/\n+/)) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
-    try {
-      const event = JSON.parse(trimmed) as {
-        type?: string;
-        payload?: { productDetails?: DemoShellProduct };
-      };
-      if (event.type === 'productDetails' && event.payload?.productDetails?.name) {
-        return event.payload.productDetails;
-      }
-    } catch {
-      // Ignore malformed stream rows and keep scanning.
+    if (!response.ok) return null;
+
+    await consumeStream(response, {
+      signal: controller.signal,
+      idleTimeoutMs: DEMO_SHELL_FETCH_TIMEOUT_MS,
+      onEvent: (event) => {
+        const nextProduct = productFromStreamEvent(event);
+        if (nextProduct == null) return;
+        product = nextProduct;
+        controller.abort();
+      },
+    });
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === 'AbortError')) {
+      throw error;
     }
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
-  return null;
+  return product;
+}
+
+function renderFeatureItems(items: string[]): string {
+  return items.map((item) => `<li>${escapeXml(item)}</li>`).join('');
 }
 
 function replaceGallery(
@@ -355,15 +380,12 @@ export function applyDemoProductToHostShell(product: DemoShellProduct, options: 
   const featureList = document.querySelector<HTMLElement>('.feature-list');
   if (featureList) {
     const items = collectHighlights(product);
-    if (items.length > 0) {
-      featureList.innerHTML = items.map((item) => `<li>${escapeXml(item)}</li>`).join('');
-    }
+    featureList.innerHTML = renderFeatureItems(items);
   }
 
   const copy = document.querySelector<HTMLElement>('.content-card p');
   if (copy) {
-    const text = summarizeText(product.description);
-    if (text !== '') copy.textContent = text;
+    copy.textContent = summarizeText(product.description);
   }
 
   const galleryMain = document.querySelector<HTMLElement>('.gallery-main');
