@@ -11,11 +11,7 @@ export const CHAT_I18N_TR: ChatI18n = {
   errorMessage: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   retryButton: 'Tekrar Dene',
   loadingMessage: 'İsteğinizi inceliyorum...',
-  loadingSequenceGeneric: [
-    'İsteğinizi inceliyorum...',
-    'Ürün ve yorumlara bakıyorum...',
-    'Detayları inceliyorum...',
-  ],
+  loadingSequenceGeneric: ['İsteğinizi inceliyorum...', 'Ürün ve yorumlara bakıyorum...', 'Detayları inceliyorum...'],
   loadingSequencePanel: [
     'En ilgili detayları inceliyorum',
     'En güçlü sinyalleri kontrol ediyorum',
