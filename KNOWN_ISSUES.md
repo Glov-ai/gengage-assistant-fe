@@ -1,6 +1,6 @@
 # Known Issues & Verification Report
 
-Last verified: 2026-04-24 against `main` branch.
+Last verified: 2026-04-24 against `main` branch (updated same day with fixes).
 
 This file keeps only concerns that are still open after the current frontend fixes. Items removed from here were either fixed, superseded, or no longer describe the current codebase accurately.
 
@@ -14,11 +14,11 @@ This file keeps only concerns that are still open after the current frontend fix
 ## 2. CTA & Interaction Consistency
 
 - **Data-driven CTA asymmetry:** Product cards and product-details panels only render the primary add-to-cart path when `cartCode && sku && inStock !== false` is present in the payload (`src/chat/components/renderUISpec.ts:549-551`, `src/chat/components/renderUISpec.ts:1389-1402`). Neighbouring items in the same result set can therefore show different CTAs (`Sepete Ekle` vs `İncele` / `View on Site`) purely because backend fields are incomplete.
-- **Demo-mode product name omission in chat bubble:** Four chat product-click call sites still call `onProductClick` with `{ sku, url }` and omit `name`: `src/chat/components/AITopPicks.ts:296`, `src/chat/components/AITopPicks.ts:410`, `src/chat/components/renderUISpec.ts:601`, and `src/chat/components/renderUISpec.ts:1415`. `ComparisonTable` is fixed, but these four paths still fall back to raw SKU text in demo mode (`isDemoWebsite: true`).
+- ~~**Demo-mode product name omission in chat bubble:**~~ **FIXED.** All four `onProductClick` call sites now pass `name` when available (AITopPicks card click, AITopPicks findSimilar CTA, ProductCard URL CTA, ProductDetailsPanel View on Site). Regression tests added in `tests/ai-top-picks.test.ts` and `tests/render-uispec.test.ts`.
 
 ## 3. Responsive Constraints
 
-- **Header overflow on ultra-mobile widths (<375px):** `.gengage-chat-header-right` still uses `flex-shrink: 0` with no dedicated sub-375px breakpoint (`src/chat/components/chat.css:465-470`). On very narrow widths such as 320px CSS pixels, the right-side action cluster can still squeeze or overflow the title area.
+- ~~**Header overflow on ultra-mobile widths (<375px):**~~ **FIXED.** Added `@media (max-width: 374px)` breakpoint in `src/chat/components/chat.css` that reduces header gap/padding, allows `.gengage-chat-header-right` to shrink (`flex-shrink: 1; min-width: 0`), and scales action buttons from 42px to 34px.
 
 ## 4. Frontend Business / Client Logic Leaks (Architecture Debt)
 

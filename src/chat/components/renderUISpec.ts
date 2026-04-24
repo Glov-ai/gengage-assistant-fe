@@ -598,7 +598,7 @@ export function renderProductCard(element: UIElement, ctx: UISpecRenderContext):
       }
       if (ctx.onProductClick && sku) {
         e.preventDefault();
-        ctx.onProductClick({ sku, url });
+        ctx.onProductClick({ sku, url, ...(name ? { name } : {}) });
       }
     });
     card.appendChild(cta);
@@ -1412,7 +1412,7 @@ function renderProductDetailsPanel(element: UIElement, ctx: UISpecRenderContext)
     cta.addEventListener('click', (e) => {
       if (ctx.onProductClick && sku) {
         e.preventDefault();
-        ctx.onProductClick({ sku, url });
+        ctx.onProductClick({ sku, url, ...(name ? { name } : {}) });
       }
     });
     actionRow.appendChild(cta);

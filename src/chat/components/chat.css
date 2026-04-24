@@ -469,6 +469,24 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 374px) {
+  .gengage-chat-header {
+    gap: 8px;
+    padding: 10px 10px;
+  }
+
+  .gengage-chat-header-right {
+    gap: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .gengage-chat-header-btn {
+    width: 34px;
+    height: 34px;
+  }
+}
+
 /* Header action buttons (cart, favorites) */
 .gengage-chat-header-btn {
   width: 42px;

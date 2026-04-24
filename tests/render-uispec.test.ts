@@ -277,6 +277,97 @@ describe('renderUISpec', () => {
     });
   });
 
+  describe('ProductCard onProductClick name', () => {
+    it('passes product name to onProductClick when URL CTA link is clicked', () => {
+      const onProductClick = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-NAME',
+                name: 'Named Product',
+                url: 'https://example.com/named',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onProductClick }));
+      const cta = result.querySelector('.gengage-chat-product-card-cta') as HTMLAnchorElement;
+      expect(cta).toBeTruthy();
+      cta.click();
+      expect(onProductClick).toHaveBeenCalledWith({
+        sku: 'SKU-NAME',
+        url: 'https://example.com/named',
+        name: 'Named Product',
+      });
+    });
+
+    it('omits name from onProductClick when product has no name', () => {
+      const onProductClick = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'SKU-NONAME',
+                url: 'https://example.com/noname',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onProductClick }));
+      const cta = result.querySelector('.gengage-chat-product-card-cta') as HTMLAnchorElement;
+      expect(cta).toBeTruthy();
+      cta.click();
+      expect(onProductClick).toHaveBeenCalledWith({
+        sku: 'SKU-NONAME',
+        url: 'https://example.com/noname',
+      });
+      expect(onProductClick.mock.calls[0]![0]).not.toHaveProperty('name');
+    });
+  });
+
+  describe('ProductDetailsPanel onProductClick name', () => {
+    it('passes product name to onProductClick from View on Site link', () => {
+      const onProductClick = vi.fn();
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductDetailsPanel',
+            props: {
+              product: {
+                sku: 'DET-1',
+                name: 'Detail Product',
+                url: 'https://example.com/detail',
+                price: '100',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ onProductClick }));
+      const viewLink = result.querySelector('.gengage-chat-product-details-cta') as HTMLAnchorElement;
+      expect(viewLink).toBeTruthy();
+      viewLink.click();
+      expect(onProductClick).toHaveBeenCalledWith({
+        sku: 'DET-1',
+        url: 'https://example.com/detail',
+        name: 'Detail Product',
+      });
+    });
+  });
+
   describe('Divider', () => {
     it('renders a plain divider without label', () => {
       const spec: UISpec = {

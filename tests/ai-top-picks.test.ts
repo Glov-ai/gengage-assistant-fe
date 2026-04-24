@@ -199,8 +199,60 @@ describe('renderAITopPicks', () => {
 
     const cta = dom.querySelector('.gengage-chat-ai-toppick-cta') as HTMLElement;
     cta.click();
-    expect(onProductClick).toHaveBeenCalledWith({ sku: '1', url: 'https://example.com/p/1' });
+    expect(onProductClick).toHaveBeenCalledWith({ sku: '1', url: 'https://example.com/p/1', name: 'Product A' });
     expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it('passes product name to onProductClick on card click', () => {
+    const onProductClick = vi.fn();
+    const el = makeElement([
+      { product: { sku: 'P1', name: 'Wireless Mouse', url: 'https://example.com/mouse' }, role: 'winner' },
+    ]);
+    const ctx = makeContext({ onProductClick });
+    const dom = renderAITopPicks(el, ctx);
+
+    const card = dom.querySelector('.gengage-chat-ai-toppick-card') as HTMLElement;
+    card.click();
+    expect(onProductClick).toHaveBeenCalledWith({
+      sku: 'P1',
+      url: 'https://example.com/mouse',
+      name: 'Wireless Mouse',
+    });
+  });
+
+  it('omits name from onProductClick when product has no name', () => {
+    const onProductClick = vi.fn();
+    const el = makeElement([
+      { product: { sku: 'P2', url: 'https://example.com/p2' }, role: 'winner' },
+    ]);
+    const ctx = makeContext({ onProductClick });
+    const dom = renderAITopPicks(el, ctx);
+
+    const card = dom.querySelector('.gengage-chat-ai-toppick-card') as HTMLElement;
+    card.click();
+    expect(onProductClick).toHaveBeenCalledWith({
+      sku: 'P2',
+      url: 'https://example.com/p2',
+    });
+    expect(onProductClick.mock.calls[0]![0]).not.toHaveProperty('name');
+  });
+
+  it('passes product name to onProductClick on findSimilar CTA click', () => {
+    const onProductClick = vi.fn();
+    const action = { title: 'View', type: 'findSimilar', payload: { sku: 'P3' } };
+    const el = makeElement([
+      { product: { name: 'Gaming Keyboard', url: 'https://example.com/kb' }, role: 'winner', action },
+    ]);
+    const ctx = makeContext({ onAction: vi.fn(), onProductClick });
+    const dom = renderAITopPicks(el, ctx);
+
+    const cta = dom.querySelector('.gengage-chat-ai-toppick-cta') as HTMLElement;
+    cta.click();
+    expect(onProductClick).toHaveBeenCalledWith({
+      sku: 'P3',
+      url: 'https://example.com/kb',
+      name: 'Gaming Keyboard',
+    });
   });
 
   it('does not render expert quality score line (redundant with product rating / labels)', () => {
