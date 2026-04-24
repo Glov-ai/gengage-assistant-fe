@@ -2431,10 +2431,7 @@ export class ChatDrawer {
       if (el.classList.contains('gengage-chat-bubble--presentation-collapsed')) continue;
       if (el.classList.contains('gengage-chat-bubble--hidden')) continue;
       if (el.offsetHeight === 0) continue;
-      if (
-        el.classList.contains('gengage-chat-bubble--assistant') &&
-        (el.textContent?.trim().length ?? 0) === 0
-      ) {
+      if (el.classList.contains('gengage-chat-bubble--assistant') && (el.textContent?.trim().length ?? 0) === 0) {
         continue;
       }
       target = el;
