@@ -481,13 +481,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '5252094';
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandAvatarUrl = 'https://configs.gengage.ai/lcwcom/glov-lcwcom-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'LC Waikiki', primaryColor: '#B82020' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;

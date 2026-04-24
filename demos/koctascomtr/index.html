@@ -488,6 +488,8 @@
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
       const brandAvatarUrl = 'https://configs.gengage.ai/koctascomtr/glov-koctascomtr-logo.svg';
+      const launcherAvatarUrl =
+        'https://configs.gengage.ai/koctascomtr/glov-koctascomtr-launcher.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -527,7 +529,7 @@
           mobileBreakpoint: 768,
           headerTitle: 'Koçtaş Robotu',
           headerAvatarUrl: brandAvatarUrl,
-          launcherImageUrl: brandAvatarUrl,
+          launcherImageUrl: launcherAvatarUrl,
           i18n: {
             inputPlaceholder: 'Ürün ara, soru sor',
             poweredBy: 'Koçtaş AI Asistan',
