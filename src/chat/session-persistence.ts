@@ -10,6 +10,7 @@
 import type { GengageIndexedDB, FavoriteData } from '../common/indexed-db.js';
 import type { CommunicationBridge } from '../common/communication-bridge.js';
 import { isSafeUrl } from '../common/safe-html.js';
+import { navigateToUrl } from '../common/navigation.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
@@ -148,7 +149,7 @@ export class SessionPersistence {
     persistFn: () => Promise<void>,
     bridge: CommunicationBridge | null,
     navigate: NavigateFn = (targetUrl) => {
-      window.location.href = targetUrl;
+      navigateToUrl(targetUrl);
     },
   ): Promise<void> {
     try {

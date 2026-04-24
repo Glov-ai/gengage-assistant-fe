@@ -5,7 +5,7 @@
  * for CSS isolation. Handles streaming NDJSON from the backend.
  */
 
-import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UISpec } from '../common/types.js';
+import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UIElement, UISpec } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { ActionRouterOptions } from '../common/action-router.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
@@ -43,6 +43,7 @@ import {
   flushBeautyStreamComplete,
   flushBeautyStreamError,
 } from './features/beauty-consulting/stream-handler.js';
+import { detectConsultingGrid, isConsultingGridReady } from './features/beauty-consulting/consulting-grid.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
 import { playTtsAudio } from '../common/tts-player.js';
@@ -77,7 +78,7 @@ import type {
 import { GengageIndexedDB } from '../common/indexed-db.js';
 import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
-import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
+import { PanelManager, determinePanelUpdateAction, type PanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
@@ -969,6 +970,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
     this._drawer?.setFormerMessagesButtonVisible(false);
     setTimeout(() => this._flushPresentationScroll(), 40);
+  }
+
+  /** Align inline UISpec render so the thread’s first visible node stays at the top. */
+  private _scrollInlineIntoView(inline: HTMLElement, threadId: string | null | undefined): void {
+    if (threadId) {
+      this._focusPresentationThread(threadId, 'auto');
+      return;
+    }
+    inline.scrollIntoView({ behavior: 'auto', block: 'start' });
   }
 
   private _releasePresentationFocus(): void {
@@ -1876,6 +1886,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const beautyStreamState = createBeautyStreamState();
     /** AITopPicks / AIGroupingCards often arrive before product_list; flush when grid mounts. */
     let pendingPanelAiSpec: UISpec | null = null;
+    /**
+     * Consulting style-picker grids may stream twice: once with some variations
+     * still `loading`, then a final replace with everything `ready`. Rendering
+     * the partial produces a visible skeleton→partial→final flash, so we hold
+     * the partial here and only flush it if the stream ends without a fully
+     * ready replacement (fallback so the shopper never sees an empty panel).
+     */
+    let pendingConsultingSpec: UISpec | null = null;
 
     const syncPanelAiAnalysisZone = (): void => {
       if (!this._drawer) return;
@@ -1889,6 +1907,82 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       } else {
         this._drawer.setPanelAiZoneState('hidden');
       }
+    };
+
+    const flushPendingPanelAiSpecToZone = (isStreaming: boolean): void => {
+      if (!pendingPanelAiSpec || !this._drawer) return;
+      const flushCtx = this._buildRenderContext();
+      flushCtx.isStreaming = isStreaming;
+      const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+      aiAnalysisUiReceivedForPanel = true;
+      this._drawer.setPanelAiZoneState('results', { resultEl: aiEl });
+      pendingPanelAiSpec = null;
+    };
+
+    const syncPanelAiZoneAfterPanelUpdate = (
+      componentType: string,
+      panelAction: PanelUpdateAction,
+      isStreaming: boolean,
+    ): void => {
+      if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
+        panelListEligibleForAiZone = !this._isMobileViewport;
+        flushPendingPanelAiSpecToZone(isStreaming);
+        syncPanelAiAnalysisZone();
+        return;
+      }
+      if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
+        panelListEligibleForAiZone = false;
+        aiAnalysisUiReceivedForPanel = false;
+        pendingPanelAiSpec = null;
+        this._drawer?.setPanelAiZoneState('hidden');
+      }
+    };
+
+    const shouldPreserveAiZoneForPanelReplace = (componentType: string): boolean =>
+      (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') &&
+      (panelListEligibleForAiZone || aiAnalysisUiReceivedForPanel || pendingPanelAiSpec !== null);
+
+    const replacePanelSpec = (
+      panelSpec: UISpec,
+      renderContext: ChatUISpecRenderContext,
+      componentType: string,
+    ): void => {
+      if (!this._drawer || !this._panel) return;
+      this._comparisonSelectMode = false;
+      this._comparisonSelectedSkus = [];
+      this._comparisonSelectionWarning = null;
+      this._drawer.setComparisonDockContent(null);
+      this._drawer.setPanelContent(this._renderUISpec(panelSpec, renderContext), {
+        preserveAiZone: shouldPreserveAiZoneForPanelReplace(componentType),
+      });
+      this._currentPanelSource = { kind: 'spec', spec: panelSpec };
+      this._panel.currentType = componentType;
+    };
+
+    const finalizePanelUpdate = (
+      componentType: string,
+      rootElement: UIElement | undefined,
+      panelAction: PanelUpdateAction,
+      isStreaming: boolean,
+    ): void => {
+      if (!this._panel) return;
+      this._drawer?.setDividerPreviewEnabled((this._panel.currentType ?? componentType) === 'ProductGrid');
+
+      if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
+        this._clearUnavailableProductContext();
+      }
+
+      if (botMsg.threadId && !this._panel.threads.includes(botMsg.threadId)) {
+        this._panel.threads.push(botMsg.threadId);
+      }
+      const titleType = this._panel.currentType ?? componentType;
+      const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
+      this._panel.updateTopBar(titleType, backendTitle);
+      this._panel.updateExtendedMode(componentType);
+      if (this._isMobileViewport && isPdpAutoLaunch) {
+        this._drawer?.hideMobilePanel();
+      }
+      syncPanelAiZoneAfterPanelUpdate(componentType, panelAction, isStreaming);
     };
 
     this.track(
@@ -2022,6 +2116,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (clearPanel) {
             this._clearAssistantPanelLikeStreamClearPanel();
             panelLoadingSeen = false;
+            pendingConsultingSpec = null;
           }
 
           const rootElement = spec.elements[spec.root];
@@ -2087,6 +2182,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
+          // Consulting style-picker gate: if the backend is still streaming
+          // `loading` variations, keep the panel skeleton up and buffer the
+          // partial spec. The final replace (all variations `ready`) will
+          // render cleanly as the first real content swap for this panel,
+          // which eliminates the skeleton→partial→final flash. Only the
+          // top-level (non-append) panel path is gated — similars-append and
+          // pure append paths are unaffected.
+          if (
+            effectivePanelHint === 'panel' &&
+            this._panel &&
+            !skipSidePanelForUISpec &&
+            componentType === 'ProductGrid' &&
+            rootElement
+          ) {
+            const consultingResult = detectConsultingGrid(rootElement);
+            if (consultingResult.isConsulting && !isConsultingGridReady(consultingResult)) {
+              pendingConsultingSpec = spec;
+              return;
+            }
+            if (consultingResult.isConsulting) {
+              pendingConsultingSpec = null;
+            }
+          }
+
           if (effectivePanelHint === 'panel' && this._panel && !skipSidePanelForUISpec) {
             const isFirstPanelContentInStream = !panelContentReceived;
             panelContentReceived = true;
@@ -2120,52 +2239,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 this._refreshComparisonUI();
               }
             } else {
-              // Reset comparison state when new panel content replaces the grid
-              this._comparisonSelectMode = false;
-              this._comparisonSelectedSkus = [];
-              this._comparisonSelectionWarning = null;
-              this._drawer?.setComparisonDockContent(null);
-              this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
-              this._currentPanelSource = { kind: 'spec', spec: panelSpec };
-              this._panel.currentType = componentType;
+              replacePanelSpec(panelSpec, renderContext, componentType);
             }
-            this._drawer?.setDividerPreviewEnabled((this._panel.currentType ?? componentType) === 'ProductGrid');
-
-            if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
-              this._clearUnavailableProductContext();
-            }
-
-            // Track panel thread and update topbar + extended mode
-            if (botMsg.threadId && !this._panel.threads.includes(botMsg.threadId)) {
-              this._panel.threads.push(botMsg.threadId);
-            }
-            // Use the primary panel type for title (don't let appended grids overwrite it).
-            // Backend-provided panelTitle (e.g. search results title) takes precedence.
-            const titleType = this._panel.currentType ?? componentType;
-            const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
-            this._panel.updateTopBar(titleType, backendTitle);
-            this._panel.updateExtendedMode(componentType);
-            if (this._isMobileViewport && isPdpAutoLaunch) {
-              this._drawer?.hideMobilePanel();
-            }
-
-            // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
-            if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
-              panelListEligibleForAiZone = !this._isMobileViewport;
-              // Top Picks / groupings may have streamed before product_list — apply now that panel + zone exist
-              if (pendingPanelAiSpec) {
-                const flushCtx = this._buildRenderContext();
-                flushCtx.isStreaming = true;
-                const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
-                aiAnalysisUiReceivedForPanel = true;
-                this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
-                pendingPanelAiSpec = null;
-              }
-            } else if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
-              panelListEligibleForAiZone = false;
-              pendingPanelAiSpec = null;
-              this._drawer?.setPanelAiZoneState('hidden');
-            }
+            finalizePanelUpdate(componentType, rootElement, panelAction, true);
           }
 
           // ProductDetailsPanel goes to the panel, but also render a compact
@@ -2202,7 +2278,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 } else {
                   messagesContainer.appendChild(inline);
                 }
-                inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+                this._scrollInlineIntoView(inline, botMsg.threadId);
                 this._drawer?.refreshPresentationCollapsed();
                 panelContentReceived = true;
               }
@@ -2259,7 +2335,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 inline.dataset['threadId'] = botMsg.threadId;
               }
               messagesContainer.appendChild(inline);
-              inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._scrollInlineIntoView(inline, botMsg.threadId);
               this._drawer?.refreshPresentationCollapsed();
               if (skipSidePanelForUISpec && componentType === 'ProductGrid') {
                 panelContentReceived = true;
@@ -2608,6 +2684,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           this._activeTypewriter = null;
           syncPanelAiAnalysisZone();
           pendingPanelAiSpec = null;
+          pendingConsultingSpec = null;
           this._bridge?.send('isResponding', false);
           this._bridge?.send('loadingMessage', { text: null });
           this._drawer?.removeTypingIndicator();
@@ -2735,6 +2812,22 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           streamDone = true;
           syncPanelAiAnalysisZone();
+          // Consulting fallback: the backend never delivered a fully-ready
+          // style-picker replacement, so flush the last partial spec now so
+          // the shopper isn't left staring at a skeleton. Single render →
+          // still no flash.
+          if (pendingConsultingSpec && this._panel && this._drawer) {
+            const fallbackCtx = this._buildRenderContext();
+            fallbackCtx.isStreaming = false;
+            const fallbackRoot = pendingConsultingSpec.elements[pendingConsultingSpec.root];
+            const fallbackPanelSpec = this._panel.toPanelSpec(pendingConsultingSpec);
+            this._applyPanelListHeadingToContext(fallbackCtx, { kind: 'spec', spec: fallbackPanelSpec });
+            const fallbackType = fallbackRoot?.type ?? 'ProductGrid';
+            replacePanelSpec(fallbackPanelSpec, fallbackCtx, fallbackType);
+            finalizePanelUpdate(fallbackType, fallbackRoot, 'replace', false);
+            panelContentReceived = true;
+          }
+          pendingConsultingSpec = null;
           // product_list never arrived but AI Top Picks / groupings were deferred — show in chat
           if (pendingPanelAiSpec) {
             const flushCtx = this._buildRenderContext();
@@ -2744,7 +2837,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               const inline = this._renderUISpec(pendingPanelAiSpec, flushCtx);
               if (botMsg.threadId) inline.dataset['threadId'] = botMsg.threadId;
               messagesContainer.appendChild(inline);
-              inline.scrollIntoView({ behavior: 'auto', block: 'end' });
+              this._scrollInlineIntoView(inline, botMsg.threadId);
               this._drawer?.refreshPresentationCollapsed();
             }
             pendingPanelAiSpec = null;
@@ -3686,7 +3779,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             summaryEl.dataset['threadId'] = this._currentThreadId;
           }
           messagesContainer.appendChild(summaryEl);
-          summaryEl.scrollIntoView({ behavior: 'auto', block: 'end' });
+          this._scrollInlineIntoView(summaryEl, this._currentThreadId);
           this._drawer?.refreshPresentationCollapsed();
         }
         if (this.config.productDetailsExtended !== true) {

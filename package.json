@@ -115,7 +115,7 @@
     "test:demo-shell": "vitest run tests/demo-shell.test.ts",
     "test:ai-top-picks": "vitest run tests/ai-top-picks.test.ts",
     "test:choice-prompter": "vitest run tests/choice-prompter.test.ts",
-    "test:e2e": "playwright test --project=chromium",
+    "test:e2e": "env -u FORCE_COLOR -u NO_COLOR playwright test --project=chromium",
     "test:all": "npm run format && npm test && npm run test:e2e",
     "test:e2e:fullstack": "playwright test --project=full-stack",
     "docs:dev": "vitepress dev docs",
