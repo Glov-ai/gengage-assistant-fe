@@ -2242,9 +2242,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
-              (skipSidePanelForUISpec &&
-                componentType === 'ProductGrid' &&
-                (!similarsAppendGrid || this._isMobileViewport))) &&
+              (skipSidePanelForUISpec && componentType === 'ProductGrid' && !similarsAppendGrid)) &&
             (componentType !== 'ActionButtons' || shouldInlineQuestionActionButtons) &&
             !routeAiAnalysisToPanel &&
             !(deferAiPanelUntilGrid && isAiAnalysisComponent);
@@ -3937,14 +3935,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // so we identify panel-only status by component type.
     // ProductDetailsPanel is panel-only but gets a compact ProductSummaryCard below.
     // ComparisonTable is always panel-only.
-    // ProductGrid with similarsAppend: panel when extended; inline in chat only on mobile.
+    // ProductGrid with similarsAppend is panel-only (matches desktop + mobile behavior).
     if (componentType === 'ComparisonTable') return;
-    if (
-      componentType === 'ProductGrid' &&
-      rootElement.props?.['similarsAppend'] === true &&
-      (this.config.productDetailsExtended === true || !this._isMobileViewport)
-    )
-      return;
+    if (componentType === 'ProductGrid' && rootElement.props?.['similarsAppend'] === true) return;
 
     const renderContext = this._buildRenderContext();
     const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
