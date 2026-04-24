@@ -472,7 +472,7 @@
     <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
       import { renderYatasSimRelCard, renderYatasChatProductCard, renderYatasCardElement } from './yatas-cards.ts';
       import yatasCardsCss from './yatas-cards.css?inline';
 
@@ -481,7 +481,7 @@
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
 
-      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Yatas', primaryColor: '#c8102e' });
+      const brandAvatarUrl = 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;

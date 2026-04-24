@@ -480,13 +480,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = 'HBCV00001ABCDE';
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Hepsiburada', primaryColor: '#ff6000' });
+      const brandAvatarUrl = 'https://configs.glov.ai/remoteConfig/glov-hepsiburadacom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;

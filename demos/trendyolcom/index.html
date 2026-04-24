@@ -481,13 +481,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '917839672';
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Trendyol', primaryColor: '#f27a1a' });
+      const brandAvatarUrl = 'https://configs.glov.ai/remoteConfig/glov-trendyolcom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;

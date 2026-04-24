@@ -472,13 +472,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
-      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '979HF';
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Screwfix', primaryColor: '#00539f' });
+      const brandAvatarUrl = 'https://configs.glov.ai/remoteConfig/glov-screwfixcom-logo.svg';
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
