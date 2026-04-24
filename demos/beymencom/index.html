@@ -482,12 +482,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '1543302';
       const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const beymenHeaderAvatarUrl = 'https://configs.gengage.ai/beymencom/glov-beymencom-logo.png';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Beymen', primaryColor: '#1a1a1a' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -530,10 +531,10 @@
           isDemoWebsite: true,
           productDetailsExtended: true,
           headerTitle: "Beymen'e Sor",
-          headerAvatarUrl: beymenHeaderAvatarUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "Beymen'e Sor",
-            avatarUrl: beymenHeaderAvatarUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#0b00dc',
             secondaryColor: '#000000',
             fontFamily: '"TT Norms Pro", "Helvetica Neue", Arial, sans-serif',
@@ -568,6 +569,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'beymencom', sku, middlewareUrl, brandName: 'Beymen' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).

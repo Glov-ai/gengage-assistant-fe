@@ -472,11 +472,13 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
-      const sku = params.get('sku') ?? undefined;
+      const defaultSku = 'BMV1004';
+      const sku = params.get('sku') ?? defaultSku;
       const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
-      const brandRemoteLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-evideacom-logo.svg';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Evidea', primaryColor: '#ff6a00' });
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;
@@ -513,10 +515,10 @@
           variant: 'floating',
           mobileBreakpoint: 768,
           headerTitle: 'Evidea Asistan',
-          headerAvatarUrl: brandRemoteLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           pillLauncher: {
             label: "Evidea'ya Sor",
-            avatarUrl: brandRemoteLogoUrl,
+            avatarUrl: brandAvatarUrl,
             primaryColor: '#ff6a00',
             secondaryColor: '#2d3436',
             fontFamily: '"Poppins", Arial, sans-serif',
@@ -545,6 +547,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'evideacom', sku, middlewareUrl, brandName: 'Evidea' });
 
       // Demo: register add-to-cart callback hook via the generic addCallback API
       if (controller.chat) {

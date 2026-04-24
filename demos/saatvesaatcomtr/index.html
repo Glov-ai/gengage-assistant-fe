@@ -519,6 +519,7 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? 'guess-erkek-kol-saati-p-guu1435g3m';
@@ -605,6 +606,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'saatvesaatcomtr', sku, middlewareUrl, brandName: 'Saat ve Saat' });
     </script>
   </body>
 </html>

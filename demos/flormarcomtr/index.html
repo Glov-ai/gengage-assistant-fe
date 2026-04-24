@@ -531,6 +531,7 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? '8682536017985';
@@ -617,6 +618,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'flormarcomtr', sku, middlewareUrl, brandName: 'Flormar' });
     </script>
   </body>
 </html>

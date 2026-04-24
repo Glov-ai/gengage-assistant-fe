@@ -480,8 +480,9 @@
 
     <script type="module">
       import { initOverlayWidgets } from '@gengage/assistant-fe';
+      import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
-      const headerLogoUrl = 'https://configs.glov.ai/remoteConfig/glov-arcelikcomtr-logo.png';
+      const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Arcelik', primaryColor: '#e4002b' });
       const launcherLogoUrl = new URL('./glov-arcelikcomtr-launcher.svg', import.meta.url).href;
 
       const params = new URLSearchParams(location.search);
@@ -529,7 +530,7 @@
           mobileBreakpoint: 768,
           headerTitle: "Çelik'e Sor",
           launcherImageUrl: launcherLogoUrl,
-          headerAvatarUrl: headerLogoUrl,
+          headerAvatarUrl: brandAvatarUrl,
           i18n: {
             inputPlaceholder: 'Arçelik asistanına sorun...',
             poweredBy: 'Arçelik AI Asistan',
@@ -565,6 +566,7 @@
       });
 
       document.getElementById('dev-session').textContent = controller.session.sessionId;
+      void hydrateDemoPdpShell({ accountId: 'arcelikcomtr', sku, middlewareUrl, brandName: 'Arcelik' });
 
       // Demo host-page "Sepete Ekle" button — brief success feedback so the page
       // feels realistic on mobile (this would be the merchant's own cart logic).
