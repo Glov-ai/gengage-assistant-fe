@@ -288,34 +288,38 @@ describe('SessionPersistence', () => {
     it('calls persistFn and sends bridge message', async () => {
       const persistFn = vi.fn().mockResolvedValue(undefined);
       const bridge = createMockBridge();
+      const navigate = vi.fn();
 
-      await sp.saveAndOpenURL('https://example.com/product', persistFn, bridge);
+      await sp.saveAndOpenURL('https://example.com/product', persistFn, bridge, navigate);
 
       expect(persistFn).toHaveBeenCalledTimes(1);
       expect(bridge.send).toHaveBeenCalledWith('openURLInNewTab', { url: 'https://example.com/product' });
+      expect(navigate).toHaveBeenCalledWith('https://example.com/product');
     });
 
     it('navigates even when persistFn throws', async () => {
       const persistFn = vi.fn().mockRejectedValue(new Error('IDB failure'));
       const bridge = createMockBridge();
+      const navigate = vi.fn();
 
-      await sp.saveAndOpenURL('https://example.com', persistFn, bridge);
+      await sp.saveAndOpenURL('https://example.com', persistFn, bridge, navigate);
 
       expect(bridge.send).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith('https://example.com');
     });
 
     it('does not navigate for unsafe URLs (javascript:)', async () => {
       const persistFn = vi.fn().mockResolvedValue(undefined);
-      const originalHref = window.location.href;
+      const navigate = vi.fn();
 
-      await sp.saveAndOpenURL('javascript:alert(1)', persistFn, null);
+      await sp.saveAndOpenURL('javascript:alert(1)', persistFn, null, navigate);
 
-      expect(window.location.href).toBe(originalHref);
+      expect(navigate).not.toHaveBeenCalled();
     });
 
     it('works when bridge is null', async () => {
       const persistFn = vi.fn().mockResolvedValue(undefined);
-      await expect(sp.saveAndOpenURL('https://example.com', persistFn, null)).resolves.toBeUndefined();
+      await expect(sp.saveAndOpenURL('https://example.com', persistFn, null, vi.fn())).resolves.toBeUndefined();
     });
   });
 

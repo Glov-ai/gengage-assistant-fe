@@ -4229,6 +4229,17 @@ button.gengage-chat-product-summary__cta {
   color: var(--text-secondary);
 }
 
+.gengage-chat-comparison-table td ul,
+.gengage-chat-comparison-table td ol {
+  margin: 0;
+  padding-left: 18px;
+  text-align: left;
+}
+
+.gengage-chat-comparison-table td li + li {
+  margin-top: 4px;
+}
+
 /*
  * display:grid must not be used on th — table-cell breaks and columns stack vertically.
  * Grid is only on inner wrappers; prices stay horizontally aligned across the row.
@@ -6946,7 +6957,7 @@ button.gengage-chat-product-details-rating {
   border-color: transparent;
   outline: none;
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--client-primary) 26%, white),
+    0 0 0 2px color-mix(in srgb, var(--client-primary) 26%, white),
     var(--shadow-1);
   filter: saturate(1.02);
 }

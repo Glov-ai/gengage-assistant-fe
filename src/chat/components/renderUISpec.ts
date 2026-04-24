@@ -2009,6 +2009,7 @@ function renderComparisonTableElement(element: UIElement, ctx: UISpecRenderConte
     attributes,
     highlights,
     specialCases,
+    locale: ctx.locale,
     onProductClick: ({ sku, name }) => {
       ctx.onProductClick?.({ sku, url: '', name });
     },

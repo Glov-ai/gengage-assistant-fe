@@ -29,6 +29,7 @@ import {
   basketAddEvent,
 } from '../common/analytics-events.js';
 import { sanitizeHtml, isSafeUrl } from '../common/safe-html.js';
+import { resolveLocaleTag } from '../common/locale.js';
 import { debugLog } from '../common/debug.js';
 import { escapeCssIdentifier } from '../common/css-escape.js';
 import { validateImageFile } from './attachment-utils.js';
@@ -321,6 +322,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Create root container
     const rootEl = document.createElement('div');
     rootEl.className = 'gengage-chat-root';
+    rootEl.lang = resolveLocaleTag(config.locale);
     this._rootEl = rootEl;
     this._shadow.appendChild(rootEl);
 
@@ -1831,7 +1833,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       session_id: this.config.session?.sessionId ?? '',
       correlation_id: this.config.session?.sessionId ?? '',
       type: enrichedAction.type,
-      locale: this.config.locale ?? 'tr',
+      locale: resolveLocaleTag(this.config.locale),
       meta,
       context: {
         // Spread backend context (panel, message_id, etc.) but preserve FE's
@@ -3606,6 +3608,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
    */
   private _buildRenderContext(): ChatUISpecRenderContext {
     const ctx: ChatUISpecRenderContext = {
+      locale: resolveLocaleTag(this.config.locale),
       onAction: (action) => {
         ga.trackSuggestedQuestion(action.title, action.type);
         if (action.type === 'addToCart') {
