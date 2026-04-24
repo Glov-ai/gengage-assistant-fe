@@ -100,6 +100,11 @@ export interface ChatDrawerOptions {
 
 const DEFAULT_I18N: ChatI18n = CHAT_I18N_TR;
 const LOADING_STEP_INTERVAL_MS = 1400;
+const PRESENTATION_SCROLL_LOCK_MS = 1500;
+
+type SetPanelContentOptions = {
+  preserveAiZone?: boolean;
+};
 
 interface LoadingSequenceBinding {
   labelEl: HTMLElement;
@@ -1600,11 +1605,8 @@ export class ChatDrawer {
     options?: { resultEl?: HTMLElement; analyzingLabel?: string },
   ): void {
     if (!this._panelAiZoneEl.isConnected) return;
-    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
-    this._panelAiZoneLoadingBinding = null;
+    this._clearPanelAiZoneState();
     if (state === 'hidden') {
-      this._panelAiZoneEl.innerHTML = '';
-      this._panelAiZoneEl.setAttribute('hidden', '');
       return;
     }
     this._panelAiZoneEl.removeAttribute('hidden');
@@ -1626,6 +1628,13 @@ export class ChatDrawer {
       this._panelAiZoneEl.innerHTML = '';
       this._panelAiZoneEl.appendChild(options.resultEl);
     }
+  }
+
+  private _clearPanelAiZoneState(): void {
+    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
+    this._panelAiZoneLoadingBinding = null;
+    this._panelAiZoneEl.innerHTML = '';
+    this._panelAiZoneEl.setAttribute('hidden', '');
   }
 
   private _resetPanelAiZoneElement(): void {
@@ -1676,16 +1685,18 @@ export class ChatDrawer {
   }
 
   /** Replace panel content and show the panel. */
-  setPanelContent(el: HTMLElement): void {
+  setPanelContent(el: HTMLElement, options?: SetPanelContentOptions): void {
     this._destroyLoadingBinding(this._panelLoadingBinding);
     this._panelLoadingBinding = null;
-    this._destroyLoadingBinding(this._panelAiZoneLoadingBinding);
-    this._panelAiZoneLoadingBinding = null;
+    const preserveAiZone = options?.preserveAiZone === true;
+    if (!preserveAiZone) {
+      this._clearPanelAiZoneState();
+    }
     const wasVisible = this._panelVisible;
     // Targeted replace when the panel is already visible: swap only the content
-    // slot (or the skeleton), leaving topbar, AI zone, thumbnails, and floating
-    // element attached. Keeps DOM layout stable so no crossfade or reflow flicker
-    // is needed across stream updates (skeleton→content, content→content).
+    // slot (or the skeleton), leaving topbar, thumbnails, and floating element
+    // attached. The AI zone is preserved only when callers opt in for stream
+    // updates that own that zone.
     // Full rebuild is reserved for the first-show path so the slide-in width
     // transform has a clean starting state.
     if (wasVisible) {
@@ -1726,6 +1737,7 @@ export class ChatDrawer {
    */
   private _swapPanelContent(el: HTMLElement): void {
     this._panelTopBar.setActions(null);
+    // showPanelLoading() owns one skeleton wrapper, so the first match is the content slot.
     const skeletonEl = this._panelEl.querySelector<HTMLElement>('.gengage-chat-panel-skeleton');
     if (skeletonEl) {
       skeletonEl.replaceWith(el);
@@ -2440,8 +2452,8 @@ export class ChatDrawer {
     if (!target) target = firstAny;
     if (!target) return false;
     const now = Date.now();
-    this._programmaticScrollUntil = now + 1500;
-    this._scrollLockedUntil = Math.max(this._scrollLockedUntil, now + 1500);
+    this._programmaticScrollUntil = now + PRESENTATION_SCROLL_LOCK_MS;
+    this._scrollLockedUntil = Math.max(this._scrollLockedUntil, now + PRESENTATION_SCROLL_LOCK_MS);
     this._userScrolledUp = true;
     const performScroll = () => {
       this._scrollMessagesTo(Math.max(target!.offsetTop - 20, 0), behavior);

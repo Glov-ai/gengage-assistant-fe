@@ -5,7 +5,7 @@
  * for CSS isolation. Handles streaming NDJSON from the backend.
  */
 
-import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UISpec } from '../common/types.js';
+import type { ActionPayload, PageContext, StreamEvent, StreamEventAction, UIElement, UISpec } from '../common/types.js';
 import type { ChatTransportConfig } from '../common/api-paths.js';
 import type { ActionRouterOptions } from '../common/action-router.js';
 import type { UISpecRenderHelpers } from '../common/renderer/index.js';
@@ -77,7 +77,7 @@ import type {
 import { GengageIndexedDB } from '../common/indexed-db.js';
 import { CHAT_I18N_TR, resolveChatLocale } from './locales/index.js';
 import { ExtendedModeManager } from './extendedModeManager.js';
-import { PanelManager, determinePanelUpdateAction } from './panel-manager.js';
+import { PanelManager, determinePanelUpdateAction, type PanelUpdateAction } from './panel-manager.js';
 import { SessionPersistence } from './session-persistence.js';
 import { ChatPresentationState, getLatestUnreadAssistantThreadId } from './chat-presentation-state.js';
 import { invalidateChatScrollCache } from './utils/get-chat-scroll-element.js';
@@ -1907,6 +1907,82 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       }
     };
 
+    const flushPendingPanelAiSpecToZone = (isStreaming: boolean): void => {
+      if (!pendingPanelAiSpec || !this._drawer) return;
+      const flushCtx = this._buildRenderContext();
+      flushCtx.isStreaming = isStreaming;
+      const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
+      aiAnalysisUiReceivedForPanel = true;
+      this._drawer.setPanelAiZoneState('results', { resultEl: aiEl });
+      pendingPanelAiSpec = null;
+    };
+
+    const syncPanelAiZoneAfterPanelUpdate = (
+      componentType: string,
+      panelAction: PanelUpdateAction,
+      isStreaming: boolean,
+    ): void => {
+      if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
+        panelListEligibleForAiZone = !this._isMobileViewport;
+        flushPendingPanelAiSpecToZone(isStreaming);
+        syncPanelAiAnalysisZone();
+        return;
+      }
+      if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
+        panelListEligibleForAiZone = false;
+        aiAnalysisUiReceivedForPanel = false;
+        pendingPanelAiSpec = null;
+        this._drawer?.setPanelAiZoneState('hidden');
+      }
+    };
+
+    const shouldPreserveAiZoneForPanelReplace = (componentType: string): boolean =>
+      (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') &&
+      (panelListEligibleForAiZone || aiAnalysisUiReceivedForPanel || pendingPanelAiSpec !== null);
+
+    const replacePanelSpec = (
+      panelSpec: UISpec,
+      renderContext: ChatUISpecRenderContext,
+      componentType: string,
+    ): void => {
+      if (!this._drawer || !this._panel) return;
+      this._comparisonSelectMode = false;
+      this._comparisonSelectedSkus = [];
+      this._comparisonSelectionWarning = null;
+      this._drawer.setComparisonDockContent(null);
+      this._drawer.setPanelContent(this._renderUISpec(panelSpec, renderContext), {
+        preserveAiZone: shouldPreserveAiZoneForPanelReplace(componentType),
+      });
+      this._currentPanelSource = { kind: 'spec', spec: panelSpec };
+      this._panel.currentType = componentType;
+    };
+
+    const finalizePanelUpdate = (
+      componentType: string,
+      rootElement: UIElement | undefined,
+      panelAction: PanelUpdateAction,
+      isStreaming: boolean,
+    ): void => {
+      if (!this._panel) return;
+      this._drawer?.setDividerPreviewEnabled((this._panel.currentType ?? componentType) === 'ProductGrid');
+
+      if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
+        this._clearUnavailableProductContext();
+      }
+
+      if (botMsg.threadId && !this._panel.threads.includes(botMsg.threadId)) {
+        this._panel.threads.push(botMsg.threadId);
+      }
+      const titleType = this._panel.currentType ?? componentType;
+      const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
+      this._panel.updateTopBar(titleType, backendTitle);
+      this._panel.updateExtendedMode(componentType);
+      if (this._isMobileViewport && isPdpAutoLaunch) {
+        this._drawer?.hideMobilePanel();
+      }
+      syncPanelAiZoneAfterPanelUpdate(componentType, panelAction, isStreaming);
+    };
+
     this.track(
       streamStartEvent(this.analyticsContext(), {
         endpoint: 'process_action',
@@ -2161,52 +2237,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 this._refreshComparisonUI();
               }
             } else {
-              // Reset comparison state when new panel content replaces the grid
-              this._comparisonSelectMode = false;
-              this._comparisonSelectedSkus = [];
-              this._comparisonSelectionWarning = null;
-              this._drawer?.setComparisonDockContent(null);
-              this._drawer?.setPanelContent(this._renderUISpec(panelSpec, renderContext));
-              this._currentPanelSource = { kind: 'spec', spec: panelSpec };
-              this._panel.currentType = componentType;
+              replacePanelSpec(panelSpec, renderContext, componentType);
             }
-            this._drawer?.setDividerPreviewEnabled((this._panel.currentType ?? componentType) === 'ProductGrid');
-
-            if (componentType === 'ProductDetailsPanel' && action.type === 'launchSingleProduct') {
-              this._clearUnavailableProductContext();
-            }
-
-            // Track panel thread and update topbar + extended mode
-            if (botMsg.threadId && !this._panel.threads.includes(botMsg.threadId)) {
-              this._panel.threads.push(botMsg.threadId);
-            }
-            // Use the primary panel type for title (don't let appended grids overwrite it).
-            // Backend-provided panelTitle (e.g. search results title) takes precedence.
-            const titleType = this._panel.currentType ?? componentType;
-            const backendTitle = rootElement?.props?.['panelTitle'] as string | undefined;
-            this._panel.updateTopBar(titleType, backendTitle);
-            this._panel.updateExtendedMode(componentType);
-            if (this._isMobileViewport && isPdpAutoLaunch) {
-              this._drawer?.hideMobilePanel();
-            }
-
-            // Desktop AI analysis zone: list/grid in panel → analyzing strip until Top Picks / groupings
-            if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
-              panelListEligibleForAiZone = !this._isMobileViewport;
-              // Top Picks / groupings may have streamed before product_list — apply now that panel + zone exist
-              if (pendingPanelAiSpec) {
-                const flushCtx = this._buildRenderContext();
-                flushCtx.isStreaming = true;
-                const aiEl = this._renderUISpec(pendingPanelAiSpec, flushCtx);
-                aiAnalysisUiReceivedForPanel = true;
-                this._drawer?.setPanelAiZoneState('results', { resultEl: aiEl });
-                pendingPanelAiSpec = null;
-              }
-            } else if (panelAction !== 'appendSimilars' && panelAction !== 'append') {
-              panelListEligibleForAiZone = false;
-              pendingPanelAiSpec = null;
-              this._drawer?.setPanelAiZoneState('hidden');
-            }
+            finalizePanelUpdate(componentType, rootElement, panelAction, true);
           }
 
           // ProductDetailsPanel goes to the panel, but also render a compact
@@ -2787,13 +2820,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             const fallbackRoot = pendingConsultingSpec.elements[pendingConsultingSpec.root];
             const fallbackPanelSpec = this._panel.toPanelSpec(pendingConsultingSpec);
             this._applyPanelListHeadingToContext(fallbackCtx, { kind: 'spec', spec: fallbackPanelSpec });
-            this._drawer.setPanelContent(this._renderUISpec(fallbackPanelSpec, fallbackCtx));
-            this._currentPanelSource = { kind: 'spec', spec: fallbackPanelSpec };
-            this._panel.currentType = fallbackRoot?.type ?? 'ProductGrid';
-            const backendTitle = fallbackRoot?.props?.['panelTitle'] as string | undefined;
-            this._panel.updateTopBar(this._panel.currentType, backendTitle);
-            this._panel.updateExtendedMode(this._panel.currentType);
-            this._drawer.setDividerPreviewEnabled(this._panel.currentType === 'ProductGrid');
+            const fallbackType = fallbackRoot?.type ?? 'ProductGrid';
+            replacePanelSpec(fallbackPanelSpec, fallbackCtx, fallbackType);
+            finalizePanelUpdate(fallbackType, fallbackRoot, 'replace', false);
             panelContentReceived = true;
           }
           pendingConsultingSpec = null;

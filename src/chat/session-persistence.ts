@@ -10,6 +10,7 @@
 import type { GengageIndexedDB, FavoriteData } from '../common/indexed-db.js';
 import type { CommunicationBridge } from '../common/communication-bridge.js';
 import { isSafeUrl } from '../common/safe-html.js';
+import { navigateToUrl } from '../common/navigation.js';
 import type { BackendContext, UISpec } from '../common/types.js';
 import type { ChatMessage, SerializableChatMessage } from './types.js';
 import type { ThumbnailEntry } from './components/ThumbnailsColumn.js';
@@ -155,7 +156,7 @@ export class SessionPersistence {
     // on the gengage:navigate CustomEvent to suppress the fallback navigation.
     bridge?.send('openURLInNewTab', { url });
     if (isSafeUrl(url)) {
-      window.location.href = url;
+      navigateToUrl(url);
     }
   }
 

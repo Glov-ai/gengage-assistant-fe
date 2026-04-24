@@ -2,6 +2,7 @@ import type { UnknownActionPolicy } from './config-schema.js';
 import type { ActionPayload, AddToCartParams, StreamEventAction } from './types.js';
 import { isSafeUrl } from './safe-html.js';
 import { debugLog } from './debug.js';
+import { navigateToUrl } from './navigation.js';
 
 export interface HostActionHandlers {
   openChat?: (payload?: ActionPayload | unknown) => void;
@@ -122,11 +123,7 @@ function defaultNavigate(url: string, newTab?: boolean): void {
     console.warn('[gengage] Blocked navigation to unsafe URL:', url);
     return;
   }
-  if (newTab) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    return;
-  }
-  window.location.href = url;
+  navigateToUrl(url, newTab);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

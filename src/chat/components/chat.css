@@ -8525,16 +8525,6 @@ button.gengage-chat-product-details-rating {
 }
 
 /* ---------------------------------------------------------------------------
- * Panel content crossfade transition
- * ---------------------------------------------------------------------------*/
-@media (prefers-reduced-motion: no-preference) {
-  .gengage-chat-panel--transitioning {
-    opacity: 0;
-    transition: opacity 150ms ease;
-  }
-}
-
-/* ---------------------------------------------------------------------------
  * Cart success toast
  * ---------------------------------------------------------------------------*/
 .gengage-chat-cart-toast {
