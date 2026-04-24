@@ -69,4 +69,25 @@ describe('GengageSimBut', () => {
 
     w.destroy();
   });
+
+  it('sets fallback lang on the owned pill without mutating the merchant mount', async () => {
+    const openWithAction = vi.fn();
+    const chat = { openWithAction } as unknown as import('../src/chat/index.js').GengageChat;
+
+    const w = new GengageSimBut();
+    await w.init({
+      accountId: 'acc',
+      middlewareUrl: 'https://example.com',
+      mountTarget: '#simbut-mount',
+      pageContext: { pageType: 'pdp', sku: 'SKU-3' },
+      locale: '',
+      chat,
+    });
+
+    const btn = mount.querySelector('.gengage-chat-find-similar-pill') as HTMLButtonElement;
+    expect(mount.lang).toBe('');
+    expect(btn.lang).toBe('tr');
+
+    w.destroy();
+  });
 });

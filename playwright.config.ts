@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Playwright forces color in worker/web-server processes; keeping NO_COLOR set
+// makes Node print a warning before every spawned process.
+delete process.env.NO_COLOR;
+
 export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',

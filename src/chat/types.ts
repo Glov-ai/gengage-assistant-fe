@@ -385,6 +385,7 @@ export interface ProductPriceUiConfig {
 }
 
 export interface ChatUISpecRenderContext {
+  locale?: string | undefined;
   onAction: (action: ActionPayload) => void;
   onProductClick?: (params: { sku: string; url: string; name?: string }) => void;
   onAddToCart?: (params: import('../common/types.js').AddToCartParams) => void;

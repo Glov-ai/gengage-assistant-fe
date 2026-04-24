@@ -16,6 +16,7 @@ export interface ActionRouterOptions {
   allowScriptCall?: boolean;
   unknownActionPolicy?: UnknownActionPolicy;
   logger?: Pick<Console, 'warn' | 'error' | 'debug'>;
+  defaultNavigate?: (url: string, newTab?: boolean) => void;
 }
 
 const defaultLogger: Pick<Console, 'warn' | 'error' | 'debug'> = console;
@@ -48,7 +49,7 @@ export function routeStreamAction(
         handlers.navigate({ url: action.url, ...(newTab !== undefined && { newTab }) });
         return;
       }
-      defaultNavigate(action.url, newTab);
+      (options.defaultNavigate ?? defaultNavigate)(action.url, newTab);
       return;
     }
     case 'save_session': {
