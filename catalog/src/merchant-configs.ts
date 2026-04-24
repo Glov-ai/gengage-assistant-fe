@@ -41,7 +41,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       fontFamily: '"Source Sans Pro", "Helvetica Neue", Arial, sans-serif',
       fontSize: '14px',
     },
-    chatHeaderAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-koctascomtr-logo.svg',
+    chatHeaderAvatarUrl: 'https://configs.gengage.ai/koctascomtr/glov-koctascomtr-logo.svg',
     chatI18n: {
       inputPlaceholder: 'Ürün ara, soru sor',
       poweredBy: 'Koçtaş AI Asistan',
@@ -96,7 +96,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       fontFamily: '"Arcelik Sans", "Helvetica Neue", Arial, sans-serif',
       fontSize: '14px',
     },
-    chatHeaderAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-arcelikcomtr-logo.png',
+    chatHeaderAvatarUrl: 'https://configs.gengage.ai/arcelikcomtr/glov-arcelikcomtr-logo.png',
     chatI18n: {
       inputPlaceholder: 'Size nasıl yardımcı olabilirim?',
       poweredBy: 'Arçelik AI Asistan',
@@ -115,7 +115,7 @@ const MERCHANT_CONFIGS: Record<string, MerchantConfig> = {
       fontFamily: '"Nunito Sans", Arial, sans-serif',
       fontSize: '14px',
     },
-    chatHeaderAvatarUrl: 'https://configs.glov.ai/remoteConfig/glov-yatasbeddingcomtr-logo.svg',
+    chatHeaderAvatarUrl: 'https://configs.gengage.ai/yatasbeddingcomtr/glov-yatasbeddingcomtr-logo.svg',
     chatI18n: {
       inputPlaceholder: 'Yatak, baza veya ürün arayın',
       poweredBy: 'Yataş AI Asistan',
