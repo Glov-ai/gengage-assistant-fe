@@ -64,6 +64,8 @@ export interface SimRelWidgetConfig extends BaseWidgetConfig {
    * Dar ekranlarda (≤768px) yatay kaydırmalı carousel davranışı korunur.
    */
   gridColumns?: number;
+  /** Client-side abort cap for similar-products and grouping requests. Defaults to 120 seconds. */
+  requestTimeoutMs?: number;
   domain?: string;
   /** Locale key for SDK defaults (for example 'tr', 'en'). */
   locale?: string;

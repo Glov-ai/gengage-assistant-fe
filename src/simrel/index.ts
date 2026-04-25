@@ -34,6 +34,12 @@ import * as ga from '../common/ga-datalayer.js';
 
 import './components/simrel.css';
 
+const DEFAULT_SIMREL_REQUEST_TIMEOUT_MS = 120_000;
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
 /**
  * Similar / related products widget for product pages.
  * Fetches AI-powered product recommendations and renders them as a scrollable grid.
@@ -176,16 +182,30 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     return this._abortController?.signal !== signal;
   }
 
+  private _resolveRequestTimeoutMs(): number {
+    const configured = this.config.requestTimeoutMs;
+    if (typeof configured !== 'number' || !Number.isFinite(configured) || configured <= 0) {
+      return DEFAULT_SIMREL_REQUEST_TIMEOUT_MS;
+    }
+    return Math.floor(configured);
+  }
+
   private async _fetchAndRender(sku: string): Promise<void> {
     this._abort();
-    this._abortController = new AbortController();
+    const controller = new AbortController();
+    this._abortController = controller;
     // Capture signal reference at invocation time to avoid race conditions:
     // if onUpdate fires between awaits, `this._abortController` gets swapped
     // but `signal` still refers to this invocation's controller.
-    const signal = this._abortController.signal;
-    // Auto-abort after 10s to prevent indefinite loading state
-    const timeoutId = setTimeout(() => this._abortController?.abort(), 10_000);
-    signal.addEventListener('abort', () => clearTimeout(timeoutId));
+    const signal = controller.signal;
+    let requestTimedOut = false;
+    // Cold similarity can legitimately run close to the backend cap; keep a client-side
+    // guard, but do not let it be shorter than the service path we are protecting.
+    const timeoutId = setTimeout(() => {
+      requestTimedOut = true;
+      controller.abort();
+    }, this._resolveRequestTimeoutMs());
+    signal.addEventListener('abort', () => clearTimeout(timeoutId), { once: true });
 
     if (!this._contentEl) return;
     this._contentEl.innerHTML = '';
@@ -335,24 +355,29 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         }),
       );
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError' && this._isSuperseded(signal)) return;
+      const abortError = isAbortError(err);
+      if (abortError && this._isSuperseded(signal)) return;
+
+      const errorCode = abortError && requestTimedOut ? 'REQUEST_TIMEOUT' : 'FETCH_ERROR';
+      const errorMessage =
+        abortError && requestTimedOut ? 'request_timeout' : err instanceof Error ? err.message : String(err);
 
       dispatch('gengage:global:error', {
         source: 'simrel',
-        code: 'FETCH_ERROR',
+        code: errorCode,
         message: getGlobalErrorMessage(this.config.locale, err),
       });
 
       this.track(
         streamErrorEvent(this.analyticsContext(), {
           request_id: requestId,
-          error_code: 'FETCH_ERROR',
-          error_message: err instanceof Error ? err.message : String(err),
+          error_code: errorCode,
+          error_message: errorMessage,
           widget: 'simrel',
         }),
       );
 
-      if (import.meta.env?.DEV) {
+      if (import.meta.env?.DEV && errorCode !== 'REQUEST_TIMEOUT') {
         console.error('[gengage:simrel] Failed to fetch similar products:', err);
       }
       // Show inline error with retry instead of hiding silently
@@ -373,6 +398,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
         this._contentEl.appendChild(errorEl);
       }
     } finally {
+      clearTimeout(timeoutId);
       releaseConnectionWarning();
     }
   }
