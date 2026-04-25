@@ -35,6 +35,10 @@ interface BrandAvatarOptions {
 }
 
 const DEMO_SHELL_FETCH_TIMEOUT_MS = 8000;
+const DEMO_SHELL_CURRENCY_ALIASES: Record<string, string> = {
+  TL: 'TRY',
+  '₺': 'TRY',
+};
 
 function escapeXml(value: string): string {
   return value
@@ -195,17 +199,25 @@ function collectHighlights(product: DemoShellProduct): string[] {
 }
 
 function priceLocale(currency?: string, preferred?: string): string {
+  const currencyCode = normalizeCurrencyCode(currency);
   if (preferred) return preferred;
-  if (currency === 'GBP') return 'en-GB';
-  if (currency === 'USD') return 'en-US';
+  if (currencyCode === 'GBP') return 'en-GB';
+  if (currencyCode === 'USD') return 'en-US';
   return 'tr-TR';
+}
+
+function normalizeCurrencyCode(currency?: string): string {
+  const normalized = (currency ?? 'TRY').trim().toUpperCase();
+  // Some catalog payloads send shopper-facing labels, but Intl requires ISO 4217 codes.
+  return DEMO_SHELL_CURRENCY_ALIASES[normalized] ?? normalized;
 }
 
 function formatMoney(value: number | undefined, currency = 'TRY', preferredLocale?: string): string {
   if (value == null || Number.isNaN(value)) return '';
-  return new Intl.NumberFormat(priceLocale(currency, preferredLocale), {
+  const currencyCode = normalizeCurrencyCode(currency);
+  return new Intl.NumberFormat(priceLocale(currencyCode, preferredLocale), {
     style: 'currency',
-    currency,
+    currency: currencyCode,
     maximumFractionDigits: 2,
   }).format(value);
 }

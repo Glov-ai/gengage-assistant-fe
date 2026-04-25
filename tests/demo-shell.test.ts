@@ -126,6 +126,29 @@ describe('demo-shell helpers', () => {
     expect(document.querySelector('.content-card p')?.textContent).toBe('');
   });
 
+  it('normalizes Turkish display currency labels before formatting prices', () => {
+    applyDemoProductToHostShell(
+      {
+        sku: 'TL-1',
+        name: 'Turkish Currency Product',
+        price: 1299.9,
+        price_discounted: 999.9,
+        price_currency: 'TL',
+      },
+      {
+        accountId: 'arcelikcomtr',
+        sku: 'TL-1',
+        middlewareUrl: 'http://localhost:7860',
+        brandName: 'Arcelik',
+      },
+    );
+
+    expect(document.querySelector('.price-main')?.textContent).toContain('999');
+    expect(document.querySelector('.price-main')?.textContent).not.toBe('XXX TL');
+    expect(document.querySelector('.price-old')?.textContent).toContain('1.299');
+    expect(document.querySelector('.price-old')?.textContent).not.toBe('YYY TL');
+  });
+
   it('hydrates product details from the middleware stream', async () => {
     sessionStorage.setItem('gengage_session_id', 'shared-demo-session');
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
