@@ -16,6 +16,7 @@ describe('GengageSimRel timeout fallback', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     document.body.innerHTML = '';
   });
@@ -53,6 +54,7 @@ describe('GengageSimRel timeout fallback', () => {
       sku: 'SKU-ORIGIN',
       mountTarget: '#simrel-mount',
       locale: 'tr',
+      requestTimeoutMs: 10_000,
     });
 
     await vi.advanceTimersByTimeAsync(10_100);
@@ -60,6 +62,38 @@ describe('GengageSimRel timeout fallback', () => {
 
     expect(mount.querySelector('.gengage-simrel-card')).toBeTruthy();
     expect(mount.textContent).toContain('Arcelik Klima');
+  });
+
+  it('does not log expected request timeouts as console errors', async () => {
+    const mount = document.createElement('div');
+    mount.id = 'simrel-mount';
+    document.body.appendChild(mount);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    vi.mocked(fetchSimilarProducts).mockImplementation(
+      (_request, _transport, signal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            reject(new DOMException('Timed out', 'AbortError'));
+          });
+        }),
+    );
+
+    const widget = new GengageSimRel();
+    const initPromise = widget.init({
+      accountId: 'assistant-id',
+      middlewareUrl: 'https://example.test/api/assistant-id',
+      sku: 'SKU-ORIGIN',
+      mountTarget: '#simrel-mount',
+      locale: 'tr',
+      requestTimeoutMs: 50,
+    });
+
+    await vi.advanceTimersByTimeAsync(60);
+    await initPromise;
+
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(mount.querySelector('.gengage-simrel-error')).toBeTruthy();
   });
 
   it('renders the flat product grid when groupings resolve without usable products', async () => {
