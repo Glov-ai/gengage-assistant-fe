@@ -1299,9 +1299,7 @@ function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec
       .filter(isNonNullable);
     const groupImage =
       firstNonEmptyString(grouping.image) ??
-      firstNonEmptyString(
-        ...normalizedProducts.map((product) => product['imageUrl']),
-      );
+      firstNonEmptyString(...normalizedProducts.map((product) => product['imageUrl']));
     if (label && normalizedProducts.length > 0) {
       const group = { groupName: label, products: normalizedProducts } as {
         groupName: string;
