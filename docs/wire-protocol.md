@@ -785,9 +785,12 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
 
 When `group_products` contains products, the frontend normalizes each group to
 a panel-native `CategoriesContainer` and sets `panelHint: "panel"`. The
-group-level `requestDetails` is optional for this panel path. When
-`group_products` is absent or empty, the frontend falls back to `AIGroupingCards`
-and uses `requestDetails`, `sku`, or `repr_sku` for the card action.
+group-level `requestDetails` is optional for this panel path. Product-backed
+payloads should be all-or-nothing; in a mixed payload, product-backed groups
+take precedence and action-only groups are not rendered for that event. When
+`group_products` is absent or empty across the payload, the frontend falls back
+to `AIGroupingCards` and uses `requestDetails`, `sku`, or `repr_sku` for the
+card action.
 
 ### `aiSuggestedSearches` — Upsell search suggestions
 

@@ -421,6 +421,10 @@ panel-native `CategoriesContainer` with `panelHint: "panel"`. Group-level
 `requestDetails` is optional for this path because product cards dispatch their
 own product actions.
 
+Product-backed `aiProductGroupings` payloads should be all-or-nothing. If a
+mixed payload is received, product-backed groups take precedence and action-only
+groups are not rendered for that event.
+
 When `group_products` is absent or empty, the adapter keeps the legacy
 `AIGroupingCards` chat-pane UI and uses `requestDetails`, `sku`, or `repr_sku`
 to build the card click action.

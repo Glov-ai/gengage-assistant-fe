@@ -1312,6 +1312,9 @@ function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec
     entries.push(entry);
   }
 
+  // Product-backed groups are panel-native content. Mixed payloads should be
+  // avoided by the backend; if they occur, product-backed groups take precedence
+  // over action-card entries for this event.
   if (groups.length > 0) {
     return {
       type: 'ui_spec',

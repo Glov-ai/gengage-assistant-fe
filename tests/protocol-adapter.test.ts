@@ -539,6 +539,47 @@ describe('adaptBackendEvent', () => {
     expect(groups![0]!.products[0]?.imageUrl).toBe('https://example.com/watch.jpg');
   });
 
+  it('prefers product-backed grouped panel content for mixed aiProductGroupings payloads', () => {
+    const groupings = adaptBackendEvent({
+      type: 'aiProductGroupings',
+      payload: {
+        product_groupings: [
+          {
+            name: 'Product-backed group',
+            group_products: [
+              {
+                sku: 'WATCH-1',
+                name: 'Classic Watch',
+                images: ['https://example.com/watch.jpg'],
+                price: 1250,
+                url: 'https://example.com/watch-1',
+              },
+            ],
+          },
+          {
+            name: 'Action-only group',
+            requestDetails: { type: 'findSimilar', payload: { sku: 'WATCH-2' } },
+          },
+        ],
+      },
+    }) as {
+      type: string;
+      panelHint?: string;
+      spec?: { elements: Record<string, { type: string; props?: Record<string, unknown> }> };
+    };
+
+    expect(groupings.type).toBe('ui_spec');
+    expect(groupings.panelHint).toBe('panel');
+    expect(groupings.spec?.elements['root']?.type).toBe('CategoriesContainer');
+
+    const groups = groupings.spec?.elements['root']?.props?.['groups'] as
+      | Array<{ groupName: string; products: Array<{ sku?: string }> }>
+      | undefined;
+    expect(groups).toHaveLength(1);
+    expect(groups![0]!.groupName).toBe('Product-backed group');
+    expect(groups![0]!.products[0]?.sku).toBe('WATCH-1');
+  });
+
   it('adapts aiSuggestedSearches to AISuggestedSearchCards ui_spec', () => {
     const searches = adaptBackendEvent({
       type: 'aiSuggestedSearches',
