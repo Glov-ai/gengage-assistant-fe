@@ -1270,6 +1270,7 @@ function adaptAiProductSuggestions(event: V1AiProductSuggestions): StreamEventUI
 
 function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec | StreamEventMetadata {
   const payloadGroupings = event.payload.product_groupings ?? [];
+  const groups: Array<{ groupName: string; image?: string; products: Record<string, unknown>[] }> = [];
   const entries: Array<Record<string, unknown>> = [];
 
   for (let i = 0; i < payloadGroupings.length; i++) {
@@ -1288,6 +1289,47 @@ function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec
     }
     if (typeof grouping.image === 'string') entry['image'] = grouping.image;
     entries.push(entry);
+
+    const rawProducts = Array.isArray(grouping.group_products) ? grouping.group_products : [];
+    const normalizedProducts = rawProducts
+      .map((product) => {
+        const record = asRecord(product);
+        return record ? (productRecordToNormalized(record) as unknown as Record<string, unknown>) : null;
+      })
+      .filter(isNonNullable);
+    const groupImage =
+      firstNonEmptyString(grouping.image) ??
+      firstNonEmptyString(
+        ...normalizedProducts.map((product) => product['imageUrl']),
+      );
+    if (label && normalizedProducts.length > 0) {
+      const group = { groupName: label, products: normalizedProducts } as {
+        groupName: string;
+        image?: string;
+        products: Record<string, unknown>[];
+      };
+      if (groupImage) group.image = groupImage;
+      groups.push(group);
+    }
+  }
+
+  if (groups.length > 0) {
+    return {
+      type: 'ui_spec',
+      widget: 'chat',
+      spec: {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'CategoriesContainer',
+            props: {
+              groups,
+            },
+          },
+        },
+      },
+      panelHint: 'panel',
+    };
   }
 
   if (entries.length === 0) {

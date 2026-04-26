@@ -267,6 +267,7 @@ export const CategoriesContainerSchema = z.object({
     .array(
       z.object({
         groupName: z.string(),
+        image: z.string().optional(),
         products: z.array(z.record(z.string(), z.unknown())).optional(),
       }),
     )

@@ -17,6 +17,7 @@ import { addImageErrorHandler } from '../../common/product-utils.js';
 
 interface GroupData {
   groupName: string;
+  image?: string;
   products: NormalizedProduct[];
 }
 
@@ -71,7 +72,20 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
     tab.setAttribute('aria-selected', String(i === 0));
     tab.tabIndex = i === 0 ? 0 : -1;
     if (i === 0) tab.classList.add('gengage-chat-categories-tab--active', 'is-active');
-    tab.textContent = group.groupName;
+    if (group.image && isSafeImageUrl(group.image)) {
+      const thumb = document.createElement('img');
+      thumb.className = 'gengage-chat-categories-tab-image';
+      thumb.src = group.image;
+      thumb.alt = group.groupName;
+      thumb.loading = 'lazy';
+      addImageErrorHandler(thumb);
+      tab.appendChild(thumb);
+    }
+
+    const title = document.createElement('span');
+    title.className = 'gengage-chat-categories-tab-text';
+    title.textContent = group.groupName;
+    tab.appendChild(title);
 
     tab.addEventListener('click', () => activateTab(i));
     tab.addEventListener('keydown', (e: KeyboardEvent) => {
