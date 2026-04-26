@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { PanelManager } from '../src/chat/panel-manager.js';
+import { ExtendedModeManager } from '../src/chat/extendedModeManager.js';
 import { CHAT_I18N_TR } from '../src/chat/locales/index.js';
 
-function createPanelManager(): PanelManager {
+function createPanelManager(overrides: Partial<ConstructorParameters<typeof PanelManager>[0]> = {}): PanelManager {
   return new PanelManager({
     drawer: () => null,
     shadow: () => null,
@@ -11,6 +12,7 @@ function createPanelManager(): PanelManager {
     extendedModeManager: () => null,
     i18n: () => CHAT_I18N_TR,
     rollbackToThread: () => {},
+    ...overrides,
   });
 }
 
@@ -30,5 +32,19 @@ describe('PanelManager', () => {
     panel.lastActionType = 'findSimilar';
 
     expect(panel.titleForComponent('ProductGrid')).toBe(CHAT_I18N_TR.panelTitleSimilarProducts);
+  });
+
+  it('treats CategoriesContainer as category panel content', () => {
+    const changes: boolean[] = [];
+    const extended = new ExtendedModeManager({ onChange: (extendedState) => changes.push(extendedState) });
+    const panel = createPanelManager({ extendedModeManager: () => extended });
+
+    expect(panel.titleForComponent('CategoriesContainer')).toBe(CHAT_I18N_TR.panelTitleCategories);
+
+    extended.unlock();
+    extended.setChatShown(true);
+    panel.updateExtendedMode('CategoriesContainer');
+
+    expect(changes).toEqual([true]);
   });
 });

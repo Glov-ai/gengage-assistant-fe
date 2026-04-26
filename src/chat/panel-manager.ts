@@ -146,6 +146,7 @@ export class PanelManager {
       case 'ComparisonTable':
         return i18n.panelTitleComparisonResults;
       case 'AIGroupingCards':
+      case 'CategoriesContainer':
         return i18n.panelTitleCategories;
       default:
         return '';
@@ -198,6 +199,7 @@ export class PanelManager {
     const mapping: Record<string, PanelContentType> = {
       ComparisonTable: 'comparisonTable',
       AIGroupingCards: 'groupList',
+      CategoriesContainer: 'groupList',
       ProductDetailsPanel: 'productDetails',
       ProductGrid: 'productList',
     };
