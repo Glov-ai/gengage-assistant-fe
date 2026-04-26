@@ -309,6 +309,9 @@ interface V1AiProductGrouping {
   image?: string;
   labels?: string[];
   sku?: string;
+  repr_sku?: string;
+  repr_image?: string;
+  group_products?: V1Product[];
   requestDetails?: V1RequestDetails;
   [key: string]: unknown;
 }
@@ -1270,15 +1273,34 @@ function adaptAiProductSuggestions(event: V1AiProductSuggestions): StreamEventUI
 
 function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec | StreamEventMetadata {
   const payloadGroupings = event.payload.product_groupings ?? [];
+  const groups: Array<{ groupName: string; image?: string; products: Record<string, unknown>[] }> = [];
   const entries: Array<Record<string, unknown>> = [];
 
   for (let i = 0; i < payloadGroupings.length; i++) {
     const grouping = payloadGroupings[i];
     if (!grouping) continue;
     const label = firstNonEmptyString(grouping.name) ?? '';
+    const representativeSku = firstNonEmptyString(grouping.sku, grouping.repr_sku);
+    const representativeImage = firstNonEmptyString(grouping.image, grouping.repr_image);
     const fallbackRequest: V1RequestDetails | undefined =
-      grouping.sku && grouping.sku.length > 0 ? { type: 'findSimilar', payload: { sku: grouping.sku } } : undefined;
+      representativeSku !== undefined ? { type: 'findSimilar', payload: { sku: representativeSku } } : undefined;
     const action = requestDetailsToAction(grouping.requestDetails ?? fallbackRequest, label);
+
+    const rawProducts = Array.isArray(grouping.group_products) ? grouping.group_products : [];
+    const normalizedProducts = rawProducts
+      .map((product) => {
+        const record = asRecord(product);
+        return record ? (productRecordToNormalized(record) as unknown as Record<string, unknown>) : null;
+      })
+      .filter(isNonNullable);
+    const groupImage =
+      representativeImage ?? firstNonEmptyString(...normalizedProducts.map((product) => product['imageUrl']));
+    if (label && normalizedProducts.length > 0) {
+      const group: (typeof groups)[number] = { groupName: label, products: normalizedProducts };
+      if (groupImage) group.image = groupImage;
+      groups.push(group);
+    }
+
     if (!action) continue;
 
     const entry: Record<string, unknown> = { name: label, action };
@@ -1286,8 +1308,30 @@ function adaptAiProductGroupings(event: V1AiProductGroupings): StreamEventUISpec
       const filteredLabels = grouping.labels.filter((x) => typeof x === 'string');
       if (filteredLabels.length > 0) entry['labels'] = filteredLabels;
     }
-    if (typeof grouping.image === 'string') entry['image'] = grouping.image;
+    if (representativeImage !== undefined) entry['image'] = representativeImage;
     entries.push(entry);
+  }
+
+  // Product-backed groups are panel-native content. Mixed payloads should be
+  // avoided by the backend; if they occur, product-backed groups take precedence
+  // over action-card entries for this event.
+  if (groups.length > 0) {
+    return {
+      type: 'ui_spec',
+      widget: 'chat',
+      spec: {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'CategoriesContainer',
+            props: {
+              groups,
+            },
+          },
+        },
+      },
+      panelHint: 'panel',
+    };
   }
 
   if (entries.length === 0) {

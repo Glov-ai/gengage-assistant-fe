@@ -48,7 +48,8 @@ These response types render in the Panel (desktop) or as compact mobile variants
 comparisonTable, groupList, productDetails, productDetailsSimilars, productList
 ```
 
-All other response types render exclusively in the chat pane.
+`aiProductGroupings` also renders as panel content when the payload includes
+`group_products`; otherwise it renders exclusively in the chat pane.
 
 ---
 
@@ -65,7 +66,7 @@ All other response types render exclusively in the chat pane.
 | `groupList` | Horizontal scroll (mobile only) | Tabbed category grid | Chat pane only |
 | `comparisonTable` | Compact compare (mobile only) | Full comparison table | Chat pane only |
 | `aiProductSuggestions` | AI Top Picks cards | — | Same |
-| `aiProductGroupings` | Category group cards | — | Same |
+| `aiProductGroupings` | Category group cards | Tabbed category grid when `group_products` is present | Chat pane only |
 | `aiSuggestedSearches` | Upsell suggestion cards | — | Same |
 | `getGroundingReview` | Clickable review prompt | — | Same |
 | `loading` | Loading indicator (conditional) | — | Same |
@@ -411,9 +412,22 @@ reason, expert_quality_score, review_highlight, product_item, requestDetails }`)
 
 ---
 
-### `aiProductGroupings` — Category group cards
+### `aiProductGroupings` — Category groups
 
-**Payload fields used**: `product_groupings` (array of `{ name, image, labels, sku, requestDetails }`)
+**Payload fields used**: `product_groupings` (array of `{ name, image, repr_image, labels, sku, repr_sku, requestDetails, group_products }`)
+
+When a group includes non-empty `group_products`, the adapter renders a
+panel-native `CategoriesContainer` with `panelHint: "panel"`. Group-level
+`requestDetails` is optional for this path because product cards dispatch their
+own product actions.
+
+Product-backed `aiProductGroupings` payloads should be all-or-nothing. If a
+mixed payload is received, product-backed groups take precedence and action-only
+groups are not rendered for that event.
+
+When `group_products` is absent or empty, the adapter keeps the legacy
+`AIGroupingCards` chat-pane UI and uses `requestDetails`, `sku`, or `repr_sku`
+to build the card click action.
 
 ```
 ┌─────────────────────────────────┐

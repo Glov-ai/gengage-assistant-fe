@@ -405,7 +405,7 @@ The backend streams these types. Each line is a complete JSON object followed by
 | `suggestedActions` | Action buttons/chips | ChatPane pills + input area |
 | `reviewHighlights` | Review highlights with sentiment classification | ChatPane cards |
 | `aiProductSuggestions` | AI top picks (evaluate mode) — winner/compact cards | ChatPane rich cards |
-| `aiProductGroupings` | AI product groups (explore/hybrid mode) | ChatPane cards |
+| `aiProductGroupings` | AI product groups (explore/hybrid mode) | ChatPane cards, or MainPane tabbed grid when `group_products` is present |
 | `aiSuggestedSearches` | Upsell search suggestions | ChatPane cards |
 | `getGroundingReview` | Review grounding prompt card | ChatPane clickable card |
 | `voice` | TTS audio (base64) | Audio playback |
@@ -756,6 +756,7 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
       {
         "name": "Budget-Friendly Options",
         "image": "https://...",
+        "repr_image": "https://...",
         "labels": ["Under 5000 TL", "Good value"],
         "sku": "SKU123",
         "requestDetails": {
@@ -766,12 +767,30 @@ Only shown for the current thread and only if `!hideSuggestedActions`.
             "last_search_max_budget": 5000,
             "group_skus": ["SKU123", "SKU456", "SKU789"]
           }
-        }
+        },
+        "group_products": [
+          {
+            "sku": "SKU123",
+            "name": "Example Watch",
+            "images": ["https://..."],
+            "price": 12999,
+            "url": "https://..."
+          }
+        ]
       }
     ]
   }
 }
 ```
+
+When `group_products` contains products, the frontend normalizes each group to
+a panel-native `CategoriesContainer` and sets `panelHint: "panel"`. The
+group-level `requestDetails` is optional for this panel path. Product-backed
+payloads should be all-or-nothing; in a mixed payload, product-backed groups
+take precedence and action-only groups are not rendered for that event. When
+`group_products` is absent or empty across the payload, the frontend falls back
+to `AIGroupingCards` and uses `requestDetails`, `sku`, or `repr_sku` for the
+card action.
 
 ### `aiSuggestedSearches` — Upsell search suggestions
 
@@ -1169,13 +1188,13 @@ The backend streams the event types listed above. The wire protocol adapter
 | `outputText` | `text_chunk` (with `final: true`) |
 | `suggestedActions` | `ui_spec` (ActionButtons) |
 | `productList` | `ui_spec` (ProductGrid) |
-| `groupList` | `ui_spec` (ProductGrid with groups) |
+| `groupList` | `ui_spec` (CategoriesContainer) with `panelHint: 'panel'` |
 | `productDetails` | `ui_spec` (ProductDetailsPanel) with `panelHint: 'panel'` |
 | `productDetailsSimilars` | `ui_spec` (SimilarProducts) — patches in-flight |
 | `comparisonTable` | `ui_spec` (ComparisonTable) with `panelHint: 'panel'` |
 | `reviewHighlights` | `ui_spec` (ReviewHighlights) |
 | `aiProductSuggestions` | `ui_spec` (AITopPicks) |
-| `aiProductGroupings` | `ui_spec` (ActionButtons) |
+| `aiProductGroupings` | `ui_spec` (CategoriesContainer) with `panelHint: 'panel'` when `group_products` is present; otherwise `ui_spec` (AIGroupingCards) |
 | `aiSuggestedSearches` | `ui_spec` (ActionButtons) |
 | `getGroundingReview` | `ui_spec` (ActionButton) |
 | `prosAndCons` | `ui_spec` (ProsAndCons) |
