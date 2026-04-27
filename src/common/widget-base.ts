@@ -254,8 +254,11 @@ function toKebab(str: string): string {
 // ---------------------------------------------------------------------------
 
 export interface ChatPublicAPI {
-  open(options?: { state?: 'full' | 'half'; initialMessage?: string }): void;
-  openWithAction(action: import('./types.js').ActionPayload, options?: { sku?: string; state?: 'full' | 'half' }): void;
+  open(options?: { state?: 'full' | 'half'; initialMessage?: string; source?: string }): void;
+  openWithAction(
+    action: import('./types.js').ActionPayload,
+    options?: { sku?: string; state?: 'full' | 'half'; source?: string },
+  ): void;
   /** Send a user message programmatically (same as typing + submit). */
   sendMessage(text: string): void;
   /** Send a backend action programmatically. */

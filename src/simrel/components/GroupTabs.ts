@@ -13,6 +13,11 @@ export interface GroupTabsOptions {
   i18n?: SimRelI18n;
   /** ProductGrid `columns` — masaüstü satır başına kart sayısı. */
   columns?: number;
+  /**
+   * Fired when the user clicks a tab/group button to switch the active
+   * grouping. Not fired for the initial render or programmatic activation.
+   */
+  onGroupClick?: (group: ProductGroup, index: number) => void;
 }
 
 let _groupTabsInstanceCounter = 0;
@@ -93,7 +98,10 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     tab.tabIndex = i === 0 ? 0 : -1;
     if (i === 0) tab.classList.add('gengage-simrel-tab--active');
 
-    tab.addEventListener('click', () => activateTab(i));
+    tab.addEventListener('click', () => {
+      activateTab(i);
+      options.onGroupClick?.(group, i);
+    });
     tab.addEventListener('keydown', (e: KeyboardEvent) => {
       let next = -1;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -108,6 +116,8 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
       if (next >= 0) {
         e.preventDefault();
         activateTab(next);
+        const nextGroup = options.groups[next]!;
+        options.onGroupClick?.(nextGroup, next);
         tabs[next]!.focus();
       }
     });

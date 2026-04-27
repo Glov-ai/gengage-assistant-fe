@@ -118,6 +118,8 @@ export interface SimRelI18n {
 export interface SimRelUISpecRenderContext {
   onClick: (product: SimilarProduct) => void;
   onAddToCart: (params: import('../common/types.js').AddToCartParams) => void;
+  /** Fired when the user changes the active grouping/filter tab. */
+  onGroupClick?: (group: { name: string; index: number }) => void;
   onAction?: (action: ActionPayload) => void;
   discountType?: 'strike-through' | 'badge';
   renderCard?: (product: SimilarProduct, index: number) => string;

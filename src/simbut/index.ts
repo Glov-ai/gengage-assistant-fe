@@ -85,7 +85,7 @@ export class GengageSimBut extends BaseWidget<SimButWidgetConfig> {
         type: 'findSimilar' as const,
         payload: imageUrl ? { sku, image_url: imageUrl } : { sku },
       };
-      chat.openWithAction(action, { sku });
+      chat.openWithAction(action, { sku, source: 'simbut' });
     });
 
     this.root.appendChild(btn);

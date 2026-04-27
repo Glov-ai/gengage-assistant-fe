@@ -207,6 +207,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _openState: 'full' | 'half' = 'full';
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
+  /**
+   * Source label for the next `onShow()` invocation (`'launcher'`, `'qna'`,
+   * `'simbut'`, `'programmatic'`, …). Cleared after each open so subsequent
+   * opens fall back to `'launcher'`.
+   */
+  private _lastOpenSource: string | null = null;
   private _pdpLaunched = false;
   private _plpLaunched = false;
   private _homepageLaunched = false;
@@ -356,7 +362,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     if (variant === 'floating') {
       const launcherOpts: import('./components/Launcher.js').LauncherOptions = {
-        onClick: () => this.open(),
+        onClick: () => { ga.trackShow('chat'); this.open(); },
         ariaLabel: this._i18n.openButton,
       };
       if (config.launcherImageUrl !== undefined) launcherOpts.imageUrl = config.launcherImageUrl;
@@ -579,6 +585,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     dispatch('gengage:chat:ready', {});
     ga.trackInit('chat');
+    ga.trackGlovOn();
     config.onReady?.();
   }
 
@@ -619,7 +626,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._showDrawer();
     this.emit('open');
     dispatch('gengage:chat:open', { state: this._openState });
-    ga.trackShow('chat');
+    ga.trackChatbotOpened(this._lastOpenSource ?? 'launcher');
+    this._lastOpenSource = null;
     this.config.onOpen?.();
 
     // Show welcome message on first open with empty history.
@@ -731,12 +739,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   // Public API
   // ---------------------------------------------------------------------------
 
-  open(options?: { state?: 'full' | 'half'; initialMessage?: string }): void {
+  open(options?: { state?: 'full' | 'half'; initialMessage?: string; source?: string }): void {
     if (options?.state !== undefined) {
       this._openState = options.state;
       if (this._drawerVisible) {
         this._applyOpenStateClasses();
       }
+    }
+    if (options?.source !== undefined) {
+      this._lastOpenSource = options.source;
     }
     this.show();
     if (options?.initialMessage !== undefined) {
@@ -744,7 +755,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     }
   }
 
-  openWithAction(action: ActionPayload, options?: { sku?: string; state?: 'full' | 'half' }): void {
+  openWithAction(action: ActionPayload, options?: { sku?: string; state?: 'full' | 'half'; source?: string }): void {
     if (options?.sku !== undefined) {
       this.update({ sku: options.sku });
     }
@@ -756,6 +767,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     } else if (this._isMobileViewport) {
       this._openState = 'half';
     }
+    this._lastOpenSource = options?.source ?? 'qna';
     this.show();
     if (this._drawerVisible) {
       this._applyOpenStateClasses();
@@ -1755,6 +1767,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     };
 
     if (action.type === 'getComparisonTable') {
+      if (!this._drawer?.isPanelVisible()) ga.trackChatbotMaximized();
       this._drawer?.showPanelLoading('comparisonTable');
       this._panel?.updateTopBarForLoading('comparisonTable');
     }
@@ -1956,9 +1969,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._comparisonSelectedSkus = [];
       this._comparisonSelectionWarning = null;
       this._drawer.setComparisonDockContent(null);
+      const panelWasHidden = !this._drawer.isPanelVisible();
       this._drawer.setPanelContent(this._renderUISpec(panelSpec, renderContext), {
         preserveAiZone: shouldPreserveAiZoneForPanelReplace(componentType),
       });
+      if (panelWasHidden) ga.trackChatbotMaximized();
       this._currentPanelSource = { kind: 'spec', spec: panelSpec };
       this._panel.currentType = componentType;
     };
@@ -2411,6 +2426,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               onCtaClick: () => {
                 this._comparisonSelectMode = true;
                 this._choicePrompterEl = null;
+                ga.trackCompareProduct('choice-prompter');
                 this._refreshComparisonUI();
               },
               onDismiss: () => {
@@ -2566,6 +2582,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
                 // Snapshot current panel before replacing with skeleton
                 capturePanelSourceIfNeeded();
                 if (this._panel) this._panel.currentType = null;
+                if (!this._drawer?.isPanelVisible()) ga.trackChatbotMaximized();
                 this._drawer?.showPanelLoading(pendingType);
                 // Set panel topbar title immediately so it's not an empty white bar
                 if (pendingType) {
@@ -2615,6 +2632,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
               panelContentReceived = false;
               capturePanelSourceIfNeeded();
               if (this._panel) this._panel.currentType = null;
+              if (!this._drawer?.isPanelVisible()) ga.trackChatbotMaximized();
               this._drawer?.showPanelLoading();
               // Default to product details title during analyze
               this._panel?.updateTopBarForLoading('productDetails');
@@ -3456,6 +3474,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._comparisonSelectMode = !this._comparisonSelectMode;
       this._comparisonSelectionWarning = null;
       if (this._comparisonSelectMode) {
+        ga.trackCompareProduct('toggle');
         recordChoicePrompterDismissedForThread(this._currentThreadId ?? '');
         this._clearChoicePrompter();
       }
@@ -3730,6 +3749,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           ga.trackFindSimilars(sku);
         }
         if (action.type === 'getComparisonTable') {
+          ga.trackCompareProduct('dock');
           ga.trackCompareSelected(this._comparisonSelectedSkus);
         }
         // addToCart/like actions should preserve the current panel (product cards stay visible)

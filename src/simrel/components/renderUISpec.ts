@@ -149,6 +149,11 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
       onAddToCart: context.onAddToCart,
       i18n: context.i18n,
     };
+    if (context.onGroupClick) {
+      options.onGroupClick = (group, index) => {
+        context.onGroupClick?.({ name: group.name, index });
+      };
+    }
     const tabGridCols = element.props?.['columns'];
     if (typeof tabGridCols === 'number' && Number.isFinite(tabGridCols) && tabGridCols > 0) {
       options.columns = Math.floor(tabGridCols);

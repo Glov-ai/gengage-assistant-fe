@@ -41,6 +41,8 @@ vi.mock('../src/common/ga-datalayer.js', () => ({
   trackInit: vi.fn(),
   trackShow: vi.fn(),
   trackCompareClear: vi.fn(),
+  trackGlovOn: vi.fn(),
+  trackInterfaceNotReady: vi.fn(),
 }));
 
 import {

@@ -168,46 +168,79 @@ function that removes all listeners.
 
 ### GA Event Names
 
-All events are lowercase, hyphen-separated, and prefixed with `gengage-` for easy filtering
-in GA dashboards:
+The SDK emits two parallel naming conventions for every legacy event so dashboards can be
+migrated without losing data:
 
-| GA Event | Description | Key Parameters |
-|----------|-------------|----------------|
-| `gengage-on-init` | Widget initialized | `gengage_widget` |
-| `gengage-show` | Chat opened / widget shown | `gengage_widget` |
-| `gengage-hide` | Chat closed / widget hidden | `gengage_widget` |
-| `gengage-search` | User search query | `gengage_search_query`, `gengage_result_count` |
-| `gengage-product-detail` | Product detail viewed | `gengage_sku`, `gengage_product_name` |
-| `gengage-cart-add` | Product added to cart | `gengage_sku`, `gengage_quantity` |
-| `gengage-like-product` | Favorite heart toggled | `gengage_sku` |
-| `gengage-like-list` | Favorites list opened | — |
-| `gengage-find-similars` | Find-similar requested from chat or SimBut | `gengage_sku` |
-| `gengage-compare-selected` | Compare selected products | `gengage_skus`, `gengage_product_count` |
-| `gengage-compare-preselection` | Product pre-selected for compare | `gengage_sku` |
-| `gengage-compare-clear` | Comparison selection cleared | — |
-| `gengage-compare-received` | Comparison results rendered | `gengage_product_count` |
-| `gengage-suggested-question` | Suggested action clicked | `gengage_question_title`, `gengage_action_type` |
-| `gengage-message-sent` | User sent a chat message | — |
-| `gengage-message-received` | Assistant responded | — |
-| `gengage-conversation-start` | New conversation started | — |
-| `gengage-voice-input` | Voice speech-to-text used | — |
-| `gengage-error` | Error occurred | `gengage_widget`, `gengage_error` |
+- **Legacy hyphen-separated** (`gengage-on-init`, `gengage-cart-add`, …) — kept for backward
+  compatibility with existing GA setups.
+- **Canonical camelCase** (`gengageOnInit`, `gengageCartAdd`, …) — automatically pushed in
+  addition to the legacy event by `pushEvent()`. New dashboards should standardize on this
+  form.
+
+A small set of newer events (`gengageChatbotOpened`, `gengageChatbotMaximized`,
+`gengageQnaInput`, `gengageQnaButton`, `gengageSimilarProductsImpression`,
+`gengageSimilarGroupingClick`, `gengageSimilarProductClick`,
+`gengageSimilarProductAddToCart`, `gengageCompareProduct`,
+`gengageInterfaceNotReady`, and the special `GLOV_ON`) are emitted **only** under their
+canonical name — no hyphenated mirror exists for these.
+
+| Canonical (camelCase) | Legacy (hyphenated) | Description | Key Parameters |
+|-----------------------|---------------------|-------------|----------------|
+| `gengageOnInit` | `gengage-on-init` | Widget initialized (chat ready signal) | `gengage_widget` |
+| `gengageShow` | `gengage-show` | Widget shown (any open path) | `gengage_widget` |
+| `gengageHide` | `gengage-hide` | Widget hidden / closed | `gengage_widget` |
+| `gengageChatbotOpened` | — | Chatbot opened from any source | `gengage_source` (`launcher`, `qna-button`, `qna-input`, `simbut`, …) |
+| `gengageChatbotMaximized` | — | Chat panel switched to full / split layout | — |
+| `GLOV_ON` | — | Robot eligibility passed; bootstrap started | `gengage_account_id` |
+| `gengageInterfaceNotReady` | — | Bootstrap retry budget exhausted | `gengage_reason`, `gengage_attempts` |
+| `gengageSearch` | `gengage-search` | Product list / search results displayed | `gengage_search_query`, `gengage_result_count` |
+| `gengageProductDetail` | `gengage-product-detail` | Product card click / PDP open | `gengage_sku`, `gengage_product_name` |
+| `gengageCartAdd` | `gengage-cart-add` | Product added to cart | `gengage_sku`, `gengage_quantity` |
+| `gengageLikeProduct` | `gengage-like-product` | Favorite heart toggled | `gengage_sku` |
+| `gengageLikeList` | `gengage-like-list` | Favorites list opened | — |
+| `gengageFindSimilars` | `gengage-find-similars` | Find-similar requested (chat / SimBut) | `gengage_sku` |
+| `gengageSimilarProductsImpression` | — | Similar products widget rendered | `gengage_product_count`, `gengage_sku` |
+| `gengageSimilarGroupingClick` | — | Similar products group/filter tab clicked | `gengage_group_name`, `gengage_group_index` |
+| `gengageSimilarProductClick` | — | Similar product card clicked | `gengage_sku`, `gengage_product_name` |
+| `gengageSimilarProductAddToCart` | — | Add-to-cart on a similar product card | `gengage_sku`, `gengage_quantity` |
+| `gengageCompareProduct` | — | Comparison toggle activated | `gengage_source` (`toggle`, `dock`, `choice-prompter`) |
+| `gengageComparePreselection` | `gengage-compare-preselection` | Product picked for compare | `gengage_sku` |
+| `gengageCompareSelected` | `gengage-compare-selected` | "Compare selected" submitted | `gengage_skus`, `gengage_product_count` |
+| `gengageCompareClear` | `gengage-compare-clear` | Comparison selection cleared | — |
+| `gengageCompareReceived` | `gengage-compare-received` | Comparison table rendered | `gengage_product_count` |
+| `gengageSuggestedQuestion` | `gengage-suggested-question` | Suggested action clicked | `gengage_question_title`, `gengage_action_type` |
+| `gengageQnaInput` | — | QNA free-text input submitted | `gengage_question_title` |
+| `gengageQnaButton` | — | QNA quick-action button clicked | `gengage_question_title`, `gengage_action_type` |
+| `gengageMessageSent` | `gengage-message-sent` | User sent a chat message | — |
+| `gengageMessageReceived` | `gengage-message-received` | Assistant responded | — |
+| `gengageConversationStart` | `gengage-conversation-start` | New conversation started | — |
+| `gengageVoiceInput` | `gengage-voice-input` | Voice speech-to-text used | — |
+| `gengageError` | `gengage-error` | Widget or stream error | `gengage_widget`, `gengage_error` |
 
 ### Event Bus Listeners
 
-`wireGADataLayer()` subscribes to the following Gengage CustomEvents on `window`:
+`wireGADataLayer()` subscribes to the following Gengage CustomEvents on `window`. Every
+listed `gengage-*` event is automatically mirrored to its canonical camelCase form (e.g.
+`gengage-on-init` → also pushes `gengageOnInit`).
 
 | CustomEvent | GA Event Fired |
 |-------------|---------------|
-| `gengage:chat:ready` | `gengage-on-init` (widget: chat) |
-| `gengage:chat:open` | `gengage-show` (widget: chat) |
-| `gengage:chat:close` | `gengage-hide` (widget: chat) |
-| `gengage:similar:add-to-cart` | `gengage-cart-add` (sku, quantity) |
-| `gengage:similar:product-click` | `gengage-product-detail` (sku) |
-| `gengage:qna:action` | `gengage-suggested-question` (title, type) |
-| `gengage:qna:open-chat` | `gengage-show` (widget: chat) |
-| `gengage:chat:voice` | `gengage-voice-input` |
-| `gengage:global:error` | `gengage-error` (source, message) |
+| `gengage:chat:ready` | `gengage-on-init` / `gengageOnInit` (widget: chat) |
+| `gengage:chat:open` | `gengage-show` / `gengageShow` (widget: chat) |
+| `gengage:chat:close` | `gengage-hide` / `gengageHide` (widget: chat) |
+| `gengage:similar:add-to-cart` | `gengage-cart-add` / `gengageCartAdd` (sku, quantity) |
+| `gengage:similar:product-click` | `gengage-product-detail` / `gengageProductDetail` (sku) |
+| `gengage:qna:action` | `gengage-suggested-question` / `gengageSuggestedQuestion` (title, type) |
+| `gengage:qna:open-chat` | `gengage-show` / `gengageShow` (widget: chat) |
+| `gengage:chat:voice` | `gengage-voice-input` / `gengageVoiceInput` |
+| `gengage:global:error` | `gengage-error` / `gengageError` (source, message) |
+
+The widget-specific events listed in the canonical-only block above
+(`gengageChatbotOpened`, `gengageChatbotMaximized`, `gengageQnaInput`, `gengageQnaButton`,
+`gengageSimilarProductsImpression`, `gengageSimilarGroupingClick`,
+`gengageSimilarProductClick`, `gengageSimilarProductAddToCart`, `gengageCompareProduct`,
+`gengageInterfaceNotReady`, `GLOV_ON`) are dispatched directly from inside the widget
+controllers via `track*` helpers and do not require the CustomEvent bridge.
 
 ### Usage
 

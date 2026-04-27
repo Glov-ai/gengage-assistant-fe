@@ -142,6 +142,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     if (this.config.onProductClick?.(simRelProduct) === false) return;
 
     ga.trackProductDetail(product.sku, product.name);
+    ga.trackSimilarProductClick(product.sku, product.name);
     const sessionId = this.config.session?.sessionId ?? null;
     dispatch('gengage:similar:product-click', {
       sku: product.sku,
@@ -154,6 +155,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
   _handleAddToCart(params: { sku: string; quantity: number; cartCode: string }): void {
     ga.trackCartAdd(params.sku, params.quantity);
+    ga.trackSimilarProductAddToCart(params.sku, params.quantity);
     this.config.onAddToCart?.(params);
     dispatch('gengage:similar:add-to-cart', params);
 
@@ -298,6 +300,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
             this._contentEl.appendChild(renderedGroups);
 
             ga.trackShow('simrel');
+            ga.trackSimilarProductsImpression(
+              usableGroups.reduce((n, g) => n + g.products.length, 0),
+              this._lastSku,
+            );
             this.track(
               streamDoneEvent(this.analyticsContext(), {
                 request_id: requestId,
@@ -335,6 +341,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
       if (products.length > 0) {
         ga.trackShow('simrel');
+        ga.trackSimilarProductsImpression(products.length, this._lastSku);
       }
 
       this.track(
@@ -423,6 +430,9 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     const context: SimRelUISpecRenderContext = {
       onClick: (product) => this._handleProductClick(product as unknown as NormalizedProduct),
       onAddToCart: (params) => this._handleAddToCart(params),
+      onGroupClick: ({ name, index }) => {
+        ga.trackSimilarGroupingClick(name, index);
+      },
       i18n: this._i18n,
     };
     if (this.config.discountType !== undefined) context.discountType = this.config.discountType;

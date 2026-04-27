@@ -9,8 +9,12 @@ import type { SimButWidgetConfig } from '../simbut/types.js';
 import { DEFAULT_IDEMPOTENCY_KEY } from './config-schema.js';
 import { resolveSession } from './context.js';
 import { wireQNAToChat } from './events.js';
+import * as ga from './ga-datalayer.js';
 import { isSafeUrl } from './safe-html.js';
 import type { PageContext, SessionContext, WidgetTheme } from './types.js';
+
+const DEFAULT_BOOTSTRAP_MAX_ATTEMPTS = 10;
+const DEFAULT_BOOTSTRAP_RETRY_DELAY_MS = 250;
 
 const DEFAULT_OVERLAY_KEY_PREFIX = `${DEFAULT_IDEMPOTENCY_KEY}_overlay_`;
 const DEFAULT_QNA_MOUNT = '#gengage-qna';
@@ -260,6 +264,12 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (!window.gengage) window.gengage = {};
     window.gengage.sessionId = this.session.sessionId;
     window.gengage.pageContext = this._pageContext;
+
+    // Robot eligibility passed (the host opted into the assistant) and we are
+    // about to start initializing widgets. Push GLOV_ON exactly once per
+    // controller — `initOverlayWidgets` deduplicates by idempotency key, so
+    // this also fires only once per page load.
+    ga.trackGlovOn(this.options.accountId);
 
     await this._initChat();
 
@@ -658,4 +668,61 @@ export function destroyOverlayWidgets(idempotencyKey: string): void {
 
 export function buildOverlayIdempotencyKey(accountId: string): string {
   return `${DEFAULT_OVERLAY_KEY_PREFIX}${accountId}`;
+}
+
+export interface BootstrapOverlayWidgetsOptions {
+  /** Maximum total attempts (initial + retries). Defaults to 10. */
+  maxAttempts?: number;
+  /** Backoff delay between attempts in milliseconds. Defaults to 250. */
+  retryDelayMs?: number;
+  /** Optional logger override (defaults to `console.warn`). */
+  onAttemptFailed?: (attempt: number, error: unknown) => void;
+}
+
+/**
+ * Resilient overlay bootstrap with retry semantics.
+ *
+ * Wraps {@link initOverlayWidgets} in an attempt loop so transient host-page
+ * issues (DOM not yet rendered, mount targets that arrive late, network blips)
+ * do not permanently disable the assistant. After {@link BootstrapOverlayWidgetsOptions.maxAttempts}
+ * unsuccessful attempts (default: 10) the helper emits a
+ * `gengageInterfaceNotReady` GA event and rethrows the last error so the host
+ * page can decide what to do next.
+ *
+ * On success the underlying `init()` already emits `GLOV_ON`.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   const controller = await bootstrapOverlayWidgets({ accountId, middlewareUrl, sku });
+ * } catch (err) {
+ *   // GA `gengageInterfaceNotReady` already pushed; render fallback UI here.
+ * }
+ * ```
+ */
+export async function bootstrapOverlayWidgets(
+  options: OverlayWidgetsOptions,
+  bootstrap?: BootstrapOverlayWidgetsOptions,
+): Promise<OverlayWidgetsController> {
+  const maxAttempts = Math.max(1, bootstrap?.maxAttempts ?? DEFAULT_BOOTSTRAP_MAX_ATTEMPTS);
+  const retryDelayMs = Math.max(0, bootstrap?.retryDelayMs ?? DEFAULT_BOOTSTRAP_RETRY_DELAY_MS);
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await initOverlayWidgets(options);
+    } catch (err) {
+      lastError = err;
+      bootstrap?.onAttemptFailed?.(attempt, err);
+      if (attempt < maxAttempts && retryDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      }
+    }
+  }
+
+  const reason = lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown_error');
+  ga.trackInterfaceNotReady(reason, maxAttempts);
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`[gengage] overlay bootstrap failed after ${maxAttempts} attempts`);
 }

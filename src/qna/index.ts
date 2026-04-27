@@ -481,6 +481,17 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
   private _handleAction(action: ActionPayload): void {
     this._showTransitionIndicator();
     ga.trackSuggestedQuestion(action.title, action.type);
+    // Free-text submissions from the QNA TextInput arrive as `user_message` or
+    // `inputText`; everything else is a quick-action button click. We push two
+    // distinct GA events so customers can attribute chatbot opens to the right
+    // QNA surface.
+    const isFreeText = action.type === 'user_message' || action.type === 'inputText';
+    if (isFreeText) {
+      ga.trackQnaInput(action.title);
+    } else {
+      ga.trackQnaButton(action.title, action.type);
+    }
+    ga.trackChatbotOpened(isFreeText ? 'qna-input' : 'qna-button');
     this.config.onActionSelected?.(action);
     // Delay the bridge dispatch so the transition indicator is visible for a
     // moment before the chat overlay takes over — without the delay both happen
@@ -490,6 +501,8 @@ export class GengageQNA extends BaseWidget<QNAWidgetConfig> {
 
   private _handleOpenChat(): void {
     this._showTransitionIndicator();
+    ga.trackQnaButton('', 'open-chat');
+    ga.trackChatbotOpened('qna-button');
     this.config.onOpenChat?.();
     // Same 350ms delay so the indicator is perceptible before chat opens.
     setTimeout(() => dispatch('gengage:qna:open-chat', {}), 350);

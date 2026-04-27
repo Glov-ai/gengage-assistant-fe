@@ -28,7 +28,13 @@ export { dispatch, listen, wireQNAToChat, wireSimilarToChat } from './events.js'
 export type { WireQNAToChatOptions } from './events.js';
 
 export { bootstrapSession, getWindowPageContext, updatePageContext, resolveSession } from './context.js';
-export { initOverlayWidgets, getOverlayWidgets, destroyOverlayWidgets, buildOverlayIdempotencyKey } from './overlay.js';
+export {
+  initOverlayWidgets,
+  bootstrapOverlayWidgets,
+  getOverlayWidgets,
+  destroyOverlayWidgets,
+  buildOverlayIdempotencyKey,
+} from './overlay.js';
 export type {
   OverlayWidgetsController,
   OverlayWidgetsOptions,
@@ -36,6 +42,7 @@ export type {
   OverlayQNAOptions,
   OverlaySimRelOptions,
   OverlaySimButOptions,
+  BootstrapOverlayWidgetsOptions,
 } from './overlay.js';
 export {
   detectNativeEnvironment,
@@ -135,7 +142,39 @@ export {
   normalizeProductGroupingsResponse,
 } from './protocol-adapter.js';
 
-export { wireGADataLayer } from './ga-datalayer.js';
+export {
+  wireGADataLayer,
+  trackInit,
+  trackShow,
+  trackHide,
+  trackChatbotOpened,
+  trackChatbotMaximized,
+  trackGlovOn,
+  trackInterfaceNotReady,
+  trackSuggestedQuestion,
+  trackQnaInput,
+  trackQnaButton,
+  trackFindSimilars,
+  trackSimilarProductsImpression,
+  trackSimilarGroupingClick,
+  trackSimilarProductClick,
+  trackSimilarProductAddToCart,
+  trackComparePreselection,
+  trackCompareSelected,
+  trackCompareClear,
+  trackCompareReceived,
+  trackCompareProduct,
+  trackLikeProduct,
+  trackLikeList,
+  trackSearch,
+  trackProductDetail,
+  trackCartAdd,
+  trackMessageSent,
+  trackMessageReceived,
+  trackConversationStart,
+  trackVoiceInput,
+  trackError,
+} from './ga-datalayer.js';
 export { isVoiceInputSupported, VoiceInput } from './voice-input.js';
 export type { VoiceInputState, VoiceInputErrorCode, VoiceInputCallbacks, VoiceInputOptions } from './voice-input.js';
 export { detectPageType, extractSkuFromUrl, autoDetectPageContext } from './page-detect.js';

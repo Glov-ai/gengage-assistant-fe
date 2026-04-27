@@ -4,9 +4,14 @@
  * Pushes chat activity events to `window.dataLayer` when GA is available.
  * Falls back to `console.debug` when GA is not detected (useful for debugging).
  *
- * Event naming follows the GA4 recommended event pattern:
- *   - All lowercase, hyphen-separated
- *   - Prefixed with `gengage-` for easy filtering in GA dashboards
+ * Event naming:
+ *   - Legacy hyphen-separated names (e.g. `gengage-on-init`) are kept for
+ *     backward compatibility with existing GA dashboards.
+ *   - For every legacy `gengage-*` push we additionally emit a camelCase
+ *     mirror (e.g. `gengageOnInit`) so customers can build new dashboards
+ *     using the canonical naming used in the SaaS / GTM specifications.
+ *   - A handful of events use a special standalone name (`GLOV_ON`); those
+ *     are pushed exactly as named without any mirroring.
  *
  * Clients can build custom chat funnels in GA using these events.
  */
@@ -34,24 +39,40 @@ function isGAAvailable(): boolean {
   return typeof window !== 'undefined' && Array.isArray(window.dataLayer);
 }
 
+/**
+ * Convert `gengage-foo-bar` → `gengageFooBar`.
+ * Returns the original string when no hyphens are present so callers can
+ * compare and skip the duplicate push.
+ */
+function kebabToCamel(name: string): string {
+  if (!name.includes('-')) return name;
+  return name.replace(/-([a-z0-9])/g, (_, ch: string) => ch.toUpperCase());
+}
+
 // ---------------------------------------------------------------------------
 // Core push function
 // ---------------------------------------------------------------------------
 
 function pushEvent(eventName: string, params?: Record<string, unknown>): void {
-  const payload: DataLayerEvent = {
-    event: eventName,
-    ...params,
-  };
-
-  if (isGAAvailable()) {
-    window.dataLayer!.push(payload);
-  }
+  if (!isGAAvailable()) return;
   // No fallback log — GA events are silently dropped when dataLayer is absent.
+
+  const dl = window.dataLayer!;
+  dl.push({ event: eventName, ...params });
+
+  // Mirror legacy hyphen-separated names (`gengage-foo-bar`) to the canonical
+  // camelCase name (`gengageFooBar`) so customers can adopt the new naming
+  // without losing data emitted by older code paths.
+  if (eventName.startsWith('gengage-')) {
+    const mirror = kebabToCamel(eventName);
+    if (mirror !== eventName) {
+      dl.push({ event: mirror, ...params });
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Typed event emitters
+// Typed event emitters — widget lifecycle
 // ---------------------------------------------------------------------------
 
 /** Widget icon/avatar displayed on page. */
@@ -69,6 +90,47 @@ export function trackHide(widget: string): void {
   pushEvent('gengage-hide', { gengage_widget: widget });
 }
 
+/**
+ * Chatbot opened from any source (launcher, QNA, programmatic, etc.).
+ * Complementary to `trackShow` — both fire on every open, but this one is
+ * the source-agnostic signal customers asked for.
+ */
+export function trackChatbotOpened(source?: string): void {
+  const params: Record<string, unknown> = {};
+  if (source !== undefined) params['gengage_source'] = source;
+  pushEvent('gengageChatbotOpened', params);
+}
+
+/** Chat panel switched to the maximized (full / split) layout. */
+export function trackChatbotMaximized(): void {
+  pushEvent('gengageChatbotMaximized');
+}
+
+/**
+ * Robot eligibility passed and the assistant runtime started initializing.
+ * Pushed exactly once per page load before any other widget event.
+ */
+export function trackGlovOn(accountId?: string): void {
+  const params: Record<string, unknown> = {};
+  if (accountId !== undefined) params['gengage_account_id'] = accountId;
+  pushEvent('GLOV_ON', params);
+}
+
+/**
+ * Frontend gave up bootstrapping the assistant after exhausting the configured
+ * retry budget (default: 10). Pushed exactly once per failed page load.
+ */
+export function trackInterfaceNotReady(reason?: string, attempts?: number): void {
+  const params: Record<string, unknown> = {};
+  if (reason !== undefined) params['gengage_reason'] = reason;
+  if (attempts !== undefined) params['gengage_attempts'] = attempts;
+  pushEvent('gengageInterfaceNotReady', params);
+}
+
+// ---------------------------------------------------------------------------
+// Typed event emitters — QNA
+// ---------------------------------------------------------------------------
+
 /** User clicked a suggested question / action button. */
 export function trackSuggestedQuestion(title: string, type: string): void {
   pushEvent('gengage-suggested-question', {
@@ -77,10 +139,63 @@ export function trackSuggestedQuestion(title: string, type: string): void {
   });
 }
 
+/** User typed free text into the QNA input and submitted. */
+export function trackQnaInput(text?: string): void {
+  const params: Record<string, unknown> = {};
+  if (text !== undefined) params['gengage_question_title'] = text;
+  pushEvent('gengageQnaInput', params);
+}
+
+/** User clicked one of the QNA quick-action buttons (non-input action). */
+export function trackQnaButton(title: string, type: string): void {
+  pushEvent('gengageQnaButton', {
+    gengage_question_title: title,
+    gengage_action_type: type,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Typed event emitters — Find Similar / SimRel
+// ---------------------------------------------------------------------------
+
 /** User clicked "Find Similar" for a product. */
 export function trackFindSimilars(sku: string): void {
   pushEvent('gengage-find-similars', { gengage_sku: sku });
 }
+
+/** Similar Products widget rendered with at least one product. */
+export function trackSimilarProductsImpression(productCount: number, sku?: string): void {
+  const params: Record<string, unknown> = { gengage_product_count: productCount };
+  if (sku !== undefined) params['gengage_sku'] = sku;
+  pushEvent('gengageSimilarProductsImpression', params);
+}
+
+/** User clicked a Similar Products group/filter tab. */
+export function trackSimilarGroupingClick(groupName: string, index: number): void {
+  pushEvent('gengageSimilarGroupingClick', {
+    gengage_group_name: groupName,
+    gengage_group_index: index,
+  });
+}
+
+/** User clicked a Similar Products card (navigates to PDP). */
+export function trackSimilarProductClick(sku: string, name?: string): void {
+  const params: Record<string, unknown> = { gengage_sku: sku };
+  if (name !== undefined) params['gengage_product_name'] = name;
+  pushEvent('gengageSimilarProductClick', params);
+}
+
+/** User clicked the add-to-cart button on a Similar Products card. */
+export function trackSimilarProductAddToCart(sku: string, quantity: number): void {
+  pushEvent('gengageSimilarProductAddToCart', {
+    gengage_sku: sku,
+    gengage_quantity: quantity,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Typed event emitters — Comparison
+// ---------------------------------------------------------------------------
 
 /** User pre-selected a product for comparison. */
 export function trackComparePreselection(sku: string): void {
@@ -106,6 +221,19 @@ export function trackCompareReceived(productCount: number): void {
     gengage_product_count: productCount,
   });
 }
+
+/**
+ * User clicked the "Compare" toggle (header chip or floating dock button).
+ * This is the entry point that flips the chat into comparison-select mode;
+ * `trackComparePreselection` then fires for each individual card the user picks.
+ */
+export function trackCompareProduct(source: 'toggle' | 'dock' | 'choice-prompter' = 'toggle'): void {
+  pushEvent('gengageCompareProduct', { gengage_source: source });
+}
+
+// ---------------------------------------------------------------------------
+// Typed event emitters — Product / Cart / Favorites
+// ---------------------------------------------------------------------------
 
 /** User liked / favorited a product. */
 export function trackLikeProduct(sku: string): void {
@@ -140,6 +268,10 @@ export function trackCartAdd(sku: string, quantity: number): void {
     gengage_quantity: quantity,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Typed event emitters — Chat lifecycle / messaging
+// ---------------------------------------------------------------------------
 
 /** User sent a chat message. */
 export function trackMessageSent(): void {
