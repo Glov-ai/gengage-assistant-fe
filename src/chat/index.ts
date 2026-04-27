@@ -2979,6 +2979,30 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._mergePanelSourceWithSimilars(spec);
   }
 
+  /**
+   * Returns the SKU of the product currently rendered in the side panel, if any.
+   *
+   * Used to short-circuit duplicate `ProductSummaryCard` messages when the user
+   * re-clicks the product that is already open in the panel. Only returns a SKU
+   * when the live panel source is a `ProductDetailsPanel` spec (either standalone
+   * or paired with a similars grid).
+   */
+  private _getCurrentPanelProductSku(): string | null {
+    const src = this._currentPanelSource;
+    if (!src) return null;
+    let pdpSpec: UISpec | null = null;
+    if (src.kind === 'spec') pdpSpec = src.spec;
+    else if (src.kind === 'productDetailsWithSimilars') pdpSpec = src.pdpSpec;
+    if (!pdpSpec) return null;
+    const root = pdpSpec.elements[pdpSpec.root];
+    if (!root || root.type !== 'ProductDetailsPanel') return null;
+    const props = root.props as Record<string, unknown> | undefined;
+    const product = (props?.['product'] ?? props) as Record<string, unknown> | undefined;
+    if (!product) return null;
+    const sku = product['sku'];
+    return typeof sku === 'string' && sku ? sku : null;
+  }
+
   /** After similars grid is appended, extend panel source so back/history/snapshot rebuild includes it. */
   private _mergePanelSourceWithSimilars(similarsSpec: UISpec): void {
     const prev = this._currentPanelSource;
@@ -3761,6 +3785,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._runChatAddToCartFlow(params);
       },
       onProductSelect: (product) => {
+        // No-op when the same product is already open in the panel: re-clicking the
+        // active PDP card or summary should not append another ProductSummaryCard
+        // bubble to the chat or re-render the same panel content.
+        const newSku = typeof product['sku'] === 'string' ? (product['sku'] as string) : '';
+        if (newSku && this._getCurrentPanelProductSku() === newSku) {
+          return;
+        }
         // Save current panel source to local history so back button can re-render it
         if (this._currentPanelSource) {
           const currentTitle = this._drawer?.getPanelTopBarTitle() ?? '';
