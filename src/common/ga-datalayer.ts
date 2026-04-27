@@ -2,7 +2,7 @@
  * Google Analytics dataLayer integration.
  *
  * Pushes chat activity events to `window.dataLayer` when GA is available.
- * Falls back to `console.debug` when GA is not detected (useful for debugging).
+ * Silently skips pushes when GA is not detected.
  *
  * Event naming follows the GA4 recommended event pattern:
  *   - All lowercase, hyphen-separated

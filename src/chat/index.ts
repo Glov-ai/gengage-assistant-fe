@@ -3914,8 +3914,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             return;
           }
         }
-        ga.trackProductDetail(params.sku);
         if (!shouldNavigate) {
+          ga.trackProductDetail(params.sku);
           const displayTitle = params.name?.trim() ? params.name.trim() : params.sku;
           this._sendAction({
             title: displayTitle,
