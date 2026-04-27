@@ -295,6 +295,7 @@ function fillStyleButtonContent(btn: HTMLButtonElement, variation: StyleVariatio
   if (imageUrl && isSafeUrl(imageUrl)) {
     const img = document.createElement('img');
     img.className = 'gengage-chat-consulting-style-image';
+    img.draggable = false;
     safeSetAttribute(img, 'src', imageUrl);
     img.alt = variationLabel(variation, index + 1, i18n);
     img.loading = 'lazy';
