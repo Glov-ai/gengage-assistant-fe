@@ -2992,6 +2992,25 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     this._mergePanelSourceWithSimilars(spec);
   }
 
+  /** Normalize product SKU for comparisons (wire may send string or number). */
+  private _coerceSkuKey(raw: unknown): string {
+    if (typeof raw === 'string') return raw.trim();
+    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw).trim();
+    return '';
+  }
+
+  private _productSkuKey(product: Record<string, unknown> | undefined): string {
+    if (!product) return '';
+    return this._coerceSkuKey(product['sku']);
+  }
+
+  private _pdpPageContextSkuKey(): string | null {
+    const pt = this.config.pageContext?.pageType;
+    if (typeof pt !== 'string' || pt.toLowerCase() !== 'pdp') return null;
+    const key = this._coerceSkuKey(this.config.pageContext?.sku);
+    return key || null;
+  }
+
   /**
    * Returns the SKU of the product currently rendered in the side panel, if any.
    *
@@ -3012,8 +3031,19 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const props = root.props as Record<string, unknown> | undefined;
     const product = (props?.['product'] ?? props) as Record<string, unknown> | undefined;
     if (!product) return null;
-    const sku = product['sku'];
-    return typeof sku === 'string' && sku ? sku : null;
+    const key = this._coerceSkuKey(product['sku']);
+    return key || null;
+  }
+
+  /**
+   * “Active” PDP SKU for suppressing redundant `ProductSummaryCard` clicks: prefer
+   * the panel spec when `productDetailsExtended` keeps a PDP there; otherwise
+   * fall back to host `pageContext` on PDP pages (panel may have been cleared).
+   */
+  private _activeSkuForProductSummaryClick(): string | null {
+    const fromPanel = this._getCurrentPanelProductSku();
+    if (fromPanel) return fromPanel;
+    return this._pdpPageContextSkuKey();
   }
 
   /** After similars grid is appended, extend panel source so back/history/snapshot rebuild includes it. */
@@ -3753,10 +3783,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
         if (action.type === 'launchSingleProduct') {
           this._drawer?.setDividerPreviewEnabled(false);
-          const sku =
+          const rawSku =
             typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload
-              ? String((action.payload as Record<string, unknown>).sku)
-              : '';
+              ? (action.payload as Record<string, unknown>).sku
+              : undefined;
+          const sku = this._coerceSkuKey(rawSku);
+          const activeSku = this._activeSkuForProductSummaryClick();
+          if (sku && activeSku && sku === activeSku) {
+            return;
+          }
           if (sku) ga.trackProductDetail(sku, action.title);
         }
         if (action.type === 'findSimilar') {
@@ -3774,10 +3809,17 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._sendAction(action, preservePanel ? { preservePanel: true } : undefined);
       },
       onProductClick: (params) => {
-        ga.trackProductDetail(params.sku);
         // Demo mode: load product in-chat via launchSingleProduct (no navigation)
         // Production mode: navigate to product page (chat auto-opens on new page)
         const shouldNavigate = this.config.isDemoWebsite !== true && this._isSameOriginUrl(params.url);
+        if (!shouldNavigate) {
+          const clickSku = this._coerceSkuKey(params.sku);
+          const activeSku = this._activeSkuForProductSummaryClick();
+          if (clickSku && activeSku && clickSku === activeSku) {
+            return;
+          }
+        }
+        ga.trackProductDetail(params.sku);
         if (!shouldNavigate) {
           const displayTitle = params.name?.trim() ? params.name.trim() : params.sku;
           this._sendAction({
@@ -3798,11 +3840,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._runChatAddToCartFlow(params);
       },
       onProductSelect: (product) => {
-        // No-op when the same product is already open in the panel: re-clicking the
-        // active PDP card or summary should not append another ProductSummaryCard
-        // bubble to the chat or re-render the same panel content.
-        const newSku = typeof product['sku'] === 'string' ? (product['sku'] as string) : '';
-        if (newSku && this._getCurrentPanelProductSku() === newSku) {
+        // No-op when the shopper is already on this PDP (panel and/or host PDP context):
+        // no extra summary bubble, no panel churn, and no follow-on launch traffic.
+        const newSku = this._productSkuKey(product as Record<string, unknown>);
+        const activeSku = this._activeSkuForProductSummaryClick();
+        if (newSku && activeSku && newSku === activeSku) {
           return;
         }
         // Save current panel source to local history so back button can re-render it
@@ -3844,6 +3886,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.setPanelContent(this._renderUISpec(detailSpec, ctx));
         this._drawer?.setDividerPreviewEnabled(false);
         this._currentPanelSource = { kind: 'spec', spec: detailSpec };
+        if (this._panel) this._panel.currentType = 'ProductDetailsPanel';
         this._drawer?.updatePanelTopBar(true, false, this._i18n.panelTitleProductDetails);
       },
       i18n: this._i18n,
