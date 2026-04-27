@@ -321,4 +321,14 @@ describe('enrichActionPayload', () => {
     const result = enrichActionPayload(action, {});
     expect(result).toBe(action);
   });
+
+  it('strips gengage_analytics_source from getComparisonTable before transport', () => {
+    const action = {
+      title: 'Compare',
+      type: 'getComparisonTable',
+      payload: { sku_list: ['A', 'B'], gengage_analytics_source: 'floating_compare_dock' },
+    };
+    const result = enrichActionPayload(action, {});
+    expect(result.payload).toEqual({ sku_list: ['A', 'B'] });
+  });
 });

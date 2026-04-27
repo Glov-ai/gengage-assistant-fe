@@ -162,6 +162,7 @@ const DEFAULT_SIMREL_UI_SPEC_REGISTRY: SimRelUISpecRegistry = {
     if (context.discountType !== undefined) options.discountType = context.discountType;
     if (context.renderCard !== undefined) options.renderCard = context.renderCard;
     if (context.renderCardElement !== undefined) options.renderCardElement = context.renderCardElement;
+    if (context.onGroupingActivate !== undefined) options.onGroupingActivate = context.onGroupingActivate;
     return renderGroupTabs(options);
   },
 

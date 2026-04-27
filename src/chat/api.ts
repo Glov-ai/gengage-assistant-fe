@@ -110,7 +110,17 @@ export function enrichActionPayload(
     }
 
     case 'getComparisonTable': {
-      // sku_list should already be set; no-op if present
+      const existing = action.payload;
+      if (
+        existing &&
+        typeof existing === 'object' &&
+        !Array.isArray(existing) &&
+        'gengage_analytics_source' in existing
+      ) {
+        const next = { ...(existing as Record<string, unknown>) };
+        delete next['gengage_analytics_source'];
+        return { ...action, payload: next };
+      }
       return action;
     }
 

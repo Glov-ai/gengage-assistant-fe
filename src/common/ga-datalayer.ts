@@ -133,6 +133,67 @@ export function trackProductDetail(sku: string, name?: string): void {
   });
 }
 
+/** SimRel (or chat-routed similar) product card click — distinct from generic PDP detail views. */
+export function trackSimilarProductClick(
+  sku: string,
+  extras?: { url?: string; name?: string; session_id?: string | null },
+): void {
+  pushEvent('gengage-similar-product-click', {
+    gengage_sku: sku,
+    ...(extras?.url !== undefined ? { gengage_product_url: extras.url } : {}),
+    ...(extras?.name !== undefined ? { gengage_product_name: extras.name } : {}),
+    ...(extras?.session_id !== undefined ? { gengage_session_id: extras.session_id } : {}),
+  });
+}
+
+/** SimRel grouping / filter tab selected. */
+export function trackSimilarGroupingClick(groupingLabel: string, groupingIndex: number): void {
+  pushEvent('gengage-similar-grouping-click', {
+    gengage_grouping_label: groupingLabel,
+    gengage_grouping_index: groupingIndex,
+  });
+}
+
+/** SimRel grid rendered and shown (successful fetch + inject). */
+export function trackSimilarProductsImpression(params: {
+  source_sku: string;
+  product_count: number;
+  grouped: boolean;
+  session_id?: string | null;
+}): void {
+  pushEvent('gengage-similar-products-impression', {
+    gengage_source_sku: params.source_sku,
+    gengage_product_count: params.product_count,
+    gengage_grouped: params.grouped,
+    ...(params.session_id !== undefined ? { gengage_session_id: params.session_id } : {}),
+  });
+}
+
+/** User clicked the floating comparison dock primary action (popup bar). */
+export function trackCompareProduct(skus: string[]): void {
+  pushEvent('gengage-compare-product', {
+    gengage_skus: skus,
+    gengage_product_count: skus.length,
+  });
+}
+
+/** Chat MainPane (assistant left panel) expanded into split view. */
+export function trackChatbotMaximized(): void {
+  pushEvent('gengage-chatbot-maximized');
+}
+
+/**
+ * SDK / bridge could not become ready after bounded retries (e.g. chat not initialized).
+ * Also used when overlay bootstrap fails fatally.
+ */
+export function trackInterfaceNotReady(params?: { reason?: string; attempts?: number; message?: string }): void {
+  pushEvent('gengage-interface-not-ready', {
+    ...(params?.reason !== undefined ? { gengage_reason: params.reason } : {}),
+    ...(params?.attempts !== undefined ? { gengage_attempts: params.attempts } : {}),
+    ...(params?.message !== undefined ? { gengage_message: params.message } : {}),
+  });
+}
+
 /** User added a product to cart from the widget. */
 export function trackCartAdd(sku: string, quantity: number): void {
   pushEvent('gengage-cart-add', {
@@ -201,10 +262,34 @@ export function wireGADataLayer(): () => void {
     trackCartAdd(sku, quantity);
   });
 
-  // Product click from similar products
-  on<{ sku: string; url: string }>('gengage:similar:product-click', ({ sku }) => {
-    trackProductDetail(sku);
-  });
+  // Product click from similar products (SimRel + chat navigate path)
+  on<{ sku: string; url: string; sessionId: string | null; productName?: string }>(
+    'gengage:similar:product-click',
+    ({ sku, url, sessionId, productName }) => {
+      const extras: { url?: string; name?: string; session_id?: string | null } = { url, session_id: sessionId };
+      if (productName !== undefined && productName !== '') extras.name = productName;
+      trackSimilarProductClick(sku, extras);
+    },
+  );
+
+  on<{ grouping_label: string; grouping_index: number; sessionId: string | null }>(
+    'gengage:similar:grouping-click',
+    ({ grouping_label, grouping_index }) => {
+      trackSimilarGroupingClick(grouping_label, grouping_index);
+    },
+  );
+
+  on<{ source_sku: string; product_count: number; grouped: boolean; sessionId: string | null }>(
+    'gengage:similar:products-impression',
+    ({ source_sku, product_count, grouped, sessionId }) => {
+      trackSimilarProductsImpression({
+        source_sku,
+        product_count,
+        grouped,
+        session_id: sessionId,
+      });
+    },
+  );
 
   // QNA action (suggested question click)
   on<{ title: string; type: string }>('gengage:qna:action', ({ title, type }) => {

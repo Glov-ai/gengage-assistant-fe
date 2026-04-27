@@ -141,12 +141,12 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
     if (this.config.onProductClick?.(simRelProduct) === false) return;
 
-    ga.trackProductDetail(product.sku, product.name);
     const sessionId = this.config.session?.sessionId ?? null;
     dispatch('gengage:similar:product-click', {
       sku: product.sku,
       url: product.url,
       sessionId,
+      productName: product.name,
     });
 
     this.config.onProductNavigate?.(product.url, product.sku, sessionId);
@@ -180,6 +180,16 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
 
   private _isSuperseded(signal: AbortSignal): boolean {
     return this._abortController?.signal !== signal;
+  }
+
+  private _emitSimilarProductsImpression(productCount: number, grouped: boolean): void {
+    const sessionId = this.config.session?.sessionId ?? null;
+    dispatch('gengage:similar:products-impression', {
+      source_sku: this.config.sku,
+      product_count: productCount,
+      grouped,
+      sessionId,
+    });
   }
 
   private _resolveRequestTimeoutMs(): number {
@@ -314,6 +324,10 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
                 widget: 'simrel',
               }),
             );
+            this._emitSimilarProductsImpression(
+              usableGroups.reduce((n, g) => n + g.products.length, 0),
+              true,
+            );
             return;
           }
         } catch {
@@ -354,6 +368,7 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
           widget: 'simrel',
         }),
       );
+      this._emitSimilarProductsImpression(products.length, false);
     } catch (err) {
       const abortError = isAbortError(err);
       if (abortError && this._isSuperseded(signal)) return;
@@ -423,6 +438,13 @@ export class GengageSimRel extends BaseWidget<SimRelWidgetConfig> {
     const context: SimRelUISpecRenderContext = {
       onClick: (product) => this._handleProductClick(product as unknown as NormalizedProduct),
       onAddToCart: (params) => this._handleAddToCart(params),
+      onGroupingActivate: (detail) => {
+        dispatch('gengage:similar:grouping-click', {
+          grouping_label: detail.grouping_label,
+          grouping_index: detail.grouping_index,
+          sessionId: this.config.session?.sessionId ?? null,
+        });
+      },
       i18n: this._i18n,
     };
     if (this.config.discountType !== undefined) context.discountType = this.config.discountType;

@@ -211,6 +211,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _openState: 'full' | 'half' = 'full';
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
+  /** GA: previous MainPane expanded state for `gengage-chatbot-maximized` edge detection. */
+  private _gaPrevMainPaneExpanded = false;
   private _pdpLaunched = false;
   private _plpLaunched = false;
   private _homepageLaunched = false;
@@ -1465,6 +1467,23 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._backdropEl.setAttribute('aria-hidden', backdropIsScrim ? 'false' : 'true');
     }
     this._syncHostDocumentScrollLock();
+    this._maybeTrackChatbotMainPaneGa();
+  }
+
+  /** MainPane = assistant left panel; mobile counts full overlay panel as expanded. */
+  private _mainPaneExpandedForAnalytics(): boolean {
+    const d = this._drawer;
+    if (!d?.isPanelVisible()) return false;
+    if (this._isMobileViewport) return true;
+    return !d.isPanelCollapsed();
+  }
+
+  private _maybeTrackChatbotMainPaneGa(): void {
+    const expanded = this._mainPaneExpandedForAnalytics();
+    if (expanded && !this._gaPrevMainPaneExpanded) {
+      ga.trackChatbotMaximized();
+    }
+    this._gaPrevMainPaneExpanded = expanded;
   }
 
   private _syncHostDocumentScrollLock(): void {
@@ -3809,7 +3828,18 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           ga.trackFindSimilars(sku);
         }
         if (action.type === 'getComparisonTable') {
-          ga.trackCompareSelected(this._comparisonSelectedSkus);
+          const raw = action.payload;
+          const rec = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+          const src = rec && typeof rec['gengage_analytics_source'] === 'string' ? rec['gengage_analytics_source'] : '';
+          let skuList: string[] = [];
+          if (rec && Array.isArray(rec['sku_list'])) {
+            skuList = rec['sku_list'].filter((x): x is string => typeof x === 'string');
+          }
+          if (src === 'floating_compare_dock') {
+            ga.trackCompareProduct(skuList);
+          } else {
+            ga.trackCompareSelected(skuList.length > 0 ? skuList : this._comparisonSelectedSkus);
+          }
         }
         // addToCart/like actions should preserve the current panel (product cards stay visible)
         const preservePanel = action.type === 'addToCart' || action.type === 'like';
@@ -3839,6 +3869,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             sku: params.sku,
             url: params.url,
             sessionId: this.config.session?.sessionId ?? null,
+            ...(params.name !== undefined && params.name !== '' ? { productName: params.name } : {}),
           });
           this._saveSessionAndOpenURL(params.url);
         }

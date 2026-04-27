@@ -160,8 +160,8 @@ Implement shared transport in `src/common/analytics.ts`.
 
 `src/common/ga-datalayer.ts` provides a Google Analytics 4 integration layer. Calling
 `wireGADataLayer()` subscribes to Gengage CustomEvents and pushes them to `window.dataLayer`
-in GA4-compatible format. When `window.dataLayer` is not available (GA not loaded), events
-fall back to `console.debug` for local debugging.
+in GA4-compatible format. When `window.dataLayer` is not available (GA not loaded), pushes
+are skipped (no console noise).
 
 Call `wireGADataLayer()` once after widgets are initialized. It returns an unsubscribe
 function that removes all listeners.
@@ -171,43 +171,53 @@ function that removes all listeners.
 All events are lowercase, hyphen-separated, and prefixed with `gengage-` for easy filtering
 in GA dashboards:
 
-| GA Event | Description | Key Parameters |
+| GA Event | Description | Key parameters |
 |----------|-------------|----------------|
-| `gengage-on-init` | Widget initialized | `gengage_widget` |
-| `gengage-show` | Chat opened / widget shown | `gengage_widget` |
-| `gengage-hide` | Chat closed / widget hidden | `gengage_widget` |
-| `gengage-search` | User search query | `gengage_search_query`, `gengage_result_count` |
-| `gengage-product-detail` | Product detail viewed | `gengage_sku`, `gengage_product_name` |
-| `gengage-cart-add` | Product added to cart | `gengage_sku`, `gengage_quantity` |
+| `gengage-on-init` | Widget initialized / ready | `gengage_widget` (`chat` \| `qna` \| `simrel` \| `simbut`) |
+| `gengage-show` | Widget or chat surface opened | `gengage_widget` |
+| `gengage-hide` | Widget or chat surface closed | `gengage_widget` |
+| `gengage-search` | Search / result list (chat stream) | `gengage_search_query`, `gengage_result_count` |
+| `gengage-product-detail` | Product detail (chat PDP paths, etc.; not SimRel card clicks) | `gengage_sku`, `gengage_product_name` |
+| `gengage-similar-product-click` | SimRel (or chat-routed) similar-product card click | `gengage_sku`; optional `gengage_product_url`, `gengage_product_name`, `gengage_session_id` |
+| `gengage-similar-grouping-click` | SimRel grouping / filter tab selected | `gengage_grouping_label`, `gengage_grouping_index` |
+| `gengage-similar-products-impression` | SimRel block rendered after successful fetch | `gengage_source_sku`, `gengage_product_count`, `gengage_grouped`; optional `gengage_session_id` |
+| `gengage-cart-add` | Add to cart | `gengage_sku`, `gengage_quantity` |
 | `gengage-like-product` | Favorite heart toggled | `gengage_sku` |
-| `gengage-like-list` | Favorites list opened | — |
-| `gengage-find-similars` | Find-similar requested from chat or SimBut | `gengage_sku` |
-| `gengage-compare-selected` | Compare selected products | `gengage_skus`, `gengage_product_count` |
-| `gengage-compare-preselection` | Product pre-selected for compare | `gengage_sku` |
-| `gengage-compare-clear` | Comparison selection cleared | — |
-| `gengage-compare-received` | Comparison results rendered | `gengage_product_count` |
-| `gengage-suggested-question` | Suggested action clicked | `gengage_question_title`, `gengage_action_type` |
-| `gengage-message-sent` | User sent a chat message | — |
-| `gengage-message-received` | Assistant responded | — |
-| `gengage-conversation-start` | New conversation started | — |
-| `gengage-voice-input` | Voice speech-to-text used | — |
-| `gengage-error` | Error occurred | `gengage_widget`, `gengage_error` |
+| `gengage-like-list` | Favorites list button | — |
+| `gengage-find-similars` | Find similar (chat / SimBut) | `gengage_sku` |
+| `gengage-compare-product` | Compare — primary action on floating comparison dock | `gengage_skus`, `gengage_product_count` |
+| `gengage-compare-selected` | Compare — `getComparisonTable` from grid / other entry points | `gengage_skus`, `gengage_product_count` |
+| `gengage-compare-preselection` | Product checkbox pre-selection for compare | `gengage_sku` |
+| `gengage-compare-clear` | Clear compare selection | — |
+| `gengage-compare-received` | Comparison table rendered | `gengage_product_count` |
+| `gengage-suggested-question` | Suggested action (QNA, SimBut) | `gengage_question_title`, `gengage_action_type` |
+| `gengage-message-sent` | User sent chat message | — |
+| `gengage-message-received` | Assistant text response | — |
+| `gengage-conversation-start` | New conversation | — |
+| `gengage-voice-input` | Voice STT used | — |
+| `gengage-chatbot-maximized` | MainPane (left assistant panel) expanded to split view | — |
+| `gengage-interface-not-ready` | Bridge / overlay failed to become ready (10 QNA→chat polls or overlay init failure) | `gengage_reason`; optional `gengage_attempts`, `gengage_message` |
+| `gengage-error` | Error (`gengage:global:error` bus) | `gengage_widget`, `gengage_error` |
 
 ### Event Bus Listeners
 
 `wireGADataLayer()` subscribes to the following Gengage CustomEvents on `window`:
 
-| CustomEvent | GA Event Fired |
-|-------------|---------------|
-| `gengage:chat:ready` | `gengage-on-init` (widget: chat) |
-| `gengage:chat:open` | `gengage-show` (widget: chat) |
-| `gengage:chat:close` | `gengage-hide` (widget: chat) |
-| `gengage:similar:add-to-cart` | `gengage-cart-add` (sku, quantity) |
-| `gengage:similar:product-click` | `gengage-product-detail` (sku) |
-| `gengage:qna:action` | `gengage-suggested-question` (title, type) |
-| `gengage:qna:open-chat` | `gengage-show` (widget: chat) |
+| CustomEvent | GA Event |
+|-------------|----------|
+| `gengage:chat:ready` | `gengage-on-init` (`gengage_widget`: chat) |
+| `gengage:chat:open` | `gengage-show` (chat) |
+| `gengage:chat:close` | `gengage-hide` (chat) |
+| `gengage:similar:add-to-cart` | `gengage-cart-add` |
+| `gengage:similar:product-click` | `gengage-similar-product-click` |
+| `gengage:similar:grouping-click` | `gengage-similar-grouping-click` |
+| `gengage:similar:products-impression` | `gengage-similar-products-impression` |
+| `gengage:qna:action` | `gengage-suggested-question` |
+| `gengage:qna:open-chat` | `gengage-show` (chat) |
 | `gengage:chat:voice` | `gengage-voice-input` |
-| `gengage:global:error` | `gengage-error` (source, message) |
+| `gengage:global:error` | `gengage-error` |
+
+Direct `track*` calls in widgets (e.g. chat `trackProductDetail`, `trackChatbotMaximized`, `trackCompareProduct`) also push to `dataLayer` outside `wireGADataLayer` listeners; plan integrations accordingly.
 
 ### Usage
 

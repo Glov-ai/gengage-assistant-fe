@@ -11,6 +11,7 @@
 import type { GengageEventDetailMap, GengageEventName } from './types.js';
 import type { ActionPayload } from './types.js';
 import { isSafeUrl } from './safe-html.js';
+import { trackInterfaceNotReady } from './ga-datalayer.js';
 
 /**
  * Dispatch a typed Gengage event on window.
@@ -116,9 +117,9 @@ export function wireQNAToChat(options?: WireQNAToChatOptions): () => void {
   const pendingActions: ActionPayload[] = [];
   let pendingOpenCount = 0;
   let pollTimer: number | null = null;
-  let pollStartedAt = 0;
-  const pollIntervalMs = 100;
-  const pollTimeoutMs = 5000;
+  let pollAttempts = 0;
+  const pollIntervalMs = 500;
+  const maxPollAttempts = 10;
 
   function getChat(): WireableChatAPI | null {
     return (window.gengage?.chat as WireableChatAPI | undefined) ?? null;
@@ -181,10 +182,17 @@ export function wireQNAToChat(options?: WireQNAToChatOptions): () => void {
 
   function ensurePollTimer(): void {
     if (pollTimer !== null) return;
-    pollStartedAt = Date.now();
+    pollAttempts = 0;
     pollTimer = window.setInterval(() => {
       if (flushPendingToChat()) return;
-      if (Date.now() - pollStartedAt >= pollTimeoutMs) {
+      pollAttempts += 1;
+      if (pollAttempts >= maxPollAttempts) {
+        if (pendingActions.length > 0 || pendingOpenCount > 0) {
+          trackInterfaceNotReady({
+            reason: 'chat_unavailable_after_poll',
+            attempts: maxPollAttempts,
+          });
+        }
         pendingActions.length = 0;
         pendingOpenCount = 0;
         clearPollTimer();

@@ -6,13 +6,16 @@ import {
   trackCartAdd,
   trackMessageSent,
   trackProductDetail,
+  trackSimilarProductClick,
   trackSuggestedQuestion,
   trackCompareSelected,
+  trackCompareProduct,
   trackCompareClear,
   trackLikeProduct,
   trackSearch,
   trackError,
   trackVoiceInput,
+  trackInterfaceNotReady,
   wireGADataLayer,
 } from '../src/common/ga-datalayer.js';
 
@@ -118,6 +121,35 @@ describe('ga-datalayer', () => {
       trackVoiceInput();
       expect(window.dataLayer![0]).toEqual({ event: 'gengage-voice-input' });
     });
+
+    it('trackSimilarProductClick pushes gengage-similar-product-click', () => {
+      trackSimilarProductClick('SKU1', { url: 'https://x/p', name: 'N', session_id: 's1' });
+      expect(window.dataLayer![0]).toEqual({
+        event: 'gengage-similar-product-click',
+        gengage_sku: 'SKU1',
+        gengage_product_url: 'https://x/p',
+        gengage_product_name: 'N',
+        gengage_session_id: 's1',
+      });
+    });
+
+    it('trackCompareProduct pushes gengage-compare-product', () => {
+      trackCompareProduct(['A', 'B']);
+      expect(window.dataLayer![0]).toEqual({
+        event: 'gengage-compare-product',
+        gengage_skus: ['A', 'B'],
+        gengage_product_count: 2,
+      });
+    });
+
+    it('trackInterfaceNotReady pushes reason and attempts', () => {
+      trackInterfaceNotReady({ reason: 'x', attempts: 10 });
+      expect(window.dataLayer![0]).toEqual({
+        event: 'gengage-interface-not-ready',
+        gengage_reason: 'x',
+        gengage_attempts: 10,
+      });
+    });
   });
 
   describe('without dataLayer', () => {
@@ -165,6 +197,25 @@ describe('ga-datalayer', () => {
       window.dataLayer = [];
       window.dispatchEvent(new CustomEvent('gengage:chat:ready', { detail: {} }));
       expect(window.dataLayer).toHaveLength(0);
+    });
+
+    it('maps gengage:similar:product-click to gengage-similar-product-click', () => {
+      const unsub = wireGADataLayer();
+      window.dispatchEvent(
+        new CustomEvent('gengage:similar:product-click', {
+          detail: { sku: 'S', url: 'https://u', sessionId: null, productName: 'P' },
+        }),
+      );
+      expect(window.dataLayer).toContainEqual(
+        expect.objectContaining({
+          event: 'gengage-similar-product-click',
+          gengage_sku: 'S',
+          gengage_product_url: 'https://u',
+          gengage_product_name: 'P',
+          gengage_session_id: null,
+        }),
+      );
+      unsub();
     });
   });
 });
