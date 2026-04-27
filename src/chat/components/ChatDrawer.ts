@@ -1597,8 +1597,8 @@ export class ChatDrawer {
   }
 
   /**
-   * Desktop: area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
-   * so they are not duplicated in the chat column.
+   * Area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
+   * so they stay in the main pane instead of the chat column.
    */
   setPanelAiZoneState(
     state: 'hidden' | 'analyzing' | 'results',

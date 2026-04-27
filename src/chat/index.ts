@@ -1905,11 +1905,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const syncPanelAiAnalysisZone = (): void => {
       if (!this._drawer) return;
-      if (this._isMobileViewport || !panelListEligibleForAiZone) {
+      // Keep rendered AITopPicks / AIGroupingCards in the panel AI zone; do not clear
+      // them just because eligibility toggled mid-stream.
+      if (aiAnalysisUiReceivedForPanel) return;
+      if (!panelListEligibleForAiZone) {
         this._drawer.setPanelAiZoneState('hidden');
         return;
       }
-      if (aiAnalysisUiReceivedForPanel) return;
       if (!streamDone) {
         this._drawer.setPanelAiZoneState('analyzing', { analyzingLabel: this._i18n.aiAnalysisAnalyzingLabel });
       } else {
@@ -1933,7 +1935,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isStreaming: boolean,
     ): void => {
       if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
-        panelListEligibleForAiZone = !this._isMobileViewport;
+        panelListEligibleForAiZone = true;
         flushPendingPanelAiSpecToZone(isStreaming);
         syncPanelAiAnalysisZone();
         return;
@@ -2325,7 +2327,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (skipSidePanelForUISpec && similarsAppendGrid) {
             renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
           }
-          if (isAiAnalysisComponent && !this._isMobileViewport && (!botMsg.silent || isContextAutoLaunch)) {
+          if (isAiAnalysisComponent && (!botMsg.silent || isContextAutoLaunch)) {
             if (panelListEligibleForAiZone) {
               const aiEl = this._renderUISpec(spec, renderContext);
               aiAnalysisUiReceivedForPanel = true;
@@ -2341,6 +2343,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const inlineOkWhenSilentPrime =
             isContextAutoLaunch && (componentType === 'GroundingReviewCard' || isAiAnalysisComponent);
           const shouldRenderInline =
+            !isAiAnalysisComponent &&
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
@@ -2833,7 +2836,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           streamDone = true;
-          syncPanelAiAnalysisZone();
           // Consulting fallback: the backend never delivered a fully-ready
           // style-picker replacement, so flush the last partial spec now so
           // the shopper isn't left staring at a skeleton. Single render →
@@ -2850,20 +2852,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             panelContentReceived = true;
           }
           pendingConsultingSpec = null;
-          // product_list never arrived but AI Top Picks / groupings were deferred — show in chat
+          // product_list never arrived but AI analysis widgets were deferred — keep them in the main panel AI zone, not the chat column
           if (pendingPanelAiSpec) {
-            const flushCtx = this._buildRenderContext();
-            flushCtx.isStreaming = false;
-            const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
-            if (messagesContainer) {
-              const inline = this._renderUISpec(pendingPanelAiSpec, flushCtx);
-              if (botMsg.threadId) inline.dataset['threadId'] = botMsg.threadId;
-              messagesContainer.appendChild(inline);
-              this._scrollInlineIntoView(inline, botMsg.threadId);
-              this._drawer?.refreshPresentationCollapsed();
-            }
-            pendingPanelAiSpec = null;
+            flushPendingPanelAiSpecToZone(false);
           }
+          syncPanelAiAnalysisZone();
           this._activeRequestThreadId = null;
           // Reset consecutive error counter on successful stream completion
           this._consecutiveErrorCount = 0;
