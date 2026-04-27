@@ -8,10 +8,7 @@
 
 import type { UIElement } from '../../../common/types.js';
 import type { ChatUISpecRenderContext } from '../../types.js';
-import {
-  patchConsultingStylePickerDom,
-  renderConsultingStylePicker,
-} from '../../components/ConsultingStylePicker.js';
+import { patchConsultingStylePickerDom, renderConsultingStylePicker } from '../../components/ConsultingStylePicker.js';
 import type { StyleVariation } from '../../components/ConsultingStylePicker.js';
 import { isConsultingSource } from '../../../common/consulting-sources.js';
 

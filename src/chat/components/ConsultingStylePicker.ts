@@ -140,10 +140,7 @@ function renderConsultingVariationContentByIndex(m: ConsultingPickerModel, index
     renderVariationPendingState(m, variation, 'loading', displayIndex);
     return;
   }
-  if (
-    variationStatus !== 'ready' &&
-    (!Array.isArray(variation.product_list) || variation.product_list.length === 0)
-  ) {
+  if (variationStatus !== 'ready' && (!Array.isArray(variation.product_list) || variation.product_list.length === 0)) {
     renderVariationPendingState(m, variation, 'unavailable', displayIndex);
     return;
   }
@@ -205,10 +202,7 @@ function renderConsultingVariationContentByIndex(m: ConsultingPickerModel, index
           type: 'ProductCard',
           props: { product },
         };
-        const card = renderProductCard(
-          cardElement,
-          ctx ?? ({ onAction: () => undefined } as ChatUISpecRenderContext),
-        );
+        const card = renderProductCard(cardElement, ctx ?? ({ onAction: () => undefined } as ChatUISpecRenderContext));
         groupGrid.appendChild(card);
       }
       section.appendChild(groupGrid);
@@ -268,7 +262,12 @@ function renderConsultingVariationContentByIndex(m: ConsultingPickerModel, index
   }
 }
 
-function fillStyleButtonContent(btn: HTMLButtonElement, variation: StyleVariation, index: number, i18n: ConsultingI18n): void {
+function fillStyleButtonContent(
+  btn: HTMLButtonElement,
+  variation: StyleVariation,
+  index: number,
+  i18n: ConsultingI18n,
+): void {
   const variationStatus = getVariationStatus(variation);
   const loadingBadge = i18n.consultingStyleLoadingBadge;
   const unavailableBadge = i18n.consultingStyleUnavailableBadge;
