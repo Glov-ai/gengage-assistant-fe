@@ -43,7 +43,11 @@ import {
   flushBeautyStreamComplete,
   flushBeautyStreamError,
 } from './features/beauty-consulting/stream-handler.js';
-import { detectConsultingGrid, isConsultingGridReady } from './features/beauty-consulting/consulting-grid.js';
+import {
+  detectConsultingGrid,
+  isConsultingGridReady,
+  patchConsultingGridDom,
+} from './features/beauty-consulting/consulting-grid.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
 import { playTtsAudio } from '../common/tts-player.js';
@@ -1952,6 +1956,23 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       componentType: string,
     ): void => {
       if (!this._drawer || !this._panel) return;
+      const rootForPatch = panelSpec.elements[panelSpec.root];
+      if (componentType === 'ProductGrid' && rootForPatch) {
+        const consultingPatch = detectConsultingGrid(rootForPatch);
+        if (consultingPatch.isConsulting) {
+          const existingPanel = this._drawer.getPanelContentElement();
+          if (existingPanel && patchConsultingGridDom(existingPanel, consultingPatch, renderContext)) {
+            this._comparisonSelectMode = false;
+            this._comparisonSelectedSkus = [];
+            this._comparisonSelectionWarning = null;
+            this._drawer.setComparisonDockContent(null);
+            this._currentPanelSource = { kind: 'spec', spec: panelSpec };
+            this._panel.currentType = componentType;
+            this._drawer.resyncPanelTopBarFromCurrentContent();
+            return;
+          }
+        }
+      }
       this._comparisonSelectMode = false;
       this._comparisonSelectedSkus = [];
       this._comparisonSelectionWarning = null;
@@ -2186,13 +2207,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
-          // Consulting style-picker gate: if the backend is still streaming
-          // `loading` variations, keep the panel skeleton up and buffer the
-          // partial spec. The final replace (all variations `ready`) will
-          // render cleanly as the first real content swap for this panel,
-          // which eliminates the skeleton→partial→final flash. Only the
-          // top-level (non-append) panel path is gated — similars-append and
-          // pure append paths are unaffected.
+          // Consulting style-picker gate: wait only until at least one variation
+          // is not `loading` (fast-first). Further `loading` tabs stream in via
+          // `patchConsultingGridDom` without replacing the whole panel. If every
+          // variation is still `loading`, keep the skeleton and buffer in
+          // `pendingConsultingSpec`. Only the top-level (non-append) panel path
+          // is gated — similars-append and pure append paths are unaffected.
           if (
             effectivePanelHint === 'panel' &&
             this._panel &&

@@ -1791,6 +1791,15 @@ export class ChatDrawer {
     return null;
   }
 
+  /**
+   * After in-place mutations to panel content (e.g. consulting grid streaming patch),
+   * refresh top bar title derivation without replacing the content node.
+   */
+  resyncPanelTopBarFromCurrentContent(): void {
+    const el = this.getPanelContentElement();
+    if (el) this._syncPanelTopBarFromContent(el);
+  }
+
   /** Whether the panel is currently visible (may be empty). */
   isPanelVisible(): boolean {
     return this._panelVisible;

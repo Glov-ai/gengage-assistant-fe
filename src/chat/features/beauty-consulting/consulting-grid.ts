@@ -8,7 +8,10 @@
 
 import type { UIElement } from '../../../common/types.js';
 import type { ChatUISpecRenderContext } from '../../types.js';
-import { renderConsultingStylePicker } from '../../components/ConsultingStylePicker.js';
+import {
+  patchConsultingStylePickerDom,
+  renderConsultingStylePicker,
+} from '../../components/ConsultingStylePicker.js';
 import type { StyleVariation } from '../../components/ConsultingStylePicker.js';
 import { isConsultingSource } from '../../../common/consulting-sources.js';
 
@@ -48,20 +51,30 @@ export function renderConsultingGrid(
 }
 
 /**
- * Whether every variation in a consulting grid has completed (not `loading`).
- *
- * Backend may stream a consulting ProductGrid twice in one response: once
- * with some variations still `loading`, then again with everything `ready`.
- * The panel renderer uses this to skip the partial render and avoid a
- * skeleton→partial→final flash; the skeleton stays visible until every
- * variation is ready (or the stream ends with the partial spec as fallback).
+ * Whether at least one variation is not actively `loading`, so the panel can
+ * paint the first ready style immediately (fast-first). Remaining `loading`
+ * tabs stream in and update in place via {@link patchConsultingGridDom} without
+ * replacing the whole panel.
  */
 export function isConsultingGridReady(detected: ConsultingGridResult): boolean {
   if (!detected.isConsulting) return true;
   if (detected.styleVariations.length === 0) return true;
-  for (const variation of detected.styleVariations) {
+  return detected.styleVariations.some((variation) => {
     const status = typeof variation.status === 'string' ? variation.status : 'ready';
-    if (status === 'loading') return false;
-  }
-  return true;
+    return status !== 'loading';
+  });
+}
+
+/**
+ * Apply a streaming consulting ProductGrid update to the visible panel without
+ * `setPanelContent` (avoids full DOM swap / blink). Returns false if the
+ * panel is not currently showing a consulting picker.
+ */
+export function patchConsultingGridDom(
+  wrapper: HTMLElement,
+  detected: ConsultingGridResult,
+  ctx?: ChatUISpecRenderContext,
+): boolean {
+  if (!detected.isConsulting || !detected.source) return false;
+  return patchConsultingStylePickerDom(wrapper, detected.source, detected.styleVariations, ctx);
 }

@@ -13,6 +13,18 @@
   padding: 0;
   overflow: visible;
   pointer-events: none;
+  /* Theme override’ı (account fontFamily) buton metnine ulaşsın diye burada
+   * uygulanır; merchant PDP container’ından inherit gelmesin. */
+  font-family: var(
+    --gengage-font-family,
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif
+  );
+  font-size: var(--gengage-font-size, 14px);
 }
 
 .gengage-simbut-root .gengage-chat-find-similar-pill {
