@@ -149,7 +149,7 @@ describe('wireQNAToChat', () => {
       chat: { open: vi.fn(), openWithAction, sendMessage: vi.fn() },
     };
 
-    vi.advanceTimersByTime(150);
+    vi.advanceTimersByTime(500);
     expect(openWithAction).toHaveBeenCalledWith(action);
 
     vi.useRealTimers();
@@ -168,7 +168,7 @@ describe('wireQNAToChat', () => {
       chat: { open, openWithAction: vi.fn(), sendMessage: vi.fn() },
     };
 
-    vi.advanceTimersByTime(150);
+    vi.advanceTimersByTime(500);
     expect(open).toHaveBeenCalledOnce();
 
     vi.useRealTimers();

@@ -11,6 +11,7 @@ import { resolveSession } from './context.js';
 import { wireQNAToChat } from './events.js';
 import { isSafeUrl } from './safe-html.js';
 import type { PageContext, SessionContext, WidgetTheme } from './types.js';
+import { trackInterfaceNotReady } from './ga-datalayer.js';
 
 const DEFAULT_OVERLAY_KEY_PREFIX = `${DEFAULT_IDEMPOTENCY_KEY}_overlay_`;
 const DEFAULT_QNA_MOUNT = '#gengage-qna';
@@ -639,6 +640,10 @@ export async function initOverlayWidgets(options: OverlayWidgetsOptions): Promis
     })
     .catch((err) => {
       delete registry.pending[key];
+      trackInterfaceNotReady({
+        reason: 'overlay_init_failed',
+        message: err instanceof Error ? err.message : String(err),
+      });
       throw err;
     });
 

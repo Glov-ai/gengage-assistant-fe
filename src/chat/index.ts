@@ -43,7 +43,11 @@ import {
   flushBeautyStreamComplete,
   flushBeautyStreamError,
 } from './features/beauty-consulting/stream-handler.js';
-import { detectConsultingGrid, isConsultingGridReady } from './features/beauty-consulting/consulting-grid.js';
+import {
+  detectConsultingGrid,
+  isConsultingGridReady,
+  patchConsultingGridDom,
+} from './features/beauty-consulting/consulting-grid.js';
 import { createLauncher } from './components/Launcher.js';
 import type { LauncherElements } from './components/Launcher.js';
 import { playTtsAudio } from '../common/tts-player.js';
@@ -165,10 +169,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Set when `config.pillLauncher` is used — `apply()` runs at end of `onInit`. */
   private _pillLauncherApply: (() => Promise<void>) | null = null;
   /**
-   * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault.
-   * Does not set `overflow` on html/body (avoids breaking host layouts).
+   * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault on `window` and
+   * `document`, `scroll` pin for the viewport, temporary `overflow` / `overscroll-behavior` on
+   * `html`/`body` (restored on release).
    */
   private _hostScrollLockActive = false;
+  private _hostOverflowRestore: {
+    htmlOverflow: string;
+    bodyOverflow: string;
+    htmlOverscroll: string;
+    bodyOverscroll: string;
+  } | null = null;
+  /** Viewport scroll position captured when the lock starts (Windows / nested layouts). */
+  private _hostScrollLockViewport: { x: number; y: number } | null = null;
+  private _hostScrollPinning = false;
   private readonly _preventHostDocumentTouchMove = (e: TouchEvent): void => {
     if (!this._hostScrollLockActive) return;
     if (this._hostScrollEventShouldReachChatScroller(e)) return;
@@ -178,6 +192,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!this._hostScrollLockActive) return;
     if (this._hostScrollEventShouldReachChatScroller(e)) return;
     e.preventDefault();
+  };
+  private readonly _pinHostViewportScroll = (): void => {
+    if (!this._hostScrollLockActive || !this._hostScrollLockViewport || this._hostScrollPinning) return;
+    const t = this._hostScrollLockViewport;
+    if (window.scrollX === t.x && window.scrollY === t.y) return;
+    this._hostScrollPinning = true;
+    window.scrollTo(t.x, t.y);
+    this._hostScrollPinning = false;
   };
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
@@ -207,6 +229,8 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _openState: 'full' | 'half' = 'full';
   private _mobileBreakpoint = 768;
   private _isMobileViewport = false;
+  /** GA: previous MainPane expanded state for `gengage-chatbot-maximized` edge detection. */
+  private _gaPrevMainPaneExpanded = false;
   private _pdpLaunched = false;
   private _plpLaunched = false;
   private _homepageLaunched = false;
@@ -1427,10 +1451,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const variant = this.config.variant ?? 'floating';
     if (variant === 'inline') return false;
     if (variant === 'overlay') return true;
-    return this._drawer?.isPanelVisible() ?? false;
+    if (!(this._drawer?.isPanelVisible() ?? false)) return false;
+    // Desktop split view: scrim only while MainPane is expanded; collapsed = chat-only column.
+    if (!this._isMobileViewport && (this._drawer?.isPanelCollapsed() ?? false)) return false;
+    return true;
   }
 
-  /** Host page scroll (touch/wheel) blocked; separate from backdrop so mobile floating drawer locks without split panel. */
+  /** Host page scroll blocked whenever MainPane is shown (including collapsed split). */
   private _shouldLockHostDocumentScroll(): boolean {
     if (!this._drawerVisible) return false;
     const variant = this.config.variant ?? 'floating';
@@ -1454,6 +1481,23 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._backdropEl.setAttribute('aria-hidden', backdropIsScrim ? 'false' : 'true');
     }
     this._syncHostDocumentScrollLock();
+    this._maybeTrackChatbotMainPaneGa();
+  }
+
+  /** MainPane = assistant left panel; mobile counts full overlay panel as expanded. */
+  private _mainPaneExpandedForAnalytics(): boolean {
+    const d = this._drawer;
+    if (!d?.isPanelVisible()) return false;
+    if (this._isMobileViewport) return true;
+    return !d.isPanelCollapsed();
+  }
+
+  private _maybeTrackChatbotMainPaneGa(): void {
+    const expanded = this._mainPaneExpandedForAnalytics();
+    if (expanded && !this._gaPrevMainPaneExpanded) {
+      ga.trackChatbotMaximized();
+    }
+    this._gaPrevMainPaneExpanded = expanded;
   }
 
   private _syncHostDocumentScrollLock(): void {
@@ -1478,6 +1522,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _hostScrollEventShouldReachChatScroller(ev: Event): boolean {
     try {
       const path = ev.composedPath();
+      // Rare host/browser edge: empty path would block all wheel if treated as "outside widget".
+      if (path.length === 0) return true;
+
       if (!path.includes(this.root)) return false;
 
       for (const n of path) {
@@ -1500,17 +1547,58 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _applyHostDocumentScrollLock(): void {
-    if (typeof document === 'undefined' || this._hostScrollLockActive) return;
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    if (!this._hostOverflowRestore) {
+      const html = document.documentElement;
+      const body = document.body;
+      this._hostOverflowRestore = {
+        htmlOverflow: html.style.overflow,
+        bodyOverflow: body?.style.overflow ?? '',
+        htmlOverscroll: html.style.overscrollBehavior,
+        bodyOverscroll: body?.style.overscrollBehavior ?? '',
+      };
+      html.style.overflow = 'hidden';
+      html.style.overscrollBehavior = 'none';
+      if (body) {
+        body.style.overflow = 'hidden';
+        body.style.overscrollBehavior = 'none';
+      }
+      this._hostScrollLockViewport = { x: window.scrollX, y: window.scrollY };
+    }
+    if (this._hostScrollLockActive) return;
+    window.addEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true, passive: false });
+    window.addEventListener('wheel', this._preventHostDocumentWheel, { capture: true, passive: false });
     document.addEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true, passive: false });
     document.addEventListener('wheel', this._preventHostDocumentWheel, { capture: true, passive: false });
+    window.addEventListener('scroll', this._pinHostViewportScroll, { capture: true, passive: true });
     this._hostScrollLockActive = true;
   }
 
   private _releaseHostDocumentScrollLock(): void {
-    if (typeof document === 'undefined' || !this._hostScrollLockActive) return;
-    document.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
-    document.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
-    this._hostScrollLockActive = false;
+    if (typeof document === 'undefined') return;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this._pinHostViewportScroll, { capture: true });
+      window.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
+      window.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
+    }
+    if (this._hostScrollLockActive) {
+      document.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
+      document.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
+      this._hostScrollLockActive = false;
+    }
+    this._hostScrollLockViewport = null;
+    this._hostScrollPinning = false;
+    if (this._hostOverflowRestore) {
+      const html = document.documentElement;
+      const body = document.body;
+      html.style.overflow = this._hostOverflowRestore.htmlOverflow;
+      html.style.overscrollBehavior = this._hostOverflowRestore.htmlOverscroll;
+      if (body) {
+        body.style.overflow = this._hostOverflowRestore.bodyOverflow;
+        body.style.overscrollBehavior = this._hostOverflowRestore.bodyOverscroll;
+      }
+      this._hostOverflowRestore = null;
+    }
   }
 
   private _handleAttachment(file: File): void {
@@ -1901,11 +1989,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
     const syncPanelAiAnalysisZone = (): void => {
       if (!this._drawer) return;
-      if (this._isMobileViewport || !panelListEligibleForAiZone) {
+      // Keep rendered AITopPicks / AIGroupingCards in the panel AI zone; do not clear
+      // them just because eligibility toggled mid-stream.
+      if (aiAnalysisUiReceivedForPanel) return;
+      if (!panelListEligibleForAiZone) {
         this._drawer.setPanelAiZoneState('hidden');
         return;
       }
-      if (aiAnalysisUiReceivedForPanel) return;
       if (!streamDone) {
         this._drawer.setPanelAiZoneState('analyzing', { analyzingLabel: this._i18n.aiAnalysisAnalyzingLabel });
       } else {
@@ -1929,7 +2019,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       isStreaming: boolean,
     ): void => {
       if (componentType === 'ProductGrid' || componentType === 'CategoriesContainer') {
-        panelListEligibleForAiZone = !this._isMobileViewport;
+        panelListEligibleForAiZone = true;
         flushPendingPanelAiSpecToZone(isStreaming);
         syncPanelAiAnalysisZone();
         return;
@@ -1952,6 +2042,23 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       componentType: string,
     ): void => {
       if (!this._drawer || !this._panel) return;
+      const rootForPatch = panelSpec.elements[panelSpec.root];
+      if (componentType === 'ProductGrid' && rootForPatch) {
+        const consultingPatch = detectConsultingGrid(rootForPatch);
+        if (consultingPatch.isConsulting) {
+          const existingPanel = this._drawer.getPanelContentElement();
+          if (existingPanel && patchConsultingGridDom(existingPanel, consultingPatch, renderContext)) {
+            this._comparisonSelectMode = false;
+            this._comparisonSelectedSkus = [];
+            this._comparisonSelectionWarning = null;
+            this._drawer.setComparisonDockContent(null);
+            this._currentPanelSource = { kind: 'spec', spec: panelSpec };
+            this._panel.currentType = componentType;
+            this._drawer.resyncPanelTopBarFromCurrentContent();
+            return;
+          }
+        }
+      }
       this._comparisonSelectMode = false;
       this._comparisonSelectedSkus = [];
       this._comparisonSelectionWarning = null;
@@ -2186,13 +2293,12 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
 
           const panelSpec = effectivePanelHint === 'panel' && this._panel ? this._panel.toPanelSpec(spec) : spec;
 
-          // Consulting style-picker gate: if the backend is still streaming
-          // `loading` variations, keep the panel skeleton up and buffer the
-          // partial spec. The final replace (all variations `ready`) will
-          // render cleanly as the first real content swap for this panel,
-          // which eliminates the skeleton→partial→final flash. Only the
-          // top-level (non-append) panel path is gated — similars-append and
-          // pure append paths are unaffected.
+          // Consulting style-picker gate: wait only until at least one variation
+          // is not `loading` (fast-first). Further `loading` tabs stream in via
+          // `patchConsultingGridDom` without replacing the whole panel. If every
+          // variation is still `loading`, keep the skeleton and buffer in
+          // `pendingConsultingSpec`. Only the top-level (non-append) panel path
+          // is gated — similars-append and pure append paths are unaffected.
           if (
             effectivePanelHint === 'panel' &&
             this._panel &&
@@ -2305,7 +2411,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           if (skipSidePanelForUISpec && similarsAppendGrid) {
             renderContext.panelProductListHeading = this._i18n.similarProductsLabel ?? 'Similar Products';
           }
-          if (isAiAnalysisComponent && !this._isMobileViewport && (!botMsg.silent || isContextAutoLaunch)) {
+          if (isAiAnalysisComponent && (!botMsg.silent || isContextAutoLaunch)) {
             if (panelListEligibleForAiZone) {
               const aiEl = this._renderUISpec(spec, renderContext);
               aiAnalysisUiReceivedForPanel = true;
@@ -2321,6 +2427,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           const inlineOkWhenSilentPrime =
             isContextAutoLaunch && (componentType === 'GroundingReviewCard' || isAiAnalysisComponent);
           const shouldRenderInline =
+            !isAiAnalysisComponent &&
             (!botMsg.silent || inlineOkWhenSilentPrime) &&
             (effectivePanelHint !== 'panel' ||
               componentType === 'ProductCard' ||
@@ -2813,7 +2920,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           // Skip cleanup for aborted/superseded requests
           if (!isPreservePanel && threadId !== this._activeRequestThreadId) return;
           streamDone = true;
-          syncPanelAiAnalysisZone();
           // Consulting fallback: the backend never delivered a fully-ready
           // style-picker replacement, so flush the last partial spec now so
           // the shopper isn't left staring at a skeleton. Single render →
@@ -2830,20 +2936,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             panelContentReceived = true;
           }
           pendingConsultingSpec = null;
-          // product_list never arrived but AI Top Picks / groupings were deferred — show in chat
+          // product_list never arrived but AI analysis widgets were deferred — keep them in the main panel AI zone, not the chat column
           if (pendingPanelAiSpec) {
-            const flushCtx = this._buildRenderContext();
-            flushCtx.isStreaming = false;
-            const messagesContainer = this._shadow?.querySelector('.gengage-chat-messages');
-            if (messagesContainer) {
-              const inline = this._renderUISpec(pendingPanelAiSpec, flushCtx);
-              if (botMsg.threadId) inline.dataset['threadId'] = botMsg.threadId;
-              messagesContainer.appendChild(inline);
-              this._scrollInlineIntoView(inline, botMsg.threadId);
-              this._drawer?.refreshPresentationCollapsed();
-            }
-            pendingPanelAiSpec = null;
+            flushPendingPanelAiSpecToZone(false);
           }
+          syncPanelAiAnalysisZone();
           this._activeRequestThreadId = null;
           // Reset consecutive error counter on successful stream completion
           this._consecutiveErrorCount = 0;
@@ -2977,6 +3074,60 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     grid.classList.add('gengage-chat-product-details-similars');
     panelEl.appendChild(grid);
     this._mergePanelSourceWithSimilars(spec);
+  }
+
+  /** Normalize product SKU for comparisons (wire may send string or number). */
+  private _coerceSkuKey(raw: unknown): string {
+    if (typeof raw === 'string') return raw.trim();
+    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw).trim();
+    return '';
+  }
+
+  private _productSkuKey(product: Record<string, unknown> | undefined): string {
+    if (!product) return '';
+    return this._coerceSkuKey(product['sku']);
+  }
+
+  private _pdpPageContextSkuKey(): string | null {
+    const pt = this.config.pageContext?.pageType;
+    if (typeof pt !== 'string' || pt.toLowerCase() !== 'pdp') return null;
+    const key = this._coerceSkuKey(this.config.pageContext?.sku);
+    return key || null;
+  }
+
+  /**
+   * Returns the SKU of the product currently rendered in the side panel, if any.
+   *
+   * Used to short-circuit duplicate `ProductSummaryCard` messages when the user
+   * re-clicks the product that is already open in the panel. Only returns a SKU
+   * when the live panel source is a `ProductDetailsPanel` spec (either standalone
+   * or paired with a similars grid).
+   */
+  private _getCurrentPanelProductSku(): string | null {
+    const src = this._currentPanelSource;
+    if (!src) return null;
+    let pdpSpec: UISpec | null = null;
+    if (src.kind === 'spec') pdpSpec = src.spec;
+    else if (src.kind === 'productDetailsWithSimilars') pdpSpec = src.pdpSpec;
+    if (!pdpSpec) return null;
+    const root = pdpSpec.elements[pdpSpec.root];
+    if (!root || root.type !== 'ProductDetailsPanel') return null;
+    const props = root.props as Record<string, unknown> | undefined;
+    const product = (props?.['product'] ?? props) as Record<string, unknown> | undefined;
+    if (!product) return null;
+    const key = this._coerceSkuKey(product['sku']);
+    return key || null;
+  }
+
+  /**
+   * “Active” PDP SKU for suppressing redundant `ProductSummaryCard` clicks: prefer
+   * the panel spec when `productDetailsExtended` keeps a PDP there; otherwise
+   * fall back to host `pageContext` on PDP pages (panel may have been cleared).
+   */
+  private _activeSkuForProductSummaryClick(): string | null {
+    const fromPanel = this._getCurrentPanelProductSku();
+    if (fromPanel) return fromPanel;
+    return this._pdpPageContextSkuKey();
   }
 
   /** After similars grid is appended, extend panel source so back/history/snapshot rebuild includes it. */
@@ -3716,10 +3867,15 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         }
         if (action.type === 'launchSingleProduct') {
           this._drawer?.setDividerPreviewEnabled(false);
-          const sku =
+          const rawSku =
             typeof action.payload === 'object' && action.payload !== null && 'sku' in action.payload
-              ? String((action.payload as Record<string, unknown>).sku)
-              : '';
+              ? (action.payload as Record<string, unknown>).sku
+              : undefined;
+          const sku = this._coerceSkuKey(rawSku);
+          const activeSku = this._activeSkuForProductSummaryClick();
+          if (sku && activeSku && sku === activeSku) {
+            return;
+          }
           if (sku) ga.trackProductDetail(sku, action.title);
         }
         if (action.type === 'findSimilar') {
@@ -3730,18 +3886,36 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
           ga.trackFindSimilars(sku);
         }
         if (action.type === 'getComparisonTable') {
-          ga.trackCompareSelected(this._comparisonSelectedSkus);
+          const raw = action.payload;
+          const rec = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+          const src = rec && typeof rec['gengage_analytics_source'] === 'string' ? rec['gengage_analytics_source'] : '';
+          let skuList: string[] = [];
+          if (rec && Array.isArray(rec['sku_list'])) {
+            skuList = rec['sku_list'].filter((x): x is string => typeof x === 'string');
+          }
+          if (src === 'floating_compare_dock') {
+            ga.trackCompareProduct(skuList);
+          } else {
+            ga.trackCompareSelected(skuList.length > 0 ? skuList : this._comparisonSelectedSkus);
+          }
         }
         // addToCart/like actions should preserve the current panel (product cards stay visible)
         const preservePanel = action.type === 'addToCart' || action.type === 'like';
         this._sendAction(action, preservePanel ? { preservePanel: true } : undefined);
       },
       onProductClick: (params) => {
-        ga.trackProductDetail(params.sku);
         // Demo mode: load product in-chat via launchSingleProduct (no navigation)
         // Production mode: navigate to product page (chat auto-opens on new page)
         const shouldNavigate = this.config.isDemoWebsite !== true && this._isSameOriginUrl(params.url);
         if (!shouldNavigate) {
+          const clickSku = this._coerceSkuKey(params.sku);
+          const activeSku = this._activeSkuForProductSummaryClick();
+          if (clickSku && activeSku && clickSku === activeSku) {
+            return;
+          }
+        }
+        if (!shouldNavigate) {
+          ga.trackProductDetail(params.sku);
           const displayTitle = params.name?.trim() ? params.name.trim() : params.sku;
           this._sendAction({
             title: displayTitle,
@@ -3753,6 +3927,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
             sku: params.sku,
             url: params.url,
             sessionId: this.config.session?.sessionId ?? null,
+            ...(params.name !== undefined && params.name !== '' ? { productName: params.name } : {}),
           });
           this._saveSessionAndOpenURL(params.url);
         }
@@ -3761,6 +3936,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._runChatAddToCartFlow(params);
       },
       onProductSelect: (product) => {
+        // No-op when the shopper is already on this PDP (panel and/or host PDP context):
+        // no extra summary bubble, no panel churn, and no follow-on launch traffic.
+        const newSku = this._productSkuKey(product as Record<string, unknown>);
+        const activeSku = this._activeSkuForProductSummaryClick();
+        if (newSku && activeSku && newSku === activeSku) {
+          return;
+        }
         // Save current panel source to local history so back button can re-render it
         if (this._currentPanelSource) {
           const currentTitle = this._drawer?.getPanelTopBarTitle() ?? '';
@@ -3800,6 +3982,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
         this._drawer?.setPanelContent(this._renderUISpec(detailSpec, ctx));
         this._drawer?.setDividerPreviewEnabled(false);
         this._currentPanelSource = { kind: 'spec', spec: detailSpec };
+        if (this._panel) this._panel.currentType = 'ProductDetailsPanel';
         this._drawer?.updatePanelTopBar(true, false, this._i18n.panelTitleProductDetails);
       },
       i18n: this._i18n,

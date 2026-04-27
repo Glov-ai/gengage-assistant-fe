@@ -347,6 +347,8 @@ export type GengageEventName =
   | 'gengage:qna:action'
   | 'gengage:qna:open-chat'
   | 'gengage:similar:product-click'
+  | 'gengage:similar:grouping-click'
+  | 'gengage:similar:products-impression'
   | 'gengage:similar:add-to-cart'
   | 'gengage:global:error'
   | 'gengage:checkout:start'
@@ -370,7 +372,23 @@ export type GengageEventDetailMap = {
   };
   'gengage:qna:action': ActionPayload;
   'gengage:qna:open-chat': Record<string, never>;
-  'gengage:similar:product-click': { sku: string; url: string; sessionId: string | null };
+  'gengage:similar:product-click': {
+    sku: string;
+    url: string;
+    sessionId: string | null;
+    productName?: string;
+  };
+  'gengage:similar:grouping-click': {
+    grouping_label: string;
+    grouping_index: number;
+    sessionId: string | null;
+  };
+  'gengage:similar:products-impression': {
+    source_sku: string;
+    product_count: number;
+    grouped: boolean;
+    sessionId: string | null;
+  };
   'gengage:similar:add-to-cart': { sku: string; quantity: number; cartCode: string };
   'gengage:global:error': {
     source: 'chat' | 'qna' | 'simrel' | 'sdk';

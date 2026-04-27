@@ -624,7 +624,7 @@
   background: color-mix(in srgb, var(--text-muted) 36%, transparent);
 }
 
-/* Above main panel body: analyzing strip + AITopPicks / AIGroupingCards (desktop) */
+/* Above main panel body: analyzing strip + AITopPicks / AIGroupingCards */
 .gengage-chat-panel-ai-zone {
   flex-shrink: 0;
   width: 100%;
@@ -5739,6 +5739,8 @@ button.gengage-chat-product-summary__cta {
   border-radius: calc(var(--radius-control) - 4px);
   object-fit: cover;
   flex-shrink: 0;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .gengage-chat-grouping-card-body {
@@ -6360,6 +6362,8 @@ button.gengage-chat-product-details-rating {
   border-radius: 12px;
   object-fit: cover;
   border: 1px solid var(--border-subtle);
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .gengage-chat-consulting-style-caption {
@@ -8023,6 +8027,8 @@ button.gengage-chat-product-details-rating {
   flex: 0 0 auto;
   border: 1px solid var(--border-subtle);
   background: var(--surface-card-muted);
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .gengage-chat-categories-tab-text {
@@ -8050,6 +8056,13 @@ button.gengage-chat-product-details-rating {
   width: 100%;
   min-width: 0;
   max-width: none;
+}
+
+.gengage-chat-categories .gengage-chat-product-card-img,
+.gengage-chat-consulting-group-grid .gengage-chat-product-card-img,
+.gengage-chat-product-grid-wrapper:has(.gengage-chat-consulting-style-picker) .gengage-chat-product-card-img {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .gengage-chat-categories-filter-tags {

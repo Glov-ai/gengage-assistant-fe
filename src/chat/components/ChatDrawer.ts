@@ -1597,8 +1597,8 @@ export class ChatDrawer {
   }
 
   /**
-   * Desktop: area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
-   * so they are not duplicated in the chat column.
+   * Area above the main panel body for “analyzing” + AITopPicks / AIGroupingCards
+   * so they stay in the main pane instead of the chat column.
    */
   setPanelAiZoneState(
     state: 'hidden' | 'analyzing' | 'results',
@@ -1789,6 +1789,15 @@ export class ChatDrawer {
       return child;
     }
     return null;
+  }
+
+  /**
+   * After in-place mutations to panel content (e.g. consulting grid streaming patch),
+   * refresh top bar title derivation without replacing the content node.
+   */
+  resyncPanelTopBarFromCurrentContent(): void {
+    const el = this.getPanelContentElement();
+    if (el) this._syncPanelTopBarFromContent(el);
   }
 
   /** Whether the panel is currently visible (may be empty). */
@@ -2185,6 +2194,7 @@ export class ChatDrawer {
       chevronBtn.textContent = collapsed ? '\u00AB' : '\u00BB'; // « (expand left) or » (collapse right)
     }
     this._syncDividerPreview();
+    this._emitHostShellSync();
   }
 
   setDividerPreviewEnabled(enabled: boolean): void {

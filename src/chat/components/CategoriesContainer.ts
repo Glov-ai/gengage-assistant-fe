@@ -75,6 +75,7 @@ export function renderCategoriesContainer(element: UIElement, context: ChatUISpe
     if (group.image && isSafeImageUrl(group.image)) {
       const thumb = document.createElement('img');
       thumb.className = 'gengage-chat-categories-tab-image';
+      thumb.draggable = false;
       thumb.src = group.image;
       thumb.alt = group.groupName;
       thumb.loading = 'lazy';
@@ -163,6 +164,7 @@ function renderCategoryProductCard(product: NormalizedProduct, ctx: ChatUISpecRe
   if (product.imageUrl && isSafeImageUrl(product.imageUrl)) {
     const img = document.createElement('img');
     img.className = 'gengage-chat-product-card-img';
+    img.draggable = false;
     img.src = product.imageUrl;
     img.alt = product.name;
     img.loading = 'lazy';

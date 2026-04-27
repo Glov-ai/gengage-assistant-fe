@@ -89,6 +89,7 @@ export function renderAIGroupingCards(element: UIElement, ctx: ChatUISpecRenderC
       const img = document.createElement('img');
       img.className = 'gengage-chat-grouping-card-img';
       img.dataset['gengagePart'] = 'ai-grouping-card-image';
+      img.draggable = false;
       img.src = entry.image;
       img.alt = entry.name;
       img.width = 64;

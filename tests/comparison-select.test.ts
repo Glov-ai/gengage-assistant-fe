@@ -197,7 +197,7 @@ describe('Comparison Selection Mode', () => {
       expect(onAction).toHaveBeenCalledWith({
         title: 'Compare',
         type: 'getComparisonTable',
-        payload: { sku_list: ['SKU-A', 'SKU-B'] },
+        payload: { sku_list: ['SKU-A', 'SKU-B'], gengage_analytics_source: 'floating_compare_dock' },
       });
     });
 

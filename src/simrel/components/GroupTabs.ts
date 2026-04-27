@@ -13,6 +13,8 @@ export interface GroupTabsOptions {
   i18n?: SimRelI18n;
   /** ProductGrid `columns` — masaüstü satır başına kart sayısı. */
   columns?: number;
+  /** User changed grouping tab (click or keyboard). */
+  onGroupingActivate?: (detail: { grouping_label: string; grouping_index: number }) => void;
 }
 
 let _groupTabsInstanceCounter = 0;
@@ -37,6 +39,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
 
   const tabs: HTMLButtonElement[] = [];
   const panels: HTMLElement[] = [];
+  let activeTabIndex = 0;
 
   const buildGridOptions = (group: ProductGroup): import('./ProductGrid.js').ProductGridOptions => {
     const gridOpts: import('./ProductGrid.js').ProductGridOptions = {
@@ -52,7 +55,13 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     return gridOpts;
   };
 
-  const activateTab = (index: number): void => {
+  const activateTab = (index: number, userInitiated = false): void => {
+    if (userInitiated && index !== activeTabIndex && options.onGroupingActivate) {
+      const g = options.groups[index]!;
+      options.onGroupingActivate({ grouping_label: g.name, grouping_index: index });
+    }
+    activeTabIndex = index;
+
     for (let j = 0; j < tabs.length; j++) {
       const isActive = j === index;
       tabs[j]!.classList.toggle('gengage-simrel-tab--active', isActive);
@@ -93,7 +102,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
     tab.tabIndex = i === 0 ? 0 : -1;
     if (i === 0) tab.classList.add('gengage-simrel-tab--active');
 
-    tab.addEventListener('click', () => activateTab(i));
+    tab.addEventListener('click', () => activateTab(i, true));
     tab.addEventListener('keydown', (e: KeyboardEvent) => {
       let next = -1;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -107,7 +116,7 @@ export function renderGroupTabs(options: GroupTabsOptions): HTMLElement {
       }
       if (next >= 0) {
         e.preventDefault();
-        activateTab(next);
+        activateTab(next, true);
         tabs[next]!.focus();
       }
     });

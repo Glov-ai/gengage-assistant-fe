@@ -56,7 +56,7 @@ export function renderFloatingComparisonButton(selectedSkus: string[], ctx: Chat
     ctx.onAction({
       title: label,
       type: 'getComparisonTable',
-      payload: { sku_list: [...selectedSkus] },
+      payload: { sku_list: [...selectedSkus], gengage_analytics_source: 'floating_compare_dock' },
     });
   });
   dock.appendChild(action);
