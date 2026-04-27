@@ -169,10 +169,20 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   /** Set when `config.pillLauncher` is used — `apply()` runs at end of `onInit`. */
   private _pillLauncherApply: (() => Promise<void>) | null = null;
   /**
-   * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault.
-   * Does not set `overflow` on html/body (avoids breaking host layouts).
+   * Host scroll blocked via capture-phase `touchmove`/`wheel` + preventDefault on `window` and
+   * `document`, `scroll` pin for the viewport, temporary `overflow` / `overscroll-behavior` on
+   * `html`/`body` (restored on release).
    */
   private _hostScrollLockActive = false;
+  private _hostOverflowRestore: {
+    htmlOverflow: string;
+    bodyOverflow: string;
+    htmlOverscroll: string;
+    bodyOverscroll: string;
+  } | null = null;
+  /** Viewport scroll position captured when the lock starts (Windows / nested layouts). */
+  private _hostScrollLockViewport: { x: number; y: number } | null = null;
+  private _hostScrollPinning = false;
   private readonly _preventHostDocumentTouchMove = (e: TouchEvent): void => {
     if (!this._hostScrollLockActive) return;
     if (this._hostScrollEventShouldReachChatScroller(e)) return;
@@ -182,6 +192,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (!this._hostScrollLockActive) return;
     if (this._hostScrollEventShouldReachChatScroller(e)) return;
     e.preventDefault();
+  };
+  private readonly _pinHostViewportScroll = (): void => {
+    if (!this._hostScrollLockActive || !this._hostScrollLockViewport || this._hostScrollPinning) return;
+    const t = this._hostScrollLockViewport;
+    if (window.scrollX === t.x && window.scrollY === t.y) return;
+    this._hostScrollPinning = true;
+    window.scrollTo(t.x, t.y);
+    this._hostScrollPinning = false;
   };
   private _messages: ChatMessage[] = [];
   // Bot text accumulation is now closure-local inside _sendAction to prevent
@@ -1439,18 +1457,14 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     return true;
   }
 
-  /** Host page scroll (touch/wheel) blocked; separate from backdrop so mobile floating drawer locks without split panel. */
+  /** Host page scroll blocked whenever MainPane is shown (including collapsed split). */
   private _shouldLockHostDocumentScroll(): boolean {
     if (!this._drawerVisible) return false;
     const variant = this.config.variant ?? 'floating';
     if (variant === 'inline') return false;
     if (variant === 'overlay') return true;
     if (this._isMobileViewport) return true;
-    const drawer = this._drawer;
-    if (!drawer?.isPanelVisible()) return false;
-    // Desktop: same as mobile intent for MainPane — lock only when the side panel is expanded.
-    if (drawer.isPanelCollapsed()) return false;
-    return true;
+    return this._drawer?.isPanelVisible() ?? false;
   }
 
   private _applyOpenStateClasses(): void {
@@ -1508,6 +1522,9 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   private _hostScrollEventShouldReachChatScroller(ev: Event): boolean {
     try {
       const path = ev.composedPath();
+      // Rare host/browser edge: empty path would block all wheel if treated as "outside widget".
+      if (path.length === 0) return true;
+
       if (!path.includes(this.root)) return false;
 
       for (const n of path) {
@@ -1530,17 +1547,58 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
   }
 
   private _applyHostDocumentScrollLock(): void {
-    if (typeof document === 'undefined' || this._hostScrollLockActive) return;
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    if (!this._hostOverflowRestore) {
+      const html = document.documentElement;
+      const body = document.body;
+      this._hostOverflowRestore = {
+        htmlOverflow: html.style.overflow,
+        bodyOverflow: body?.style.overflow ?? '',
+        htmlOverscroll: html.style.overscrollBehavior,
+        bodyOverscroll: body?.style.overscrollBehavior ?? '',
+      };
+      html.style.overflow = 'hidden';
+      html.style.overscrollBehavior = 'none';
+      if (body) {
+        body.style.overflow = 'hidden';
+        body.style.overscrollBehavior = 'none';
+      }
+      this._hostScrollLockViewport = { x: window.scrollX, y: window.scrollY };
+    }
+    if (this._hostScrollLockActive) return;
+    window.addEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true, passive: false });
+    window.addEventListener('wheel', this._preventHostDocumentWheel, { capture: true, passive: false });
     document.addEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true, passive: false });
     document.addEventListener('wheel', this._preventHostDocumentWheel, { capture: true, passive: false });
+    window.addEventListener('scroll', this._pinHostViewportScroll, { capture: true, passive: true });
     this._hostScrollLockActive = true;
   }
 
   private _releaseHostDocumentScrollLock(): void {
-    if (typeof document === 'undefined' || !this._hostScrollLockActive) return;
-    document.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
-    document.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
-    this._hostScrollLockActive = false;
+    if (typeof document === 'undefined') return;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this._pinHostViewportScroll, { capture: true });
+      window.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
+      window.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
+    }
+    if (this._hostScrollLockActive) {
+      document.removeEventListener('touchmove', this._preventHostDocumentTouchMove, { capture: true });
+      document.removeEventListener('wheel', this._preventHostDocumentWheel, { capture: true });
+      this._hostScrollLockActive = false;
+    }
+    this._hostScrollLockViewport = null;
+    this._hostScrollPinning = false;
+    if (this._hostOverflowRestore) {
+      const html = document.documentElement;
+      const body = document.body;
+      html.style.overflow = this._hostOverflowRestore.htmlOverflow;
+      html.style.overscrollBehavior = this._hostOverflowRestore.htmlOverscroll;
+      if (body) {
+        body.style.overflow = this._hostOverflowRestore.bodyOverflow;
+        body.style.overscrollBehavior = this._hostOverflowRestore.bodyOverscroll;
+      }
+      this._hostOverflowRestore = null;
+    }
   }
 
   private _handleAttachment(file: File): void {
