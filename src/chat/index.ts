@@ -362,7 +362,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     // Create launcher (floating variant only — inline/overlay are triggered programmatically)
     if (variant === 'floating') {
       const launcherOpts: import('./components/Launcher.js').LauncherOptions = {
-        onClick: () => { ga.trackShow('chat'); this.open(); },
+        onClick: () => {
+          ga.trackShow('chat');
+          this.open();
+        },
         ariaLabel: this._i18n.openButton,
       };
       if (config.launcherImageUrl !== undefined) launcherOpts.imageUrl = config.launcherImageUrl;
