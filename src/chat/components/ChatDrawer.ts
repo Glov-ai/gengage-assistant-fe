@@ -2194,6 +2194,7 @@ export class ChatDrawer {
       chevronBtn.textContent = collapsed ? '\u00AB' : '\u00BB'; // « (expand left) or » (collapse right)
     }
     this._syncDividerPreview();
+    this._emitHostShellSync();
   }
 
   setDividerPreviewEnabled(enabled: boolean): void {

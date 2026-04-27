@@ -1431,7 +1431,10 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     const variant = this.config.variant ?? 'floating';
     if (variant === 'inline') return false;
     if (variant === 'overlay') return true;
-    return this._drawer?.isPanelVisible() ?? false;
+    if (!(this._drawer?.isPanelVisible() ?? false)) return false;
+    // Desktop split view: scrim only while MainPane is expanded; collapsed = chat-only column.
+    if (!this._isMobileViewport && (this._drawer?.isPanelCollapsed() ?? false)) return false;
+    return true;
   }
 
   /** Host page scroll (touch/wheel) blocked; separate from backdrop so mobile floating drawer locks without split panel. */
@@ -1441,7 +1444,11 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
     if (variant === 'inline') return false;
     if (variant === 'overlay') return true;
     if (this._isMobileViewport) return true;
-    return this._drawer?.isPanelVisible() ?? false;
+    const drawer = this._drawer;
+    if (!drawer?.isPanelVisible()) return false;
+    // Desktop: same as mobile intent for MainPane — lock only when the side panel is expanded.
+    if (drawer.isPanelCollapsed()) return false;
+    return true;
   }
 
   private _applyOpenStateClasses(): void {
