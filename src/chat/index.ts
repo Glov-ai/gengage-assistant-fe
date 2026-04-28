@@ -1621,14 +1621,6 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       this._queuedUserMessages = [];
     }
 
-    // First outgoing user message: mark KVKK accepted so `kvkkApproved` is true on this request;
-    // if banner is still visible on a later send, dismiss it without requiring ×.
-    const isFirstUserMessage = !this._messages.some((m) => m.role === 'user');
-    if (isFirstUserMessage || this._drawer?.isKvkkBannerVisible()) {
-      markKvkkShown(this.config.accountId);
-      this._drawer?.hideKvkkBanner();
-    }
-
     ga.trackMessageSent();
     // Track conversation start on first user message in a new thread
     const hasUserMessages = this._messages.some((m) => m.role === 'user');
@@ -1778,6 +1770,13 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       const lastMsg = this._messages.length > 0 ? this._messages[this._messages.length - 1] : undefined;
       const isDuplicate = lastMsg !== undefined && lastMsg.role === 'user' && lastMsg.content === userText;
       if (!isDuplicate) {
+        // Mark KVKK approved on first user-visible action; also dismiss the banner
+        // if still visible when a later message arrives (covers chip/button actions
+        // that bypass _sendMessage).
+        if (!this._messages.some((m) => m.role === 'user') || this._drawer?.isKvkkBannerVisible()) {
+          markKvkkShown(this.config.accountId);
+          this._drawer?.hideKvkkBanner();
+        }
         const userMsg = this._createMessage('user', userText);
         userMsg.threadId = threadId;
         if (options?.attachment !== undefined) {
