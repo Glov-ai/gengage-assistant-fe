@@ -15,7 +15,7 @@ domain needs to control the chat widget), explicitly list the allowed origins:
 const chat = new GengageChat();
 chat.init({
   accountId: 'your-account',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
   allowedOrigins: [
     'https://www.yoursite.com',
     'https://portal.yoursite.com',
@@ -31,7 +31,7 @@ For GTM deployments, add origins in the config object:
 window.gengageConfig = {
   version: '1',
   accountId: 'your-account',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
   allowedOrigins: ['https://www.yoursite.com'],
 };
 </script>
@@ -57,7 +57,7 @@ When loading the SDK via CDN script tags, your CSP headers must allow the SDK so
 ```http
 Content-Security-Policy:
   script-src 'self' https://unpkg.com https://cdn.jsdelivr.net;
-  connect-src 'self' https://chat.gengage.ai https://chatbe-dev.gengage.ai;
+  connect-src 'self' <your Gengage backend service origin>;
   style-src 'self' 'unsafe-inline';
   img-src 'self' https: data:;
   media-src 'self' blob:;
@@ -69,7 +69,7 @@ Content-Security-Policy:
 | Directive | Value | Reason |
 |-----------|-------|--------|
 | `script-src` | CDN domains | SDK IIFE bundle loaded from CDN |
-| `connect-src` | Backend domains | NDJSON streaming + analytics |
+| `connect-src` | Gengage backend service origin | NDJSON streaming + analytics |
 | `style-src` | `'unsafe-inline'` | Shadow DOM style injection (CSS is inlined) |
 | `img-src` | `https: data:` | Product images from merchant CDNs + data URIs |
 | `media-src` | `blob:` | TTS audio playback uses blob URLs |
@@ -129,7 +129,7 @@ import { GengageChat } from '@gengage/assistant-fe/chat';
 const chat = new GengageChat();
 await chat.init({
   accountId: 'your-account',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
 
   // Security
   allowedOrigins: [
@@ -157,7 +157,7 @@ await chat.init({
   var chat = new window.Gengage.GengageChat();
   chat.init({
     accountId: 'your-account',
-    middlewareUrl: 'https://chat.gengage.ai',
+    middlewareUrl: '<backend service location provided for your Gengage account>',
     allowedOrigins: ['https://www.yoursite.com']
   });
 })();
@@ -171,6 +171,6 @@ Before going live, verify:
 - [ ] `allowedOrigins` is not set to `['*']` (same-origin default is secure; only set explicit origins if cross-origin iframes need access)
 - [ ] CSP headers allow the SDK source and API endpoints
 - [ ] No custom `renderCard` overrides use unsanitized user input
-- [ ] Backend middleware URL points to production (`chat.gengage.ai`), not dev
+- [ ] Backend middleware URL points to the production backend service location provided for your Gengage account
 - [ ] HTTPS is enforced on all origins in `allowedOrigins`
 - [ ] `img.src` values from your product catalog use HTTPS

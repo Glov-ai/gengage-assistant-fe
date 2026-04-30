@@ -36,7 +36,7 @@ Replace the ESM import with a CDN URL:
     runtimeConfig: {
       version: '1',
       accountId: 'YOUR_ACCOUNT_ID',
-      middlewareUrl: 'https://chat.gengage.ai',
+      middlewareUrl: '<backend service location provided for your Gengage account>',
       widgets: { chat: { enabled: true }, qna: { enabled: true }, simrel: { enabled: true } },
       mounts: { qna: '#gengage-qna', simrel: '#gengage-simrel' },
     },

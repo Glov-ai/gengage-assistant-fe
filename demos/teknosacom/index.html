@@ -479,13 +479,14 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
       import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSkus = ['125077817', '125077816', '125077820'];
       const sku = params.get('sku') ?? defaultSkus[0];
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       let shouldRewriteUrl = false;
       ['glov_force_account', 'nd_debug'].forEach((key) => {
         if (params.has(key)) {

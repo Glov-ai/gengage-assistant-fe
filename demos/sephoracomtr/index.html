@@ -625,13 +625,14 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const PRODUCT_URL =
         'https://www.sephora.com.tr/p/bangin%E2%80%99-lashes---badgal-bang--maskara-seti-P1000207331.html';
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? '769798';
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
 
       const skuDisplay = sku ?? '—';
       document.getElementById('dev-sku').textContent = skuDisplay;

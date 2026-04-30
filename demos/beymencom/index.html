@@ -481,13 +481,14 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
       import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '1543302';
       const sku = params.get('sku') ?? defaultSku;
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       const brandAvatarUrl = 'https://configs.gengage.ai/beymencom/glov-beymencom-logo.png';
 
       const skuDisplay = sku ?? '—';

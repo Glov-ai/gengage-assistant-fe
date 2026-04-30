@@ -15,7 +15,7 @@ For a full reference of the override system, see [customization.md](./customizat
 ```ts
 await chatWidget.init({
   accountId: 'mystore',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
   renderer: {
     registry: {
       ProductCard: ({ element, context }) => {
@@ -95,7 +95,7 @@ await chatWidget.init({
 ```ts
 await chatWidget.init({
   accountId: 'mystore',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
 
   // Custom header
   headerTitle: 'MyStore Asistanı',
@@ -122,7 +122,7 @@ await chatWidget.init({
 ```ts
 await chatWidget.init({
   accountId: 'mystore',
-  middlewareUrl: 'https://chat.gengage.ai',
+  middlewareUrl: '<backend service location provided for your Gengage account>',
 
   // Custom launcher icon (SVG string)
   launcherSvg: `

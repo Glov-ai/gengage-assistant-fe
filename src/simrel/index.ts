@@ -51,7 +51,7 @@ function isAbortError(error: unknown): boolean {
  * const simrel = new GengageSimRel();
  * await simrel.init({
  *   accountId: 'mystore',
- *   middlewareUrl: 'https://chat.gengage.ai',
+ *   middlewareUrl: '<backend service location provided for your Gengage account>',
  *   sku: '12345',
  *   mountTarget: '#similar-products',
  *   session: { sessionId: bootstrapSession() },

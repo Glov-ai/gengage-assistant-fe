@@ -49,7 +49,7 @@ import './components/qna.css';
  * const qna = new GengageQNA();
  * await qna.init({
  *   accountId: 'mystore',
- *   middlewareUrl: 'https://chat.gengage.ai',
+ *   middlewareUrl: '<backend service location provided for your Gengage account>',
  *   mountTarget: '#qna-section',
  *   pageContext: { pageType: 'pdp', sku: '12345' },
  *   session: { sessionId: bootstrapSession() },

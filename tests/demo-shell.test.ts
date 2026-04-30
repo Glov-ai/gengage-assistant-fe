@@ -5,6 +5,7 @@ import {
   createBrandAvatarDataUrl,
   hydrateDemoPdpShell,
 } from '../demos/shared/demo-shell.ts';
+import { defaultDevBackend } from '../demos/shared/default-dev-backend.ts';
 
 const originalFetch = globalThis.fetch;
 
@@ -181,7 +182,7 @@ describe('demo-shell helpers', () => {
     await hydrateDemoPdpShell({
       accountId: 'trendyolcom',
       sku: '917839672',
-      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      middlewareUrl: defaultDevBackend,
       brandName: 'Trendyol',
       locale: 'tr',
     });
@@ -238,7 +239,7 @@ describe('demo-shell helpers', () => {
     await hydrateDemoPdpShell({
       accountId: 'trendyolcom',
       sku: 'EARLY-1',
-      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      middlewareUrl: defaultDevBackend,
       brandName: 'Trendyol',
       locale: 'tr',
     });
@@ -255,7 +256,7 @@ describe('demo-shell helpers', () => {
     await hydrateDemoPdpShell({
       accountId: 'trendyolcom',
       sku: '917839672',
-      middlewareUrl: 'https://chatbe-dev.gengage.ai',
+      middlewareUrl: defaultDevBackend,
       brandName: 'Trendyol',
       locale: 'tr',
     });

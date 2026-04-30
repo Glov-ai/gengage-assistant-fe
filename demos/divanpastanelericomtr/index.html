@@ -471,13 +471,14 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
       import { createBrandAvatarDataUrl, hydrateDemoPdpShell } from '../shared/demo-shell.ts';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = 'divan-klasik';
       const sku = params.get('sku') ?? defaultSku;
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       const brandAvatarUrl = createBrandAvatarDataUrl({ brandName: 'Divan', primaryColor: '#8b1a2d' });
 
       const skuDisplay = sku ?? '—';

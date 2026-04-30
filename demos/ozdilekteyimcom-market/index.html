@@ -558,6 +558,7 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
@@ -567,7 +568,7 @@
       }
 
       const sku = params.get('sku') ?? '10005724';
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       const chatIconUrl = new URL('./market.svg', import.meta.url).href;
 
       const skuDisplay = sku;

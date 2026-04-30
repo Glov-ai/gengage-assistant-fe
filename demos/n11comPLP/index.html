@@ -319,6 +319,7 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const SKU_LIST = [
@@ -409,7 +410,7 @@
 
       // Boot assistant
       const params = new URLSearchParams(location.search);
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
 
       const controller = await initOverlayWidgets({
         accountId: 'n11com',

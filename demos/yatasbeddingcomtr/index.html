@@ -471,6 +471,7 @@
 
     <link rel="stylesheet" href="./yatas-cards.css" />
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
       import { hydrateDemoPdpShell } from '../shared/demo-shell.ts';
       import { renderYatasSimRelCard, renderYatasChatProductCard, renderYatasCardElement } from './yatas-cards.ts';
@@ -479,7 +480,7 @@
       const params = new URLSearchParams(location.search);
       const defaultSku = '1066800';
       const sku = params.get('sku') ?? defaultSku;
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
 
       const brandAvatarUrl = 'https://configs.gengage.ai/yatasbeddingcomtr/glov-yatasbeddingcomtr-logo.svg';
 

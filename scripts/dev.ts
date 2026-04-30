@@ -19,6 +19,8 @@ import { readFileSync, existsSync, readdirSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
+import { defaultDevBackend } from '../demos/shared/default-dev-backend.ts';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ---------------------------------------------------------------------------
@@ -87,7 +89,7 @@ function parseArgs(argv: string[]): DevOptions {
   const demo = positionalDemo ?? namedDemo;
 
   if (!demo) {
-    const backendUrl = process.env['MIDDLEWARE_URL'] ?? 'https://chatbe-dev.gengage.ai';
+    const backendUrl = process.env['MIDDLEWARE_URL'] ?? defaultDevBackend;
     return { demo: '', sku: undefined, port, backendUrl };
   }
 
@@ -111,7 +113,7 @@ function parseArgs(argv: string[]): DevOptions {
   const backendUrl =
     args.find((a) => a.startsWith('--backend-url='))?.slice('--backend-url='.length) ??
     process.env['MIDDLEWARE_URL'] ??
-    'https://chatbe-dev.gengage.ai';
+    defaultDevBackend;
   const sku = flagSku ?? positionalSku;
 
   return { demo, sku, port, backendUrl };

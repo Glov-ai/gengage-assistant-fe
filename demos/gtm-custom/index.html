@@ -168,12 +168,13 @@
 
     <!-- Dev server injects from local build; production would use CDN -->
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '/src/common/overlay.js';
       import { wireQNAToChat } from '/src/common/events.js';
 
       const params = new URLSearchParams(location.search);
       const ACCOUNT_ID = params.get('accountId') || 'koctascomtr';
-      const MIDDLEWARE_URL = params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      const MIDDLEWARE_URL = params.get('middlewareUrl') || defaultDevBackend;
       const SKU = params.get('sku') || '1000465056';
 
       document.getElementById('demo-sku').textContent = SKU;

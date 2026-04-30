@@ -635,12 +635,13 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
       const defaultSku = '738220152';
       const sku = params.get('sku') ?? defaultSku;
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       const demoImages = [
         'https://n11scdn.akamaized.net/a1/750/10/00/55/35/IMG-8957242470457036188.jpg',
         'https://n11scdn.akamaized.net/a1/750/01/63/49/11/IMG-1402692361329991593.jpg',

@@ -38,6 +38,7 @@
 
     <!-- Initialize widgets -->
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import {
         initNativeOverlayWidgets,
         applyNativeSession,
@@ -53,7 +54,7 @@
       var params = new URLSearchParams(window.location.search);
 
       var accountId = nativeConfig.accountId || params.get('accountId') || 'demo';
-      var middlewareUrl = nativeConfig.middlewareUrl || params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      var middlewareUrl = nativeConfig.middlewareUrl || params.get('middlewareUrl') || defaultDevBackend;
       var sku = nativeConfig.sku || params.get('sku') || undefined;
       var locale = nativeConfig.locale || params.get('locale') || 'tr';
       var pageType = nativeConfig.pageType || params.get('pageType') || (sku ? 'pdp' : 'other');

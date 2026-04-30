@@ -146,7 +146,7 @@ import { asRecord } from './assistant-mode.js';
  * const chat = new GengageChat();
  * await chat.init({
  *   accountId: 'mystore',
- *   middlewareUrl: 'https://chat.gengage.ai',
+ *   middlewareUrl: '<backend service location provided for your Gengage account>',
  *   session: { sessionId: bootstrapSession() },
  * });
  * chat.open(); // Programmatically open the drawer

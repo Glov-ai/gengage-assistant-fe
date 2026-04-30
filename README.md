@@ -132,7 +132,7 @@ npm run docs:build                             # Build contributor docs with Vit
 npm run dev -- koctascomtr --sku=1000465056 --backend-url=http://localhost:7860
 ```
 
-The default backend is `https://chatbe-dev.gengage.ai`. You can also set it via the `MIDDLEWARE_URL` environment variable:
+The local demos use the shared `defaultDevBackend` value from `demos/shared/default-dev-backend.ts`. For account-specific testing, set `MIDDLEWARE_URL` to the backend service location provided for your Gengage account:
 
 ```bash
 MIDDLEWARE_URL=http://localhost:7860 npm run dev -- koctascomtr --sku=1000465056

@@ -605,7 +605,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
  *
  * const controller = await initOverlayWidgets({
  *   accountId: 'mystore',
- *   middlewareUrl: 'https://chat.gengage.ai',
+ *   middlewareUrl: '<backend service location provided for your Gengage account>',
  *   sku: window.productSku,
  *   pageContext: { pageType: 'pdp' },
  *   chat: { variant: 'floating' },

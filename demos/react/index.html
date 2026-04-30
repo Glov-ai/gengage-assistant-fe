@@ -110,12 +110,14 @@
     <script src="https://unpkg.com/@gengage/assistant-fe/dist/qna.iife.js"></script>
     <script src="https://unpkg.com/@gengage/assistant-fe/dist/simrel.iife.js"></script>
 
-    <script>
+    <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
+
       var params = new URLSearchParams(location.search);
 
       // ---- CONFIGURE THESE VALUES ----
       var ACCOUNT_ID = 'koctascomtr';
-      var MIDDLEWARE_URL = params.get('middlewareUrl') || 'https://chatbe-dev.gengage.ai';
+      var MIDDLEWARE_URL = params.get('middlewareUrl') || defaultDevBackend;
       var LOCALE = 'tr';
 
       var h = React.createElement;

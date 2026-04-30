@@ -558,11 +558,12 @@
     </main>
 
     <script type="module">
+      import { defaultDevBackend } from '../shared/default-dev-backend.ts';
       import { initOverlayWidgets } from '@gengage/assistant-fe';
 
       const params = new URLSearchParams(location.search);
       const sku = params.get('sku') ?? 'PR-70147SBH.MVI0082300048MAVI';
-      const middlewareUrl = params.get('middlewareUrl') ?? 'https://chatbe-dev.gengage.ai';
+      const middlewareUrl = params.get('middlewareUrl') ?? defaultDevBackend;
       const ozdilekLauncherIconUrl = new URL('./magaza.svg', import.meta.url).href;
       const ozdilekHeaderLogoUrl = new URL('./ozdilekteyimLogoMagaza.svg', import.meta.url).href;
 
