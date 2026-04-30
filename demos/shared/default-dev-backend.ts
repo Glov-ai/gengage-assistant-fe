@@ -1,1 +1,1 @@
-export const defaultDevBackend = 'https://chatbe-dev.gengage.ai';
+export const defaultDevBackend = 'https://chatbe-az-dev.gengage.ai';
