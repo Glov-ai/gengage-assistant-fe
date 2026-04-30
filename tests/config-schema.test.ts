@@ -49,6 +49,7 @@ describe('AccountRuntimeConfigSchema', () => {
     expect(config.accountId).toBe('testaccount');
     expect(config.locale).toBe('tr');
     expect(config.widgets.chat.enabled).toBe(true);
+    expect(config.widgets.simrel).toBeUndefined();
     expect(config.widgets.simbut.enabled).toBe(false);
     expect(config.analytics.enabled).toBe(true);
     expect(config.analytics.endpoint).toBe('/analytics');
@@ -81,18 +82,34 @@ describe('AccountRuntimeConfigSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('applies defaults for optional fields', () => {
+  it('leaves widgets.simrel undefined when the key is omitted (default off)', () => {
     const config = parseAccountRuntimeConfig({
       version: '1',
       accountId: 'test',
       middlewareUrl: 'https://api.test.com',
-      widgets: { chat: { enabled: true }, qna: { enabled: true }, simrel: { enabled: true } },
+      widgets: { chat: { enabled: true }, qna: { enabled: true }, simbut: { enabled: false } },
     });
     expect(config.widgets.chat.enabled).toBe(true);
+    expect(config.widgets.simrel).toBeUndefined();
     expect(config.widgets.simbut.enabled).toBe(false);
     expect(config.analytics.fireAndForget).toBe(true);
     expect(config.actionHandling.unknownActionPolicy).toBe('log-and-ignore');
     expect(config.actionHandling.allowScriptCall).toBe(false);
+  });
+
+  it('parses widgets.simrel when provided', () => {
+    const config = parseAccountRuntimeConfig({
+      version: '1',
+      accountId: 'test',
+      middlewareUrl: 'https://api.test.com',
+      widgets: {
+        chat: { enabled: true },
+        qna: { enabled: true },
+        simrel: { enabled: true },
+        simbut: { enabled: false },
+      },
+    });
+    expect(config.widgets.simrel?.enabled).toBe(true);
   });
 
   it('allows disabling individual widgets', () => {

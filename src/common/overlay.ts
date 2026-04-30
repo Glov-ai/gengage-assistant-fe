@@ -109,6 +109,8 @@ export interface OverlayChatOptions {
   renderer?: ChatWidgetConfig['renderer'];
   /** When true, allow full product details in the assistant side panel; default is chat summary only. */
   productDetailsExtended?: boolean;
+  /** Hides percent discount badges on chat product cards / details when true. */
+  hideProductDiscountBadge?: ChatWidgetConfig['hideProductDiscountBadge'];
   isDemoWebsite?: ChatWidgetConfig['isDemoWebsite'];
   /** Pill launcher — forwarded to `chat.pillLauncher` (applied inside GengageChat). */
   pillLauncher?: ChatWidgetConfig['pillLauncher'];
@@ -392,6 +394,9 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
     if (this.options.chat?.productPriceUi !== undefined) {
       config.productPriceUi = this.options.chat.productPriceUi;
     }
+    if (this.options.chat?.hideProductDiscountBadge !== undefined) {
+      config.hideProductDiscountBadge = this.options.chat.hideProductDiscountBadge;
+    }
     if (this.options.onScriptCall !== undefined) {
       config.onScriptCall = this.options.onScriptCall;
     }
@@ -475,7 +480,7 @@ class OverlayWidgetsRuntime implements OverlayWidgetsController {
       this._qna = null;
     }
 
-    if (this.options.simrel?.enabled !== false) {
+    if (this.options.simrel !== undefined && this.options.simrel.enabled !== false) {
       const simRelTarget = this.options.simrel?.mountTarget ?? DEFAULT_SIMREL_MOUNT;
       const mountTarget = resolveMountTarget(simRelTarget);
 

@@ -2,6 +2,14 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { preflightDiagnostics } from '../src/common/preflight.js';
 import { parseAccountRuntimeConfig } from '../src/common/config-schema.js';
 
+/** Widgets snapshot that enables SimRel so mounts.simrel preflight applies. */
+const widgetsWithSimRelOn = {
+  chat: { enabled: true },
+  qna: { enabled: true },
+  simrel: { enabled: true },
+  simbut: { enabled: false },
+};
+
 function makeConfig(overrides: Record<string, unknown> = {}) {
   return parseAccountRuntimeConfig({
     version: '1',
@@ -10,7 +18,7 @@ function makeConfig(overrides: Record<string, unknown> = {}) {
     widgets: {
       chat: { enabled: true },
       qna: { enabled: true },
-      simrel: { enabled: true },
+      simbut: { enabled: false },
     },
     ...overrides,
   });
@@ -34,13 +42,28 @@ describe('preflightDiagnostics', () => {
   });
 
   it('warns when SimRel mount selector is not found in DOM', () => {
-    const result = preflightDiagnostics(makeConfig({ mounts: { simrel: '#missing-simrel' } }));
+    const result = preflightDiagnostics(
+      makeConfig({
+        mounts: { simrel: '#missing-simrel' },
+        widgets: widgetsWithSimRelOn,
+      }),
+    );
     expect(result.warnings).toContainEqual(expect.objectContaining({ code: 'MOUNT_NOT_FOUND', severity: 'warn' }));
+  });
+
+  it('does not validate mounts.simrel when widgets.simrel is omitted', () => {
+    const result = preflightDiagnostics(makeConfig({ mounts: { simrel: '#missing-simrel' } }));
+    expect(result.warnings.filter((w) => w.code === 'MOUNT_NOT_FOUND')).toHaveLength(0);
   });
 
   it('passes when mount selectors exist in DOM', () => {
     document.body.innerHTML = '<div id="qna"></div><div id="simrel"></div>';
-    const result = preflightDiagnostics(makeConfig({ mounts: { qna: '#qna', simrel: '#simrel' } }));
+    const result = preflightDiagnostics(
+      makeConfig({
+        mounts: { qna: '#qna', simrel: '#simrel' },
+        widgets: widgetsWithSimRelOn,
+      }),
+    );
     expect(result.ok).toBe(true);
     expect(result.warnings).toHaveLength(0);
   });

@@ -998,6 +998,31 @@ describe('renderUISpec', () => {
       expect(badge!.textContent).toBe('%33');
     });
 
+    it('hides discount badge when hideProductDiscountBadge is true', () => {
+      const spec: UISpec = {
+        root: 'root',
+        elements: {
+          root: {
+            type: 'ProductCard',
+            props: {
+              product: {
+                sku: 'D1',
+                name: 'Discounted Product',
+                imageUrl: 'https://example.com/img.jpg',
+                price: '100',
+                originalPrice: '150',
+                discountPercent: 33,
+                url: '/product/d1',
+              },
+            },
+          },
+        },
+      };
+
+      const result = renderUISpec(spec, makeContext({ hideProductDiscountBadge: true }));
+      expect(result.querySelector('.gengage-chat-product-card-discount-badge')).toBeNull();
+    });
+
     it('does not render discount badge when discountPercent is absent', () => {
       const spec: UISpec = {
         root: 'root',

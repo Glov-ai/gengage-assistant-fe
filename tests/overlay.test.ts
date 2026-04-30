@@ -51,6 +51,7 @@ import {
 } from '../src/common/overlay.js';
 import { GengageQNA } from '../src/qna/index.js';
 import { GengageChat } from '../src/chat/index.js';
+import { GengageSimRel } from '../src/simrel/index.js';
 
 describe('overlay', () => {
   beforeEach(() => {
@@ -118,6 +119,43 @@ describe('overlay', () => {
 
       expect(controller.idempotencyKey).toBe('my-custom-key');
       expect(getOverlayWidgets('my-custom-key')).toBe(controller);
+    });
+
+    it('does not initialize SimRel when simrel options are omitted', async () => {
+      vi.clearAllMocks();
+      const controller = await initOverlayWidgets({
+        accountId: 'no-simrel-opt',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+      });
+
+      expect(GengageSimRel).not.toHaveBeenCalled();
+      expect(controller.simrel).toBeNull();
+    });
+
+    it('initializes SimRel when simrel.enabled is true', async () => {
+      vi.clearAllMocks();
+      await initOverlayWidgets({
+        accountId: 'with-simrel-explicit',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        simrel: { enabled: true },
+      });
+
+      expect(GengageSimRel).toHaveBeenCalled();
+    });
+
+    it('does not initialize SimRel when simrel.enabled is false', async () => {
+      vi.clearAllMocks();
+      const controller = await initOverlayWidgets({
+        accountId: 'simrel-off',
+        middlewareUrl: 'https://example.com',
+        sku: 'SKU123',
+        simrel: { enabled: false },
+      });
+
+      expect(GengageSimRel).not.toHaveBeenCalled();
+      expect(controller.simrel).toBeNull();
     });
   });
 

@@ -28,7 +28,11 @@ function parseConfig(raw: AccountRuntimeConfig | unknown): AccountRuntimeConfig 
   return result.data;
 }
 
-function mapConfigToOverlayOptions(
+/**
+ * Maps validated account runtime config to overlay widget options.
+ * Exported for unit tests.
+ */
+export function mapAccountRuntimeConfigToOverlayOptions(
   config: AccountRuntimeConfig,
   hostActions?: HostActions,
   initialContext?: Partial<PageContext>,
@@ -60,11 +64,11 @@ function mapConfigToOverlayOptions(
     options.qna.mountTarget = config.mounts.qna;
   }
 
-  options.simrel = {
-    enabled: config.widgets.simrel.enabled,
-  };
-  if (config.mounts.simrel !== undefined) {
-    options.simrel.mountTarget = config.mounts.simrel;
+  if (config.widgets.simrel !== undefined) {
+    options.simrel = {
+      enabled: config.widgets.simrel.enabled,
+      ...(config.mounts.simrel !== undefined ? { mountTarget: config.mounts.simrel } : {}),
+    };
   }
 
   options.simbut = {
@@ -106,7 +110,7 @@ export async function initGengageClient(options: GengageClientOptions): Promise<
 
   const initialContext = options.contextResolver?.();
 
-  const overlayOptions = mapConfigToOverlayOptions(config, options.hostActions, initialContext);
+  const overlayOptions = mapAccountRuntimeConfigToOverlayOptions(config, options.hostActions, initialContext);
   const controller = await initOverlayWidgets(overlayOptions);
 
   if (options.contextResolver !== undefined) {

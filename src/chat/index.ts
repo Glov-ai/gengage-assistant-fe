@@ -3987,6 +3987,7 @@ export class GengageChat extends BaseWidget<ChatWidgetConfig> {
       i18n: this._i18n,
       pricing: this.config.pricing,
       productPriceUi: this.config.productPriceUi,
+      hideProductDiscountBadge: this.config.hideProductDiscountBadge,
       productSort: this._productSort,
       onSortChange: (sort) => {
         this._productSort = sort;
