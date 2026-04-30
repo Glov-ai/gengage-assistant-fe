@@ -302,7 +302,7 @@ function fillProductDetailsPriceRow(
   }
 
   const discountPercent = productNumber(product, 'discountPercent', 'price_discount_rate');
-  if (typeof discountPercent === 'number' && discountPercent > 0) {
+  if (!ctx.hideProductDiscountBadge && typeof discountPercent === 'number' && discountPercent > 0) {
     const discountBadge = document.createElement('span');
     discountBadge.className = 'gengage-chat-product-details-discount-badge';
     discountBadge.textContent = `%${clampDiscount(discountPercent)}`;
@@ -355,7 +355,7 @@ export function renderProductCard(element: UIElement, ctx: UISpecRenderContext):
 
     // Discount badge (top-left of image)
     const discountPercent = product['discountPercent'] as number | undefined;
-    if (typeof discountPercent === 'number' && discountPercent > 0) {
+    if (!ctx.hideProductDiscountBadge && typeof discountPercent === 'number' && discountPercent > 0) {
       const badge = document.createElement('span');
       badge.className = 'gengage-chat-product-card-discount-badge';
       badge.textContent = `%${clampDiscount(discountPercent)}`;

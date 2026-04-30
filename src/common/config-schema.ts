@@ -60,7 +60,8 @@ export const AccountRuntimeConfigSchema = z.object({
   widgets: z.object({
     chat: WidgetToggleSchema.default({ enabled: true }),
     qna: WidgetToggleSchema.default({ enabled: true }),
-    simrel: WidgetToggleSchema.default({ enabled: true }),
+    /** Omit entirely → SimRel is off and not passed to the overlay unless declared here. */
+    simrel: WidgetToggleSchema.optional(),
     simbut: WidgetToggleSchema.default({ enabled: false }),
   }),
   mounts: MountSelectorsSchema.default({}),
@@ -113,7 +114,6 @@ export function createDefaultAccountRuntimeConfig(params: {
     widgets: {
       chat: { enabled: true },
       qna: { enabled: true },
-      simrel: { enabled: true },
       simbut: { enabled: false },
     },
   });

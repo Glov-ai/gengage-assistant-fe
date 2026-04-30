@@ -149,6 +149,12 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   /** Product price presentation (cards, summary, details, AI Top Picks). */
   productPriceUi?: ProductPriceUiConfig;
 
+  /**
+   * When true, hides the circular percent discount badge on product card images and the
+   * inline percent badge in the product details price row. List/sale price and campaign badges are unchanged.
+   */
+  hideProductDiscountBadge?: boolean;
+
   // -------------------------------------------------------------------------
   // Voice input (Web Speech API STT)
   // -------------------------------------------------------------------------
@@ -392,6 +398,7 @@ export interface ChatUISpecRenderContext {
   onProductSelect?: (product: Record<string, unknown>) => void;
   pricing?: import('../common/price-formatter.js').PriceFormatConfig | undefined;
   productPriceUi?: ProductPriceUiConfig | undefined;
+  hideProductDiscountBadge?: boolean | undefined;
   i18n?: Pick<
     ChatI18n,
     | 'productCtaLabel'

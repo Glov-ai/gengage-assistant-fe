@@ -36,6 +36,7 @@ export function preflightDiagnostics(
 
   for (const [widget, selector] of mountEntries) {
     if (selector === undefined) continue;
+    if (widget === 'simrel' && config.widgets.simrel === undefined) continue;
 
     if (!isValidSelector(selector)) {
       warnings.push({

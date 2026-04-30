@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { initGengageClient } from '../src/common/client.js';
+import { initGengageClient, mapAccountRuntimeConfigToOverlayOptions } from '../src/common/client.js';
+import { parseAccountRuntimeConfig } from '../src/common/config-schema.js';
 
 describe('initGengageClient', () => {
   beforeEach(() => {
@@ -161,5 +162,83 @@ describe('initGengageClient', () => {
     }
 
     expect(onFindSimilar).not.toHaveBeenCalled();
+  });
+
+  it('does not log SimRel mount warning when widgets.simrel is omitted', async () => {
+    document.body.innerHTML = '<div id="gengage-qna"></div>';
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      await initGengageClient({
+        runtimeConfig: {
+          version: '1',
+          accountId: 'test',
+          middlewareUrl: 'https://test.example.com',
+          widgets: {
+            chat: { enabled: true },
+            qna: { enabled: true },
+            simbut: { enabled: false },
+          },
+          mounts: { qna: '#gengage-qna' },
+        },
+        contextResolver: () => ({ pageType: 'pdp' as const, sku: 'SKU-WARN-TEST' }),
+        preflight: false,
+      });
+    } catch {
+      /* backend/network */
+    }
+
+    expect(warnSpy.mock.calls.some((call) => String(call[0]).includes('SimRel mount'))).toBe(false);
+    warnSpy.mockRestore();
+  });
+});
+
+describe('mapAccountRuntimeConfigToOverlayOptions', () => {
+  it('omits overlay simrel when widgets.simrel is undefined', () => {
+    const config = parseAccountRuntimeConfig({
+      version: '1',
+      accountId: 'acct',
+      middlewareUrl: 'https://example.com',
+      widgets: {
+        chat: { enabled: true },
+        qna: { enabled: true },
+        simbut: { enabled: false },
+      },
+    });
+    const opts = mapAccountRuntimeConfigToOverlayOptions(config);
+    expect(opts.simrel).toBeUndefined();
+  });
+
+  it('does not add overlay simrel when only mounts.simrel is set (widgets.simrel must be declared)', () => {
+    const config = parseAccountRuntimeConfig({
+      version: '1',
+      accountId: 'acct',
+      middlewareUrl: 'https://example.com',
+      widgets: {
+        chat: { enabled: true },
+        qna: { enabled: true },
+        simbut: { enabled: false },
+      },
+      mounts: { simrel: '#similar-products' },
+    });
+    const opts = mapAccountRuntimeConfigToOverlayOptions(config);
+    expect(opts.simrel).toBeUndefined();
+  });
+
+  it('maps widgets.simrel and mounts.simrel when both are configured', () => {
+    const config = parseAccountRuntimeConfig({
+      version: '1',
+      accountId: 'acct',
+      middlewareUrl: 'https://example.com',
+      widgets: {
+        chat: { enabled: true },
+        qna: { enabled: true },
+        simrel: { enabled: true },
+        simbut: { enabled: false },
+      },
+      mounts: { simrel: '#similar-products' },
+    });
+    const opts = mapAccountRuntimeConfigToOverlayOptions(config);
+    expect(opts.simrel).toEqual({ enabled: true, mountTarget: '#similar-products' });
   });
 });
